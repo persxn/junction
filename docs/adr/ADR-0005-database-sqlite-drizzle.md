@@ -1,0 +1,31 @@
+# ADR-0005: Database: SQLite (WAL) owned by one backend process; Drizzle ORM; never on a network share
+
+- **Status:** Proposed
+- **Date:** 2026-09-20
+- **Source:** ARCHITECTURE.md §4.0, §4.5, §4.6, §6.1
+
+## Context
+Scale is ≤ 100k events and ≤ 10k students. The pilot has zero administration capacity and needs trivial
+backups, full-text search and a future path to a server.
+
+## Decision
+- **SQLite 3 in WAL mode via better-sqlite3**, opened only by the backend process (single writer).
+  Page cache capped at 32–64 MB.
+- **Drizzle ORM** schema in TypeScript. drizzle-kit generates SQL migrations that are committed and reviewed.
+  Migrations are forward-only with an automatic `PRE_MIGRATION` backup. Migration tests run from an empty DB
+  and from the previous release's fixture DB.
+- Repositories per module. Raw SQL only through the parameterized `sql` template.
+- Conventions: UUIDv7 TEXT PKs, UTC epoch-ms timestamps, integer minor-unit money (unknown = NULL),
+  enums as TEXT + CHECK, and `version` on editable aggregates.
+- **Never place the DB on a network share.** Keep SQL dialect-neutral outside the `search` module.
+
+## Consequences
+- Zero administration, a single-file DB, online backup API, built-in FTS5, and haversine as a UDF.
+- Single host, single writer. Multi-campus scale would need PostgreSQL, which is a contained migration
+  because Drizzle supports it.
+- Drizzle is younger than Prisma or TypeORM, and some queries read better in raw SQL.
+
+## Alternatives considered
+- **PostgreSQL:** needs a service install and administration; overkill for the pilot.
+- **node:sqlite:** release-candidate status in 2026; revisit later to drop a native addon.
+- **Kysely:** hand-written migrations. **Prisma:** heavier, less control over FTS5 and triggers.
