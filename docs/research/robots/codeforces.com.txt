@@ -1,0 +1,224 @@
+# Block known bad bots and aggressive scrapers
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: Mediapartners-Google
+Disallow: /
+
+User-agent: IsraBot
+Disallow: /
+
+User-agent: Orthogaffe
+Disallow: /
+
+User-agent: UbiCrawler
+Disallow: /
+
+User-agent: DOC
+Disallow: /
+
+User-agent: Zao
+Disallow: /
+
+User-agent: sitecheck.internetseer.com
+Disallow: /
+
+User-agent: Zealbot
+Disallow: /
+
+User-agent: MSIECrawler
+Disallow: /
+
+User-agent: SiteSnagger
+Disallow: /
+
+User-agent: WebStripper
+Disallow: /
+
+User-agent: WebCopier
+Disallow: /
+
+User-agent: Fetch
+Disallow: /
+
+User-agent: Offline Explorer
+Disallow: /
+
+User-agent: Teleport
+Disallow: /
+
+User-agent: TeleportPro
+Disallow: /
+
+User-agent: WebZIP
+Disallow: /
+
+User-agent: linko
+Disallow: /
+
+User-agent: HTTrack
+Disallow: /
+
+User-agent: Microsoft.URL.Control
+Disallow: /
+
+User-agent: Xenu
+Disallow: /
+
+User-agent: larbin
+Disallow: /
+
+User-agent: libwww
+Disallow: /
+
+User-agent: ZyBORG
+Disallow: /
+
+User-agent: Download Ninja
+Disallow: /
+
+User-agent: fast
+Disallow: /
+
+User-agent: grub-client
+Disallow: /
+
+User-agent: k2spider
+Disallow: /
+
+User-agent: NPBot
+Disallow: /
+
+User-agent: WebReaper
+Disallow: /
+
+# AI and LLM crawlers
+
+User-agent: Omgilibot
+Disallow: /
+
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: openai-crawler
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: Claude-Web
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: PerplexityBot
+Disallow: /
+
+User-agent: YouBot
+Disallow: /
+
+User-agent: Amazonbot
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: Applebot
+Disallow: /
+
+User-agent: facebookexternalhit
+Disallow: /
+
+User-agent: MetaAI-Bot
+Disallow: /
+
+User-agent: HuggingFaceBot
+Disallow: /
+
+# Common scraping tools (only allow /api)
+
+User-agent: Scrapy
+Disallow: /
+Allow: /api/
+
+User-agent: python-requests
+Disallow: /
+Allow: /api/
+
+User-agent: curl
+Disallow: /
+Allow: /api/
+
+User-agent: Wget
+Disallow: /
+Allow: /api/
+
+# General restrictions for all bots
+
+User-agent: *
+Disallow: /admin
+Disallow: /alpha
+Disallow: /attachment
+Disallow: /comments/with
+Disallow: /contest
+Disallow: /contestInvitation
+Disallow: /contestRegistrants
+Disallow: /contestRegistration
+Disallow: /contests/with
+Disallow: /css
+Disallow: /data
+Disallow: /enter
+Disallow: /gifts
+Disallow: /trustList
+Disallow: /group
+Disallow: /gym/edit
+Disallow: /images
+Disallow: /js
+Disallow: /list/view
+Disallow: /lists
+Disallow: /lists/edit
+Disallow: /lists/new
+Disallow: /logout
+Disallow: /markitup
+Disallow: /mashups
+Disallow: /modules
+Disallow: /printEntry
+Disallow: /problemset/standings
+Disallow: /problemset/status
+Disallow: /problemset/submit
+Disallow: /proposals
+Disallow: /ratings
+Disallow: /ratings/page
+Disallow: /recent-actions
+Disallow: /register
+Disallow: /renderer
+Disallow: /site
+Disallow: /scripts
+Disallow: /search
+Disallow: /settings
+Disallow: /society
+Disallow: /spectator
+Disallow: /st.codeforces.com
+Disallow: /submissions
+Disallow: */submission/*
+Disallow: /support
+Disallow: /system
+Disallow: /teams/invite
+Disallow: /teams/with
+Disallow: /top-contributed
+Disallow: /u
+Disallow: /unsubscribe
+Disallow: /uploadfile
+Disallow: /user
+Disallow: /userForm
+Disallow: /userFormFieldValue/download
+Disallow: /userform
+Disallow: /userlist
+Disallow: /users
+Disallow: /usertalk
+Disallow: /verifyme

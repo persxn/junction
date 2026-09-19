@@ -1,0 +1,84 @@
+User-agent: *
+Allow: /_next/
+Allow: /static/
+Allow: /internship/
+Allow: /job/
+Allow: /competitions/
+Allow: /practice/
+Allow: /courses/
+Allow: /hackathons/
+Allow: /blog/
+Allow: /quiz/
+Allow: /api/public/*
+Disallow: /api/get-attachment/*
+Disallow: /mentor/book-mentor/*
+Disallow: /certificate-preview/*
+Disallow: /directory/user/*
+Disallow: /u/*
+Disallow: /p/*
+Disallow: /pf/*
+Disallow: /api/*
+Disallow: /competitions/*/register
+
+# Transactional / non-index pages
+Disallow: /mentor/book-mentor/
+Disallow: /certificate-preview/
+Disallow: /competitions/*/register
+
+# AI / LLM Crawlers (Allow)
+User-agent: GPTBot
+User-agent: Google-Extended
+User-agent: ChatGPT-User
+User-agent: OpenAI
+User-agent: Claude-Web
+User-agent: anthropic-ai
+User-agent: Perplexity
+User-agent: Cohere
+User-agent: cohere-ai
+User-agent: Amazonbot
+User-agent: Applebot-Extended
+User-agent: Google-CloudVertexBot
+Allow: /
+
+# Low-quality / Scraper Bots
+User-agent: CCBot
+User-agent: Bytespider
+User-agent: Diffbot
+User-agent: Omgilibot
+User-agent: Youbot
+User-agent: DotBot
+User-agent: FriendlyCrawler
+User-agent: img2dataset
+Disallow: /
+
+# Legacy Downloaders
+User-agent: HTTrack
+User-agent: WebZip
+User-agent: Wget
+User-agent: Teleport
+User-agent: TeleportPro
+User-agent: WebCopier
+User-agent: Offline Explorer
+User-agent: Xenu
+User-agent: EmailCollector
+User-agent: EmailSiphon
+User-agent: EmailWolf
+User-agent: WebBandit
+User-agent: ExtractorPro
+User-agent: CherryPicker
+User-agent: SiteSnagger
+User-agent: URL_Spider_Pro
+User-agent: LinkWalker
+User-agent: LinkextractorPro
+User-agent: Spinn3r
+User-agent: Tailrank
+User-agent: TurnitinBot
+Disallow: /
+
+# Bing
+User-agent: Bingbot
+Crawl-delay: 1
+
+# Sitemaps
+Sitemap: https://unstop.com/sitemap
+Sitemap: https://unstop.com/sitemaps/static-sitemap.xml

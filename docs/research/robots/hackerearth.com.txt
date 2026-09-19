@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Disallow: /*?login=
+Disallow: /*&login=
+Disallow: /*AJAX
+Disallow: /ru/*
+Disallow: /fr/*
+Disallow: /de/*
+Disallow: /zh/*
+Disallow: /pt-br/*
+Disallow: /ja/*
+Sitemap: https://www.hackerearth.com/recruit/sitemap_index.xml
+Sitemap: https://www.hackerearth.com/sitemap.xml

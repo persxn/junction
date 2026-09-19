@@ -1,0 +1,54 @@
+User-agent: *
+Sitemap: https://clist.by/sitemap.xml
+
+Disallow: /login/
+Disallow: /logout/
+Disallow: /signup/
+Disallow: /oauth/
+Disallow: /auth/
+Disallow: /o/
+Disallow: /service_auth/
+Disallow: /chat/
+Disallow: /chats/
+
+Disallow: /admin/
+Disallow: /charts/
+Disallow: /get/events/
+Disallow: /solutions/
+Disallow: /settings/
+Disallow: /list/
+Disallow: /calendar/
+Disallow: /messages/
+Disallow: /profile/
+Disallow: /account/
+Disallow: /telegram/
+Disallow: /versus/
+Disallow: /virtual-start/
+Disallow: /form/
+Disallow: /coder/*/ratings/
+Disallow: /account/*/ratings/
+Disallow: /account/*/verification/
+
+Disallow: /send-event-notification/
+Disallow: /change-environment/
+Disallow: /change-debug-toolbar/
+Disallow: /standings/action/
+Disallow: /promotion/skip/
+Disallow: /webpush/
+Disallow: /django-rq/
+Disallow: /silk/
+Disallow: /*/dumpdata/
+
+Allow: /api/v*/doc
+Disallow: /api/
+
+Allow: /coders/?country=
+Disallow: /coders/?country=*&
+Allow: /accounts/?country=
+Disallow: /accounts/?country=*&
+Allow: /standings/?resource=
+Disallow: /standings/?resource=*&
+Allow: /problems/?resource=
+Disallow: /problems/?resource=*&
+
+Disallow: /*?

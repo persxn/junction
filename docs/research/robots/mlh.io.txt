@@ -1,0 +1,19 @@
+User-agent: *
+
+Disallow: /account/
+Disallow: /tools/
+Disallow: /_/
+Disallow: /v4/
+Disallow: /auth/
+Disallow: /admin/
+Disallow: /sidekiq/
+Disallow: /marksmith/
+Disallow: /graphql
+Disallow: /events/*/partners/*/promo_codes/
+Disallow: /projects/invites/
+Disallow: /submissions/invites/
+Disallow: /submissions/*/invites/
+
+Allow: /
+
+Sitemap: https://www.mlh.com/sitemap.xml

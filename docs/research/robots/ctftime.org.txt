@@ -1,0 +1,37 @@
+User-agent: *
+Content-signal: search=yes, ai-train=no, use=reference
+Crawl-delay: 10
+
+Disallow: /user/
+Disallow: /task/tags/
+Disallow: /login/
+
+# public data for rating experiments
+Disallow: /export/
+
+# secret page
+Disallow: /dating/
+
+User-agent: dotbot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: SemrushBot-SA
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: Mail.RU_Bot
+Disallow: /
+
+User-agent: Mail.Ru
+Disallow: /
+
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: Mail.RU_Bot
+Disallow: /
