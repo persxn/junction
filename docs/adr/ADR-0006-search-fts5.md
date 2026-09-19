@@ -1,6 +1,6 @@
 # ADR-0006: Search: FTS5 + structured filters; no vector DB in MVP
 
-- **Status:** Proposed
+- **Status:** Accepted (spec v1.1, 2026-09-20) — amended
 - **Date:** 2026-09-20
 - **Source:** ARCHITECTURE.md §4.7, §8
 
@@ -24,3 +24,7 @@ fee, team size) with explainable ranking, and no extra services.
 ## Alternatives considered
 - Meilisearch/Typesense: an extra service to run.
 - sqlite-vec + a small CPU embedding model: Phase 2, only if the AI eval shows recall gaps.
+
+## Amendments (v1.1)
+- Trigram tokenizer provides **substring** matching only; typo tolerance comes from a vocabulary table + edit distance (§8.2).
+- Build-machine perf tests assert half the 8 GB budgets as a proxy (§8.3).

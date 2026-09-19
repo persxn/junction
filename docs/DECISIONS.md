@@ -1,6 +1,6 @@
 # Decisions register
 
-Copied from `ARCHITECTURE.md` §1 (resolved) and §2 (open), v1.0-draft, 20 Sep 2026.
+Copied from `ARCHITECTURE.md` §1 (resolved) and §2 (open). **Updated to spec v1.1, 20 Sep 2026** (architect review of WP-00…WP-02b; rulings index in ARCHITECTURE.md §21).
 When the architect resolves an open question, update its row (status → RESOLVED + answer + date) and record the decision in an ADR where it affects architecture.
 
 ## Resolved decisions
@@ -32,13 +32,21 @@ When the architect resolves an open question, update its row (status → RESOLVE
 | D-23 | RESOLVED | Offline works for everything except scraping, URL import and external links; offline is not a failure. | `SKIPPED_OFFLINE` run outcome; offline banner, not error. |
 | D-24 | RESOLVED | Audit log for administrative accountability. | Append-only `audit_log` written in the same transaction as each change. |
 | D-25 | RESOLVED | Light/dark following Windows; accessibility baseline. | Design tokens + system theme sync (§16). |
+| D-26 | RESOLVED (v1.1) | Source verdicts: CTFtime & Devfolio APPROVED_WITH_LIMITS; CLIST APPROVED_WITH_LIMITS once key exists; Unstop MANUAL_IMPORT_ONLY until Terms read; Devpost MANUAL_IMPORT_ONLY; campus sites PENDING_REVIEW. | ADR-0016; WP-12/13 re-scoped. |
+| D-27 | RESOLVED (v1.1) | 15-minute refresh cycle; per-source minimum intervals (Devfolio/Unstop 15 min, CTFtime/CLIST 30 min, campus 12 h); manual refresh floors. | `sources.cadence_minutes`, `manual_min_interval_minutes`. |
+| D-28 | RESOLVED (v1.1) | Delay = max(3 s, source setting, robots Crawl-delay); TLS never disabled; 403 → BLOCKED, no UA rotation. | PoliteHttpClient (§7.2). |
+| D-29 | RESOLVED (v1.1) | No PII from sources: people fields dropped at the adapter boundary; e-mails/phones in descriptions redacted. | Normalization tests (§7.3). |
+| D-30 | RESOLVED (v1.1) | URL import refused for MANUAL_IMPORT_ONLY/BLOCKED domains (manual form with link instead). | WP-14 (§7.1). |
+| D-31 | RESOLVED (v1.1) | Case/quiz/marketing/cultural competitions out of MVP scope (event-type policy). | §7.4. |
+| D-32 | RESOLVED (v1.1) | Attribution on every event; no republishing; no model training on source data. | §7.2. |
+| D-33 | RESOLVED (v1.1) | Real student data only on disk-encrypted machines; build machine uses synthetic data. | ADR-0018. |
 
 ## Open questions
 
 | # | Status | Question | Blocks | Proposed default (used until answered) |
 |---|---|---|---|---|
 | Q1 | OPEN | Pilot host: one shared PC or individual professor machines? Is off-campus access required? | Client mode (post-M5); network security | Host mode on one machine. No off-campus access in MVP (later via university VPN — never exposed to the internet). |
-| Q2 | OPEN | Pilot facts: date, number of professors, host machine specs, who installs, IT restrictions (Smart App Control, WDAC/AppLocker, proxy), who maintains scrapers. | WP-26 model choice, WP-31 packaging | Taken from WP-00/WP-01 recon of the build machine until the pilot host is known. |
+| Q2 | PARTLY ANSWERED (build machine known; pilot host unknown — check SAC + disk encryption) | Pilot facts: date, number of professors, host machine specs, who installs, IT restrictions (Smart App Control, WDAC/AppLocker, proxy), who maintains scrapers. | WP-26 model choice, WP-31 packaging | Taken from WP-00/WP-01 recon of the build machine until the pilot host is known. |
 | Q3 | OPEN | Campus name and coordinates. | WP-07 setup wizard (entered at runtime — not blocking code) | — |
 | Q4 | OPEN | Notification recipients and thresholds. | WP-23 | Competition/stage/task deadlines → primary + co-mentors; watched-event changes → users who saved it; saved-search matches → owner; scraper/backup failures → admins. Thresholds 7 / 3 / 1 days + due day + overdue. |
 | Q5 | OPEN | Permission defaults in §10 (student profile edits, event corrections, co-mentor rights). | WP-07, WP-17, WP-19 | As in the §10 matrix. |
@@ -46,7 +54,18 @@ When the architect resolves an open question, update its row (status → RESOLVE
 | Q7 | OPEN | Outcome fields in MVP. | WP-21 | Team-level: result, rank, prize text, certificate reference, result URL, notes. |
 | Q8 | OPEN | Student personal fields & consent; does the university have a data-protection policy/officer? | WP-17 | Fields as in §6.2; phone off by default; record "privacy notice acknowledged" date. |
 | Q9 | OPEN | Audit log retention and visibility. | WP-30 | Admins see all; professors see activity timelines of records they can view; retain 3 years (login events 1 year). |
-| Q10 | OPEN | Does university IT have a code-signing certificate or signing service? Will the project be open source? | WP-31 | Unsigned internal pilot if Smart App Control/WDAC allow (§18). |
+| Q10 | OPEN — higher priority (SAC was ON on the build machine) | Does university IT have a code-signing certificate or signing service? Will the project be open source? | WP-31 | Unsigned internal pilot if Smart App Control/WDAC allow (§18). |
 | Q11 | OPEN | University identity provider (Google Workspace / Microsoft 365). | Post-MVP SSO | — |
 | Q12 | OPEN | Hybrid events whose physical venue is outside India: show as "online participation possible" or hide? | WP-08 | Show, labelled "Hybrid — online participation" (configurable). |
-| Q13 | OPEN | Sources whose ToS forbid automated access (outcome of WP-02): request permission, rely on manual/URL import, or drop? | WP-13 | Manual/URL import only, plus a permission request email. |
+| Q13 | RESOLVED (v1.1 → D-26, D-30) | Sources whose ToS forbid automated access (outcome of WP-02): request permission, rely on manual/URL import, or drop? | WP-13 | Manual/URL import only, plus a permission request email. |
+
+## User actions (outside the codebase)
+
+| # | Status | Action | Blocks |
+|---|---|---|---|
+| U1 | OPEN | Turn Smart App Control off on the build machine. | WP-03a and all builds |
+| U2 | OPEN | Approve toolchain installs (VS Build Tools C++, rustup, pnpm) and enable Windows long paths (admin + restart). | WP-03a |
+| U3 | OPEN | Read Unstop's Terms in a browser and send the relevant clauses to the architect. | WP-13 |
+| U4 | OPEN | Create a CLIST account + API key. | Live CLIST runs (WP-11) |
+| U5 | OPEN (optional) | Send permission e-mails (Devfolio courtesy, Devpost request). | — |
+| U6 | OPEN (optional) | Defender exclusions for build folders. | — |

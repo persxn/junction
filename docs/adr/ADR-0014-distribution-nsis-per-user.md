@@ -1,6 +1,6 @@
 # ADR-0014: Distribution: NSIS per-user; unsigned internal pilot conditional on SAC/WDAC
 
-- **Status:** Proposed
+- **Status:** Accepted (spec v1.1, 2026-09-20) — amended
 - **Date:** 2026-09-20
 - **Source:** ARCHITECTURE.md §1 (D-17), §4.13, §18
 
@@ -29,3 +29,7 @@ hardware or cloud key storage. EV no longer grants instant SmartScreen reputatio
 ## Alternatives considered
 - MSIX: requires signing, and sandboxing complicates child processes and data directories.
 - A single-binary backend (pkg/SEA): packed executables attract antivirus false positives.
+
+## Amendments (v1.1)
+- Binaries ship as Tauri `resources`, not `externalBin`; WP-31 verifies an upgrade replaces every binary.
+- Smart App Control was ON on the build machine; pilot hosts must be checked (Q2/Q10). If SAC must stay on, everything shipped must be signed.

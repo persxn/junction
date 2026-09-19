@@ -1,6 +1,6 @@
 # ADR-0003: TypeScript end-to-end with shared zod contracts
 
-- **Status:** Proposed
+- **Status:** Accepted (spec v1.1, 2026-09-20)
 - **Date:** 2026-09-20
 - **Source:** ARCHITECTURE.md §3.4, §4.0, §4.2, §4.3, §4.4, §8.1
 

@@ -1,6 +1,6 @@
 # ADR-0004: Backend: Fastify on Node.js 24 LTS; ship official node.exe
 
-- **Status:** Proposed
+- **Status:** Accepted (spec v1.1, 2026-09-20)
 - **Date:** 2026-09-20
 - **Source:** ARCHITECTURE.md §4.0, §4.3, §4.4, §4.13
 

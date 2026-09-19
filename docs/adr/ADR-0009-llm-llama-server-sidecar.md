@@ -1,6 +1,6 @@
 # ADR-0009: LLM: llama.cpp llama-server sidecar; small model; planner / database / UI split
 
-- **Status:** Proposed
+- **Status:** Accepted (spec v1.1, 2026-09-20) — amended
 - **Date:** 2026-09-20
 - **Source:** ARCHITECTURE.md §1 (D-05, D-11, D-16), §4.10, §4.11, §5, §9
 
@@ -31,3 +31,7 @@ nothing may be fabricated.
 - Ollama: separate install and service, less control.
 - ONNX Runtime GenAI / Foundry Local: attractive for NPUs but a narrower catalogue; revisit in Phase 2.
 - 7–9B models: GPU tier only.
+
+## Amendments (v1.1)
+- JSON-schema constraints can fail open in some llama.cpp releases: every plan is zod-validated, schemas are regex-free and closed, and a startup self-test checks enforcement on the pinned release.
+- Build machine is the GPU tier (RTX 4060 8 GB): WP-26 benchmarks CPU, Vulkan and CUDA builds; automatic first-run backend selection lands in WP-27a.

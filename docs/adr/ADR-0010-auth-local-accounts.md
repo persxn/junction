@@ -1,6 +1,6 @@
 # ADR-0010: Auth: local accounts, Argon2id, opaque hashed sessions, code-defined RBAC
 
-- **Status:** Proposed
+- **Status:** Accepted (spec v1.1, 2026-09-20) — amended
 - **Date:** 2026-09-20
 - **Source:** ARCHITECTURE.md §1 (D-03, D-07, D-20, D-24), §4.12, §10
 
@@ -27,3 +27,6 @@ ownership-based editing, no SSO in the MVP, and shared machines are possible.
 ## Alternatives considered
 - Windows identity: breaks on shared PCs and accounts.
 - SSO: needs internet and IT registration; later, behind `AuthProvider`.
+
+## Amendments (v1.1)
+- Header names and SSE authentication are defined in ADR-0017.

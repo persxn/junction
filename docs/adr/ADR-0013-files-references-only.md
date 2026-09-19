@@ -1,6 +1,6 @@
 # ADR-0013: Files: references only; open allowlist
 
-- **Status:** Proposed
+- **Status:** Accepted (spec v1.1, 2026-09-20)
 - **Date:** 2026-09-20
 - **Source:** ARCHITECTURE.md §1 (D-12), §6.2 (`resources`), §13
 

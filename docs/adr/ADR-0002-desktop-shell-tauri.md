@@ -1,6 +1,6 @@
 # ADR-0002: Desktop shell: Tauri 2 (vs Electron, WinUI)
 
-- **Status:** Proposed
+- **Status:** Accepted (spec v1.1, 2026-09-20) — amended
 - **Date:** 2026-09-20
 - **Source:** ARCHITECTURE.md §4.0, §4.1, §3.2
 
@@ -23,3 +23,7 @@ notifications, updater (Phase 2) and NSIS per-user installer. The shell stays th
   installer) with a different Node ABI from the standalone backend (two native-module builds).
 - **WinUI 3 / WPF:** native and light, but no reusable web UI for future browser access, and a slower path to a
   polished custom UI.
+
+## Amendments (v1.1)
+- No built-in Job Object/kill-tree for sidecars → implemented in the shell (see ADR-0001).
+- Building requires Smart App Control off on the build machine (ADR-0018).

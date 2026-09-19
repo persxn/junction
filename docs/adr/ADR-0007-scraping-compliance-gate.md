@@ -1,6 +1,6 @@
 # ADR-0007: Scraping: API-first adapters behind a compliance gate; headless Edge only as last resort
 
-- **Status:** Proposed
+- **Status:** Accepted (spec v1.1, 2026-09-20) — amended
 - **Date:** 2026-09-20
 - **Source:** ARCHITECTURE.md §1 (D-10, D-16, D-23), §4.8, §7.1, §7.2, §7.7, §7.8
 
@@ -29,3 +29,8 @@ configurable college sites. ToS and robots.txt must be checked before any scrape
 
 ## Alternatives considered
 - Python Scrapy: a second runtime. Crawlee: heavier than needed.
+
+## Amendments (v1.1)
+- Source verdicts, cadence, delay rule, PII stripping, URL-import restrictions and attribution are recorded in **ADR-0016**.
+- Schema.org JSON-LD is a URL-import fallback, not a primary strategy (0 of 117 Indian campus sites publish it); RSS/Atom feeds and per-site selectors are used for campus sites.
+- TLS validation is never disabled; 403/WAF → BLOCKED, never retried with another User-Agent.

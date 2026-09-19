@@ -1,6 +1,6 @@
 # ADR-0001: Process model: thin shell + backend service + LLM sidecar over an HTTP API
 
-- **Status:** Proposed
+- **Status:** Accepted (spec v1.1, 2026-09-20) — amended
 - **Date:** 2026-09-20
 - **Source:** ARCHITECTURE.md §1 (D-01, D-02, D-05, D-14), §3.1–§3.3
 
@@ -32,3 +32,10 @@ optional (D-05). Scraping must continue while the window is closed to the tray (
 ## Alternatives considered
 - UI talking to the DB, or business logic in the shell via IPC: rejected by D-01/D-02.
 - In-process LLM (node-llama-cpp): a native crash would kill the backend (see ADR-0009).
+
+## Amendments (v1.1)
+- New client secret for **every backend spawn**; header `X-CompIntel-Client`; session in `Authorization: Bearer`; Tauri command `backend_connection()` → `{baseUrl, clientSecret, generation}` (§3.2).
+- Backend is spawned with `std::process::Command`; the shell creates the Job Object itself (`windows` crate, KILL_ON_JOB_CLOSE) because Tauri has no kill-tree.
+- Orphan detection by **stdin EOF**, Job Object as the hard guarantee.
+- CORS allowlist `http://tauri.localhost` + `http://localhost:5173`; Host allowlist `127.0.0.1:<port>`, `localhost:<port>`; LNA-flag test in WP-05b.
+- Packaged layout fixed in §3.2 (`resources\node`, `resources\backend`, `resources\llama`).

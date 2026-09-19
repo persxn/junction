@@ -1,6 +1,6 @@
 # ADR-0008: Scheduler: DB-backed in-process job runner
 
-- **Status:** Proposed
+- **Status:** Accepted (spec v1.1, 2026-09-20) — amended
 - **Date:** 2026-09-20
 - **Source:** ARCHITECTURE.md §4.9
 
@@ -24,3 +24,6 @@ drift, and must be observable.
 - croner/node-cron: in-memory, no state or catch-up.
 - Windows Task Scheduler: external, harder to package and observe.
 - BullMQ: needs Redis.
+
+## Amendments (v1.1)
+- 15-minute refresh cycle; each source runs only when its own minimum interval has passed (D-27, ADR-0016).

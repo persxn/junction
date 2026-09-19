@@ -1,6 +1,6 @@
 # ADR-0012: Geography: offline gazetteer + institutions; straight-line distance; configurable geography policy
 
-- **Status:** Proposed
+- **Status:** Accepted (spec v1.1, 2026-09-20) — amended
 - **Date:** 2026-09-20
 - **Source:** ARCHITECTURE.md §1 (D-06, D-09, D-16), §4.17, §6.4, §7.4
 
@@ -26,3 +26,6 @@ India only, online is worldwide, and hybrid is judged by physical location. Budg
 ## Alternatives considered
 - Nominatim or other online geocoding as the primary: rate-limited and needs a network.
 - Road routing: paid or heavy.
+
+## Amendments (v1.1)
+- An event-type policy (tech types only in MVP, D-31) sits next to the geography policy and hides out-of-scope types the same way.

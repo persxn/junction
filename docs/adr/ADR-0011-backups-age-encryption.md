@@ -1,6 +1,6 @@
 # ADR-0011: Backups: SQLite backup API + age encryption with passphrase-protected recovery key
 
-- **Status:** Proposed
+- **Status:** Accepted (spec v1.1, 2026-09-20) — amended
 - **Date:** 2026-09-20
 - **Source:** ARCHITECTURE.md §1 (D-13), §4.16, §14
 
@@ -30,3 +30,7 @@ machine (USB, OneDrive, shares) and contain student PII. They must run unattende
 - A DPAPI-protected key: unattended, but machine-bound, so restoring on a new PC fails.
 - No encryption: unacceptable once backups hold PII off-machine.
 - SQLCipher: its key would sit on the same machine; adds little over BitLocker.
+
+## Amendments (v1.1)
+- Pre-migration copies are local and unencrypted by design (ADR-0005 amendment); this ADR covers AUTO/MANUAL backups only.
+- Schedule time is the host machine's local time.

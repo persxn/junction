@@ -1,6 +1,6 @@
 # Competition Intel — Architecture Specification
 
-**Version:** 1.0-draft · **Date:** 20 Sep 2026 · **Status:** PROPOSED — awaiting product-owner approval
+**Version:** 1.1 · **Date:** 20 Sep 2026 · **Status:** ACCEPTED — implementation baseline (amended after WP-00…WP-02b)
 **Author:** Architect (Claude, Cowork session) · **Implementer:** Claude Code (worker session)
 
 > **How to use this document.** This is the implementation source of truth. The worker must not
@@ -9,6 +9,13 @@
 > verified by the benchmark/perf work packages before they are relied on.
 >
 > **Priority order for every trade-off:** Reliability > Maintainability > Usability > Performance > Feature count.
+
+### Changelog
+
+| Version | Date | Changes |
+|---|---|---|
+| 1.0-draft | 20 Sep 2026 | First complete architecture. |
+| **1.1** | 20 Sep 2026 | Folded in the WP-01 engineering review and WP-02 source research: new decisions D-26…D-33; user actions U1–U6 (§2.1); SSE over authenticated fetch streams; per-spawn client secret + header names; stdin-EOF orphan detection; Job Object owned by the shell; packaged layout; custom SQL migrations for FTS5/triggers; plain local pre-migration copies; robots Crawl-delay precedence; per-source cadence; PII stripping at the adapter boundary; URL-import restrictions; typo tolerance redefined; EventQuery date/unknown/distance semantics; progress and permission clarifications; roadmap split into smaller WPs and re-scoped (Devpost adapter removed); ADR-0016…0018; rulings index (§21). |
 
 ---
 
@@ -56,6 +63,14 @@ Working name: **Competition Intel** (code/paths: `compintel`).
 | D-23 | Offline works for everything except scraping, URL import and external links; offline is not a failure. | `SKIPPED_OFFLINE` run outcome; offline banner, not error. |
 | D-24 | Audit log for administrative accountability. | Append-only `audit_log` written in the same transaction as each change. |
 | D-25 | Light/dark following Windows; accessibility baseline. | Design tokens + system theme sync (§16). |
+| D-26 | **Source verdicts (WP-02):** CTFtime APPROVED_WITH_LIMITS (documented API only) · Devfolio APPROVED_WITH_LIMITS (public server-rendered pages only; never `api.devfolio.co`) · CLIST APPROVED_WITH_LIMITS once an account + API key exist · Unstop MANUAL_IMPORT_ONLY until a human reads its Terms · **Devpost MANUAL_IMPORT_ONLY** (its Terms prohibit scraping) · college sites PENDING_REVIEW, approved one by one. | `sources.compliance_status` seeded from this; WP-12/13 re-scoped (§19); ADR-0016. |
+| D-27 | **Refresh cadence:** the scheduler runs a 15-minute refresh cycle; each source also has a minimum interval: Devfolio 15 min, Unstop 15 min (if approved), CTFtime 30 min, CLIST 30 min, college sites 12 h. Manual refresh is allowed down to a per-source floor (5 min platforms, 10 min CTFtime/CLIST, 1 h colleges). | `sources.cadence_minutes`, `sources.manual_min_interval_minutes` (§7.2). |
+| D-28 | **Politeness:** effective per-host delay = max(3 s default, source setting, robots `Crawl-delay`). TLS validation is never disabled; a 403/WAF response is recorded as BLOCKED and never retried with another User-Agent. | PoliteHttpClient rules (§7.2). |
+| D-29 | **PII never enters the database from sources:** `EventCandidate` has no fields for people; adapters drop participant, judge and contact data; e-mail addresses and phone numbers in descriptions are redacted at ingest. | Adapter boundary + normalization tests (§7.3). |
+| D-30 | **URL import** (user-initiated, one page) works for approved sources and for domains not in the `sources` table; it is **refused for MANUAL_IMPORT_ONLY/BLOCKED domains** (e.g. Devpost), which get the manual form with the link attached. | WP-14 behaviour (§7.1). |
+| D-31 | Non-technical competition types (case, quiz, marketing, cultural) are out of MVP scope (per D-08); an event-type policy stores them as POLICY_HIDDEN. | Type policy next to the geography policy (§7.4). |
+| D-32 | **Attribution & reuse:** every event shows its source(s) with links; CTFtime and CLIST are credited in About; source data is never republished outside the app and never used to train models. | UI + policy (§7.2). |
+| D-33 | **Real student data only on machines with disk encryption.** The build machine (Windows 11 Home, no BitLocker) uses synthetic data only. | Seeds/synthetic data generator; health check (§14). |
 
 ---
 
@@ -64,7 +79,7 @@ Working name: **Competition Intel** (code/paths: `compintel`).
 | # | Question | Blocks | Proposed default (used until answered) |
 |---|---|---|---|
 | Q1 | Pilot host: one shared PC or individual professor machines? Is off-campus access required? | Client mode (post-M5); network security | Host mode on one machine. No off-campus access in MVP (later via university VPN — never exposed to the internet). |
-| Q2 | Pilot facts: date, number of professors, host machine specs, who installs, IT restrictions (Smart App Control, WDAC/AppLocker, proxy), who maintains scrapers. | WP-26 model choice, WP-31 packaging | Taken from WP-00/WP-01 recon of the build machine until the pilot host is known. |
+| Q2 | Pilot facts: date, number of professors, host machine specs, who installs, IT restrictions (Smart App Control, WDAC/AppLocker, proxy), who maintains scrapers. **Partly answered:** the build machine is Windows 11 Home, Ryzen 7 5700, 16 GB, RTX 4060 8 GB (GPU tier), SAC was ON, no BitLocker. The pilot host is still unknown — check it for Smart App Control and disk encryption. | WP-26 model choice, WP-31 packaging | Build-machine facts until the pilot host is known. |
 | Q3 | Campus name and coordinates. | WP-07 setup wizard (entered at runtime — not blocking code) | — |
 | Q4 | Notification recipients and thresholds. | WP-23 | Competition/stage/task deadlines → primary + co-mentors; watched-event changes → users who saved it; saved-search matches → owner; scraper/backup failures → admins. Thresholds 7 / 3 / 1 days + due day + overdue. |
 | Q5 | Permission defaults in §10 (student profile edits, event corrections, co-mentor rights). | WP-07, WP-17, WP-19 | As in the §10 matrix. |
@@ -72,10 +87,21 @@ Working name: **Competition Intel** (code/paths: `compintel`).
 | Q7 | Outcome fields in MVP. | WP-21 | Team-level: result, rank, prize text, certificate reference, result URL, notes. |
 | Q8 | Student personal fields & consent; does the university have a data-protection policy/officer? | WP-17 | Fields as in §6.2; phone off by default; record "privacy notice acknowledged" date. |
 | Q9 | Audit log retention and visibility. | WP-30 | Admins see all; professors see activity timelines of records they can view; retain 3 years (login events 1 year). |
-| Q10 | Does university IT have a code-signing certificate or signing service? Will the project be open source? | WP-31 | Unsigned internal pilot if Smart App Control/WDAC allow (§18). |
+| Q10 | Does university IT have a code-signing certificate or signing service? Will the project be open source? **More important after WP-01:** Smart App Control was ON on the build machine, so a pilot host may have it on too — then either IT turns it off or everything we ship must be signed. | WP-31 | Unsigned internal pilot if Smart App Control/WDAC allow (§18). |
 | Q11 | University identity provider (Google Workspace / Microsoft 365). | Post-MVP SSO | — |
 | Q12 | Hybrid events whose physical venue is outside India: show as "online participation possible" or hide? | WP-08 | Show, labelled "Hybrid — online participation" (configurable). |
-| Q13 | Sources whose ToS forbid automated access (outcome of WP-02): request permission, rely on manual/URL import, or drop? | WP-13 | Manual/URL import only, plus a permission request email. |
+| Q13 | ~~Sources whose ToS forbid automated access~~ **RESOLVED → D-26, D-30:** manual entry only, plus an optional permission request. | — | — |
+
+### 2.1 User actions (outside the codebase)
+
+| # | Action | Blocks | Status |
+|---|---|---|---|
+| U1 | Turn **Smart App Control off** on the build machine (Windows Security → App & browser control → Smart App Control → Off). Every Rust/Tauri build creates new unsigned executables, which SAC blocks. Defender antivirus stays on; since the April 2026 update SAC can be turned back on later. | WP-03a and every build after it | OPEN |
+| U2 | Approve the toolchain installs (Visual Studio Build Tools C++ workload ~6–8 GB, rustup + stable Rust ~2 GB, pnpm) and **enable Windows long paths** (admin, one registry value + restart). | WP-03a | OPEN |
+| U3 | Read Unstop's Terms (<https://unstop.com/legal/terms-of-use>) in a browser; search for "scrap", "crawl", "robot", "automat", "spider", "extract", "data mining"; paste any matching clauses to the architect. | Unstop adapter (WP-13) | OPEN |
+| U4 | Create a free CLIST account and API key (keep it private; it is entered in the app's settings later, or as `COMPINTEL_CLIST_API_KEY` for development). | Live CLIST runs (WP-11) | OPEN |
+| U5 | Optional: send the permission e-mails in `docs/research/permission-request-template.md` (Devfolio courtesy note; Devpost permission request), ideally from a university address. | Nothing (Devpost stays manual unless permission arrives) | OPEN |
+| U6 | Optional: Defender exclusions for build folders (admin; speeds builds, slightly lowers protection). Default: no exclusions. | Nothing | OPEN |
 
 ---
 
@@ -125,19 +151,51 @@ Working name: **Competition Intel** (code/paths: `compintel`).
 
 **Lifecycle**
 
-- Shell start → spawn backend with env `COMPINTEL_DATA_DIR`, `COMPINTEL_CLIENT_SECRET` (random per
-  launch), `PORT=0` → backend binds `127.0.0.1` on a free port → prints one JSON line
-  `{"ready":true,"port":N,"apiVersion":"1.x","appVersion":"..."}` on stdout → shell passes base URL +
-  secret to the UI via a Tauri command → UI loads.
+- Shell start → the shell spawns the backend with `std::process::Command` (not the shell plugin's
+  sidecar API, so it controls the Job Object) and env `COMPINTEL_DATA_DIR`, `COMPINTEL_CLIENT_SECRET`
+  (32 random bytes, **new for every backend spawn**, including restarts), `PORT=0` → backend binds
+  `127.0.0.1` on a free port → prints one JSON line
+  `{"ready":true,"port":N,"apiVersion":"1.x","appVersion":"..."}` on stdout → the Tauri command
+  `backend_connection()` returns `{baseUrl, clientSecret, generation}` to the UI → UI loads.
+- Every request from the UI carries `X-CompIntel-Client: <clientSecret>` and, after login,
+  `Authorization: Bearer <sessionToken>`. On a network error the UI calls `backend_connection()` again
+  (the generation number tells it the backend restarted); sessions live in the DB, so they survive a
+  backend restart.
 - Backend crash → shell restarts it with exponential backoff (1 s, 2 s, 4 s … max 60 s). After 5
   crashes in 10 minutes the UI shows *"The background service stopped"* with **Open logs**,
   **Copy diagnostics**, **Retry**.
 - Window close → hide to tray (if enabled). **Exit completely** → `POST /api/v1/system/shutdown`
   (finish current transaction, cancel scrapes, stop llama-server) → wait ≤ 10 s → kill process tree.
   The shell places children in a Windows **Job Object** so they die if the shell dies.
-- In host mode the backend also exits if its parent process disappears (orphan protection).
-- **Verify early (WP-05):** WebView2 can call the loopback API (CORS for the Tauri origin, Chromium
-  Local Network Access rules). Fallback: route API calls through Tauri's HTTP plugin.
+- Orphan protection: the shell keeps the backend's **stdin pipe** open; the backend exits gracefully
+  when stdin reaches EOF (the shell died). The Job Object (`JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE`,
+  created by the shell with the `windows` crate — Tauri has no built-in kill-tree) is the hard
+  guarantee; `llama-server` and any headless Edge inherit the job because the backend spawns them.
+- **Verify early (WP-05):** WebView2 can call the loopback API. CORS allowlist: `http://tauri.localhost`
+  (production; `useHttpsScheme` stays false) and `http://localhost:5173` (Vite dev server, `strictPort`).
+  Host-header allowlist: `127.0.0.1:<port>` and `localhost:<port>`. Run the test once with
+  `--enable-features=LocalNetworkAccessChecks,msWebViewAllowLocalNetworkAccessChecks` (Chromium Local
+  Network Access is flag-gated in WebView2 today but may become default). Fallback: route API calls
+  through Tauri's HTTP plugin.
+
+**Packaged layout (Windows)**
+
+```text
+<install dir>\
+├─ CompIntel.exe                      Tauri shell
+└─ resources\
+   ├─ node\node.exe                   official signed Node 24 LTS
+   ├─ backend\main.mjs                esbuild bundle
+   ├─ backend\native\                better-sqlite3 + argon2 prebuilds (.node)
+   ├─ backend\migrations\*.sql
+   ├─ backend\seeds\                  institutions, categories, rules, workflow templates
+   ├─ gazetteer.db
+   └─ llama\cpu\ · llama\vulkan\       llama-server.exe + DLLs (optional CUDA build downloaded later)
+```
+
+Backend command: `resources\node\node.exe resources\backend\main.mjs --data-dir <dir>`. Binaries are
+shipped as Tauri `resources`, not `externalBin`, and WP-31 verifies that an upgrade replaces every
+binary (hash check).
 
 ### 3.3 Layering
 
@@ -254,7 +312,10 @@ Backend modules: `auth`, `users`, `org` (university, departments, campus, settin
 
 - REST/JSON over HTTP, prefix `/api/v1`; OpenAPI 3.1 generated from zod (fastify-type-provider-zod).
 - **SSE** stream `/api/v1/stream` for live updates (scrape progress, notifications, cache
-  invalidation). Simpler than WebSockets, auto-reconnects.
+  invalidation). The browser `EventSource` API cannot send headers, so the UI reads the stream with
+  `fetch()` + `ReadableStream` (a small in-house client, ~100 lines, with reconnect/backoff and
+  `Last-Event-ID`), sending the same `X-CompIntel-Client` and `Authorization` headers as every other
+  request. No tokens in URLs, no cookies.
 - Errors: RFC 9457 `application/problem+json` with a stable `code` (e.g. `SOURCE_UNREACHABLE`),
   human `title`, optional `hint` and `retryable`.
 - Cursor pagination; optimistic concurrency via `version` on editable aggregates → `409 CONFLICT`
@@ -281,8 +342,15 @@ Backend modules: `auth`, `users`, `org` (university, departments, campus, settin
 
 - Drizzle schema in TypeScript; drizzle-kit generates SQL migrations committed to git (reviewable).
 - Repositories per module; raw SQL only via the `sql` tagged template (parameterized).
-- Migrations are forward-only; an automatic `PRE_MIGRATION` backup runs before applying; migration
-  tests run from an empty DB and from the previous release's fixture DB.
+- Migrations are forward-only; migration tests run from an empty DB and from the previous release's
+  fixture DB and assert that FTS tables and triggers exist.
+- **Drizzle can't model FTS5 virtual tables or triggers:** those are **custom SQL migrations**
+  (`drizzle-kit generate --custom`). `drizzle-kit push` is never used (no script for it).
+- Before applying pending migrations to a non-empty DB, the backend makes a **plain local copy**
+  (`VACUUM INTO <data>\backups-local\pre-migration-<timestamp>.db`, keep the last 5). It stays on the
+  same disk as the DB, so it adds no exposure and needs no encryption keys. Encrypted exports (§14) are
+  for AUTO/MANUAL backups to external destinations.
+- Pin exact versions (Drizzle is still 0.x).
 - **Downside:** younger than Prisma/TypeORM; complex queries sometimes clearer in raw SQL.
 - **Alternatives:** Kysely (excellent builder, hand-written migrations); Prisma (heavier, less control
   over SQLite specifics such as FTS5 and triggers).
@@ -302,8 +370,13 @@ Backend modules: `auth`, `users`, `org` (university, departments, campus, settin
   retries with exponential backoff + jitter honouring `Retry-After`, timeouts (connect 10 s, total
   30 s), conditional GET (ETag/Last-Modified), response size cap (5 MB), identifying User-Agent,
   system proxy support.
-- Parsing: JSON first; cheerio for HTML; schema.org `Event` JSON-LD/microdata extraction; chrono-node
-  plus source-specific rules for dates; zod validation of each adapter's output.
+- Parsing: JSON first (APIs, embedded `__NEXT_DATA__`-style page data); RSS/Atom feeds (many
+  WordPress/Drupal campus sites expose `/feed`); cheerio for HTML with per-site selectors; schema.org
+  `Event` JSON-LD/Open Graph as a generic fallback for URL import (WP-02 found **no** Event JSON-LD on
+  117 Indian campus sites, so it is not a primary strategy); chrono-node plus source-specific rules for
+  dates; zod validation of each adapter's output.
+- TLS certificate validation is never disabled; invalid certificates, DNS failures and 403/WAF
+  responses are recorded as failures (`NETWORK`/`BLOCKED`) and shown in Source status.
 - JS-only pages: `playwright-core` driving the **installed Microsoft Edge** (`channel: 'msedge'`,
   headless) — no Chromium download; opt-in per adapter; one browser at a time; closed after use.
 - **Resources:** HTTP runs: tens of MB. Browser runs: +250–400 MB transient (*estimate*).
@@ -318,7 +391,7 @@ Backend modules: `auth`, `users`, `org` (university, departments, campus, settin
   restarts and sleep/resume catch up automatically, with no timer drift.
 - Per-job single-flight; global limits (2 concurrent scrapes, 1 LLM job); jitter; stale-lock recovery.
 - Offline detection before scraping → runs recorded as `SKIPPED_OFFLINE` (not failures).
-- Jobs: `scrape:<source>` (default 15 min, per-source configurable), `detail-refresh` (changed items
+- Jobs: `scrape:<source>` (15-minute refresh cycle; each source has its own minimum interval, D-27), `detail-refresh` (changed items
   only), `deadline-evaluator` (5 min), `saved-search-evaluator` (after scrapes), `backup:daily`
   (configured time; runs at next opportunity if missed), `cleanup` (daily), `health-snapshot` (hourly).
 - **Downside:** custom code (~200–300 lines) to maintain — heavily tested.
@@ -335,6 +408,10 @@ Backend modules: `auth`, `users`, `org` (university, departments, campus, settin
   free RAM ≥ model requirement + 1 GB — otherwise deterministic mode with an explanation); idle
   unload after 10 min (5 min on hosts < 12 GB); health checks; crash isolation (an LLM crash never
   affects scraping or the API).
+- **JSON-schema constraints can fail open** in some llama.cpp releases (a grammar error yields
+  unconstrained output with 200 OK). Therefore: every plan is zod-validated; planner schemas avoid regex
+  `pattern`s and use closed objects and enums; a startup self-test checks that the pinned release
+  enforces a known schema; per-model chat-template checks are part of WP-26.
 - **Downside:** fast-moving upstream; Windows binaries are unsigned (§18); one more process.
 - **Alternatives:** *node-llama-cpp* in-process (a native crash/OOM would kill the backend);
   *Ollama* (separate install/service, less control); *ONNX Runtime GenAI / Foundry Local* (NPU
@@ -365,7 +442,8 @@ Backend modules: `auth`, `users`, `org` (university, departments, campus, settin
 - Login throttling and temporary lockout (5 failures → 5 min, exponential).
 - Admin creates accounts; forced password change on first login; admin resets professor passwords.
 - First-run wizard creates the first admin and a one-time **recovery code** for admin lockout.
-- Host mode: every request also carries the per-launch client secret (defence in depth).
+- Host mode: every request also carries the per-spawn client secret in `X-CompIntel-Client`
+  (defence in depth, §3.2). Session token: `Authorization: Bearer <token>`.
 - **Downside:** no self-service reset (no email in MVP). **Alternatives:** Windows identity (breaks
   on shared PCs/accounts); SSO (needs internet + IT registration → later, behind `AuthProvider`).
 
@@ -374,8 +452,8 @@ Backend modules: `auth`, `users`, `org` (university, departments, campus, settin
 - Tauri bundler → **NSIS installer, per-user install** (no admin rights), WebView2 bootstrapper
   (installs only if missing).
 - Bundle: shell exe, UI assets, official `node.exe` (pinned LTS), backend bundle (esbuild single file
-  + native modules folder), `llama-server` CPU build (+ optional Vulkan build), gazetteer DB, seeds.
-  **Not bundled:** the model (downloaded or side-loaded).
+  + native modules folder), `llama-server` CPU build (+ optional Vulkan build), gazetteer DB, seeds —
+  layout in §3.2. **Not bundled:** the model (downloaded or side-loaded).
 - Data directory: default `%LOCALAPPDATA%\CompIntel\`; configurable at setup for a host machine
   (e.g. `D:\CompIntel\`). Layout: `data\app.db`, `snapshots\`, `models\`, `logs\`, `tmp\`.
   Uninstall keeps data unless the user explicitly opts in.
@@ -388,7 +466,9 @@ Backend modules: `auth`, `users`, `org` (university, departments, campus, settin
 
 - pino JSON logs → daily rotated files (keep 14 days) in `logs\`; correlation by request id and
   job/run id; **redaction** of passwords, tokens, emails, phone numbers, API keys.
-- Shell logs (tauri-plugin-log) to the same folder; UI errors posted to `/api/v1/system/client-log`.
+- Shell logs (tauri-plugin-log) to the same folder; UI errors posted to `/api/v1/system/client-log`
+  (no session needed because errors can happen before login, but the client-secret header is required;
+  body ≤ 8 KB; rate limit 30/min).
 - Admin log viewer (filterable tail).
 - **Copy diagnostics** → zip of redacted logs, versions, config without secrets, source status and DB
   statistics (no student data). Also the easiest thing to paste back to the architect.
@@ -444,6 +524,11 @@ Backend modules: `auth`, `users`, `org` (university, departments, campus, settin
 tier); the model loads only on demand and unloads after 5 idle minutes; one headless browser at a
 time; SQLite cache capped. Deterministic "smart search" (§9 step 1) works on every tier.
 
+**Test hardware reality (WP-00):** the build machine is the GPU tier (16 GB, RTX 4060) on Windows 11
+Home, which has no Hyper-V. Performance tests run there with **halved budgets** as a proxy (§8.3), and
+the 8 GB CPU-only experience is validated before the pilot on a real 8 GB laptop or a VirtualBox VM
+limited to 8 GB (WP-31/32).
+
 **Server-mode note:** the LLM runs where the backend runs. In client mode professor laptops only run
 the UI (~200 MB); the backend host should be a 16 GB machine (ideally with a GPU).
 
@@ -453,7 +538,8 @@ the UI (~200 MB); the backend host should be a 16 GB machine (ideally with a GPU
 ### 6.1 Conventions
 
 - **Primary keys:** UUIDv7 stored as TEXT — sortable and globally unique (safe for future
-  multi-department merges or sync).
+  multi-department merges or sync). Generated by a small in-house function (RFC 9562 layout,
+  monotonic within a millisecond, unit-tested); no dependency.
 - **Timestamps:** INTEGER Unix milliseconds, UTC. Display in `Asia/Kolkata` (setting). Event dates also
   store `timezone` (IANA) and a precision (`DATETIME | DATE | MONTH | UNKNOWN`).
 - **Money:** integer minor units + ISO 4217 currency. **Unknown is NULL, never 0.**
@@ -510,9 +596,9 @@ DB — see §10.
 #### Sources & ingestion
 | Table | Key columns |
 |---|---|
-| `sources` | id PK, key UQ, name, adapter (CTFTIME_API\|CLIST_API\|DEVPOST\|DEVFOLIO\|UNSTOP\|CONFIGURED_LISTING\|MANUAL\|URL_IMPORT), config_json, is_enabled, cadence_minutes, trust_rank, compliance_status (APPROVED\|APPROVED_WITH_LIMITS\|MANUAL_IMPORT_ONLY\|PENDING_REVIEW\|BLOCKED), compliance_notes, compliance_reviewed_at?, compliance_reviewed_by?, version |
+| `sources` | id PK, key UQ, name, adapter (CTFTIME_API\|CLIST_API\|DEVPOST\|DEVFOLIO\|UNSTOP\|CONFIGURED_LISTING\|MANUAL\|URL_IMPORT), config_json, is_enabled, cadence_minutes, manual_min_interval_minutes, min_delay_ms, max_requests_per_run, allowed_paths_json, attribution_text?, trust_rank, compliance_status (APPROVED\|APPROVED_WITH_LIMITS\|MANUAL_IMPORT_ONLY\|PENDING_REVIEW\|BLOCKED), compliance_notes, compliance_reviewed_at?, compliance_reviewed_by?, version |
 | `source_state` | source_id PK/FK, last_run_at?, last_success_at?, next_due_at, consecutive_failures, backoff_until?, last_error_kind?, last_error_message? |
-| `scrape_runs` | id PK, source_id FK, trigger (SCHEDULE\|MANUAL\|STARTUP_CATCHUP), started_at, finished_at?, outcome (SUCCESS\|PARTIAL\|FAILED\|SKIPPED_OFFLINE\|SKIPPED_BACKOFF\|BLOCKED_BY_POLICY), error_kind? (NETWORK\|DNS\|TIMEOUT\|HTTP_4XX\|HTTP_5XX\|RATE_LIMITED\|ROBOTS_DISALLOWED\|PARSE\|SCHEMA_CHANGED\|UNKNOWN), error_detail?, requests_made, items_seen, items_new, items_updated, items_unchanged, items_invalid, duration_ms |
+| `scrape_runs` | id PK, source_id FK, trigger (SCHEDULE\|MANUAL\|STARTUP_CATCHUP), started_at, finished_at?, outcome (SUCCESS\|PARTIAL\|FAILED\|SKIPPED_OFFLINE\|SKIPPED_BACKOFF\|BLOCKED_BY_POLICY), error_kind? (NETWORK\|DNS\|TLS\|TIMEOUT\|HTTP_4XX\|HTTP_5XX\|BLOCKED\|RATE_LIMITED\|ROBOTS_DISALLOWED\|PARSE\|SCHEMA_CHANGED\|UNKNOWN), error_detail?, listing_complete (bool, §7.6), requests_made, items_seen, items_new, items_updated, items_unchanged, items_invalid, duration_ms |
 | `source_records` | id PK, source_id FK, external_key, UQ(source_id, external_key), url, first_seen_at, last_seen_at, last_fetched_at, content_hash, payload_json (validated `EventCandidate`), raw_snapshot_ref?, parse_warnings_json, presence (LISTED\|MISSING\|GONE), missing_since?, event_id? FK, match_method (URL\|AUTO_SCORE\|MANUAL\|NEW), match_score? |
 
 #### Events
@@ -568,7 +654,7 @@ DB — see §10.
 | Table | Key columns |
 |---|---|
 | `engagements` | id PK, department_id FK, event_id FK, participant_kind (TEAM\|INDIVIDUAL), team_id? FK, status (CONSIDERING\|ASSIGNED\|APPLIED\|PARTICIPATING\|COMPLETED\|WITHDRAWN\|NOT_SELECTED), status_changed_at, internal_notes?, created_at, created_by, version; UQ(event_id, team_id) when team_id set |
-| `engagement_participants` | engagement_id FK, student_id FK, PK(both), role_label?, added_at, removed_at? — roster frozen per competition, so later team changes don't rewrite history |
+| `engagement_participants` | engagement_id FK, student_id FK, PK(both), event_id FK (denormalized from the engagement), role_label?, added_at, removed_at? — roster frozen per competition, so later team changes don't rewrite history. **UQ(event_id, student_id) among active rows**: a student can't be in two active competitions for the same event (team or individual) |
 | `engagement_mentors` | id PK, engagement_id FK, user_id FK, role (PRIMARY\|CO_MENTOR), from_at, to_at?; one active PRIMARY |
 | `engagement_status_history` | id PK, engagement_id FK, from_status?, to_status, changed_by, changed_at, note? |
 | `engagement_outcomes` | engagement_id PK/FK, result (PARTICIPATED\|DID_NOT_PARTICIPATE\|QUALIFIED\|FINALIST\|RUNNER_UP\|WINNER\|OTHER), rank?, prize_text?, prize_minor?, prize_currency?, certificate_resource_id? FK, result_url?, notes?, feedback?, recorded_by, recorded_at — **[OPEN Q7]** |
@@ -721,24 +807,48 @@ interface AdapterContext {
   carries a confidence and the original text (dates, fees, team size, eligibility).
 - Adapters never touch the DB. They are tested with recorded fixtures
   (`test/fixtures/<source>/<case>.(json|html)` → expected candidates as golden files).
+- **URL import (WP-14)** first checks the URL's domain: if it belongs to an approved source, that
+  adapter's `detail()` + `normalize()` handle it; if the domain is MANUAL_IMPORT_ONLY/BLOCKED (e.g.
+  Devpost), no request is made and the manual form opens with the link attached (D-30); otherwise a
+  generic single-page extractor (Open Graph, JSON-LD, heuristics) runs once, robots-checked, and the
+  professor reviews every field before saving.
 - **Adding a source** = one adapter file + fixtures + a `sources` row. The `CONFIGURED_LISTING`
   adapter needs only a row whose `config_json` holds a listing URL plus item/field selectors or regexes,
-  or `"jsonld": true`. Admins add college sites from the UI with a **Test extraction** preview.
+  or an RSS/Atom feed URL (`"feed": "<url>"`). Admins add college sites from the UI with a **Test extraction** preview.
 
 ### 7.2 Compliance & politeness gate (enforced in code)
 
-- A source runs only if `compliance_status ∈ {APPROVED, APPROVED_WITH_LIMITS}` (set from the WP-02
-  feasibility review, with notes and reviewer).
-- robots.txt fetched and cached 24 h; disallowed path → outcome `ROBOTS_DISALLOWED`, no request made.
-- Per-host minimum delay (default 3 s, configurable per source); max requests per run; max 1
-  concurrent request per host.
+- A source runs only if `compliance_status ∈ {APPROVED, APPROVED_WITH_LIMITS}` (seeded from the WP-02
+  verdicts, D-26, with notes and reviewer). Requests are limited to the source's `allowed_paths_json`.
+- robots.txt fetched and cached 24 h **per host** (Devfolio hackathons live on their own subdomains);
+  disallowed path → outcome `ROBOTS_DISALLOWED`, no request made.
+- **Effective per-host delay = max(3 s, `sources.min_delay_ms`, robots `Crawl-delay`)** (D-28); max
+  requests per run (`max_requests_per_run`); max 1 concurrent request per host.
 - Honours 429/503 and `Retry-After`. Consecutive failures → backoff between runs
   (15 → 30 → 60 min … max 12 h).
-- Identifies itself: `User-Agent: CompIntel/<version> (+<department contact email>)`.
-- **Never:** log in, solve or bypass CAPTCHAs or anti-bot systems, rotate IPs or user agents, use
-  credentials, or ignore a ToS prohibition.
-- Conditional GETs + detail fetches only when a listing item's hash changed → a 15-minute cadence
-  costs a handful of requests per source per run.
+- Identifies itself: `User-Agent: CompIntel/<version> (+mailto:<scraper.contactEmail>)`. The setting
+  `scraper.contactEmail` is required by the setup wizard; **no scraping runs before setup is complete.**
+- **Never:** log in, solve or bypass CAPTCHAs or anti-bot systems, rotate IPs or user agents, disable
+  TLS validation, use credentials other than a documented API key, call undocumented private APIs, or
+  ignore a ToS prohibition.
+- Conditional GETs + detail fetches only when a listing item's hash changed; detail fetches per run are
+  capped (the remainder continues next run).
+- **Cadence (D-27):** the job runner's refresh cycle is 15 minutes; a source runs in a cycle only if its
+  own minimum interval has passed.
+
+| Source | Status (D-26) | Access | Cadence | Manual floor | Delay | Notes |
+|---|---|---|---|---|---|---|
+| Devfolio | APPROVED_WITH_LIMITS | `devfolio.co/hackathons` + `<slug>.devfolio.co` pages (embedded page JSON); never `api.devfolio.co` | 15 min | 5 min | ≥ 3 s | Drop participants, judges, contact e-mail |
+| CTFtime | APPROVED_WITH_LIMITS | `/api/v1/events/`, `/api/v1/events/{id}/` only | 30 min | 10 min | ≥ 10 s (Crawl-delay) | No republishing; `ai-train=no`; attribute |
+| CLIST | APPROVED_WITH_LIMITS (needs key, U4) | v4 API with key; ≤ 10 req/min | 30 min | 10 min | ≥ 6 s | Aggregator (low trust_rank); attribute; no redistribution |
+| Unstop | MANUAL_IMPORT_ONLY until U3 | — (if approved: `/hackathons/`, `/competitions/`, `/api/public/*`; never `*/register`, `/u/`, `/p/`, `/pf/`) | 15 min if approved | 5 min | ≥ 3 s | Tech types only (D-31) |
+| Devpost | MANUAL_IMPORT_ONLY | none — manual entry with link (D-30) | — | — | — | Terms prohibit scraping |
+| College/fest sites | PENDING_REVIEW, per site | RSS/Atom or configured selectors | 12 h | 1 h | ≥ 5 s | ≤ 20 requests/run |
+
+- **Trust rank (field resolution, §7.5):** organizer's own site > Devfolio/Unstop (registration
+  platforms) > CTFtime > CLIST (aggregator).
+- **Attribution & reuse (D-32):** sources are shown on every event; CTFtime and CLIST are credited in
+  About; data is never republished outside the app or used to train models.
 
 ### 7.3 Normalization rules (highlights)
 
@@ -756,6 +866,15 @@ interface AdapterContext {
   patterns) → `is_recurring_round = true` → shown in the Contest Calendar, hidden from the main feed.
 - **Text:** HTML → sanitized Markdown at ingest (no raw HTML stored); tracking parameters stripped from
   URLs; only http/https URLs kept.
+- **PII (D-29):** `EventCandidate` has no fields for people. Adapters drop participant lists, judges,
+  mentors and contact e-mails. E-mail addresses and phone numbers inside descriptions are replaced with
+  "[contact details on the source page]". Tests assert that fixtures produce no e-mail/phone patterns.
+- **`edition_year`:** year of `starts_at` in the event timezone; else of the registration deadline;
+  else a 4-digit year (2020–2100) in the title. If the title year and the start year disagree, the start
+  year wins and a parse warning is recorded.
+- **Prize/fee conflicts inside one source** (e.g. CTFtime `prizes` "$500" vs "₹50,000" in the
+  description): keep the structured field, record the other value as a separate claim so the UI shows
+  "Sources disagree"; never convert currencies.
 
 ### 7.4 Geography policy (one configurable module)
 
@@ -767,6 +886,10 @@ interface AdapterContext {
   "unknownLocation": "SHOW_FLAGGED"
 }
 ```
+
+An **event-type policy** sits next to it (D-31): allowed types HACKATHON, IDEATHON,
+INNOVATION_CHALLENGE, CTF, CODING_CONTEST; case competitions, quizzes, marketing and cultural contests
+are hidden with a reason.
 
 Excluded events are stored with `visibility = POLICY_HIDDEN` and a reason, so a policy change needs
 no re-scrape. They never appear in feeds, search or AI answers. **[OPEN Q12]** for the hybrid default.
@@ -789,6 +912,10 @@ no re-scrape. They never appear in feeds, search or AI answers. **[OPEN Q12]** f
 
 ### 7.6 Lifecycle: missing, cancelled, ended
 
+- A **complete listing run** is one where the adapter walked the whole listing it is scoped to (e.g.
+  "open + upcoming") without hitting a page/request cap or an error; the adapter reports it and the run
+  stores `listing_complete = true`. Runs that stop early are PARTIAL and never count towards MISSING.
+  Adapters must scope listings (filters, date windows) so a complete walk fits within the caps.
 - A source record not seen in 3 consecutive *complete* listing runs → `presence = MISSING`. If all
   records of a not-yet-ended event are missing → UI shows "Not seen at source since <date>".
   **Never auto-cancelled.**
@@ -804,6 +931,7 @@ no re-scrape. They never appear in feeds, search or AI answers. **[OPEN Q12]** f
 | RATE_LIMITED | "Devfolio asked us to slow down. Next attempt at 3:45 PM." |
 | ROBOTS_DISALLOWED / BLOCKED_BY_POLICY | "Updates from Devfolio are disabled by policy. **Details**" (admin) |
 | SCHEMA_CHANGED / PARSE | "Devfolio's page format changed, so its updates are paused. Admins have been notified." |
+| TLS / BLOCKED | "IIT Jodhpur's website has an invalid security certificate (or refuses automated readers), so it is skipped. **Details**" — never worked around |
 
 The backend uses the Windows system proxy. A connectivity probe distinguishes "no internet / proxy
 blocked" (one banner) from a single source failing (one row in Source status).
@@ -826,32 +954,54 @@ widgets and the AI planner — one code path, one test suite.
 EventQuery = {
   text?: string;
   eventTypes?: EventType[]; categories?: string[]; tags?: string[]; modes?: Mode[];
-  maxDistanceKm?: number;                       // from primary campus; offline/hybrid only
-  registration?: { states?: RegState[]; deadlineFrom?: string; deadlineTo?: string };
-  eventDate?: { from?: string; to?: string };
+  maxDistanceKm?: number;                       // straight line from the primary campus
+  registration?: { states?: RegState[]; deadlineFrom?: IsoDate; deadlineTo?: IsoDate };
+  eventDate?: { from?: IsoDate; to?: IsoDate };
   organizerKinds?: OrganizerKind[]; institutionIds?: string[];
   freeOnly?: boolean; feeMax?: Money; prizeMin?: Money;
-  teamSizeFits?: number;                        // team_min ≤ n ≤ team_max (unknown excluded unless includeUnknown)
-  includeRecurring?: boolean; includeEnded?: boolean; includeUnknownFields?: boolean;
+  teamSizeFits?: number;                        // team_min ≤ n ≤ team_max
+  includeUnknown?: { fee?: boolean; teamSize?: boolean; location?: boolean; deadline?: boolean };
+  includeRecurring?: boolean; includeEnded?: boolean;
   watchlistedOnly?: boolean; excludeHidden?: boolean;
   sort?: 'RELEVANCE' | 'DEADLINE' | 'START' | 'DISTANCE' | 'PRIZE' | 'NEWEST';
   cursor?: string; limit?: number;
 }
 ```
 
+**Semantics**
+
+- `IsoDate` = `YYYY-MM-DD`, interpreted in the display timezone (Asia/Kolkata): `from` = start of that
+  day, `to` = end of that day (inclusive). The query builder converts to UTC ms. The AI parser turns
+  relative phrases ("next month", "this week") into concrete dates before a query is built, and the
+  chips show the concrete dates.
+- **Unknown values:** when a filter on a field is active, events whose value for that field is unknown
+  are **excluded**, unless `includeUnknown.<field>` is true (UI: "Include events with unknown fee").
+  `freeOnly` never matches an unknown fee.
+- **Distance:** `maxDistanceKm` applies to OFFLINE and HYBRID events. ONLINE events are excluded when a
+  distance filter is set, unless `modes` explicitly includes ONLINE (then online events are included and
+  shown without a distance). The chip reads "Within 300 km (in person)".
+
 ### 8.2 Execution
 
 - Structured filters → indexed SQL. Distance: bounding-box prefilter on indexed lat/lon, exact
   haversine via a registered SQL function.
 - Text → `event_fts` (unicode61 + porter, diacritics removed; bm25 weights title 10, organizer 4,
-  tags 3, description 1) **plus** `event_fts_trigram` on title + organizer for substrings and typos.
-  User text is escaped into quoted FTS tokens (no FTS syntax injection); aliases expand terms.
+  tags 3, description 1) **plus** `event_fts_trigram` on title + organizer for **substring** matches
+  (≥ 3 characters; trigram does not handle typos). User text is escaped into quoted FTS tokens (no FTS
+  syntax injection); aliases expand terms.
+- **Typo tolerance (MVP):** a vocabulary table (distinct title/organizer tokens, category names,
+  aliases, tags) is refreshed after each ingest. Query tokens with no FTS hit are matched against it by
+  edit distance (≤ 1 for 4–5 letters, ≤ 2 for ≥ 6 letters); the best match is used and shown as
+  "Showing results for *hackathon* (searched *hackthon*)". AC: "hackthon" → hackathon,
+  "cyber secuirty" → cybersecurity.
 - Facet counts (type, category, mode, registration state, distance bucket) via grouped SQL on the
   filtered set.
 
-### 8.3 Performance budgets (verified by WP-15 perf test, 20k synthetic events, 8 GB host)
+### 8.3 Performance budgets (verified by WP-15 perf test, 20k synthetic events)
 
-Filter + text query p95 < 100 ms · facets p95 < 150 ms · event detail < 50 ms.
+Target on an 8 GB CPU-only host: filter + text query p95 < 100 ms · facets p95 < 150 ms · event
+detail < 50 ms. On the build machine the test asserts **half** these numbers as a proxy; the 8 GB
+numbers are measured again in WP-31/32.
 
 ### 8.4 Ranking & relevance (deterministic, explainable)
 
@@ -957,7 +1107,7 @@ The UI reads `/api/v1/me/permissions` only to hide or disable controls (cosmetic
 |---|---|---|
 | View events, students, teams, competitions (open department) | ✓ | ✓ |
 | Create students; edit student profiles (skills, interests, notes) | ✓ (audited) | ✓ |
-| Deactivate a student | the student's mentors | ✓ |
+| Deactivate a student | an active mentor via `mentorships`, or the primary/co-mentor of an active team the student belongs to | ✓ |
 | Erase a student (privacy deletion) | — | ✓ |
 | Import students (CSV/XLSX) | ✓ | ✓ |
 | Create teams | ✓ | ✓ |
@@ -1001,8 +1151,11 @@ user sessions.
 - Stage due dates can be computed from anchors (e.g. PPT = registration deadline − 2 days). If an
   event deadline later changes, manually set dates are never overwritten silently — the user gets
   "Event deadline changed — update stage dates?".
-- **Stage progress:** if the stage has tasks → done ÷ total. Otherwise from status: COMPLETED = 100,
-  others = 0, SKIPPED excluded. A manual `progress_override` is allowed and visibly marked "manual".
+- **Stage progress (precedence):** SKIPPED → excluded from the workflow total (tasks ignored) ·
+  COMPLETED → 100 · manual `progress_override` (visibly marked "manual") · tasks present → done ÷ total ·
+  otherwise 0. Marking a stage COMPLETED with open tasks asks "Mark the remaining N tasks done?" —
+  **Yes** closes them; **Complete anyway** keeps them open and flags the stage "completed with open
+  tasks". BLOCKED keeps the computed progress.
 - **Workflow progress** = Σ(weight × stage progress) ÷ Σ(weight of non-skipped stages).
 - **Schedule health:** BLOCKED (any blocked stage) · BEHIND (any overdue stage) · AT_RISK (a stage due
   within 2 days and < 50% done) · ON_TRACK. Every state shows its reason ("PPT due tomorrow, 1 of 4
@@ -1053,7 +1206,8 @@ user sessions.
 **Backup pipeline:** SQLite online backup API → `PRAGMA integrity_check` on the copy → gzip →
 encrypt with **age** (`age-encryption`, the TypeScript implementation by the age author) → write
 `compintel-<kind>-<yyyyMMdd-HHmm>.age` + a JSON manifest (app version, schema version, sha256, row
-counts) → verify by reading back → rotate (keep 14 AUTO, 10 MANUAL, 5 PRE_MIGRATION/PRE_RESTORE).
+counts) → verify by reading back → rotate (keep 14 AUTO, 10 MANUAL). PRE_MIGRATION and PRE_RESTORE
+safety copies are plain local copies in `<data>\backups-local\` (keep 5 each, §4.6).
 
 **Keys:** at setup the admin sets a backup passphrase. The app generates an X25519 key pair. The
 **public key** is stored in settings, so unattended daily backups need no secret. The **private key**
@@ -1068,15 +1222,20 @@ independent of this app.
 - **Alternatives:** a DPAPI-protected key (unattended, but tied to one machine — restoring onto a new
   PC fails); no encryption (unacceptable once backups hold PII off-machine).
 - **Database at rest:** rely on BitLocker/Device Encryption; the admin health page warns if the data
-  drive isn't encrypted. SQLCipher was considered, but storing its key on the same machine adds little
+  drive isn't encrypted (read without admin rights via the Shell property
+  `System.Volume.BitLockerProtection`; Windows Home has no BitLocker cmdlet access). SQLCipher was considered, but storing its key on the same machine adds little
   over BitLocker.
 
-**Schedule and checks:** daily at a configurable time (default 13:00, when the host is likely on);
+**Pre-migration copies** are separate from this pipeline: plain local `VACUUM INTO` copies in
+`<data>\backups-local\` (§4.6).
+
+**Schedule and checks:** daily at a configurable time in the **host machine's local time** (default
+13:00, when the host is likely on);
 missed → runs at next start. Before each run: destination exists and is writable, free space ≥
 3 × last backup size. Failures → admin notification + dashboard health card + tray warning.
 
 **Restore (admin):** pick file → passphrase → validate (decrypt, sha256, integrity_check, schema
-version ≤ current) → automatic PRE_RESTORE backup → stop scheduler → atomic file swap → forward
+version ≤ current) → automatic local PRE_RESTORE copy → stop scheduler → atomic file swap → forward
 migrations → restart backend → audit entry.
 
 **Test restore:** restores into a temporary DB and reports row counts — proves backups work.
@@ -1212,73 +1371,90 @@ popover) · notifications bell · user menu (theme, lock, sign out).
 
 ---
 
-## 19. Roadmap
+## 19. Roadmap (v1.1)
 
-**Rules:** vertical slices; each WP ≈ 1–2 days of worker time; each has acceptance criteria (AC) and
-tests; ends with `pnpm verify` green, a commit `WP-xx: …`, and a WORKER REPORT. The architect reviews
-every report before the next WP is issued. A demo to the product owner closes each milestone.
+**Rules:** vertical slices; each WP ≈ 1 day of worker time and runs in a **fresh Claude Code session**
+(the prompt lists exactly what to read). Each WP has acceptance criteria (AC) and tests, ends with
+`pnpm verify` green, an updated `docs/PROGRESS.md`, a commit `WP-xx: …` and a WORKER REPORT. The
+architect reviews every report before the next WP is issued. A demo to the product owner closes each
+milestone. Letter suffixes (03a/03b…) are splits recommended by the WP-01 review.
 
 ### M0 — Foundations · *app launches, signs in, survives crashes*
 | WP | Scope | Acceptance criteria |
 |---|---|---|
-| WP-00 | Environment recon (issued) | Report received |
-| WP-01 | Install this spec + engineering review + extra recon (docs only) | Review findings reported; ADR files created |
-| WP-02 | Source feasibility & compliance matrix (research only) | Matrix with quoted ToS/robots/API facts per source |
-| WP-03 | Monorepo scaffold: pnpm workspaces, TS strict, ESLint/Prettier, Vitest, `packages/contracts`, `pnpm verify` | Verify green on a clean clone |
-| WP-04 | Backend foundation: app factory, config, pino + rotation, problem+json, `/health`, SQLite + Drizzle + migrations + pre-migration backup hook, job-runner skeleton | Runs standalone with `--data-dir`; migration & error tests |
-| WP-05 | Desktop shell: Tauri 2, backend supervision (READY handshake, restart/backoff, Job Object), tray menu, close-to-tray toggle, single instance, client secret, loopback API check | Killing the backend → auto restart; Exit completely leaves no processes |
+| WP-00 | Environment recon | **DONE** |
+| WP-01 | Spec install, ADRs, engineering review | **DONE** |
+| WP-02 | Source feasibility & compliance matrix | **DONE** |
+| WP-02b | Fresh-session housekeeping (CLAUDE.md, PROGRESS.md) | **DONE** |
+| WP-03a | Toolchain install (after U1/U2) + probes: native modules (better-sqlite3 FTS5/trigram/UDF/backup, argon2) and a Tauri 2 hello-world build | All probes pass; exact versions recorded in PROGRESS.md |
+| WP-03b | Monorepo scaffold: pnpm workspaces, TS strict, ESLint/Prettier, Vitest, `packages/contracts`, `apps/backend` stub, `pnpm verify` | Verify green on a clean clone; failures make it exit non-zero |
+| WP-04a | Backend app factory: config, pino + rotation, problem+json, `/health`, READY line, stdin-EOF exit, graceful shutdown | Runs standalone with `--data-dir`; tests |
+| WP-04b | SQLite + Drizzle + migration runner (incl. custom SQL path) + pre-migration local copy + UUIDv7 | Migration tests (empty DB, upgrade, triggers present) |
+| WP-04c | DB-backed job runner | Tests: catch-up after "sleep", single-flight, stale lock, backoff |
+| WP-05a | Tauri shell: spawn via `Command`, Job Object, READY handshake, `backend_connection()`, restart/backoff, Exit completely | Killing the backend → restart with new secret; exit leaves no processes |
+| WP-05b | Tray menu, close-to-tray toggle, single instance, autostart setting, loopback/CORS/LNA check + fallback | LNA-flag test documented |
 | WP-06 | UI foundation: tokens (light/dark/system), app shell, Ctrl+K stub, API client, error boundary, toasts, skeletons, empty states | axe clean on shell; theme follows Windows |
-| WP-07 | Auth, RBAC, audit: setup wizard (admin, university, department, campus, data & backup folders, backup passphrase), login, sessions, auto-lock, lockout, user admin, policy module, append-only audit | Permission matrix test green; audit rows for auth/admin actions |
+| WP-07a | Auth core: accounts, Argon2id, sessions, lockout, auto-lock, policy module + matrix tests, append-only audit (hash chain), authenticated SSE (server + fetch client) | Permission matrix green; audit rows for auth actions |
+| WP-07b | Setup wizard (admin, university/department, campus, scraper contact e-mail, data & backup folders, backup passphrase → age keys + recovery file) + user admin UI | Wizard can't be skipped; recovery file exported |
 
 ### M1 — Events · *real events, trustworthy and searchable*
 | WP | Scope | Acceptance criteria |
 |---|---|---|
-| WP-08 | Event domain & normalization: schema (sources, records, events, claims, overrides, categories, tags, institutions), normalization library, gazetteer + institutions seed, geocoder, distance, geography policy | ≥ 100 normalization cases incl. invalid dates/timezones |
-| WP-09 | Ingestion engine: adapter contract, PoliteHttpClient, scrape runs, source state, scheduler jobs, snapshots; **CTFtime** adapter | Failure-mode tests: timeout, 429, 5xx, robots disallow, format change, offline |
-| WP-10 | Dedup/merge/unmerge, field resolution & conflicts, change detection, dedup review API | Scenarios: same event on 3 sources; yearly editions; internal round vs national |
-| WP-11 | **CLIST** adapter + series/recurring detection → Contest Calendar | Weekly rounds hidden from main feed |
-| WP-12 | **Devpost** adapter + geography policy on US in-person events | Policy-hidden events stored but invisible |
-| WP-13 | **Devfolio / Unstop** adapters — only if WP-02 approves; otherwise document manual/URL-import path | Compliance status recorded |
-| WP-14 | Manual event creation + URL import (JSON-LD / OpenGraph / heuristics; preview & edit before save) | Import from 5 sample pages |
-| WP-15 | Search: EventQuery, query builder, FTS5 + trigram, aliases, category rules engine, facets, ranking, relevance reasons; perf test | p95 < 100 ms on 20k events |
-| WP-16 | Discover UI: feed tabs, filters, cards, detail drawer with provenance/conflicts/history, freshness pill + source status, watchlist, hide, category override | Playwright smoke; keyboard navigation |
+| WP-08a | Event schema, `EventCandidate` contract, normalization library (dates/tz, fees, team size, mode, edition_year, PII redaction) | ≥ 100 cases incl. invalid dates/timezones; no e-mail/phone survives |
+| WP-08b | Gazetteer build, institutions seed, geocoder, distance, geography + event-type policies | Policy-hidden events stored but invisible |
+| WP-09a | PoliteHttpClient (per-host robots, delay rule, retries, conditional GET, TLS/403 handling, proxy), compliance gate, source seeds (D-26), scrape runs/state, scrape jobs, snapshots | Failure-mode tests: timeout, 429, 5xx, robots disallow, TLS error, 403, format change, offline |
+| WP-09b | CTFtime adapter (fixtures in `docs/research/fixtures/ctftime`) | Golden tests; one manual live smoke run |
+| WP-10 | Dedup/merge/unmerge, field resolution & conflicts, change detection, review API | Scenarios: same event on 3 sources; yearly editions; internal vs national round; CTFtime prize conflict |
+| WP-11 | CLIST adapter + series/recurring detection → Contest Calendar (fixtures from the documented schema; live after U4) | Weekly rounds hidden from main feed |
+| WP-12 | **Devfolio adapter** (re-scoped: Devpost is manual-only) — listing + subdomain detail pages | Participant/judge/contact data dropped; per-subdomain robots honoured |
+| WP-13 | **Unstop adapter** if U3 allows it; otherwise a docs-only WP recording MANUAL_IMPORT_ONLY | Compliance status recorded |
+| WP-14 | Manual event creation + URL import (dispatch per D-30) | 5 sample imports; Devpost URL opens manual form with no request made |
+| WP-15a | EventQuery, query builder, FTS5 + trigram, aliases, typo vocabulary, perf test | Halved budgets on build machine (§8.3); typo AC |
+| WP-15b | Category rules engine, facets, ranking, relevance reasons | Reasons for every ranked result |
+| WP-16a | Discover UI: tabs, filters/chips, cards, watchlist, hide | Playwright smoke; keyboard navigation |
+| WP-16b | Detail drawer (provenance, conflicts, history), freshness pill + source status, category override | "Sources disagree" visible on the conflict fixture |
 
 ### M2 — People & work · *assign an event to a team and track it*
 | WP | Scope | Acceptance criteria |
 |---|---|---|
-| WP-17 | Students: CRUD, tags, mentorships, deactivate, CSV/XLSX import with validation preview | Import 500 rows with errors reported per row |
+| WP-17 | Students: CRUD, tags, mentorships, deactivate, CSV/XLSX import with validation preview | Import 500 rows with per-row errors |
 | WP-18 | Teams: members (roles, lead), mentors (primary/co), skill coverage | Student in 3 teams works |
-| WP-19 | Competitions: statuses + history, roster, assign flow, pipeline board | Invalid transitions rejected; permissions enforced |
-| WP-20 | Workflows: seeded templates, copy-on-assign, stage CRUD/reorder, tasks, resources + open allowlist, progress & schedule health | Progress calculation unit tests; overdue derived |
+| WP-19 | Competitions: statuses + history, roster, assign flow, pipeline board | Invalid transitions rejected; one active participation per student per event |
+| WP-20a | Workflows: seeded templates, copy-on-assign, stages CRUD/reorder, tasks, progress & schedule health | Progress precedence tests (§11) |
+| WP-20b | Resources + open allowlist (shell-side path checks) | Executables can't be opened |
 | WP-21 | Outcomes, ownership transfer, student history | Transfer preserves history; audit complete |
 
 ### M3 — Time · *nothing slips*
 | WP | Scope | Acceptance criteria |
 |---|---|---|
 | WP-22 | Deadline read model, Deadline Radar, Dashboard | Counts match list views |
-| WP-23 | Notification engine, inbox, SSE, tray badge/toasts (after Q4) | Each threshold fires once; snooze works |
-| WP-24 | Saved searches + new-match alerts; relevance with "Why relevant?"; Recommended section | Reasons shown for every recommendation |
+| WP-23 | Notification engine, inbox, SSE delivery, tray badge/toasts (after Q4) | Each threshold fires once; snooze works |
+| WP-24 | Saved searches + new-match alerts; relevance "Why relevant?"; Recommended | Reasons shown for every recommendation |
 
 ### M4 — AI · *ask in plain English, nothing fabricated*
 | WP | Scope | Acceptance criteria |
 |---|---|---|
-| WP-25 | Deterministic NL parser + eval dataset (≥ 120) + "Interpreted as" chips (works with no LLM) | Parser metrics reported |
-| WP-26 | LLM benchmark spike on the pilot host: CPU/Vulkan/CUDA builds × 2–3 models → accuracy, latency, RAM → model ADR | Tier table with measured numbers |
-| WP-27 | LLM integration: supervisor (lazy load, memory guard, idle unload), planner, entity resolution & clarification, grounded summaries + validator, fallbacks, AI query log, Assistant UI | Eval gates met; fallback test with LLM down |
+| WP-25a | Deterministic NL parser + "Interpreted as" chips (no LLM) | Parser unit tests |
+| WP-25b | AI eval dataset (≥ 120) + harness | Baseline metrics for the deterministic parser |
+| WP-26 | LLM benchmark on the build machine: CPU / Vulkan / CUDA builds × 2–3 models (accuracy, latency, RAM), chat-template and schema self-test | Tier table with measured numbers → model ADR |
+| WP-27a | LLM supervisor (lazy load, memory guard, idle unload, first-run backend selection), planner, entity resolution & clarification, fallbacks | Eval gates met; LLM-down fallback test |
+| WP-27b | Grounded summaries + validator, Assistant UI, AI query log | Grounding tests; no ungrounded numbers/dates shown |
 
 ### M5 — Hardening & pilot · *safe to hand to professors*
 | WP | Scope | Acceptance criteria |
 |---|---|---|
-| WP-28 | Backup/restore/test-restore (age), CSV/XLSX exports | Round-trip + wrong-passphrase + corrupt-file tests |
-| WP-29 | Configurable college-site adapter + admin source editor with Test extraction; seed approved IIT/NIT sources | 3 college sources working after compliance review |
-| WP-30 | Admin completion: audit viewer, system health (disk, BitLocker, backups, DB, LLM, sources), log viewer, diagnostics bundle, settings | Diagnostics bundle contains no PII |
-| WP-31 | Packaging: NSIS per-user installer, data-dir choice, model download/side-load, first run, uninstall behaviour, signing decision | Clean-machine install on 8 GB succeeds |
-| WP-32 | Performance, accessibility & reliability pass; 72 h tray soak incl. sleep/resume and network loss; pilot checklist | No leaks/crashes in soak; checklist signed off |
+| WP-28 | Backup/restore/test-restore (age), CSV/XLSX exports | Round-trip, wrong-passphrase, corrupt-file, `age` CLI interop tests |
+| WP-29 | Configurable college/fest adapter (RSS/Atom + selectors) + admin source editor with Test extraction; up to 3 starter sites (IIIT Hyderabad, BITS Pilani, IEM Kolkata) after per-site review. **May move after the pilot.** | Starter sites working after compliance review |
+| WP-30 | Admin completion: audit viewer, system health (disk, encryption via Shell property, backups, DB, LLM, sources), log viewer, diagnostics bundle, settings | Diagnostics bundle contains no PII |
+| WP-31 | Packaging: NSIS per-user installer, data-dir choice, model download/side-load, first run, uninstall, upgrade replaces all binaries, signing decision; install on an 8 GB machine/VM | Clean 8 GB install succeeds |
+| WP-32 | Performance, accessibility & reliability pass; 72 h tray soak (sleep/resume, network loss); pilot checklist | No leaks/crashes in soak; checklist signed off |
+
+**Count:** 46 work packages, 4 done → **42 remaining**.
 
 **Phase 2 candidates:** AI actions with confirmation · AI category suggestions and ingest-time
 summaries · team/skill-based recommendations · .ics calendar export · accreditation-style
 participation/achievement reports · managed file storage · client mode (LAN server + TLS; earlier if
-Q1 requires) · auto-updater · SSO.
+Q1 requires) · auto-updater · SSO · Devpost/Unstop adapters if permission is granted.
 
 ---
 
@@ -1301,6 +1477,53 @@ Q1 requires) · auto-updater · SSO.
 | 0013 | Files: references only; open allowlist |
 | 0014 | Distribution: NSIS per-user; unsigned internal pilot conditional on SAC/WDAC |
 | 0015 | Time: UTC storage + IANA timezone + precision; IST display |
+| 0016 | Source verdicts, cadence, politeness, PII stripping and attribution (D-26…D-32) |
+| 0017 | Connection security: per-spawn client secret, bearer sessions, fetch-based SSE, CORS/Host allowlists |
+| 0018 | Build-machine prerequisites: Smart App Control off, long paths, synthetic data only (U1, U2, D-33) |
+
+---
+
+## 21. Rulings index (v1.1)
+
+Traceability for every finding and question raised in WP-01 (F = finding, A = ambiguity) and WP-02/02b.
+
+| Ref | Ruling | Where |
+|---|---|---|
+| F1 Smart App Control | Off on the build machine (U1). Pilot host: IT turns it off or we sign everything (Q10). | §2, §2.1, ADR-0018 |
+| F2 Toolchain | Install after approval (U2) in WP-03a; pnpm via corepack or npm, pinned. | §2.1, §19 |
+| F3 / A1 SSE auth | `fetch()` stream with the normal headers; no EventSource, no tokens in URLs, no cookies. | §4.4, ADR-0017 |
+| F4 / A4 Pre-migration backup | Plain local `VACUUM INTO` copy, keep 5; skipped on an empty DB. | §4.6, §14 |
+| F5 / A5 Typos | Trigram = substrings only; typo tolerance via vocabulary edit distance. | §8.2 |
+| F6 Drizzle & FTS5 | Custom SQL migrations; `drizzle-kit push` never used; tests assert triggers exist. | §4.6 |
+| F7 Job Object / NSIS | Shell creates the Job Object (`windows` crate); binaries as `resources`; upgrade hash check in WP-31. | §3.2, §4.13 |
+| F8 llama fail-open | Always zod-validate; regex-free closed schemas; startup self-test. | §4.10 |
+| F9 WebView2 LNA | Test with the LNA flags in WP-05b; Tauri HTTP plugin fallback. | §3.2 |
+| F10 No BitLocker | Synthetic data only on the build machine (D-33); health check via Shell property. | §1, §14 |
+| A2 Client secret | New secret per backend spawn; header `X-CompIntel-Client`; `backend_connection()` returns `{baseUrl, clientSecret, generation}`. | §3.2 |
+| A3 CORS origins | `http://tauri.localhost` + `http://localhost:5173`; Host allowlist `127.0.0.1:<port>`, `localhost:<port>`. | §3.2 |
+| A6 Unknown values / distance | Per-field `includeUnknown`; distance applies to OFFLINE/HYBRID; ONLINE only if explicitly selected. | §8.1 |
+| A7 Dates in EventQuery | `YYYY-MM-DD` in Asia/Kolkata, inclusive day bounds. | §8.1 |
+| A8 Complete listing run | Adapter-reported full walk within caps → `listing_complete`; partial runs never mark MISSING. | §7.6 |
+| A9 Crawl-delay | max(3 s, source setting, robots Crawl-delay). | §7.2, D-28 |
+| A10 UA contact | `scraper.contactEmail`, required by setup; no scraping before setup. | §7.2 |
+| A11 edition_year | Start year > registration year > title year; disagreement → warning. | §7.3 |
+| A12 Stage progress | SKIPPED > COMPLETED > manual override > tasks > 0; "complete anyway" flag. | §11 |
+| A13 Deactivate student | Active mentorship mentor, or primary/co-mentor of an active team with the student. | §10.2 |
+| A14 Individual engagements | UQ(event_id, student_id) on active participants. | §6.2 |
+| A15 Backup time | Host machine's local time. | §14 |
+| A16 UUIDv7 | In-house function, no dependency. | §6.1 |
+| A17 Orphan detection | stdin EOF; Job Object as hard guarantee. | §3.2 |
+| A18 GPU micro-benchmark | Manual benchmark in WP-26; automatic first-run selection in WP-27a. | §19 |
+| A19 Client log | No session; client secret required; ≤ 8 KB; 30/min. | §4.14 |
+| A20 Packaged layout | `resources\node`, `resources\backend`, `resources\llama`, `gazetteer.db`. | §3.2 |
+| WP-02 Q1 Devpost | Manual-only; WP-12 becomes the Devfolio adapter. | D-26, §19 |
+| WP-02 Q2 URL import | Refused for MANUAL_IMPORT_ONLY/BLOCKED domains. | D-30, §7.1 |
+| WP-02 Q3 Unstop / CLIST | User actions U3, U4. | §2.1 |
+| WP-02 Q4 Cadence | 15-min cycle; per-source minimum intervals. | D-27, §7.2 |
+| WP-02 Q5 College path | Kept but reduced (RSS/selectors, ≤ 3 starters); may move after the pilot. | WP-29 |
+| WP-02 Q6 Case competitions | Out of MVP scope. | D-31 |
+| WP-02b long paths / Defender | Enable long paths (U2); Defender exclusions optional (U6). | §2.1 |
+| Missing requirements doc | Supplied by the architect: `docs/requirements/master-requirements.md`. | — |
 
 ---
 

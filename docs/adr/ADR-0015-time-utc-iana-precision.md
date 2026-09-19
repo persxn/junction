@@ -1,6 +1,6 @@
 # ADR-0015: Time: UTC storage + IANA timezone + precision; IST display
 
-- **Status:** Proposed
+- **Status:** Accepted (spec v1.1, 2026-09-20)
 - **Date:** 2026-09-20
 - **Source:** ARCHITECTURE.md §6.1, §6.4, §7.3
 
