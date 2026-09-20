@@ -1,7 +1,11 @@
 # Progress — newest first, keep < 150 lines
 
 ## Current
-- **Next WP: WP-08a.** M0 is complete: WP-07b shipped the first-run wizard and user administration.
+- **Next WP: WP-08a (M1).** M0 is closed — **read docs/handoff/M0.md first**: it holds the milestone
+  account, the 44 self-issued rulings awaiting review, and the owner decisions taken during downtime.
+- **Owner, 20 Sep 2026:** the product is a **standalone app — one professor, one machine, his own
+  students** (narrower than §3.1; Q1 is answerable). Security posture was reviewed and **left
+  unchanged** on his instruction; he wants less security framing in prose and comments.
 - **Architect is offline** (Sep 2026): this session acts as master + worker. Every architectural call is
   recorded in the handoff reports under "Minor decisions"/"Questions" for review when they are back.
 - Spec: docs/ARCHITECTURE.md **v1.1.5 — ACCEPTED** (changelog at the top; rulings index §21 incl. R1–R44; roadmap §19 = 46 WPs, 14 done, 32 remaining).
@@ -109,8 +113,8 @@
   `packages/contracts/src/jobs.ts` (JobKind SCRAPE/LLM/GENERAL, JobTrigger, JobOutcome + ABORTED/CRASHED,
   JobSnapshot). `apps/backend/src/jobs/`: `schedule` (jitter, 15→30→60 min…12 h), `outcome` (state machine),
   `store` (conditional-UPDATE claim = single-flight), `run`, `scheduler` (30 s tick, catch-up, 2 scrape /
-  1 LLM / 4 general, stale lease → CRASHED, SKIPPED_OFFLINE, manual `trigger()`), `online` (interface-table
-  check). Wired in `main.ts` with **no jobs registered** — each later WP registers its own.
+  1 LLM / 4 general, stale lease → CRASHED, SKIPPED_OFFLINE, manual `trigger()`), `online`. Wired in
+  `main.ts` with **no jobs registered** — each later WP registers its own.
 - **WP-04b — SQLite + Drizzle + migrations + data-dir lock + UUIDv7.** better-sqlite3 13.0.3, drizzle-orm
   0.45.2 (drizzle-kit 0.31.10 dev). `ids.ts` UUIDv7 (RFC 9562, monotonic, clock-regression safe); `lock.ts`
   `<dataDir>\backend.lock` (R15); `db.ts` R16 PRAGMAs + `quick_check` + checkpoint/close; `migrate.ts`
@@ -118,27 +122,24 @@
   MIGRATION_FAILED; migration 0000 = `app_meta`; no `drizzle-kit push` (a test enforces it). Also the
   WP-04a review fixes R11–R18 and the bundle's `native\` + `migrations\` (R17).
 - **WP-04a — backend app factory**. `apps/backend`: zod config (flags > env > defaults, `--data-dir`,
-  `PORT`, `--dev`, `--stdin-lifeline`, dirs `data/logs/tmp/backups-local` created + write-probed), pino via
-  `multistream` → in-house daily-rotating file (keep 14, injectable clock) + stderr in `--dev`, deep key-based
-  redaction, `AppError` → RFC 9457 `problem+json` (R5) with `X-Request-Id` everywhere, Host + `X-CompIntel-Client`
-  (`timingSafeEqual`) + `@fastify/cors` (R9), `GET /api/v1/health`, `POST /api/v1/system/shutdown`,
-  `buildApp()` (no listen) + `main.ts` (READY line, signals, stdin EOF, 10 s hard timeout). Deps: fastify
+  `PORT`, `--dev`, `--stdin-lifeline`, dirs created + write-probed), pino `multistream` → daily-rotating file
+  (keep 14) + stderr in `--dev`, deep redaction, `AppError` → RFC 9457 `problem+json` (R5) with
+  `X-Request-Id`, Host + `X-CompIntel-Client` (`timingSafeEqual`) + `@fastify/cors` (R9), `/health`,
+  `/system/shutdown`, `buildApp()` + `main.ts` (READY line, stdin EOF, 10 s hard timeout). Deps: fastify
   5.12.5, @fastify/cors 11.3.0, fastify-type-provider-zod 7.0.0, pino 10.3.1, zod 4.6.5, tsx 4.23.13,
-  esbuild 0.28.2 (needs `allowBuilds`). Rulings R1–R10 → §21 (spec v1.1.1).
-- **WP-03b — monorepo scaffold + `pnpm verify`**. pnpm workspace (`apps/*`, `packages/*`, `tools/*`),
-  engines `>=24.19 <25`, `.npmrc` save-exact + engine-strict. **TypeScript 6.0.3** — not 7.0.2, because
-  typescript-eslint 8.70.0 supports `>=4.8.4 <6.1.0`. ESLint 10.11.0 flat config, Prettier 3.9.8 (`docs/`
-  excluded), Vitest 5.0.1. `packages/contracts` (zod 4.6.5): API_VERSION, the 5 spec enums, ProblemDetails +
-  ErrorCode. Verified green from a fresh clone + `--frozen-lockfile`; injected faults each exit 1.
+  esbuild 0.28.2 (`allowBuilds`).
+- **WP-03b — monorepo scaffold + `pnpm verify`**. pnpm workspace, engines `>=24.19 <25`, `.npmrc`
+  save-exact + engine-strict. **TypeScript 6.0.3** — not 7.0.2, because typescript-eslint 8.70.0 supports
+  `>=4.8.4 <6.1.0`. ESLint 10.11.0 flat config, Prettier 3.9.8 (`docs/` excluded), Vitest 5.0.1.
+  `packages/contracts` (zod 4.6.5). Verified green from a fresh clone + `--frozen-lockfile`.
 - **WP-03a — toolchain install + build probes.** VS Build Tools 2022, rustup + stable-msvc, pnpm 12.4.2.
-  **Probe A**: better-sqlite3 → SQLite 3.53.4, WAL, FTS5 porter + trigram, a JS `haversine()` from SQL,
-  `db.backup()` 4.1 ms, `VACUUM INTO` 2.9 ms; @node-rs/argon2 2.2.1 m=19456/t=2/p=1 → **12.8 ms/hash**.
-  Prebuilds only. **Probe B**: a Tauri 2 hello world built in **2m 13s** cold.
+  **Probe A**: better-sqlite3 → SQLite 3.53.4, WAL, FTS5 porter + trigram, JS `haversine()` from SQL,
+  `VACUUM INTO` 2.9 ms; @node-rs/argon2 2.2.1 m=19456/t=2/p=1 → **12.8 ms/hash**. Prebuilds only.
 - **WP-00…WP-02b — recon, spec, ADRs, source feasibility** (d159c78…ef8bd55; architect review → spec v1.1
-  in d781885). ARCHITECTURE.md + ADR-0001…0015 + DECISIONS.md; docs/handoff/WP-01-review.md (10 findings,
-  20 ambiguities); **source matrix** in docs/research/source-feasibility.md — CTFtime/CLIST/Devfolio
-  APPROVED_WITH_LIMITS (CLIST needs an API key), **Devpost and Unstop MANUAL_IMPORT_ONLY**, 117 college
-  sites PENDING_REVIEW; fixtures for CTFtime + Devfolio; 13 robots.txt in docs/research/robots/.
+  in d781885). ARCHITECTURE.md + ADR-0001…0015 + DECISIONS.md; WP-01-review.md (10 findings, 20
+  ambiguities); **source matrix** (docs/research/source-feasibility.md): CTFtime/CLIST/Devfolio
+  APPROVED_WITH_LIMITS (CLIST needs a key), **Devpost and Unstop MANUAL_IMPORT_ONLY**, 117 college sites
+  PENDING_REVIEW; fixtures + 13 robots.txt under docs/research/.
 
 ## Open issues
 All WP-01/WP-02 findings are ruled on in ARCHITECTURE.md §21. Still open:
