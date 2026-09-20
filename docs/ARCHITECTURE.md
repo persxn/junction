@@ -1,6 +1,6 @@
 # Competition Intel — Architecture Specification
 
-**Version:** 1.1.3 · **Date:** 20 Sep 2026 · **Status:** ACCEPTED — implementation baseline (amended after WP-00…WP-02b)
+**Version:** 1.1.4 · **Date:** 20 Sep 2026 · **Status:** ACCEPTED — implementation baseline (amended after WP-00…WP-02b)
 **Author:** Architect (Claude, Cowork session) · **Implementer:** Claude Code (worker session)
 
 > **How to use this document.** This is the implementation source of truth. The worker must not
@@ -19,6 +19,7 @@
 | 1.1.1 | 20 Sep 2026 | Rulings R1–R10 after WP-03a/03b (see §21). |
 | 1.1.2 | 20 Sep 2026 | Rulings R11–R18 after WP-04a (see §21). |
 | 1.1.3 | 20 Sep 2026 | Rulings R19–R31 after WP-04c/05a/05b (see §21). |
+| 1.1.4 | 20 Sep 2026 | Rulings R32–R38 after WP-06; auth decisions for WP-07a (see §21). |
 
 ---
 
@@ -1561,6 +1562,13 @@ ative\ (better-sqlite3 `nativeBinding`); the bundle must run from a folder with 
 | R29 Tray state | A FAILED badge, a tooltip phase and the §16.1 freshness line land with WP-30's health surface. The tray stays static until then. | §16.1, WP-30 |
 | R30 SSE has no proxy | The shell proxy is request/response only, so SSE has no fallback transport. WP-07a's client must degrade to polling with a visible "live updates unavailable" note, never a hard error. | ADR-0017, F9 |
 | R31 SOURCE_UNREACHABLE | Keeps its name: `SOURCE_` is its domain prefix, so R12 is satisfied. | §4.4, R12 |
+| R32 Permission matrix | Q5 is closed: the §10.2 matrix is the MVP matrix. `packages/contracts/src/permissions.ts` is the single source — an Action enum, the role→action map for ADMINISTRATOR and PROFESSOR, and named ownership predicates. A user may hold both roles. The UI only hides controls (§10.1). | §10.1, §10.2, Q5 |
+| R33 Sessions | Opaque 256-bit token, SHA-256 hashed at rest, never logged. Idle expiry from setting `auth.autoLockMinutes` (default 15), absolute 12 h. `last_seen_at`/`idle_expires_at` are refreshed at most once every 60 s. Expired or revoked → 401 `AUTH_SESSION_EXPIRED`. | §4.12, §10.5 |
+| R34 Login throttling | Per user: 5 consecutive failures → `locked_until` = now + 5 min, then 10, 20, 40, capped at 60 min. While locked, even a correct password is refused and the counter is untouched; a success resets both. Plus a process-wide limit of 10 login attempts/minute. Failures are audited without the password. | §4.12, §10.3 |
+| R35 Audit chain | `prev_hash` is the previous row's `hash`; genesis is 64 zeros. `hash` = SHA-256 over a canonical (sorted-key, no-whitespace) JSON of id, occurred_at, actor_kind, actor_user_id, action, entity_kind, entity_id, summary, diff_json, request_id, prev_hash. SQLite triggers reject UPDATE and DELETE. A `verifyChain()` helper ships with it. | §6.2 |
+| R36 SSE | `/api/v1/stream` per ADR-0017: `fetch` + ReadableStream, event ids from one monotonic counter, `Last-Event-ID` replayed from an in-memory ring buffer (last 200 events or 5 minutes, whichever is smaller), a comment heartbeat every 15 s, and the stream registered as a **`streams`**-phase shutdown hook (R14). Nothing user-identifying in an event body beyond ids. | ADR-0017, R14 |
+| R37 Auto-lock | Enforced server-side by `idle_expires_at`; the lock screen is cosmetic. `POST /auth/unlock` re-verifies the password and extends the *same* session, so the token the UI holds in memory stays valid. | §10.5 |
+| R38 Forced password change | `must_change_password` lets login succeed but every route except `/auth/change-password`, `/auth/logout` and `/me` answers 403 `AUTH_PASSWORD_CHANGE_REQUIRED`. | §4.12 |
 
 ---
 
