@@ -102,9 +102,9 @@
   degradation. **`/stream` must write its head through Fastify or the WebView loses the CORS headers.**
 - **WP-06 — UI foundation.** Tailwind v4 + `src/styles/tokens.css`: one `--ci-*` token set, both themes via
   `@theme inline`, every text/surface pair **measured** at >= 4.5:1 in a test; light/dark/**system**.
-  `src/shell/backend.ts` is IPC only; the API client lives in `src/api/` (typed `ApiProblem`, `Authorization`
-  seam, generation retry, R27's **2 s** timeout). TanStack Query + Router, app shell, cmdk palette,
-  ErrorBoundary/toasts/Skeleton/EmptyState, `<ConnectionScreen>` (R26). Vitest `node` + `jsdom`; axe clean.
+  `src/shell/backend.ts` is IPC only; the API client lives in `src/api/` (typed `ApiProblem`, generation
+  retry, R27's **2 s** timeout). TanStack Query + Router, app shell, cmdk palette, ErrorBoundary/toasts/
+  Skeleton/EmptyState, `<ConnectionScreen>` (R26). Vitest `node` + `jsdom`; axe clean on every route.
 - **WP-05b — tray, close-to-tray, single instance, autostart, LNA check.** Tray menu via `tray-icon` +
   `tauri-plugin-single-instance` 2.4.5 and `tauri-plugin-autostart` 2.5.1; preferences in
   `<dataDir>\shell-settings.json` (R28), close-to-tray on by default (D-14). `loopback.rs` serves the
@@ -128,8 +128,7 @@
 - **WP-04a — backend app factory**. zod config (flags > env > defaults), pino `multistream` → daily-rotating
   file (keep 14) + deep redaction, `AppError` → RFC 9457 `problem+json` (R5) with `X-Request-Id`, Host +
   `X-CompIntel-Client` (`timingSafeEqual`) + CORS (R9), `/health`, `/system/shutdown`, `buildApp()` +
-  `main.ts` (READY line, stdin EOF, 10 s hard timeout). Deps: fastify 5.12.5, @fastify/cors 11.3.0,
-  fastify-type-provider-zod 7.0.0, pino 10.3.1, zod 4.6.5, tsx 4.23.13, esbuild 0.28.2.
+  `main.ts` (READY line, stdin EOF, 10 s hard timeout). Deps: fastify 5.12.5, pino 10.3.1, zod 4.6.5.
 - **WP-03a/03b — toolchain + monorepo scaffold.** VS Build Tools 2022, rustup stable-msvc, pnpm workspace,
   engines `>=24.19 <25`, save-exact. **TypeScript 6.0.3**, not 7.x (typescript-eslint caps at `<6.1.0`).
   Probe A: SQLite 3.53.4 WAL + FTS5 porter/trigram, `VACUUM INTO` 2.9 ms, argon2 prebuilds only.
