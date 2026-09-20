@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { AUTO_LOCK_MINUTES } from '../modules/auth/settings.js';
 import { BACKUP_DAILY_TIME_LOCAL, BACKUP_PUBLIC_KEY } from '../modules/backup/settings.js';
-import { GEOGRAPHY_POLICY } from '../modules/org/settings.js';
+import { GEOGRAPHY_POLICY } from '../modules/geo/settings.js';
 // The barrel, so the registry assertions below see every module's definitions
 // and not only the ones the imports above happen to pull in.
 import '../settings.js';
@@ -169,6 +169,10 @@ describe('module-owned definitions', () => {
       'backup.destinationDir',
       'backup.privateKeyEncrypted',
       'backup.publicKey',
+      // WP-08b's, declared by modules/geo — the geography pair moved there from
+      // modules/org without changing key or default, which is the point of the
+      // handle-based registry.
+      'eventType.policy',
       'geography.nearbyRadiusKm',
       'geography.policy',
       'scraper.contactEmail',

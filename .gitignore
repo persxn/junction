@@ -77,3 +77,10 @@ dist-types/
 # --- Monorepo tooling (WP-03b) ---
 .eslintcache
 *.timestamp-*.mjs
+
+# The built gazetteer is a build output, not a source file (ruling R53): tens of
+# megabytes, reproducible from `resources/gazetteer/manifest.json` with
+# `pnpm gazetteer:build`. The ≤200 KB test fixture built by `--mini` IS committed.
+/resources/gazetteer/gazetteer.db
+**/gazetteer.db
+!apps/backend/test/fixtures/gazetteer/mini.db

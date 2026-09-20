@@ -24,6 +24,12 @@ import { resolveResources } from './platform/resources.js';
 import { SettingsStore } from './platform/settings.js';
 import { ShutdownRegistry } from './platform/shutdown.js';
 import { StartupError, toStartupFailure } from './platform/startup-error.js';
+import { openGazetteer, unavailableGazetteer } from './platform/gazetteer.js';
+import { Geocoder } from './modules/geo/geocoder.js';
+import { loadInstitutions, seedInstitutions } from './modules/geo/seed.js';
+import { EventsRepository } from './modules/events/repository.js';
+import { EventsService } from './modules/events/service.js';
+import './settings.js';
 
 /**
  * The one and only thing this process writes to stdout (ruling R7). The callback
@@ -107,6 +113,34 @@ async function main(): Promise<void> {
         setup.invalidate();
       },
     });
+
+    // Geography (§4.17, rulings R53-R55). The gazetteer is reference data the
+    // build produces; a missing one is a warning and a geocoder that answers
+    // UNKNOWN, never a failed start (R54). The institutions seed is idempotent,
+    // so running it every start costs one query and keeps a fresh install
+    // correct without a separate step.
+    const gazetteer =
+      resources.gazetteerFile === undefined
+        ? unavailableGazetteer('no gazetteer was built; run `pnpm gazetteer:build`')
+        : openGazetteer(resources.gazetteerFile, { logger, shutdown });
+    if (!gazetteer.available) {
+      logger.warn(
+        { reason: gazetteer.unavailableReason },
+        'geocoding will answer UNKNOWN until a gazetteer is built',
+      );
+    }
+    const seeded = seedInstitutions(db, audit);
+    logger.info(seeded, 'institutions seeded');
+    const geocoder = new Geocoder({ gazetteer, institutions: loadInstitutions(db) });
+    const eventsService = new EventsService({
+      repository: new EventsRepository(db),
+      geocoder,
+      settings,
+      audit,
+    });
+    // Nothing routes to it yet — WP-09b is the first caller (this WP wires no
+    // routes). Constructed here so a startup failure surfaces at startup.
+    void eventsService;
 
     // Constructed before the HTTP layer so its `resources` hook is registered
     // even if the process is asked to stop during startup (R14); started only

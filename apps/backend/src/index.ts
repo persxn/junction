@@ -63,6 +63,37 @@ export {
   type TriggerRefusal,
   type TriggerResult,
 } from './jobs/index.js';
+export {
+  bestMatch,
+  boundingBox,
+  distanceBucketKm,
+  formatDistanceKm,
+  haversineKm,
+  haversineKmRaw,
+  nameKey,
+  nameTokens,
+  normalizeName,
+  tokenSetScore,
+  tokenWeights,
+  withinBoundingBox,
+  EARTH_RADIUS_KM,
+  NAME_MATCH_THRESHOLD,
+  TIE_MARGIN,
+  type BoundingBox,
+  type NameMatch,
+  type Nameable,
+  type Point,
+} from './domain/geo/index.js';
+export {
+  applyEventTypePolicy,
+  applyGeographyPolicy,
+  applyPolicies,
+  UNCERTAIN_TYPE_BELOW,
+  type EventTypeFacts,
+  type GeographyFacts,
+  type PolicyDecision,
+  type PolicyFacts,
+} from './domain/policy/index.js';
 export { acquireDataDirLock, lockPath, LOCK_FILE, type DataDirLock } from './platform/lock.js';
 export { createLogger, LOG_RETENTION_FILES, type LoggerHandle } from './platform/logger.js';
 export {

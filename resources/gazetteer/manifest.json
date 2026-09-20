@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "builtAt": "2026-09-20",
+  "license": "CC BY 4.0 — see resources/gazetteer/ATTRIBUTION.md",
+  "sources": [
+    {
+      "url": "https://download.geonames.org/export/dump/IN.zip",
+      "entry": "IN.txt",
+      "filter": "FEATURE_CLASS_P",
+      "note": "India, populated places only",
+      "sha256": "f0b2b17b9c29c1af5f38826077584325cede46201d185bd5c953d28ec04982a3",
+      "bytes": 15751814
+    },
+    {
+      "url": "https://download.geonames.org/export/dump/cities15000.zip",
+      "entry": "cities15000.txt",
+      "filter": "NONE",
+      "note": "World, population >= 15000",
+      "sha256": "92708f433d59eb2720c19abf484d3d8a338224b7bf2c9f71d39dc45e7b7be3c2",
+      "bytes": 3359367
+    },
+    {
+      "url": "https://download.geonames.org/export/dump/admin1CodesASCII.txt",
+      "entry": "admin1CodesASCII.txt",
+      "filter": "NONE",
+      "note": "State and province names",
+      "sha256": "1da92a6323a5fec3176f3f743bf4cf4040fd56a876da55e46fbca23c863aa60a",
+      "bytes": 151583
+    }
+  ],
+  "rows": {
+    "places": 588362,
+    "placeAltNames": 145933,
+    "admin1": 3865
+  },
+  "output": {
+    "bytes": 71843840
+  }
+}

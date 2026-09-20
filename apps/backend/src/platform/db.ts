@@ -8,6 +8,7 @@ import * as schema from '../db/schema/index.js';
 import { dataSubdir, type Config } from './config.js';
 import { StartupError } from './startup-error.js';
 import type { ShutdownRegistry } from './shutdown.js';
+import { haversineKmRaw } from '../domain/geo/distance.js';
 
 /** File name of the one database this backend owns (§3.2 packaged layout). */
 export const DATABASE_FILE = 'app.db';
@@ -87,6 +88,40 @@ export function readPragmas(raw: SqliteDatabase): Record<string, string | number
 }
 
 /**
+ * SQL functions this connection provides, registered before anything queries.
+ *
+ * **One haversine (ruling R56).** `haversine_km` delegates to
+ * `domain/geo/distance.ts`, which is also what every in-process calculation
+ * calls. §8.2 filters candidates with an indexed bounding box and then measures
+ * exactly, and WP-15a will sort on the result — if the SQL and the JavaScript
+ * were separate implementations they would eventually disagree by a rounding
+ * rule, and the symptom would be an event 49 km away in the list and 51 km away
+ * on its own page. Nobody finds that bug.
+ *
+ * `deterministic` lets SQLite use it in an index or a partial index later;
+ * `safeIntegers` is left off because coordinates are REAL.
+ */
+function registerSqlFunctions(raw: SqliteDatabase): void {
+  raw.function(
+    'haversine_km',
+    { deterministic: true, varargs: false },
+    (lat1: unknown, lon1: unknown, lat2: unknown, lon2: unknown): number | null => {
+      // Any NULL coordinate means "we do not know where this is", and a
+      // distance from an unknown point is not 0 — it is unknown (§6.1).
+      if (
+        typeof lat1 !== 'number' ||
+        typeof lon1 !== 'number' ||
+        typeof lat2 !== 'number' ||
+        typeof lon2 !== 'number'
+      ) {
+        return null;
+      }
+      return haversineKmRaw(lat1, lon1, lat2, lon2);
+    },
+  );
+}
+
+/**
  * Opens the single database this process owns and proves it is usable before the
  * HTTP server ever starts: the PRAGMAs from ruling R16 are applied and read back,
  * then `PRAGMA quick_check` runs. A corrupt file fails the start with
@@ -109,6 +144,7 @@ export function openDatabase(config: Config, options: OpenDatabaseOptions): Data
 
   try {
     applyPragmas(raw);
+    registerSqlFunctions(raw);
     const problems = (options.integrityCheck ?? quickCheck)(raw).filter(
       (row) => row.toLowerCase() !== 'ok',
     );

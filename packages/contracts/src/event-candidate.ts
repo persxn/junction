@@ -97,6 +97,11 @@ export const PARSE_WARNING_CODES = [
   'HTML_SANITIZED',
   /** The source's own type/category did not map to any `EventType`. */
   'EVENT_TYPE_UNMAPPED',
+  /**
+   * A place name matched several places and nothing could tell them apart, so
+   * the location was left less precise rather than guessed (R55).
+   */
+  'GEO_AMBIGUOUS_PLACE',
 ] as const;
 export const ParseWarningCode = z.enum(PARSE_WARNING_CODES);
 export type ParseWarningCode = z.infer<typeof ParseWarningCode>;
