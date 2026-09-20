@@ -11,6 +11,7 @@
   `cargo clean` freed **11.2 GiB**; C: 28.8 → 38.2 GB, then **34.9 GB** once `target/` was rebuilt (3.7 GB).
   **Open for the architect:** `jobs/schedule.ts` cannot move to `domain/` until `JobDefinition.nextDueAt`
   stops being typed against the Drizzle row — a jobs-layer refactor, see the handoff §4.
+- **Next: WP-08b.**
 - **Architect reviewed M0** (20 Sep 2026, `docs/handoff/M0-review.md`): R1–R44 accepted as written, plus
   R45–R47 (recovery-code sign-in → WP-30, Argon2id calibration deferred, `/system/shutdown` exemption).
   **Q1 RESOLVED** — standalone single-professor deployment, §3.1 amended, accounts/RBAC/audit retained.
@@ -22,7 +23,7 @@
 - **New: WP-33** (`prompts/M4/WP-33.md`, milestone **M4.5**, just before M5) — appearance system
   (Catppuccin palettes, CALM/STANDARD/SHOWCASE effect tiers, motion & glow) + Insights. ADR-0019, R67–R69.
 - **Owner, 20 Sep 2026:** standalone app — one professor, one machine (§3.1). Security posture reviewed and **left unchanged**; less security framing in prose from here on.
-- Spec: docs/ARCHITECTURE.md **v1.1.6 — ACCEPTED** (§21 R1–R47 + R67–R69; §19 = **48 WPs, 14 done, 34 remaining**).
+- Spec: docs/ARCHITECTURE.md **v1.1.7 — ACCEPTED** (§21 R1–R52 + R67–R69; §19 = **48 WPs, 16 done, 32 remaining**).
 - ADR-0001…0019 Accepted. Decisions register: docs/DECISIONS.md (D-01…D-33, Q1 RESOLVED, U1/U2 DONE).
 
 ## Environment facts
