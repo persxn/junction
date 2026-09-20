@@ -1,33 +1,33 @@
 # Progress — newest first, keep < 150 lines
 
 ## Current
-- **pre-M1 DONE** (21 Sep 2026, `docs/handoff/pre-M1.md`) — consolidation, **no behaviour change**.
-  `platform/time.ts` = one `Clock` + local-day arithmetic; `src/domain/` with four linter-enforced
-  boundary rules + `max-lines: 400`; `withAudit()`; settings `define()`d by the owning module;
-  `testing/golden.ts`; R12 error blocks; M0 debt cleared. 1790 tests; built exe verified.
+- **pre-M1 DONE** (`docs/handoff/pre-M1.md`) — `platform/time.ts` (one `Clock` + local-day arithmetic),
+  `src/domain/` with four linter-enforced boundary rules + `max-lines: 400`, `withAudit()`, settings
+  `define()`d by the owning module, `testing/golden.ts`, R12 error blocks, M0 debt cleared.
   **Open for the architect:** `jobs/schedule.ts` cannot move to `domain/` until
   `JobDefinition.nextDueAt` stops being typed against the Drizzle row (handoff §4).
-- **WP-08a IN PROGRESS** (~65%, `b9a6408`) — **read `docs/handoff/WP-08a.md` before writing any code.**
-  Done and green: rulings R48-R52 / spec v1.1.7 · contracts `events.ts` + `event-candidate.ts`
-  (`.strict()`, R50) · migration **0004** = event_series, events, event_deadlines, event_field_claims,
-  event_overrides, event_changes, institutions (R48; `source_record_id` carries no FK, R49) ·
-  `domain/normalize/` (11 modules, pure + clock-injected, R52) · **153 table-driven cases**.
-  **Left:** enum/CHECK tests · migration tests for the new tables · PII sweep over the fixtures ·
-  two golden files · a fast-check property test · `pnpm audit:deps` · PROGRESS + the closing report.
-  New deps: chrono-node 2.10.1, sanitize-html 2.17.7, turndown 7.2.4 (+2 @types, dev).
-  **1979 tests** (was 1790).
+- **WP-08a DONE** (21 Sep 2026, `docs/handoff/WP-08a.md`) — event schema, `EventCandidate`, the
+  normalization library. Contracts `events.ts` + `event-candidate.ts` (`.strict()` = R50 enforced by
+  the schema, not by discipline); migration **0004** creates all seven tables (R48), `source_record_id`
+  carries no FK and a test records that as deliberate (R49); `domain/normalize/` = 12 pure,
+  clock-injected modules (R52) behind `normalizeCandidate()`; **156 table-driven cases** + fast-check
+  properties over ten timezones. Three bugs the tests found: a comma read as a fee amount (a 500-rupee
+  event shown free), `Date.parse` resolving naive timestamps in the *host* zone, and Turndown escaping
+  a source's own Markdown. **2038 tests** (was 1790). New deps: chrono-node 2.10.1, sanitize-html
+  2.17.7, turndown 7.2.4, +3 dev (@types x2, fast-check 4.10.2).
+- **Next: WP-08b** — its STEP 0 is already recorded (spec **v1.1.8**, R53–R57); start at BUILD.
+  Q12 stays OPEN in both ARCHITECTURE.md §2 and DECISIONS.md.
 - **Architect reviewed M0** (20 Sep 2026, `docs/handoff/M0-review.md`): R1–R44 accepted as written, plus
   R45–R47 (recovery-code sign-in → WP-30, Argon2id calibration deferred, `/system/shutdown` exemption).
   **Q1 RESOLVED** — standalone single-professor deployment, §3.1 amended, accounts/RBAC/audit retained.
   ADR-0010/0011 amended (R33/R34/R37/R38, R41/R42); DECISIONS.md drift fixed (U1/U2, Q3).
 - **M1 released as a batch**; `docs/prompts/` is organized by milestone (index: `prompts/README.md`).
-  Order: **`M1/pre-M1.md` first** (consolidation refactor, no behaviour change), then WP-08a · 08b · 09a ·
-  09b · 10 · 11 · 12 · 13 · 14 · 15a · 15b · 16a · 16b. Zip `docs/` and send it back when M1 closes.
-  **§21 R48–R66 are reserved** for the STEP 0 blocks of WP-08a…WP-10.
+  Order: pre-M1 · **WP-08a** · 08b · 09a · 09b · 10 · 11 · 12 · 13 · 14 · 15a · 15b · 16a · 16b
+  (first two done). Zip `docs/` and send it back when M1 closes. §21 R58–R66 stay reserved.
 - **New: WP-33** (`prompts/M4/WP-33.md`, milestone **M4.5**, just before M5) — appearance system
   (Catppuccin palettes, CALM/STANDARD/SHOWCASE effect tiers, motion & glow) + Insights. ADR-0019, R67–R69.
 - **Owner, 20 Sep 2026:** standalone app — one professor, one machine (§3.1). Security posture reviewed and **left unchanged**; less security framing in prose from here on.
-- Spec: docs/ARCHITECTURE.md **v1.1.7 — ACCEPTED** (§21 R1–R52 + R67–R69; §19 = **48 WPs, 16 done, 32 remaining**).
+- Spec: docs/ARCHITECTURE.md **v1.1.8 — ACCEPTED** (§21 R1–R57 + R67–R69; §19 = **48 WPs, 17 done, 31 remaining**).
 - ADR-0001…0019 Accepted. Decisions register: docs/DECISIONS.md (D-01…D-33, Q1 RESOLVED, U1/U2 DONE).
 
 ## Environment facts
