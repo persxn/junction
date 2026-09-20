@@ -1,10 +1,10 @@
 # Progress — newest first, keep < 150 lines
 
 ## Current
-- **Next WP: WP-05b** (tray menu, close-to-tray, single instance, autostart, loopback/CORS/LNA check).
+- **Next WP: WP-06** (UI foundation: tokens, app shell, Ctrl+K stub, API client, error boundary, toasts).
 - **Architect is offline** (Sep 2026): this session acts as master + worker. Every architectural call is
   recorded in the handoff reports under "Minor decisions"/"Questions" for review when they are back.
-- Spec: docs/ARCHITECTURE.md **v1.1.2 — ACCEPTED** (changelog at the top; rulings index §21 incl. R1–R18; roadmap §19 = 46 WPs, 8 done, 38 remaining).
+- Spec: docs/ARCHITECTURE.md **v1.1.2 — ACCEPTED** (changelog at the top; rulings index §21 incl. R1–R18; roadmap §19 = 46 WPs, 11 done, 35 remaining).
 - ADR-0001…0018 Accepted (several amended). Decisions register: docs/DECISIONS.md (D-01…D-33, Q1…Q13, user actions U1…U6).
 
 ## Environment facts
@@ -52,6 +52,10 @@
 - Desktop shell: `pnpm --filter @compintel/desktop tauri:dev` (Vite on **localhost:5173**, strictPort - the CORS
   allowlist has that exact origin) · `tauri:build` (= `tauri build --debug --no-bundle`) · `test:rust`
   (`cargo test`, 34 tests, ~5 s) · `lint:rust` (clippy `-D warnings`) · `format:rust:check`.
+  **LNA re-check** (F9, after any WebView2/Windows update): launch the exe with
+  `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--enable-features=LocalNetworkAccessChecks,msWebViewAllowLocalNetworkAccessChecks`
+  and confirm the window still shows a backend health line - procedure and results in
+  docs/research/webview2-local-network-access.md.
   **The Rust checks are outside `pnpm verify`** (they need cargo and would blow the < 2 min budget);
   run them in any WP that touches `src-tauri`. A dev run needs `pnpm --filter @compintel/backend bundle`
   first: the shell starts `apps/backend/dist-bundle/main.mjs` with the system Node.
@@ -61,28 +65,36 @@
 - `npm i -g` now warns about unrun install scripts (npm 11.17 `allow-scripts` gate) — harmless for pnpm's shim.
 
 ## Completed
-- **WP-05a — Tauri shell + backend supervision** (this WP). `apps/desktop` (React 19 + Vite 8, own tsconfig
-  per R6) with `src-tauri` inside: `rust-toolchain.toml` pins 1.98.1 (R1). Rust modules `backoff` (1→2→4…
-  60 s, 5 crashes/10 min), `ready` (the one stdout line, R7), `secret` (32 random bytes per spawn, A2),
-  `paths` (A20 `resources\` layout, dev fallback to the repo bundle + `CompIntel-dev`), `job`
-  (KILL_ON_JOB_CLOSE, F7/A17), `shutdown` (a hand-written loopback POST, no HTTP client), `supervisor`
-  (one thread: spawn → READY → watch → restart, `Phase` + `generation`), `commands` (`backend_status`,
-  `backend_connection`, `retry_backend`, `exit_completely`, `open_logs_folder`) and the `backend://status`
-  event. `packages/contracts/src/shell.ts` types the IPC; the UI parses every payload. **Verified on the
-  built exe:** window close → graceful `reason:"api"` shutdown, exit 0, lock removed, nothing left; hard
-  kill of the shell → the Job Object takes the backend with it; and WebView2 reached `/api/v1/health` 200.
-  `pnpm verify` **431 tests green**; `cargo test` 34 green; clippy clean. Deps: react/react-dom 19.3.0,
-  @tauri-apps/api 2.11.1, vite 8.3.0, tauri 2.11.6, windows 0.62.2, getrandom 0.4.3 (full list in the report).
-- **WP-04c — DB-backed job runner** (this WP). Migration 0001 = `job_state` (§6.2 columns + `kind`,
-  `last_outcome`, `last_duration_ms`, `last_error_message`, CHECKs from the contracts enums, index on
-  `next_due_at`). `packages/contracts/src/jobs.ts`: JobKind (SCRAPE/LLM/GENERAL), JobTrigger, JobOutcome
-  (+ ABORTED, CRASHED), JobSnapshot. `apps/backend/src/jobs/`: `schedule.ts` (jitter, 15→30→60 min…12 h
-  backoff, due/lease predicates), `outcome.ts` (state machine), `store.ts` (conditional-UPDATE claim =
-  single-flight), `run.ts` (one run, never throws), `scheduler.ts` (30 s tick, catch-up, limits 2 scrape /
-  1 LLM / 4 general, lease reclaim → CRASHED, `SKIPPED_OFFLINE`, manual `trigger()`, `resources` stop hook),
-  `online.ts` (interface-table offline check, no network call). Wired in `main.ts` with **no jobs
-  registered** — each later WP registers its own. `pnpm verify` **422 tests green (21 s)**; `smoke:bundle`
-  and `audit:deps` clean. **No new dependencies.**
+- **WP-05b — tray, close-to-tray, single instance, autostart, LNA check** (this WP). Tauri `tray-icon`
+  feature + `tauri-plugin-single-instance` 2.4.5 and `tauri-plugin-autostart` 2.5.1. Tray menu: Open ·
+  Close to tray · Start with Windows · Open logs · Exit completely, with the two check items kept in step
+  with the UI. Preferences live in `<dataDir>\shell-settings.json` (`settings.rs`; close-to-tray **on** by
+  default per D-14), **not** in the backend's `settings` table - the tray must work before the backend is
+  up. `shutdown.rs` became `loopback.rs`: the same hand-written client now also serves a read-only,
+  prefix-locked `backend_get` command, which is the **finding-F9 fallback** (no HTTP plugin, no new dep).
+  **LNA measured** (docs/research/webview2-local-network-access.md): with the flags on, the page and IPC
+  still work but the loopback `fetch` **never settles** - it does not reject - so the direct call got a 5 s
+  timeout and the app now switches to the shell proxy automatically (verified on screen and in the log).
+  Also fixed: a UTF-8 BOM in the settings file silently reverted every preference. `pnpm verify` **439
+  tests green**; `cargo test` 46 green; clippy clean; A-D end-to-end script passes.
+- **WP-05a — Tauri shell + backend supervision.** `apps/desktop` (React 19 + Vite 8, own tsconfig per R6)
+  with `src-tauri` inside; `rust-toolchain.toml` pins 1.98.1 (R1). Rust modules: `backoff` (1→2→4…60 s,
+  5 crashes/10 min → FAILED), `ready` (the one stdout line, R7), `secret` (32 fresh bytes per spawn, A2),
+  `paths` (A20 layout; dev falls back to the repo bundle + `CompIntel-dev`), `job` (KILL_ON_JOB_CLOSE,
+  F7/A17), `supervisor` (one thread: spawn → READY → watch → restart; `Phase` + `generation`), `commands`
+  + the `backend://status` event; `packages/contracts/src/shell.ts` types the IPC and the UI parses it.
+  A named startup error (DATA_DIR_LOCKED…) is terminal, not a restart loop. **Verified on the built exe:**
+  window close → graceful `reason:"api"` shutdown, exit 0, lock removed, nothing left; a hard kill takes
+  the backend with it; WebView2 reached `/api/v1/health` 200. Deps: react/react-dom 19.3.0,
+  @tauri-apps/api 2.11.1, vite 8.3.0, tauri 2.11.6, windows 0.62.2, getrandom 0.4.3 (details in the report).
+- **WP-04c — DB-backed job runner.** Migration 0001 = `job_state` (§6.2 columns + `kind`, `last_outcome`,
+  `last_duration_ms`, `last_error_message`, CHECKs from the contracts enums, index on `next_due_at`);
+  `packages/contracts/src/jobs.ts` (JobKind SCRAPE/LLM/GENERAL, JobTrigger, JobOutcome + ABORTED/CRASHED,
+  JobSnapshot). `apps/backend/src/jobs/`: `schedule` (jitter, 15→30→60 min…12 h), `outcome` (state
+  machine), `store` (conditional-UPDATE claim = single-flight), `run`, `scheduler` (30 s tick, catch-up,
+  2 scrape / 1 LLM / 4 general, stale lease → CRASHED, SKIPPED_OFFLINE, manual `trigger()`, `resources`
+  stop hook), `online` (interface-table check, no network call). Wired in `main.ts` with **no jobs
+  registered** — each later WP registers its own. 422 tests green. **No new dependencies.**
 - **WP-04b — SQLite + Drizzle + migrations + data-dir lock + UUIDv7.** better-sqlite3 13.0.3, drizzle-orm
   0.45.2 (drizzle-kit 0.31.10 dev). `ids.ts` UUIDv7 (RFC 9562, monotonic, clock-regression safe); `lock.ts`
   `<dataDir>\backend.lock` (R15); `db.ts` R16 PRAGMAs + `quick_check` + checkpoint/close; `migrate.ts`
@@ -105,14 +117,13 @@
   Vitest 5.0.1, one root config. `packages/contracts` (zod 4.6.5): API_VERSION, the 5 spec enums, RFC 9457
   ProblemDetails + ErrorCode, 57 tests. `apps/backend`: `describeBuild()` via `workspace:*`.
   Verified green from a fresh `git clone` + `--frozen-lockfile`; injected lint/type/test faults each exit 1.
-- **WP-03a — toolchain install + build probes.** Prerequisites re-verified (SAC=0, LongPaths=1).
-  Installed VS Build Tools 2022 (C++ workload, ~10 min), rustup + stable-msvc, pnpm 12.4.2.
-  **Probe A passed**: better-sqlite3 13.0.3 → SQLite **3.53.4**, WAL, FTS5 `porter` + `tokenize='trigram'` both
-  MATCHing, JS `haversine()` called from SQL, `db.backup()` 4.1 ms, `VACUUM INTO` 2.9 ms, both copies verified;
-  @node-rs/argon2 2.2.1 argon2id m=19456/t=2/p=1 → **12.8 ms per hash**, 12.3 ms per verify. Prebuilds only — no
-  compiler needed (4 s install). `process.versions.sqlite` = 3.53.3 (Node's own, unused).
-  **Probe B passed**: Tauri 2 vanilla-ts hello world built in **2m 13s** cold (471 crates), 12.4 MB debug exe,
-  window opened and closed cleanly, no SAC/Defender block. Probe folder deleted; repo has docs changes only.
+- **WP-03a — toolchain install + build probes.** VS Build Tools 2022 (C++ workload), rustup + stable-msvc,
+  pnpm 12.4.2. **Probe A**: better-sqlite3 13.0.3 → SQLite 3.53.4, WAL, FTS5 porter + trigram, a JS
+  `haversine()` called from SQL, `db.backup()` 4.1 ms, `VACUUM INTO` 2.9 ms; @node-rs/argon2 2.2.1
+  argon2id m=19456/t=2/p=1 → **12.8 ms per hash**. Prebuilds only, no compiler needed.
+  **Probe B**: a Tauri 2 hello world built in **2m 13s** cold (471 crates), 12.4 MB debug exe, no
+  SAC/Defender block. Probe folder deleted afterwards.
+
 - **Architect review of WP-00…WP-02b → spec v1.1** (commit d781885, docs only, delivered by the user).
   All WP-01 findings and WP-02 questions ruled on (§21); `docs/requirements/master-requirements.md` supplied.
 - **WP-00 — environment recon & bootstrap** (d159c78). Repo, .gitignore, docs/ tree; system/toolchain report;

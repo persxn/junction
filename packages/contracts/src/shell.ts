@@ -58,3 +58,33 @@ export const BackendStatus = z.object({
   appVersion: z.string().min(1),
 });
 export type BackendStatus = z.infer<typeof BackendStatus>;
+
+/**
+ * The shell's own machine-level preferences (D-14, §4.1). They live in
+ * `<dataDir>\shell-settings.json`, not in the backend's `settings` table: the
+ * tray and the window have to behave before the backend is up or any account
+ * exists.
+ */
+export const ShellSettings = z.object({
+  /** Closing the window hides it; the backend and its scrapes keep running. */
+  closeToTray: z.boolean(),
+  /** Start the shell when the user signs in to Windows. */
+  autostart: z.boolean(),
+});
+export type ShellSettings = z.infer<typeof ShellSettings>;
+
+/**
+ * How the UI is reaching the loopback API. `FETCH` is the normal path; `SHELL`
+ * is the finding-F9 fallback, where the page cannot reach `127.0.0.1` itself
+ * (Chromium Local Network Access) and the shell proxies GETs over IPC instead.
+ */
+export const API_TRANSPORTS = ['FETCH', 'SHELL'] as const;
+export const ApiTransport = z.enum(API_TRANSPORTS);
+export type ApiTransport = z.infer<typeof ApiTransport>;
+
+/** What the shell's proxy command returns. */
+export const LoopbackResponse = z.object({
+  status: z.int().min(100).max(599),
+  body: z.string(),
+});
+export type LoopbackResponse = z.infer<typeof LoopbackResponse>;

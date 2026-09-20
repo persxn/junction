@@ -24,10 +24,10 @@ use crate::backoff::{
     BACKOFF_BASE, BACKOFF_MAX, CRASH_WINDOW, CrashLog, MAX_CRASHES_IN_WINDOW, restart_delay,
 };
 use crate::job::ProcessJob;
+use crate::loopback::request_shutdown;
 use crate::paths::ShellPaths;
 use crate::ready::{ReadyError, parse_ready_line};
 use crate::secret::client_secret;
-use crate::shutdown::request_shutdown;
 
 /// How long the backend has to print its READY line before it counts as a crash.
 pub const STARTUP_TIMEOUT: Duration = Duration::from_secs(20);

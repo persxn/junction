@@ -1,25 +1,29 @@
 //! CompIntel desktop shell (ARCHITECTURE.md §3.2, ADR-0001, ADR-0002).
 //!
-//! The shell is deliberately thin: a window, the backend supervisor and a handful
-//! of IPC commands. No business logic, no database, no network beyond the loopback
-//! shutdown request - all of that belongs to the backend.
+//! The shell is deliberately thin: a window, a tray, the backend supervisor and a
+//! handful of IPC commands. No business logic, no database, no network beyond the
+//! loopback calls to our own backend - all of that belongs to the backend.
 
+pub mod actions;
 pub mod backoff;
 pub mod commands;
 pub mod job;
+pub mod loopback;
 pub mod paths;
 pub mod ready;
 pub mod secret;
-pub mod shutdown;
+pub mod settings;
 pub mod supervisor;
+pub mod tray;
 
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
-use tauri::{Emitter, Manager, RunEvent};
+use tauri::{Emitter, Manager, RunEvent, WindowEvent};
 
 use crate::commands::ShellState;
 use crate::paths::{PathInputs, ShellPaths};
+use crate::settings::SettingsStore;
 use crate::supervisor::{Supervisor, SupervisorConfig};
 
 /// The event the UI listens to for every lifecycle transition.
@@ -45,16 +49,33 @@ fn shell_paths(resource_dir: Option<PathBuf>) -> ShellPaths {
 /// Builds and runs the shell. Returns only when the app has exited.
 pub fn run() {
     tauri::Builder::default()
+        // Must be registered first (the plugin's own requirement): a second launch
+        // hands its arguments to this callback and then exits, so the app is a
+        // single instance and the running window comes forward instead.
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            actions::show_window(app);
+        }))
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            None,
+        ))
         .invoke_handler(tauri::generate_handler![
             commands::backend_status,
             commands::backend_connection,
             commands::retry_backend,
             commands::exit_completely,
             commands::open_logs_folder,
+            commands::shell_settings,
+            commands::set_close_to_tray,
+            commands::set_autostart,
+            commands::hide_to_tray,
+            commands::backend_get,
         ])
         .setup(|app| {
             let resource_dir = app.path().resource_dir().ok();
             let paths = shell_paths(resource_dir);
+            let store = Arc::new(SettingsStore::open(&paths.data_dir));
+            let preferences = store.get();
 
             let mut config = SupervisorConfig::new(paths, APP_VERSION);
             if cfg!(debug_assertions) {
@@ -75,15 +96,49 @@ pub fn run() {
 
             app.manage(ShellState {
                 supervisor: Arc::clone(&supervisor),
+                settings: Arc::clone(&store),
+                tray: Mutex::new(None),
             });
+
+            // The registry and the saved preference can disagree - the user may
+            // have removed the Run entry by hand - so the file wins at startup.
+            if let Err(cause) = actions::apply_autostart(app.handle(), preferences.autostart) {
+                eprintln!("autostart could not be applied: {cause}");
+            }
+
+            let handles = tray::build(app.handle(), preferences)?;
+            if let Some(state) = app.try_state::<ShellState>() {
+                *state
+                    .tray
+                    .lock()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(handles);
+            }
+
             supervisor.start();
             Ok(())
+        })
+        .on_window_event(|window, event| {
+            // Close-to-tray (D-14): the window goes away, the backend does not, so
+            // scrapes and deadline evaluation keep running. Only "Exit completely"
+            // stops everything.
+            if let WindowEvent::CloseRequested { api, .. } = event {
+                let close_to_tray = window
+                    .app_handle()
+                    .try_state::<ShellState>()
+                    .is_some_and(|state| state.settings.get().close_to_tray);
+                if close_to_tray {
+                    api.prevent_close();
+                    let _ = window.hide();
+                } else {
+                    actions::exit_completely(window.app_handle());
+                }
+            }
         })
         .build(tauri::generate_context!())
         .expect("the Tauri application must build")
         .run(|handle, event| {
-            // Whatever closes the app - the window's X, "Exit completely", the
-            // task bar - the backend is stopped before the process goes, so no
+            // Whatever closes the app - "Exit completely", the task bar, a signed
+            // out session - the backend is stopped before the process goes, so no
             // child is left holding the data-directory lock.
             if matches!(event, RunEvent::Exit)
                 && let Some(state) = handle.try_state::<ShellState>()

@@ -1,17 +1,27 @@
-import { exitCompletely, openLogsFolder, retryBackend } from './shell/backend.js';
+import { exitCompletely, hideToTray, openLogsFolder, retryBackend } from './shell/backend.js';
 import { useBackend } from './shell/use-backend.js';
 import './app.css';
 
 /**
- * WP-05a's whole UI: it exists to show that the shell supervises the backend and
- * that WebView2 can reach the loopback API. The real app shell, tokens and
- * routing arrive with WP-06, so there is deliberately no design system here.
+ * WP-05a/05b's whole UI: it shows that the shell supervises the backend, that
+ * WebView2 can reach the loopback API, and it exposes the two shell preferences.
+ * The real app shell, tokens and routing arrive with WP-06, so there is
+ * deliberately no design system here.
  */
 export function App(): React.JSX.Element {
-  const { status, connection, health, error, refresh } = useBackend();
+  const {
+    status,
+    connection,
+    health,
+    transport,
+    settings,
+    error,
+    refresh,
+    toggleCloseToTray,
+    toggleAutostart,
+  } = useBackend();
   const failed = status?.phase === 'FAILED';
-
-  const diagnostics = JSON.stringify({ status, health, error }, null, 2);
+  const diagnostics = JSON.stringify({ status, health, transport, settings, error }, null, 2);
 
   return (
     <main>
@@ -65,6 +75,8 @@ export function App(): React.JSX.Element {
                     health.database.ok ? 'ok' : 'down'
                   }`}
             </dd>
+            <dt>API transport</dt>
+            <dd>{transport === 'FETCH' ? 'fetch (direct loopback)' : 'shell proxy (fallback)'}</dd>
             <dt>Recent crashes</dt>
             <dd>{status?.recentCrashes ?? 0}</dd>
           </dl>
@@ -72,7 +84,37 @@ export function App(): React.JSX.Element {
         </section>
       )}
 
+      <section className="panel">
+        <h2>Shell</h2>
+        <label>
+          <input
+            type="checkbox"
+            checked={settings?.closeToTray ?? true}
+            disabled={settings === undefined}
+            onChange={toggleCloseToTray}
+          />
+          Close to tray (keep scraping when the window is closed)
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={settings?.autostart ?? false}
+            disabled={settings === undefined}
+            onChange={toggleAutostart}
+          />
+          Start with Windows
+        </label>
+      </section>
+
       <div className="row">
+        <button
+          type="button"
+          onClick={() => {
+            void hideToTray();
+          }}
+        >
+          Hide to tray
+        </button>
         <button
           type="button"
           onClick={() => {

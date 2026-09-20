@@ -28,6 +28,20 @@ h1 {
   border-color: #c62828;
 }
 
+label {
+  display: block;
+  margin-top: 0.5rem;
+}
+
+h2 {
+  font-size: 1rem;
+  margin-top: 0;
+}
+
+.panel + .panel {
+  margin-top: 1rem;
+}
+
 dl {
   display: grid;
   grid-template-columns: max-content 1fr;
