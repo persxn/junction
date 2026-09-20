@@ -86,7 +86,28 @@ function tidy(markdown: string): string {
 }
 
 /**
- * HTML (or plain text) → sanitized Markdown, with contact details redacted.
+ * Something tag-shaped: `<p`, `<br/>`, `<!-- -->`, `</div>`.
+ *
+ * Deliberately loose. Anything that might be markup takes the sanitizing path,
+ * so the only inputs that skip it are ones with nothing tag-like in them at all.
+ */
+const LOOKS_LIKE_HTML = /<[a-z!/][^>]*>/i;
+
+/**
+ * HTML, Markdown or plain text → sanitized Markdown, with contact details
+ * redacted.
+ *
+ * The two paths matter, and the Devfolio fixture is why. Turndown exists to turn
+ * HTML into Markdown, and it *escapes* Markdown syntax it finds in its input so
+ * that the output renders as the literal characters. That is correct for HTML —
+ * a `*` in a paragraph is an asterisk — and wrong for a source like Devfolio
+ * that already sends Markdown, where it turned every `**bold**` into
+ * `\*\*bold\*\*` and a professor would have read the backslashes on screen.
+ *
+ * So: markup goes through the sanitizer and the converter; text that contains no
+ * tag at all is already in the target language and is left alone. Anything
+ * remotely tag-shaped takes the first path, so nothing dangerous can reach the
+ * second one by looking innocent.
  *
  * Returns `undefined` for input that holds no text at all, so an empty
  * description is an absent field rather than an empty string.
@@ -100,6 +121,12 @@ export function toMarkdown(
   if (trimmed.length === 0) {
     return undefined;
   }
+
+  if (!LOOKS_LIKE_HTML.test(trimmed)) {
+    const markdown = tidy(trimmed);
+    return markdown.length === 0 ? undefined : redact(markdown, warnings, field);
+  }
+
   const clean = sanitizeHtml(trimmed, SANITIZE_OPTIONS);
   if (clean.replace(/\s+/g, '') !== trimmed.replace(/\s+/g, '')) {
     warnings?.add('HTML_SANITIZED', 'Disallowed markup was removed from the description.', field);

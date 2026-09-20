@@ -91,6 +91,15 @@ describe('the recorded source fixtures', () => {
   );
 
   /**
+   * A recorded source response, as opposed to a golden this project produced.
+   *
+   * The two live in the same folder so a source's inputs and outputs are read
+   * together, but only the recorded ones have a counterpart in `docs/research/`
+   * — a golden is ours, and there is nothing for it to drift from.
+   */
+  const isRecordedResponse = (name: string): boolean => !name.endsWith('.golden.json');
+
+  /**
    * WP-02 recorded these responses and `docs/research/` keeps them as evidence;
    * the adapters need a working copy inside the test tree. Two copies drift, so
    * this asserts they are byte-identical — a fixture edited on one side and not
@@ -103,7 +112,12 @@ describe('the recorded source fixtures', () => {
       const names = readdirSync(research).sort();
 
       expect(names.length, `${source} has fixtures`).toBeGreaterThan(0);
-      expect(readdirSync(working).sort(), `${source} file list`).toStrictEqual(names);
+      // Still an exact comparison, so a recorded response deleted from the test
+      // tree fails; goldens are excluded because they have no research copy.
+      expect(
+        readdirSync(working).filter(isRecordedResponse).sort(),
+        `${source} file list`,
+      ).toStrictEqual(names);
 
       for (const name of names) {
         expect(

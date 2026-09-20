@@ -58,6 +58,25 @@ export const TEXT_CASES: readonly NormalizeCase[] = [
     expect: { fields: { descriptionMd: 'Just a sentence.' } },
   },
   {
+    // Devfolio sends Markdown, not HTML. Running it through the HTML converter
+    // escaped every marker, so `**GNIT**` rendered as literal `\*\*GNIT\*\*`.
+    name: 'a source that already sends Markdown keeps its emphasis unescaped',
+    input: { description: '**RECURSIVE** is a hackathon at *GNIT*.' },
+    expect: { fields: { descriptionMd: '**RECURSIVE** is a hackathon at *GNIT*.' } },
+  },
+  {
+    name: 'Markdown links and lists survive the passthrough intact',
+    input: { description: '- One\n- Two\n\nSee [the rules](https://example.org/r).' },
+    expect: {
+      fields: { descriptionMd: '- One\n- Two\n\nSee [the rules](https://example.org/r).' },
+    },
+  },
+  {
+    name: 'text with anything tag-shaped still takes the sanitizing path',
+    input: { description: '**Bold** and <script>alert(1)</script>' },
+    expect: { warnings: ['HTML_SANITIZED'] },
+  },
+  {
     name: 'an empty description leaves both text fields absent',
     input: { description: '   ' },
     expect: { absent: ['descriptionMd', 'summary'] },
