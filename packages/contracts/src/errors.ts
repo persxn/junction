@@ -17,27 +17,49 @@ export const ERROR_CODES = [
 export const ErrorCode = z.enum(ERROR_CODES);
 export type ErrorCode = z.infer<typeof ErrorCode>;
 
+/** Prefix of every `type` URN (ruling R5). */
+export const PROBLEM_TYPE_PREFIX = 'urn:compintel:problem:';
+
+/** The problem `type` URN for a code, e.g. `urn:compintel:problem:NOT_FOUND`. */
+export function problemType(code: ErrorCode): string {
+  return `${PROBLEM_TYPE_PREFIX}${code}`;
+}
+
+const PROBLEM_TYPE_PATTERN = /^urn:compintel:problem:[A-Z][A-Z0-9_]*$/;
+
+/** One field-level complaint inside a `VALIDATION_FAILED` problem (ruling R5). */
+export const ProblemFieldError = z.object({
+  /** Dotted location of the offending value, e.g. `body.name` or `query.limit`. */
+  path: z.string(),
+  /** Human-readable explanation of what is wrong with that value. */
+  message: z.string().min(1),
+});
+export type ProblemFieldError = z.infer<typeof ProblemFieldError>;
+
 /**
- * RFC 9457 `application/problem+json` body, plus the three CompIntel extensions
- * the spec requires: a stable `code`, an optional human `hint` and an optional
- * `retryable` flag (§4.4).
+ * RFC 9457 `application/problem+json` body as fixed by ruling R5: `type`, `title`,
+ * `status`, `code` and `requestId` are always present; everything else is optional.
  */
 export const ProblemDetails = z.object({
-  /** URI identifying the problem type; `about:blank` when there is no specific type. */
-  type: z.url(),
+  /** `urn:compintel:problem:<code>` — a stable URI identifying the problem type. */
+  type: z.string().regex(PROBLEM_TYPE_PATTERN),
   /** Short human-readable summary, stable for a given `type`. */
   title: z.string().min(1),
   /** HTTP status code generated on the origin server. */
   status: z.int().min(100).max(599),
-  /** Human-readable explanation specific to this occurrence. */
-  detail: z.string(),
-  /** URI identifying this specific occurrence (request path or request id). */
-  instance: z.string().min(1),
-  /** CompIntel extension: the code the UI switches on. */
+  /** The code the UI switches on. */
   code: ErrorCode,
-  /** CompIntel extension: what the user can do about it. */
+  /** Correlates the response with the `X-Request-Id` header and the log entry. */
+  requestId: z.string().min(1),
+  /** Human-readable explanation specific to this occurrence. */
+  detail: z.string().min(1).optional(),
+  /** URI identifying this specific occurrence (usually the request path). */
+  instance: z.string().min(1).optional(),
+  /** What the user can do about it. */
   hint: z.string().min(1).optional(),
-  /** CompIntel extension: whether retrying the same request may succeed. */
+  /** Whether retrying the same request may succeed. */
   retryable: z.boolean().optional(),
+  /** Field-level complaints; only meaningful for `VALIDATION_FAILED`. */
+  errors: z.array(ProblemFieldError).optional(),
 });
 export type ProblemDetails = z.infer<typeof ProblemDetails>;

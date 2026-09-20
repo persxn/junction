@@ -1,8 +1,8 @@
 # Progress — newest first, keep < 150 lines
 
 ## Current
-- **Next WP: WP-04a.** Toolchain and scaffold are ready; no user action blocks it.
-- Spec: docs/ARCHITECTURE.md **v1.1.1 — ACCEPTED** (changelog at the top; rulings index §21; roadmap §19 = 46 WPs, 6 done, 40 remaining).
+- **Next WP: WP-04b** (SQLite + Drizzle + migration runner). Nothing blocks it; the shutdown registry is ready for the DB hook.
+- Spec: docs/ARCHITECTURE.md **v1.1.1 — ACCEPTED** (changelog at the top; rulings index §21 incl. R1–R10; roadmap §19 = 46 WPs, 7 done, 39 remaining).
 - ADR-0001…0018 Accepted (several amended). Decisions register: docs/DECISIONS.md (D-01…D-33, Q1…Q13, user actions U1…U6).
 
 ## Environment facts
@@ -35,6 +35,11 @@
   source file with PowerShell `Add-Content`** — it writes CRLF and `format:check` fails.
 - `corepack enable` **fails without admin** (EPERM on `C:\Program Files\nodejs\pnpx`). pnpm is installed
   globally via `npm i -g pnpm@12.4.2`; `packageManager` in package.json pins it regardless.
+- Backend: `pnpm --filter @compintel/backend dev` (tsx watch, `--dev`) · `start` · `bundle` (esbuild → `dist-bundle/`)
+  · `smoke:bundle`. Root `pnpm audit:deps` (network, R4) is **outside** verify.
+- **Windows has no POSIX signals**: `child.kill('SIGTERM')` hard-terminates. The shell's real lifeline is
+  stdin EOF (`--stdin-lifeline`) plus the Job Object; `fetch()` also silently drops a caller-set `Host` header,
+  so Host-allowlist tests must use `node:http`.
 - Rust/Tauri build: `pnpm tauri build --debug --no-bundle` (add `--no-bundle` whenever the installer isn't wanted).
 - **PATH caveat:** rustup added `%USERPROFILE%\.cargo\bin` to the *user* PATH; already-open terminals must be
   restarted or prepend it manually, otherwise `cargo`/`rustc` are not found.
@@ -42,7 +47,16 @@
 - `npm i -g` now warns about unrun install scripts (npm 11.17 `allow-scripts` gate) — harmless for pnpm's shim.
 
 ## Completed
-- **WP-03b — monorepo scaffold + `pnpm verify`** (this WP). pnpm workspace (`apps/*`, `packages/*`, `tools/*`),
+- **WP-04a — backend app factory** (this WP). `apps/backend`: zod config (flags > env > defaults, `--data-dir`,
+  `PORT`, `--dev`, `--stdin-lifeline`, dirs `data/logs/tmp/backups-local` created + write-probed), pino via
+  `multistream` → in-house daily-rotating file (keep 14, injectable clock) + stderr in `--dev`, deep key-based
+  redaction, `AppError` → RFC 9457 `problem+json` (R5) with `X-Request-Id` everywhere, Host + `X-CompIntel-Client`
+  (`timingSafeEqual`) + `@fastify/cors` (R9), `GET /api/v1/health`, `POST /api/v1/system/shutdown`,
+  `buildApp()` (no listen) + `main.ts` (READY line, signals, stdin EOF, 10 s hard timeout, empty shutdown registry).
+  Deps: fastify 5.12.5, @fastify/cors 11.3.0, fastify-type-provider-zod 7.0.0, pino 10.3.1, zod 4.6.5,
+  tsx 4.23.13, esbuild 0.28.2 (needs `allowBuilds`). `pnpm verify` 217 tests green (7 s); `smoke:bundle` passes
+  (2.2 MB `dist-bundle/main.mjs`); `pnpm audit:deps` clean. Rulings R1–R10 recorded in §21 (spec v1.1.1).
+- **WP-03b — monorepo scaffold + `pnpm verify`**. pnpm workspace (`apps/*`, `packages/*`, `tools/*`),
   `packageManager` pnpm@12.4.2, engines `>=24.19 <25`, `.npmrc` save-exact + engine-strict, `onlyBuiltDependencies: []`
   (nothing in the tree needs install scripts). **TypeScript 6.0.3** — not 7.0.2, because typescript-eslint 8.70.0
   supports `>=4.8.4 <6.1.0`. ESLint 10.11.0 flat config (recommended+stylistic TypeChecked, `no-explicit-any`,

@@ -13,6 +13,7 @@
     "lint": "eslint .",
     "typecheck": "tsc -b",
     "test": "vitest run",
+    "audit:deps": "pnpm audit --audit-level=moderate",
     "verify": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
     "clean": "tsc -b --clean"
   },

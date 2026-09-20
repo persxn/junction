@@ -5,4 +5,10 @@ packages:
 
 # Only these packages may run install scripts (ARCHITECTURE.md §15).
 # Every entry must be justified in the WP report that adds it.
-onlyBuiltDependencies: []
+allowBuilds:
+  # esbuild's postinstall moves the platform binary (@esbuild/win32-x64) into place;
+  # without it `esbuild` cannot run. Needed by the backend `bundle` script (WP-04a).
+  esbuild: true
+
+minimumReleaseAgeExclude:
+  - tsx@4.23.15

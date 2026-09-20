@@ -23,5 +23,10 @@ describe('barrel', () => {
     expect(contracts.ScrapeErrorKind).toBeDefined();
     expect(contracts.ErrorCode).toBeDefined();
     expect(contracts.ProblemDetails).toBeDefined();
+    expect(contracts.ProblemFieldError).toBeDefined();
+    expect(contracts.problemType).toBeDefined();
+    expect(contracts.HealthResponse).toBeDefined();
+    expect(contracts.ReadyLine).toBeDefined();
+    expect(contracts.StartupErrorCode).toBeDefined();
   });
 });

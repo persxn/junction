@@ -16,10 +16,14 @@ export default defineConfig({
     include: ['{apps,packages,tools}/*/src/**/*.test.ts'],
     environment: 'node',
     clearMocks: true,
+    // The backend process tests spawn a real Node child and wait for its READY
+    // line; 5 s is too tight for a cold tsx start on this machine.
+    testTimeout: 20_000,
+    hookTimeout: 20_000,
     coverage: {
       provider: 'v8',
       include: ['{apps,packages,tools}/*/src/**/*.ts'],
-      exclude: ['**/*.test.ts'],
+      exclude: ['**/*.test.ts', '**/src/testing/**', '**/src/tools/**'],
     },
   },
 });

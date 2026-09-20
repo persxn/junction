@@ -51,8 +51,8 @@ target/
 **/*.rs.bk
 
 # --- .NET ---
-bin/
-obj/
+# bin/ and obj/ are deliberately absent (ruling R10): they shadowed real source
+# directories in the JS and Rust trees.
 *.user
 *.suo
 .vs/
@@ -64,6 +64,9 @@ TestResults/
 logs/
 tmp/
 *.sqlite-journal
+
+# --- Backend bundle (WP-04a) ---
+dist-bundle/
 
 # --- Monorepo tooling (WP-03b) ---
 .eslintcache
