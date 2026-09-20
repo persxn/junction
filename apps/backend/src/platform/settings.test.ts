@@ -1,7 +1,21 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { z } from 'zod';
 
+import { AUTO_LOCK_MINUTES } from '../modules/auth/settings.js';
+import { BACKUP_DAILY_TIME_LOCAL, BACKUP_PUBLIC_KEY } from '../modules/backup/settings.js';
+import { GEOGRAPHY_POLICY } from '../modules/org/settings.js';
+// The barrel, so the registry assertions below see every module's definitions
+// and not only the ones the imports above happen to pull in.
+import '../settings.js';
 import { openMigratedDatabase, type MigratedDatabase } from '../testing/database.js';
-import { defaultSetting, SETTING_KEYS, SettingsStore } from './settings.js';
+import {
+  define,
+  definitionOf,
+  serialize,
+  settingDefinitions,
+  settingKeys,
+  SettingsStore,
+} from './settings.js';
 import { fixedClock, type Clock } from './time.js';
 
 let database: MigratedDatabase | undefined;
@@ -28,31 +42,31 @@ function open(clock: Clock = fixedClock('2023-11-14T22:13:20.000Z')): {
 describe('the typed setting registry (§6.2)', () => {
   it('reads a default for a key that has never been written', () => {
     const { store } = open();
-    expect(store.get('auth.autoLockMinutes')).toBe(15);
-    expect(defaultSetting('auth.autoLockMinutes')).toBe(15);
+    expect(store.get(AUTO_LOCK_MINUTES)).toBe(15);
+    expect(AUTO_LOCK_MINUTES.default).toBe(15);
   });
 
   it('round-trips a value', () => {
     const { store } = open();
-    store.set('auth.autoLockMinutes', 30, 'user-1');
-    expect(store.get('auth.autoLockMinutes')).toBe(30);
+    store.set(AUTO_LOCK_MINUTES, 30, 'user-1');
+    expect(store.get(AUTO_LOCK_MINUTES)).toBe(30);
   });
 
   it('overwrites rather than duplicating', () => {
     const { store, database: h } = open();
-    store.set('auth.autoLockMinutes', 20);
-    store.set('auth.autoLockMinutes', 25);
+    store.set(AUTO_LOCK_MINUTES, 20);
+    store.set(AUTO_LOCK_MINUTES, 25);
     const rows = h.db.raw.prepare('SELECT count(*) as n FROM settings').get() as { n: number };
     expect(rows.n).toBe(1);
-    expect(store.get('auth.autoLockMinutes')).toBe(25);
+    expect(store.get(AUTO_LOCK_MINUTES)).toBe(25);
   });
 
   it('records who changed it and when', () => {
     const { store, database: h } = open(fixedClock('2023-11-14T22:13:20.000Z'));
-    store.set('auth.autoLockMinutes', 30, 'user-7');
+    store.set(AUTO_LOCK_MINUTES, 30, 'user-7');
     const row = h.db.raw
       .prepare('SELECT * FROM settings WHERE key = ?')
-      .get('auth.autoLockMinutes') as {
+      .get(AUTO_LOCK_MINUTES.key) as {
       updated_by: string;
       updated_at: number;
       value_json: string;
@@ -65,34 +79,116 @@ describe('the typed setting registry (§6.2)', () => {
   it('refuses to store a value the schema rejects', () => {
     const { store } = open();
     expect(() => {
-      store.set('auth.autoLockMinutes', 0);
+      store.set(AUTO_LOCK_MINUTES, 0);
     }).toThrow();
     expect(() => {
-      store.set('auth.autoLockMinutes', 10_000);
+      store.set(AUTO_LOCK_MINUTES, 10_000);
     }).toThrow();
     // Nothing landed, so the default still applies.
-    expect(store.get('auth.autoLockMinutes')).toBe(15);
+    expect(store.get(AUTO_LOCK_MINUTES)).toBe(15);
   });
 
   it('falls back to the default when a stored value does not parse', () => {
     const { store, invalid, database: h } = open();
     h.db.raw
       .prepare('INSERT INTO settings (key, value_json, updated_at) VALUES (?,?,?)')
-      .run('auth.autoLockMinutes', 'not json', 1);
-    expect(store.get('auth.autoLockMinutes')).toBe(15);
-    expect(invalid).toHaveBeenCalledWith('auth.autoLockMinutes', 'the stored value is not JSON');
+      .run(AUTO_LOCK_MINUTES.key, 'not json', 1);
+    expect(store.get(AUTO_LOCK_MINUTES)).toBe(15);
+    expect(invalid).toHaveBeenCalledWith(AUTO_LOCK_MINUTES.key, 'the stored value is not JSON');
   });
 
   it('falls back to the default when a stored value is the wrong shape', () => {
     const { store, invalid, database: h } = open();
     h.db.raw
       .prepare('INSERT INTO settings (key, value_json, updated_at) VALUES (?,?,?)')
-      .run('auth.autoLockMinutes', '"fifteen"', 1);
-    expect(store.get('auth.autoLockMinutes')).toBe(15);
+      .run(AUTO_LOCK_MINUTES.key, '"fifteen"', 1);
+    expect(store.get(AUTO_LOCK_MINUTES)).toBe(15);
     expect(invalid).toHaveBeenCalledTimes(1);
   });
+});
 
-  it('lists the keys it knows', () => {
-    expect([...SETTING_KEYS]).toContain('auth.autoLockMinutes');
+describe('module-owned definitions', () => {
+  it('defines every key exactly once', () => {
+    const keys = settingKeys();
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+
+  it('refuses a second definition of the same key', () => {
+    expect(() =>
+      define(AUTO_LOCK_MINUTES.key, { schema: z.int(), default: 1, description: 'A duplicate.' }),
+    ).toThrow(/defined twice/);
+  });
+
+  it('gives every key a schema and a description', () => {
+    for (const definition of settingDefinitions()) {
+      expect(definition.schema, definition.key).toBeDefined();
+      expect(definition.description.trim().length, definition.key).toBeGreaterThan(0);
+      // The default must satisfy the schema, or a fresh install starts invalid.
+      expect(() => definition.schema.parse(definition.default), definition.key).not.toThrow();
+    }
+  });
+
+  it('refuses a definition with no description', () => {
+    expect(() =>
+      define('test.noDescription', { schema: z.int(), default: 1, description: '  ' }),
+    ).toThrow(/needs a description/);
+  });
+
+  it('refuses a key that is not a dotted name', () => {
+    expect(() => define('nodots', { schema: z.int(), default: 1, description: 'x' })).toThrow(
+      /dotted name/,
+    );
+    expect(() => define('Bad.Key', { schema: z.int(), default: 1, description: 'x' })).toThrow(
+      /dotted name/,
+    );
+  });
+
+  it('throws when an unregistered key is read', () => {
+    const { store } = open();
+    expect(() => definitionOf('nobody.definedThis')).toThrow(/No setting is registered/);
+    expect(() => store.getByKey('nobody.definedThis')).toThrow(/No setting is registered/);
+  });
+
+  it('resolves a registered key given as a string', () => {
+    const { store } = open();
+    store.set(AUTO_LOCK_MINUTES, 42);
+    expect(store.getByKey(AUTO_LOCK_MINUTES.key)).toBe(42);
+  });
+
+  /**
+   * Every key WP-07b shipped, still registered and still defaulting to what it
+   * defaulted to then — a professor who upgrades must not find their auto-lock
+   * or their backup folder quietly reset. Asserted literally, so moving a
+   * definition to another module cannot change either by accident.
+   */
+  it("keeps every WP-07b key, with WP-07b's value", () => {
+    expect(settingKeys()).toStrictEqual([
+      'auth.autoLockMinutes',
+      'auth.recoveryCodeHash',
+      'backup.dailyTimeLocal',
+      'backup.destinationDir',
+      'backup.privateKeyEncrypted',
+      'backup.publicKey',
+      'geography.nearbyRadiusKm',
+      'geography.policy',
+      'scraper.contactEmail',
+    ]);
+
+    const { store } = open();
+    expect(store.get(AUTO_LOCK_MINUTES)).toBe(15);
+    expect(store.get(BACKUP_DAILY_TIME_LOCAL)).toBe('13:00');
+    expect(store.get(BACKUP_PUBLIC_KEY)).toBe('');
+    expect(store.get(GEOGRAPHY_POLICY)).toStrictEqual({
+      inPerson: { allowCountries: ['IN'] },
+      online: { allow: 'ALL' },
+      hybrid: { evaluate: 'PHYSICAL_LOCATION', ifOutsideAllowed: 'SHOW_AS_ONLINE' },
+      unknownLocation: 'SHOW_FLAGGED',
+    });
+  });
+
+  it('serializes through the schema, so the wizard cannot write an invalid value', () => {
+    expect(serialize(AUTO_LOCK_MINUTES, 20)).toBe('20');
+    expect(() => serialize(AUTO_LOCK_MINUTES, 0)).toThrow();
+    expect(() => serialize(BACKUP_DAILY_TIME_LOCAL, '25:00')).toThrow();
   });
 });

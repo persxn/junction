@@ -19,6 +19,7 @@ import {
 import { hashPassword, verifyPassword } from './password.js';
 import { normalizeEmail, type AuthRepository } from './repository.js';
 import { loginFailureEntry } from './audit-entries.js';
+import { AUTO_LOCK_MINUTES } from './settings.js';
 import { LoginRateLimiter } from './throttle.js';
 import type { ActiveSession, LoginContext, LoginResult, Principal } from './types.js';
 import {
@@ -74,7 +75,7 @@ export class AuthService {
 
   /** Minutes of inactivity before the idle window lapses (`auth.autoLockMinutes`). */
   autoLockMinutes(): number {
-    return this.#settings.get('auth.autoLockMinutes');
+    return this.#settings.get(AUTO_LOCK_MINUTES);
   }
 
   #principal(userId: string): Principal | undefined {

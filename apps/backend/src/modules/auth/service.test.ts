@@ -10,6 +10,7 @@ import {
   type AuthHarness,
 } from '../../testing/auth.js';
 import { LOCKOUT_LADDER_MINUTES } from '../../domain/lockout.js';
+import { AUTO_LOCK_MINUTES } from './settings.js';
 import { LoginRateLimiter } from './throttle.js';
 import { ABSOLUTE_SESSION_MS, hashToken } from './tokens.js';
 
@@ -79,7 +80,7 @@ describe('login', () => {
   it('sets the two expiries from the settings and R33', async () => {
     const clock = new TestClock();
     const h = await withUser({ clock });
-    h.settings.set('auth.autoLockMinutes', 20);
+    h.settings.set(AUTO_LOCK_MINUTES, 20);
 
     const { session } = await h.service.login({
       email: EMAIL,

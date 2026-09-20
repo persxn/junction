@@ -7,6 +7,15 @@ import { unwrapIdentity } from '../modules/backup/keys.js';
 import { normalizeRecoveryCode } from '../modules/setup/recovery-code.js';
 import { verifyPassword } from '../modules/auth/password.js';
 import { startSetupTestServer, type SetupTestServer } from '../testing/setup-server.js';
+import {
+  AUTO_LOCK_MINUTES,
+  BACKUP_DAILY_TIME_LOCAL,
+  BACKUP_DESTINATION_DIR,
+  BACKUP_PRIVATE_KEY_ENCRYPTED,
+  BACKUP_PUBLIC_KEY,
+  RECOVERY_CODE_HASH,
+  SCRAPER_CONTACT_EMAIL,
+} from '../settings.js';
 
 /**
  * The first-run wizard over a real socket (rulings R39–R44).
@@ -170,13 +179,13 @@ describe('POST /setup/complete (ruling R40)', () => {
     const h = await fresh();
     await call(h, 'POST', '/api/v1/setup/complete', request(h.backupDir));
 
-    expect(h.settings.get('scraper.contactEmail')).toBe('compintel@example.edu');
-    expect(h.settings.get('backup.destinationDir')).toBe(path.resolve(h.backupDir));
-    expect(h.settings.get('backup.dailyTimeLocal')).toBe('13:00');
-    expect(h.settings.get('auth.autoLockMinutes')).toBe(15);
-    expect(h.settings.get('backup.publicKey')).toMatch(/^age1/);
-    expect(h.settings.get('backup.privateKeyEncrypted')).toContain('BEGIN AGE ENCRYPTED FILE');
-    expect(h.settings.get('auth.recoveryCodeHash')).toMatch(/^\$argon2id\$/);
+    expect(h.settings.get(SCRAPER_CONTACT_EMAIL)).toBe('compintel@example.edu');
+    expect(h.settings.get(BACKUP_DESTINATION_DIR)).toBe(path.resolve(h.backupDir));
+    expect(h.settings.get(BACKUP_DAILY_TIME_LOCAL)).toBe('13:00');
+    expect(h.settings.get(AUTO_LOCK_MINUTES)).toBe(15);
+    expect(h.settings.get(BACKUP_PUBLIC_KEY)).toMatch(/^age1/);
+    expect(h.settings.get(BACKUP_PRIVATE_KEY_ENCRYPTED)).toContain('BEGIN AGE ENCRYPTED FILE');
+    expect(h.settings.get(RECOVERY_CODE_HASH)).toMatch(/^\$argon2id\$/);
   }, 30_000);
 
   it('hands back recovery material that actually works (R41, R42)', async () => {
@@ -191,17 +200,17 @@ describe('POST /setup/complete (ruling R40)', () => {
     expect(result.recoveryFileName).toMatch(/^compintel-recovery-\d{8}\.txt$/);
 
     // The code is stored only as a hash, and that hash verifies (R41).
-    const hash = h.settings.get('auth.recoveryCodeHash');
+    const hash = h.settings.get(RECOVERY_CODE_HASH);
     expect(hash).not.toContain(result.recoveryCode);
     expect(await verifyPassword(hash, normalizeRecoveryCode(result.recoveryCode))).toBe(true);
     expect(await verifyPassword(hash, normalizeRecoveryCode('AAAAA-BBBBB'))).toBe(false);
 
     // The file carries the public key and the wrapped identity, and the
     // passphrase still opens it (R42).
-    expect(result.recoveryFile).toContain(h.settings.get('backup.publicKey'));
+    expect(result.recoveryFile).toContain(h.settings.get(BACKUP_PUBLIC_KEY));
     expect(result.recoveryFile).not.toContain('AGE-SECRET-KEY-1');
     expect(result.recoveryFile).not.toContain(result.recoveryCode);
-    const identity = await unwrapIdentity(h.settings.get('backup.privateKeyEncrypted'), PASSPHRASE);
+    const identity = await unwrapIdentity(h.settings.get(BACKUP_PRIVATE_KEY_ENCRYPTED), PASSPHRASE);
     expect(identity).toMatch(/^AGE-SECRET-KEY-1/);
   }, 60_000);
 

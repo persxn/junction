@@ -8,7 +8,15 @@ import {
 
 import { AppError } from '../../platform/errors.js';
 import { withAudit, type AuditLog } from '../../platform/audit.js';
-import type { SettingsStore } from '../../platform/settings.js';
+import { serialize, type SettingsStore } from '../../platform/settings.js';
+import { AUTO_LOCK_MINUTES, RECOVERY_CODE_HASH } from '../auth/settings.js';
+import {
+  BACKUP_DAILY_TIME_LOCAL,
+  BACKUP_DESTINATION_DIR,
+  BACKUP_PRIVATE_KEY_ENCRYPTED,
+  BACKUP_PUBLIC_KEY,
+} from '../backup/settings.js';
+import { SCRAPER_CONTACT_EMAIL } from '../org/settings.js';
 import { generateBackupKeys, recoveryFileName, renderRecoveryFile } from '../backup/keys.js';
 import { hashPassword } from '../auth/password.js';
 import { normalizeEmail } from '../auth/repository.js';
@@ -125,7 +133,7 @@ export class SetupService {
       required: !hasAdmin,
       hasAdmin,
       hasOrganization: this.#repository.organization() !== undefined,
-      hasBackupKey: this.#settings.get('backup.publicKey') !== '',
+      hasBackupKey: this.#settings.get(BACKUP_PUBLIC_KEY) !== '',
     };
   }
 
@@ -165,14 +173,26 @@ export class SetupService {
     ]);
 
     const createdAt = this.#clock.now();
+    // Written through the definitions, so each value is validated by the same
+    // schema a later read will use — inside R40's one transaction, which is why
+    // these are rows rather than `SettingsStore.set` calls.
     const settings: [string, string][] = [
-      ['scraper.contactEmail', JSON.stringify(normalizeEmail(request.scraperContactEmail))],
-      ['backup.publicKey', JSON.stringify(backupKeys.publicKey)],
-      ['backup.privateKeyEncrypted', JSON.stringify(backupKeys.privateKeyEncrypted)],
-      ['backup.destinationDir', JSON.stringify(pathCheck.resolvedPath)],
-      ['backup.dailyTimeLocal', JSON.stringify('13:00')],
-      ['auth.autoLockMinutes', JSON.stringify(15)],
-      ['auth.recoveryCodeHash', JSON.stringify(recoveryCodeHash)],
+      [
+        SCRAPER_CONTACT_EMAIL.key,
+        serialize(SCRAPER_CONTACT_EMAIL, normalizeEmail(request.scraperContactEmail)),
+      ],
+      [BACKUP_PUBLIC_KEY.key, serialize(BACKUP_PUBLIC_KEY, backupKeys.publicKey)],
+      [
+        BACKUP_PRIVATE_KEY_ENCRYPTED.key,
+        serialize(BACKUP_PRIVATE_KEY_ENCRYPTED, backupKeys.privateKeyEncrypted),
+      ],
+      [BACKUP_DESTINATION_DIR.key, serialize(BACKUP_DESTINATION_DIR, pathCheck.resolvedPath)],
+      [
+        BACKUP_DAILY_TIME_LOCAL.key,
+        serialize(BACKUP_DAILY_TIME_LOCAL, BACKUP_DAILY_TIME_LOCAL.default),
+      ],
+      [AUTO_LOCK_MINUTES.key, serialize(AUTO_LOCK_MINUTES, AUTO_LOCK_MINUTES.default)],
+      [RECOVERY_CODE_HASH.key, serialize(RECOVERY_CODE_HASH, recoveryCodeHash)],
     ];
 
     // R40 already puts the whole wizard in one transaction; `withAudit` puts the

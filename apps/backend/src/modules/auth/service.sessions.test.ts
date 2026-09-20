@@ -12,6 +12,7 @@ import {
   type AuthHarness,
 } from '../../testing/auth.js';
 import { ABSOLUTE_SESSION_MS, hashToken, SESSION_REFRESH_INTERVAL_MS } from './tokens.js';
+import { AUTO_LOCK_MINUTES } from './settings.js';
 
 /**
  * What a session does once it exists: rulings R33, R37 and R38. Signing in, and
@@ -102,7 +103,7 @@ describe('sessions (ruling R33)', () => {
     const clock = new TestClock();
     const h = await withUser({ clock });
     // An auto-lock longer than a session's whole life; the refresh must clamp.
-    h.settings.set('auth.autoLockMinutes', 24 * 60);
+    h.settings.set(AUTO_LOCK_MINUTES, 24 * 60);
     const token = await signIn(h);
 
     clock.advanceMs(SESSION_REFRESH_INTERVAL_MS + 1);

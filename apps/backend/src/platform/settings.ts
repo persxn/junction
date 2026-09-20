@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { z } from 'zod';
+import type { z } from 'zod';
 
 import { settings } from '../db/schema/index.js';
 import type { DatabaseHandle } from './db.js';
@@ -8,104 +8,113 @@ import { nowMs, systemClock, type Clock } from './time.js';
 /**
  * The typed setting registry (§6.2 `settings`: "typed registry in code").
  *
- * The table is one key and one JSON blob; the meaning lives here. A setting that
- * has never been written reads as its default, so a fresh install works before
- * WP-07b's wizard has run, and a value that no longer parses — an older build
- * wrote it, or someone edited the file — falls back to the default with a
- * warning rather than taking the backend down at startup.
+ * The table is one key and one JSON blob; the meaning lives in code. What
+ * changed in pre-M1 is *where* in code: a setting is now declared by the module
+ * that owns it, with `define()`, rather than in one central list that thirteen
+ * work packages would take turns editing. WP-08b brings the geography and
+ * event-type policies, WP-10 the dedup thresholds, WP-15b the ranking weights —
+ * each in its own file, none of them touching this one.
  *
- * Every key is declared here and nowhere else: no module reads a setting by a
- * string it made up, so "what is configurable" is answerable by reading one
- * file, and a typo is a type error.
+ * `define()` hands back a typed handle, and that handle is the only way to read
+ * or write the setting. Two useful things follow. A typo is a compile error
+ * rather than a silent default, exactly as it was before. And because a module
+ * must import the handle to use the setting, the definition is guaranteed to
+ * have been registered before anything reads it — there is no import-order
+ * hazard of the kind a registry of bare strings would have.
+ *
+ * A setting that has never been written reads as its default, so a fresh install
+ * works before the wizard has run; a stored value that no longer parses — an
+ * older build wrote it, or someone edited the file — falls back to the default
+ * with a warning rather than taking the backend down at startup.
  */
 
-/** `HH:mm` in the host machine's local time (§14 "Schedule and checks"). */
-const LocalTime = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
+/** What a module says about the setting it owns. */
+export interface SettingSpec<T> {
+  readonly schema: z.ZodType<T>;
+  readonly default: T;
+  /** One sentence: what this changes, for the admin screen and the registry dump. */
+  readonly description: string;
+}
 
-/** §7.4's geography policy, as the JSON the spec prints. */
-const GeographyPolicy = z.object({
-  inPerson: z.object({ allowCountries: z.array(z.string().length(2)) }),
-  online: z.object({ allow: z.enum(['ALL', 'ALLOWED_COUNTRIES']) }),
-  hybrid: z.object({
-    evaluate: z.enum(['PHYSICAL_LOCATION', 'ONLINE']),
-    ifOutsideAllowed: z.enum(['SHOW_AS_ONLINE', 'HIDE']),
-  }),
-  unknownLocation: z.enum(['SHOW_FLAGGED', 'HIDE']),
-});
+/** A registered setting. Holding one of these is what lets you read or write it. */
+export interface SettingDefinition<T> extends SettingSpec<T> {
+  readonly key: string;
+}
 
-const definitions = {
-  /**
-   * Minutes of inactivity before the session's idle expiry lapses (§10.5,
-   * ruling R33). The server enforces it; the UI's lock screen is cosmetic.
-   */
-  'auth.autoLockMinutes': {
-    schema: z
-      .int()
-      .min(1)
-      .max(24 * 60),
-    default: 15,
-  },
+/** Dotted `area.name`, so the registry sorts into something readable. */
+const KEY_PATTERN = /^[a-z][a-zA-Z0-9]*(\.[a-z][a-zA-Z0-9]*)+$/;
 
-  /**
-   * Argon2id hash of the one-time admin recovery code (ruling R41). The code
-   * itself is shown once at setup and never stored; an empty string means no
-   * code has been issued.
-   */
-  'auth.recoveryCodeHash': { schema: z.string(), default: '' },
+const registry = new Map<string, SettingDefinition<unknown>>();
 
-  /**
-   * §7.2: every scraper request identifies itself with this address, and ruling
-   * A10 forbids scraping until the wizard has set it. Empty means not set.
-   */
-  'scraper.contactEmail': { schema: z.string(), default: '' },
+/**
+ * Declares a setting. Called once, at module load, by the module that owns it.
+ *
+ * Defining the same key twice throws rather than letting the second definition
+ * win: two modules disagreeing about a key's schema or default is the kind of
+ * thing that surfaces as a mysterious value months later.
+ */
+export function define<T>(key: string, spec: SettingSpec<T>): SettingDefinition<T> {
+  if (!KEY_PATTERN.test(key)) {
+    throw new TypeError(`Setting key "${key}" is not a dotted name, e.g. "auth.autoLockMinutes".`);
+  }
+  if (registry.has(key)) {
+    throw new TypeError(`Setting "${key}" is defined twice; a key has exactly one owner.`);
+  }
+  if (spec.description.trim().length === 0) {
+    throw new TypeError(`Setting "${key}" needs a description; it is shown to an administrator.`);
+  }
+  const definition: SettingDefinition<T> = { key, ...spec };
+  registry.set(key, definition);
+  return definition;
+}
 
-  /** The age recipient backups are encrypted to — public, no secret (R42). */
-  'backup.publicKey': { schema: z.string(), default: '' },
+/**
+ * Every registered setting, sorted by key — the admin screen's list, and what
+ * the tests walk. It only sees the modules that have been imported, which is why
+ * `src/settings.ts` imports them all in one place.
+ */
+export function settingDefinitions(): readonly SettingDefinition<unknown>[] {
+  return [...registry.values()].sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+}
 
-  /** The age identity, armored and encrypted to the backup passphrase (R42). */
-  'backup.privateKeyEncrypted': { schema: z.string(), default: '' },
+/** Every registered key, sorted. */
+export function settingKeys(): readonly string[] {
+  return settingDefinitions().map((definition) => definition.key);
+}
 
-  /** Where encrypted backups are written; validated by R43 before it is stored. */
-  'backup.destinationDir': { schema: z.string(), default: '' },
+/**
+ * The definition for a key given as a string — the wizard writing a batch, the
+ * admin screen editing one by name. An unregistered key throws: a setting nobody
+ * declared has no schema to validate against and no honest default to fall back
+ * to, so answering at all would be a guess.
+ */
+export function definitionOf(key: string): SettingDefinition<unknown> {
+  const definition = registry.get(key);
+  if (definition === undefined) {
+    throw new TypeError(`No setting is registered under "${key}".`);
+  }
+  return definition;
+}
 
-  /** §14: daily backup time in the host's local time; 13:00 is when a host is likely on. */
-  'backup.dailyTimeLocal': { schema: LocalTime, default: '13:00' },
-
-  /** §7.4, the one configurable module. The wizard writes the default; WP-08b edits it. */
-  'geography.policy': {
-    schema: GeographyPolicy,
-    default: {
-      inPerson: { allowCountries: ['IN'] },
-      online: { allow: 'ALL' },
-      hybrid: { evaluate: 'PHYSICAL_LOCATION', ifOutsideAllowed: 'SHOW_AS_ONLINE' },
-      unknownLocation: 'SHOW_FLAGGED',
-    },
-  },
-
-  /** How far "nearby" reaches in Discover, measured from the primary campus (§7.4). */
-  'geography.nearbyRadiusKm': { schema: z.int().min(1).max(5_000), default: 250 },
-} as const;
-
-export type SettingKey = keyof typeof definitions;
-export type SettingValue<K extends SettingKey> = z.infer<(typeof definitions)[K]['schema']>;
-
-/** Every key the registry knows, for the admin screen and the tests. */
-export const SETTING_KEYS = Object.keys(definitions) as readonly SettingKey[];
-
-export function defaultSetting<K extends SettingKey>(key: K): SettingValue<K> {
-  return definitions[key].default as SettingValue<K>;
+/**
+ * The stored form of a value, validated first. Used by {@link SettingsStore.set}
+ * and by the setup wizard, which writes its settings inside the one transaction
+ * R40 requires and so cannot go through the store row by row.
+ */
+export function serialize<T>(definition: SettingDefinition<T>, value: T): string {
+  return JSON.stringify(definition.schema.parse(value));
 }
 
 export interface SettingsStoreOptions {
   readonly clock?: Clock;
   /** Called when a stored value cannot be parsed; the default is used instead. */
-  readonly onInvalid?: (key: SettingKey, reason: string) => void;
+  readonly onInvalid?: (key: string, reason: string) => void;
 }
 
 export class SettingsStore {
   readonly #db: DatabaseHandle;
   readonly #clock: Clock;
-  readonly #onInvalid: (key: SettingKey, reason: string) => void;
+  readonly #onInvalid: (key: string, reason: string) => void;
 
   constructor(db: DatabaseHandle, options: SettingsStoreOptions = {}) {
     this.#db = db;
@@ -118,33 +127,44 @@ export class SettingsStore {
     return nowMs(this.#clock);
   }
 
-  /** The stored value, or this key's default when it is absent or unreadable. */
-  get<K extends SettingKey>(key: K): SettingValue<K> {
-    const row = this.#db.drizzle.select().from(settings).where(eq(settings.key, key)).get();
+  /** The stored value, or this setting's default when it is absent or unreadable. */
+  get<T>(definition: SettingDefinition<T>): T {
+    const row = this.#db.drizzle
+      .select()
+      .from(settings)
+      .where(eq(settings.key, definition.key))
+      .get();
     if (row === undefined) {
-      return defaultSetting(key);
+      return definition.default;
     }
     let raw: unknown;
     try {
       raw = JSON.parse(row.valueJson);
     } catch {
-      this.#onInvalid(key, 'the stored value is not JSON');
-      return defaultSetting(key);
+      this.#onInvalid(definition.key, 'the stored value is not JSON');
+      return definition.default;
     }
-    const parsed = definitions[key].schema.safeParse(raw);
+    const parsed = definition.schema.safeParse(raw);
     if (!parsed.success) {
-      this.#onInvalid(key, parsed.error.issues[0]?.message ?? 'the stored value is not valid');
-      return defaultSetting(key);
+      this.#onInvalid(
+        definition.key,
+        parsed.error.issues[0]?.message ?? 'the stored value is not valid',
+      );
+      return definition.default;
     }
-    return parsed.data as SettingValue<K>;
+    return parsed.data;
+  }
+
+  /** The value for a key named at runtime; throws if nothing declared it. */
+  getByKey(key: string): unknown {
+    return this.get(definitionOf(key));
   }
 
   /** Writes a value after validating it; an invalid one throws rather than lands. */
-  set<K extends SettingKey>(key: K, value: SettingValue<K>, updatedBy?: string): void {
-    const parsed = definitions[key].schema.parse(value);
+  set<T>(definition: SettingDefinition<T>, value: T, updatedBy?: string): void {
     const row = {
-      key,
-      valueJson: JSON.stringify(parsed),
+      key: definition.key,
+      valueJson: serialize(definition, value),
       updatedAt: this.#nowMs,
       updatedBy: updatedBy ?? null,
     };
@@ -156,12 +176,12 @@ export class SettingsStore {
   }
 
   /** True when the key has a row of its own, whatever it says. */
-  has(key: SettingKey): boolean {
+  has(definition: SettingDefinition<unknown>): boolean {
     return (
       this.#db.drizzle
         .select({ key: settings.key })
         .from(settings)
-        .where(eq(settings.key, key))
+        .where(eq(settings.key, definition.key))
         .get() !== undefined
     );
   }

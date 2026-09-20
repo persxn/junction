@@ -19,6 +19,7 @@ import { installLifecycle } from './platform/lifecycle.js';
 import { acquireDataDirLock } from './platform/lock.js';
 import { createLogger, type LoggerHandle } from './platform/logger.js';
 import { recordAppMeta, runMigrations } from './platform/migrate.js';
+import { AUTO_LOCK_MINUTES } from './settings.js';
 import { resolveResources } from './platform/resources.js';
 import { SettingsStore } from './platform/settings.js';
 import { ShutdownRegistry } from './platform/shutdown.js';
@@ -158,7 +159,7 @@ async function main(): Promise<void> {
         migrationsApplied: migrations.applied,
         migrationsTotal: migrations.total,
         jobs: scheduler.registered().length,
-        autoLockMinutes: settings.get('auth.autoLockMinutes'),
+        autoLockMinutes: settings.get(AUTO_LOCK_MINUTES),
       },
       'backend listening',
     );
