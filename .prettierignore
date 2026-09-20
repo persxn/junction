@@ -1,0 +1,10 @@
+node_modules
+dist
+coverage
+target
+pnpm-lock.yaml
+*.tsbuildinfo
+
+# Architect-owned documents: committed verbatim, never reformatted.
+docs/
+CLAUDE.md
