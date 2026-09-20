@@ -8,10 +8,14 @@ import { useLiveUpdates } from '../api/use-live-updates.js';
 import { AuthProvider, useAuth } from '../auth/auth-context.js';
 import { ChangePasswordScreen, LockScreen, LoginScreen } from '../auth/AuthScreens.js';
 import { ConnectionScreen } from '../components/ConnectionScreen.js';
+import { SetupChecking, SetupUnreachable } from '../features/setup/SetupStatusScreens.js';
+import { SetupWizard } from '../features/setup/SetupWizard.js';
+import { useSetupStatus } from '../features/setup/use-setup-status.js';
 import { ErrorBoundary } from '../components/ErrorBoundary.js';
 import { ToastProvider, useToast } from '../components/toast/ToastProvider.js';
 import { useIdleTimer } from '../lib/use-idle-timer.js';
 import { openLogsFolder, retryBackend } from '../shell/backend.js';
+import { ConnectionProvider } from '../shell/connection-context.js';
 import { copyDiagnostics, formatDiagnostics } from '../shell/diagnostics.js';
 import { useBackend } from '../shell/use-backend.js';
 import { ThemeProvider } from '../theme/theme-context.js';
@@ -47,7 +51,7 @@ function BackendGate(): React.JSX.Element {
   const toast = useToast();
 
   if (status?.phase === 'READY' && connection !== undefined) {
-    return <SessionGate connection={connection} />;
+    return <SetupGate connection={connection} dataDir={status.dataDir} />;
   }
 
   return (
@@ -85,6 +89,35 @@ function BackendGate(): React.JSX.Element {
 }
 
 /**
+ * The first of the two gates above the session (ruling R39).
+ *
+ * While setup is required the wizard **is** the application: no router, no
+ * login screen, nothing to navigate to. That is not the security — the server
+ * answers 409 `SETUP_REQUIRED` on every other route — but it is what makes the
+ * §19 criterion "the wizard cannot be skipped" true of the UI as well.
+ */
+export function SetupGate({
+  connection,
+  dataDir,
+}: {
+  readonly connection: BackendConnection;
+  readonly dataDir: string | undefined;
+}): React.JSX.Element {
+  const { state, refresh } = useSetupStatus(connection);
+
+  if (state.kind === 'LOADING') {
+    return <SetupChecking />;
+  }
+  if (state.kind === 'FAILED') {
+    return <SetupUnreachable onRetry={refresh} />;
+  }
+  if (state.status.required) {
+    return <SetupWizard connection={connection} dataDir={dataDir} onFinished={refresh} />;
+  }
+  return <SessionGate connection={connection} />;
+}
+
+/**
  * The session half of the app: who is signed in, and which screen that means.
  *
  * It is a component of its own, and exported, so the flow tests can mount it
@@ -97,9 +130,11 @@ export function SessionGate({
   readonly connection: BackendConnection;
 }): React.JSX.Element {
   return (
-    <AuthProvider connection={connection}>
-      <AuthGate connection={connection} />
-    </AuthProvider>
+    <ConnectionProvider connection={connection}>
+      <AuthProvider connection={connection}>
+        <AuthGate connection={connection} />
+      </AuthProvider>
+    </ConnectionProvider>
   );
 }
 

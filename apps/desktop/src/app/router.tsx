@@ -7,6 +7,7 @@ import {
   redirect,
 } from '@tanstack/react-router';
 
+import { UsersPage } from '../features/admin/users/UsersPage.js';
 import { AppShell } from './AppShell.js';
 import { ADMIN_NAV, MAIN_NAV, type NavItem } from './nav.js';
 import { NotFoundPage } from './routes/NotFoundPage.js';
@@ -102,7 +103,7 @@ const adminUsersRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/admin/users',
   beforeLoad: adminGuard('user.manage'),
-  component: () => <PlaceholderPage item={navItem('admin-users')} />,
+  component: UsersPage,
 });
 
 const adminSourcesRoute = createRoute({

@@ -31,6 +31,18 @@ export const AUTH_ERROR_CODES = [
   'AUTH_RECOVERY_INVALID',
 ] as const;
 
+/**
+ * First-run setup (§4.12, rulings R39-R43). `SETUP_REQUIRED` is the gate itself:
+ * a 409 rather than a 401, because nothing is wrong with the caller - the
+ * installation simply has no administrator yet.
+ */
+export const SETUP_ERROR_CODES = [
+  'SETUP_REQUIRED',
+  'SETUP_ALREADY_DONE',
+  'SETUP_PATH_UNUSABLE',
+  'SETUP_PASSPHRASE_WEAK',
+] as const;
+
 /** Event-source and scraping failures (§7.7). */
 export const SOURCE_ERROR_CODES = ['SOURCE_UNREACHABLE'] as const;
 
@@ -44,6 +56,7 @@ export const DB_ERROR_CODES = ['DB_UNAVAILABLE', 'DB_CONSTRAINT_VIOLATED'] as co
 export const ERROR_CODES = [
   ...COMMON_ERROR_CODES,
   ...AUTH_ERROR_CODES,
+  ...SETUP_ERROR_CODES,
   ...SOURCE_ERROR_CODES,
   ...DB_ERROR_CODES,
 ] as const;

@@ -5,5 +5,6 @@ export * from './errors.js';
 export * from './ids.js';
 export * from './jobs.js';
 export * from './permissions.js';
+export * from './setup.js';
 export * from './shell.js';
 export * from './system.js';

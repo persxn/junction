@@ -3,12 +3,15 @@
 //! stays short on purpose: everything else the UI needs it asks the backend for
 //! over `/api/v1`.
 
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use tauri::{AppHandle, State};
+use tauri::{AppHandle, Manager, State};
+use tauri_plugin_dialog::DialogExt;
 
 use crate::actions;
+use crate::files::{self, WriteRefusal};
 use crate::loopback::{self, LoopbackResponse};
 use crate::settings::{SettingsStore, ShellSettings};
 use crate::supervisor::{BackendConnection, BackendStatus, Supervisor};
@@ -23,6 +26,9 @@ pub struct ShellState {
     pub settings: Arc<SettingsStore>,
     /// Set once the tray exists; `None` in the window between setup and tray.
     pub tray: Mutex<Option<TrayHandles>>,
+    /// Folders the user picked in a native dialog during this run (ruling R43).
+    /// The only places `save_text_file` will write. Empty until a dialog is used.
+    pub picked_folders: Mutex<Vec<PathBuf>>,
 }
 
 impl ShellState {
@@ -129,4 +135,76 @@ pub fn backend_get(
         authorization.as_deref(),
         PROXY_TIMEOUT,
     )
+}
+
+/// Opens the native folder picker and remembers what came back (ruling R43).
+///
+/// Remembering is the point: the page gets a path it can show, and the shell
+/// gets the only evidence it will ever accept that a human chose that folder.
+/// `None` means the user cancelled, which is not an error.
+#[tauri::command]
+pub async fn pick_folder(app: AppHandle, title: String) -> Result<Option<String>, String> {
+    let (sender, receiver) = std::sync::mpsc::channel();
+    app.dialog()
+        .file()
+        .set_title(&title)
+        .pick_folder(move |picked| {
+            // The receiver is dropped only if the command was cancelled, in
+            // which case there is nothing to deliver the answer to.
+            let _ = sender.send(picked);
+        });
+
+    let picked = receiver
+        .recv()
+        .map_err(|cause| format!("the folder dialog closed unexpectedly: {cause}"))?;
+    let Some(picked) = picked else {
+        return Ok(None);
+    };
+    let path = picked
+        .into_path()
+        .map_err(|cause| format!("that folder has no usable path: {cause}"))?;
+
+    let state = app
+        .try_state::<ShellState>()
+        .ok_or_else(|| "the shell is not ready".to_owned())?;
+    let mut folders = state
+        .picked_folders
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    if !folders.iter().any(|known| known == &path) {
+        folders.push(path.clone());
+    }
+    Ok(Some(path.to_string_lossy().into_owned()))
+}
+
+/// Writes a text file into a folder the user picked, and nowhere else (R43).
+///
+/// The wizard uses it for the recovery file. `file_name` must be a plain name:
+/// the folder comes from the shell's own record of the dialog, so the page
+/// cannot redirect the write by dressing a path up as a file name.
+#[tauri::command]
+pub fn save_text_file(
+    state: State<'_, ShellState>,
+    folder: String,
+    file_name: String,
+    contents: String,
+    overwrite: bool,
+) -> Result<String, String> {
+    let picked = state
+        .picked_folders
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .clone();
+    let target = files::authorise_write(
+        std::path::Path::new(&folder),
+        &file_name,
+        overwrite,
+        &picked,
+        &|path| path.exists(),
+    )
+    .map_err(WriteRefusal::message)?;
+
+    std::fs::write(&target, contents)
+        .map_err(|cause| format!("could not write the file: {cause}"))?;
+    Ok(target.to_string_lossy().into_owned())
 }

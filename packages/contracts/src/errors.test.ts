@@ -9,6 +9,7 @@ import {
   PROBLEM_TYPE_PREFIX,
   ProblemDetails,
   ProblemFieldError,
+  SETUP_ERROR_CODES,
   SOURCE_ERROR_CODES,
   problemType,
 } from './errors.js';
@@ -51,6 +52,10 @@ describe('ErrorCode', () => {
       'AUTH_SESSION_EXPIRED',
       'AUTH_PASSWORD_CHANGE_REQUIRED',
       'AUTH_RECOVERY_INVALID',
+      'SETUP_REQUIRED',
+      'SETUP_ALREADY_DONE',
+      'SETUP_PATH_UNUSABLE',
+      'SETUP_PASSPHRASE_WEAK',
       'SOURCE_UNREACHABLE',
       'DB_UNAVAILABLE',
       'DB_CONSTRAINT_VIOLATED',
@@ -61,6 +66,7 @@ describe('ErrorCode', () => {
     expect([...ERROR_CODES]).toStrictEqual([
       ...COMMON_ERROR_CODES,
       ...AUTH_ERROR_CODES,
+      ...SETUP_ERROR_CODES,
       ...SOURCE_ERROR_CODES,
       ...DB_ERROR_CODES,
     ]);
@@ -72,6 +78,7 @@ describe('ErrorCode', () => {
 
   it.each([
     ['AUTH_', AUTH_ERROR_CODES],
+    ['SETUP_', SETUP_ERROR_CODES],
     ['SOURCE_', SOURCE_ERROR_CODES],
     ['DB_', DB_ERROR_CODES],
   ])('prefixes every %s domain code', (prefix, codes) => {

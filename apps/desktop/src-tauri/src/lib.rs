@@ -7,6 +7,7 @@
 pub mod actions;
 pub mod backoff;
 pub mod commands;
+pub mod files;
 pub mod job;
 pub mod loopback;
 pub mod paths;
@@ -59,6 +60,11 @@ pub fn run() {
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             None,
         ))
+        // Registered for its **Rust** API only: `pick_folder` calls the dialog
+        // from here, so the shell knows which folder a human really chose
+        // (ruling R43). The page is deliberately not given the plugin's own
+        // JavaScript surface, which would let it open dialogs of its own.
+        .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             commands::backend_status,
             commands::backend_connection,
@@ -70,6 +76,8 @@ pub fn run() {
             commands::set_autostart,
             commands::hide_to_tray,
             commands::backend_get,
+            commands::pick_folder,
+            commands::save_text_file,
         ])
         .setup(|app| {
             let resource_dir = app.path().resource_dir().ok();
@@ -98,6 +106,7 @@ pub fn run() {
                 supervisor: Arc::clone(&supervisor),
                 settings: Arc::clone(&store),
                 tray: Mutex::new(None),
+                picked_folders: Mutex::new(Vec::new()),
             });
 
             // The registry and the saved preference can disagree - the user may

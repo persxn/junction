@@ -94,6 +94,21 @@ export const forbidden = (detail: string, hint?: string): AppError =>
     ...(hint === undefined ? {} : { hint }),
   });
 
+/**
+ * A request that is well-formed but cannot be applied to the current state - a
+ * duplicate e-mail, a stale `version` (§6.1). Distinct from VALIDATION_FAILED,
+ * which is about the request itself and never changes on a retry.
+ */
+export const conflict = (detail: string, hint?: string): AppError =>
+  new AppError({
+    code: 'CONFLICT',
+    status: 409,
+    title: 'That does not fit the current state',
+    detail,
+    retryable: false,
+    ...(hint === undefined ? {} : { hint }),
+  });
+
 export const validationFailed = (errors: readonly ProblemFieldError[]): AppError =>
   new AppError({
     code: 'VALIDATION_FAILED',

@@ -8,6 +8,10 @@ import { JobStore } from './jobs/store.js';
 import { setArgon2BindingPath } from './modules/auth/argon2-binding.js';
 import { AuthRepository } from './modules/auth/repository.js';
 import { AuthService } from './modules/auth/service.js';
+import { SetupRepository } from './modules/setup/repository.js';
+import { SetupService } from './modules/setup/service.js';
+import { UsersRepository } from './modules/users/repository.js';
+import { UsersService } from './modules/users/service.js';
 import { AuditLog } from './platform/audit.js';
 import { ensureDataDirs, loadConfig, writeDevConnectionFile } from './platform/config.js';
 import { openDatabase } from './platform/db.js';
@@ -80,10 +84,27 @@ async function main(): Promise<void> {
         logger.warn({ setting: key, reason }, 'a stored setting was unreadable; using the default');
       },
     });
-    const auth = new AuthService({
-      repository: new AuthRepository(db),
+    const audit = new AuditLog(db);
+    const authRepository = new AuthRepository(db);
+    const auth = new AuthService({ repository: authRepository, settings, audit });
+
+    // The first-run wizard (rulings R39-R44) and user administration. The setup
+    // service also owns the gate's cached answer, so anything that changes the
+    // administrator population tells it to look again.
+    const setup = new SetupService({
+      repository: new SetupRepository(db),
       settings,
-      audit: new AuditLog(db),
+      audit,
+      dataDir: config.dataDir,
+      appVersion: config.appVersion,
+    });
+    const users = new UsersService({
+      repository: new UsersRepository(db),
+      auth: authRepository,
+      audit,
+      onAdministratorsChanged: () => {
+        setup.invalidate();
+      },
     });
 
     // Constructed before the HTTP layer so its `resources` hook is registered
@@ -103,6 +124,8 @@ async function main(): Promise<void> {
     const app = buildApp(config, logger, {
       shutdown,
       auth: () => auth,
+      setup: () => setup,
+      users: () => users,
       onShutdownRequested: () => {
         lifecycle.start('api');
       },

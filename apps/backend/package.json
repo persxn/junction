@@ -26,6 +26,7 @@
     "@compintel/contracts": "workspace:*",
     "@fastify/cors": "11.3.0",
     "@node-rs/argon2": "2.2.1",
+    "age-encryption": "0.3.1",
     "better-sqlite3": "13.0.3",
     "drizzle-orm": "0.45.2",
     "fastify": "5.12.5",

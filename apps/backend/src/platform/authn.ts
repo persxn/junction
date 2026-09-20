@@ -38,6 +38,13 @@ export function publicPaths(apiPrefix: string): ReadonlySet<string> {
     // shell we started. Flagged for the architect; in server mode it needs an
     // admin session.
     `${apiPrefix}/system/shutdown`,
+    // Ruling R39: the UI asks this before it knows whether there is anyone to
+    // sign in as. It only ever says whether the wizard is needed.
+    `${apiPrefix}/setup/status`,
+    // Also always open, and always refused once an administrator exists: a 401
+    // here would suggest that signing in lets you run setup again, and nothing
+    // does. The service answers `SETUP_ALREADY_DONE` instead.
+    `${apiPrefix}/setup/complete`,
   ]);
 }
 
@@ -55,6 +62,13 @@ export function passwordChangeAllowedPaths(apiPrefix: string): ReadonlySet<strin
 
 export interface AuthenticationOptions {
   readonly apiPrefix: string;
+  /**
+   * Ruling R39: while the wizard is still required there is no account to
+   * authenticate as, so the rest of `/setup/*` — the folder probe — answers
+   * without a session. Once an administrator exists it needs one like
+   * everything else.
+   */
+  readonly setupRequired?: () => boolean;
   /**
    * Resolved lazily: the service is built after the database opens, and some
    * tests build an app with no database at all, where every guarded route must
@@ -75,10 +89,16 @@ export function requireSession(request: FastifyRequest): ActiveSession {
 export function registerAuthentication(app: FastifyInstance, options: AuthenticationOptions): void {
   const open = publicPaths(options.apiPrefix);
   const duringForcedChange = passwordChangeAllowedPaths(options.apiPrefix);
+  const setupPrefix = `${options.apiPrefix}/setup/`;
+  const setupRequired = options.setupRequired ?? ((): boolean => false);
 
   app.addHook('preHandler', (request, _reply, done) => {
     const path = pathOf(request.url);
     if (request.method === 'OPTIONS' || open.has(path)) {
+      done();
+      return;
+    }
+    if (path.startsWith(setupPrefix) && setupRequired()) {
       done();
       return;
     }

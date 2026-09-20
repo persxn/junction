@@ -3,11 +3,19 @@ import { RouterProvider } from '@tanstack/react-router';
 import { render, screen, type RenderResult } from '@testing-library/react';
 
 import { createQueryClient } from '../api/query.js';
+import { ConnectionProvider } from '../shell/connection-context.js';
 import type { AuthView } from '../auth/auth-context.js';
 import { createAppRouter } from '../app/router.js';
 import { ToastProvider } from '../components/toast/ToastProvider.js';
 import { ThemeProvider } from '../theme/theme-context.js';
 import { mockAuth, MockAuthProvider, type MockAuthOptions } from './auth.js';
+
+/** A connection that points nowhere; tests that make calls stub `fetch`. */
+export const TEST_CONNECTION = {
+  baseUrl: 'http://127.0.0.1:52991',
+  clientSecret: 'a'.repeat(64),
+  generation: 2,
+} as const;
 
 /**
  * Renders a component inside the providers the real app gives it. Tests that
@@ -17,7 +25,9 @@ export function renderWithProviders(ui: React.ReactNode): RenderResult {
   return render(
     <ThemeProvider>
       <QueryClientProvider client={createQueryClient()}>
-        <ToastProvider>{ui}</ToastProvider>
+        <ConnectionProvider connection={TEST_CONNECTION}>
+          <ToastProvider>{ui}</ToastProvider>
+        </ConnectionProvider>
       </QueryClientProvider>
     </ThemeProvider>,
   );

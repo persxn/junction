@@ -85,6 +85,37 @@ export async function backendGet(path: string, authorization?: string): Promise<
   );
 }
 
+/**
+ * Opens the native folder picker and returns what the user chose, or
+ * `undefined` if they cancelled (ruling R43).
+ *
+ * The shell remembers the answer: it is the only evidence it will accept that a
+ * human picked a folder, and {@link saveTextFile} will write nowhere else.
+ */
+export async function pickFolder(title: string): Promise<string | undefined> {
+  const picked = await invoke<string | null>('pick_folder', { title });
+  return picked ?? undefined;
+}
+
+/**
+ * Writes a text file into a folder {@link pickFolder} returned. The name must be
+ * a plain file name; the shell refuses a path, and refuses to replace an
+ * existing file unless `overwrite` says so. Returns the full path written.
+ */
+export async function saveTextFile(options: {
+  readonly folder: string;
+  readonly fileName: string;
+  readonly contents: string;
+  readonly overwrite?: boolean;
+}): Promise<string> {
+  return invoke<string>('save_text_file', {
+    folder: options.folder,
+    fileName: options.fileName,
+    contents: options.contents,
+    overwrite: options.overwrite ?? false,
+  });
+}
+
 /** Subscribes to lifecycle transitions; the returned function unsubscribes. */
 export async function onBackendStatus(handler: (status: Status) => void): Promise<UnlistenFn> {
   return listen<unknown>(BACKEND_STATUS_EVENT, (event) => {

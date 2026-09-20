@@ -1,11 +1,11 @@
 import { randomBytes } from 'node:crypto';
-import { cpSync, existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { HealthResponse } from '@compintel/contracts';
 
-import { devRoot } from '../testing/temp.js';
+import { devRoot, removeTempDir } from '../testing/temp.js';
 import { baseUrlOf, spawnBackend, type BackendProcess } from '../testing/backend-process.js';
 
 const DIST = fileURLToPath(new URL('../../dist-bundle/', import.meta.url));
@@ -18,6 +18,23 @@ const DIST = fileURLToPath(new URL('../../dist-bundle/', import.meta.url));
 const STAGE = path.join(devRoot(), 'bundle-smoke');
 const BUNDLE = path.join(STAGE, 'main.mjs');
 const DATA_DIR = path.join(STAGE, 'data-dir');
+/** Beside the data directory, never inside it: ruling R43 refuses the latter. */
+const BACKUP_DIR = path.join(STAGE, 'backups');
+
+/** What the first-run wizard sends (rulings R40-R44). */
+const SETUP_REQUEST = {
+  organization: { name: 'Smoke Institute of Technology', shortName: 'SIT' },
+  department: { name: 'Computer Science', code: 'CSE' },
+  campus: { name: 'Main Campus', lat: 12.9716, lon: 77.5946 },
+  admin: {
+    email: 'smoke@example.edu',
+    displayName: 'Smoke Administrator',
+    password: 'smoke-bundle-admin-pw-1',
+  },
+  scraperContactEmail: 'compintel@example.edu',
+  backupDir: BACKUP_DIR,
+  backupPassphrase: 'smoke bundle backup passphrase',
+} as const;
 
 function check(condition: boolean, message: string): void {
   if (!condition) {
@@ -50,6 +67,38 @@ function preMigrationCopies(): string[] {
 const clientSecret = randomBytes(32).toString('hex');
 const steps: string[] = [];
 
+/** Only the fields this smoke asserts on; everything else stays `unknown`. */
+interface JsonBody {
+  readonly code?: string;
+  readonly ok?: boolean;
+  readonly token?: string;
+  readonly recoveryCode?: unknown;
+  readonly recoveryFile?: unknown;
+  readonly [key: string]: unknown;
+}
+
+interface JsonResponse {
+  readonly status: number;
+  readonly body: JsonBody;
+}
+
+/** A POST with the client header, parsed leniently: a 500 has a body too. */
+async function post(baseUrl: string, route: string, body: unknown): Promise<JsonResponse> {
+  const response = await fetch(`${baseUrl}/api/v1${route}`, {
+    method: 'POST',
+    headers: { 'X-CompIntel-Client': clientSecret, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const text = await response.text();
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    parsed = { raw: text };
+  }
+  return { status: response.status, body: parsed as JsonBody };
+}
+
 async function runOnce(label: string): Promise<BackendProcess> {
   const backend = await spawnBackend({
     command: process.execPath,
@@ -60,8 +109,9 @@ async function runOnce(label: string): Promise<BackendProcess> {
   return backend;
 }
 
-rmSync(STAGE, { recursive: true, force: true });
+removeTempDir(STAGE);
 mkdirSync(STAGE, { recursive: true });
+mkdirSync(BACKUP_DIR, { recursive: true });
 
 try {
   cpSync(DIST, STAGE, { recursive: true });
@@ -87,21 +137,64 @@ try {
     `/health 200: database.ok=true migrationsApplied=${health.database.migrationsApplied.toString()}`,
   );
 
-  // Proves the Argon2id addon under `native\` loaded (R17). A login for an
-  // account that does not exist still hashes, so a 401 with this code means the
-  // addon ran; a bundle that could not load it would answer 500 instead.
-  const login = await fetch(`${baseUrl}/api/v1/auth/login`, {
-    method: 'POST',
-    headers: { 'X-CompIntel-Client': clientSecret, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: 'nobody@example.edu', password: 'not-the-password' }),
+  // A brand-new data directory has no administrator, so ruling R39's gate is on:
+  // every route but the exempt few answers 409 SETUP_REQUIRED. Until WP-07b this
+  // was where the smoke logged in; the gate now comes first, so the login proof
+  // moves below the wizard.
+  const gated = await post(baseUrl, '/auth/login', {
+    email: 'nobody@example.edu',
+    password: 'not-the-password',
   });
-  const loginBody = (await login.json()) as { code?: string };
   check(
-    login.status === 401 && loginBody.code === 'AUTH_INVALID_CREDENTIALS',
-    `/auth/login answered ${login.status.toString()} ${String(loginBody.code)}, ` +
-      'expected 401 AUTH_INVALID_CREDENTIALS (the Argon2id addon did not load)',
+    gated.status === 409 && gated.body.code === 'SETUP_REQUIRED',
+    `/auth/login answered ${gated.status.toString()} ${String(gated.body.code)}, ` +
+      'expected 409 SETUP_REQUIRED (the R39 gate is not on)',
   );
-  steps.push('/auth/login 401 AUTH_INVALID_CREDENTIALS: the Argon2id addon loaded from native\\');
+  steps.push('/auth/login 409 SETUP_REQUIRED: the R39 gate holds on a fresh data directory');
+
+  // The wizard, driven the way the UI drives it. This is also what proves the
+  // two native addons under `native\` loaded (R17): `setup/complete` hashes the
+  // admin password and the recovery code with Argon2id, and the login below
+  // verifies that hash. A bundle that could not load the addon answers 500 here.
+  const checked = await post(baseUrl, '/setup/check-path', { path: BACKUP_DIR });
+  check(
+    checked.status === 200 && checked.body.ok === true,
+    `/setup/check-path refused ${BACKUP_DIR}: ${JSON.stringify(checked.body)}`,
+  );
+  steps.push('/setup/check-path 200 ok=true: the write probe ran on a real folder');
+
+  const completed = await post(baseUrl, '/setup/complete', SETUP_REQUEST);
+  check(
+    completed.status === 200 && typeof completed.body.recoveryCode === 'string',
+    `/setup/complete answered ${completed.status.toString()}: ${JSON.stringify(completed.body)}`,
+  );
+  check(
+    typeof completed.body.recoveryFile === 'string' &&
+      completed.body.recoveryFile.includes('age1') &&
+      !completed.body.recoveryFile.includes('AGE-SECRET-KEY-'),
+    'the recovery file is missing the public key or carries a plaintext identity (R42)',
+  );
+  steps.push(
+    '/setup/complete 200: age keys generated, recovery file carries no plaintext identity',
+  );
+
+  const login = await post(baseUrl, '/auth/login', {
+    email: SETUP_REQUEST.admin.email,
+    password: SETUP_REQUEST.admin.password,
+  });
+  check(
+    login.status === 200 && typeof login.body.token === 'string',
+    `/auth/login answered ${login.status.toString()} ${String(login.body.code)}, ` +
+      'expected 200 (the Argon2id addon did not load)',
+  );
+  steps.push('/auth/login 200 for the new administrator: the Argon2id addon loaded from native\\');
+
+  const done = await post(baseUrl, '/setup/complete', SETUP_REQUEST);
+  check(
+    done.status === 409 && done.body.code === 'SETUP_ALREADY_DONE',
+    `a second /setup/complete answered ${done.status.toString()} ${String(done.body.code)}`,
+  );
+  steps.push('/setup/complete 409 SETUP_ALREADY_DONE the second time');
 
   check(
     preMigrationCopies().length === 0,
@@ -145,5 +238,8 @@ try {
   }
   process.stdout.write('smoke:bundle PASSED\n');
 } finally {
-  rmSync(STAGE, { recursive: true, force: true });
+  // Best-effort, and deliberately not `rmSync`: Windows holds the SQLite and
+  // addon handles for a moment after the child exits, and an EPERM here used to
+  // replace the real failure with a cleanup error.
+  removeTempDir(STAGE);
 }

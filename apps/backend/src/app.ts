@@ -5,6 +5,9 @@ import Fastify, { LogController, type FastifyBaseLogger, type FastifyInstance } 
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 
 import type { AuthService } from './modules/auth/service.js';
+import { registerSetupGate } from './modules/setup/gate.js';
+import type { SetupService } from './modules/setup/service.js';
+import type { UsersService } from './modules/users/service.js';
 import { registerAuthentication } from './platform/authn.js';
 import type { Config } from './platform/config.js';
 import { registerErrorHandling } from './platform/errors.js';
@@ -12,9 +15,11 @@ import { registerRequestLogging } from './platform/request-log.js';
 import { registerSecurity } from './platform/security.js';
 import { ShutdownRegistry } from './platform/shutdown.js';
 import { StreamHub } from './platform/stream.js';
+import { adminUsersRoutes } from './routes/admin-users.js';
 import { authRoutes } from './routes/auth.js';
 import { healthRoutes } from './routes/health.js';
 import { meRoutes } from './routes/me.js';
+import { setupRoutes } from './routes/setup.js';
 import { streamRoutes } from './routes/stream.js';
 import { systemRoutes } from './routes/system.js';
 
@@ -46,6 +51,9 @@ export interface BuildAppOptions {
    * backend without one answers 401 on every route that needs a session.
    */
   readonly auth?: () => AuthService | undefined;
+  /** Resolved per request for the same reason as `auth`; drives the R39 gate. */
+  readonly setup?: () => SetupService | undefined;
+  readonly users?: () => UsersService | undefined;
   /** Shared so jobs and services can publish; one hub per process (R36). */
   readonly streamHub?: StreamHub;
   /** Injected in tests so a heartbeat does not take fifteen real seconds. */
@@ -94,7 +102,18 @@ export function buildApp(
   registerSecurity(server, config);
 
   const auth = options.auth ?? ((): AuthService | undefined => undefined);
-  registerAuthentication(server, { apiPrefix: API_PREFIX, auth });
+  const setup = options.setup ?? ((): SetupService | undefined => undefined);
+  const users = options.users ?? ((): UsersService | undefined => undefined);
+
+  // Order is hook order, and this order is the point: a request on a fresh
+  // install is refused for being unconfigured (R39) before it is refused for
+  // being unauthenticated, because "sign in" is not advice anyone can follow yet.
+  registerSetupGate(server, { apiPrefix: API_PREFIX, setup });
+  registerAuthentication(server, {
+    apiPrefix: API_PREFIX,
+    auth,
+    setupRequired: () => setup()?.isRequired() ?? false,
+  });
 
   const shutdown = options.shutdown ?? new ShutdownRegistry();
   const streamHub = options.streamHub ?? new StreamHub();
@@ -109,6 +128,8 @@ export function buildApp(
   void server.register(systemRoutes({ onShutdownRequested }), { prefix: API_PREFIX });
   void server.register(authRoutes({ auth }), { prefix: API_PREFIX });
   void server.register(meRoutes({ auth }), { prefix: API_PREFIX });
+  void server.register(setupRoutes({ setup }), { prefix: API_PREFIX });
+  void server.register(adminUsersRoutes({ users }), { prefix: API_PREFIX });
   void server.register(
     streamRoutes({
       hub: streamHub,

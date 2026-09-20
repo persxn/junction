@@ -67,31 +67,35 @@
 - `npm i -g` now warns about unrun install scripts (npm 11.17 `allow-scripts` gate) — harmless for pnpm's shim.
 
 ## Completed
-- **WP-07a — auth core** (this WP). Contracts `permissions.ts` (R32 matrix, ~500 generated cases) + `auth.ts`;
-  migrations 0002/0003 (organization + identity + `audit_log`, append-only triggers, seeded roles);
-  `modules/auth/` — Argon2id **m=128 MiB t=6 p=1, 322-409 ms measured here** (R17 addon path), opaque
-  SHA-256-hashed sessions (R33), the R34 lockout ladder, `policy.assertCan` off the contracts map;
-  `platform/` audit hash chain + `verifyChain` (R35), typed settings, the session preHandler (R38), SSE hub
-  (R36); routes `/auth/*`, `/me`, `/me/permissions`, `/stream`, `/system/client-log`. UI: login/lock/forced-change
-  screens, idle timer, admin rail and routes by permission, **token in memory only** (asserted), SSE client with
-  the R30 polling degradation. `backend_get` forwards `Authorization` (R27). **1607 tests** (1347 node + 260
-  desktop). **Fixed on the built app: `/stream` wrote its head raw and dropped the CORS headers, so the WebView
-  blocked every stream** — now carried over, with a test. `seed:dev` makes the first accounts until WP-07b.
+- **WP-07b — first-run wizard + user administration** (this WP, closes M0). R39 gate = 409
+  `SETUP_REQUIRED` before the session hook (exempt: `/health`, `/setup/*`, `/system/client-log`,
+  `/system/shutdown`); `modules/setup/` writes organization + department + campus + first admin +
+  settings + age keys in **one transaction** (R40); `modules/backup/keys.ts` = `age-encryption` 0.3.1
+  X25519 identity wrapped to a scrypt passphrase (**work factor 18**) + the recovery-file text (R42);
+  one-time recovery code hashed into `auth.recoveryCodeHash` (R41); `settings.ts` is now the **one typed
+  registry**. `modules/users/` = admin CRUD, last-admin protection, `version` 409s. Shell `files.rs`:
+  `pick_folder`/`save_text_file` limited to a folder picked in this run (R43, `tauri-plugin-dialog`
+  2.7.3, Rust API only). **1736 tests** (1429 node + 307 desktop); cargo 56; **`smoke:bundle` now drives
+  the whole wizard on a fresh data dir**, second launch skips it.
+- **WP-07a — auth core.** Contracts `permissions.ts` (R32 matrix) + `auth.ts`; migrations 0002/0003
+  (organization + identity + `audit_log`, append-only triggers, seeded roles); `modules/auth/` — Argon2id
+  **m=128 MiB t=6 p=1, 322-409 ms here** (R17 addon path), opaque SHA-256 sessions (R33), the R34 lockout
+  ladder, `policy.assertCan`; `platform/` audit hash chain + `verifyChain` (R35), session preHandler (R38),
+  SSE hub (R36); routes `/auth/*`, `/me`, `/me/permissions`, `/stream`, `/system/client-log`. UI: login/
+  lock/forced-change, idle timer, rail and routes by permission, **token in memory only**, SSE client with
+  R30 degradation. **`/stream` must write its head through Fastify or the WebView loses the CORS headers.**
 - **WP-06 — UI foundation.** Tailwind v4 (`@tailwindcss/vite`) + `src/styles/tokens.css`: one `--ci-*` token
-  set, both themes, mapped onto Tailwind's namespaces with `@theme inline`, so `[data-theme='dark']` re-points
-  every utility at once; every text/surface pair is **measured** at >= 4.5:1 in a test. Theme light/dark/**system**.
-  `src/shell/backend.ts` is IPC only; the API client lives in `src/api/` (typed `ApiProblem`, `Authorization`
-  seam, generation retry, R27's **2 s** timeout). TanStack Query + Router, app shell (collapsible rail, top bar,
-  user menu), cmdk palette, ErrorBoundary/toasts/Skeleton/EmptyState, `<ConnectionScreen>` for the R26 cases.
-  Vitest split into `node` + `jsdom` projects; axe clean on every route. Manual run verified incl.
-  DATA_DIR_LOCKED → Retry → shell.
+  set, both themes via `@theme inline`, every text/surface pair **measured** at >= 4.5:1 in a test; theme
+  light/dark/**system**. `src/shell/backend.ts` is IPC only; the API client lives in `src/api/` (typed
+  `ApiProblem`, `Authorization` seam, generation retry, R27's **2 s** timeout). TanStack Query + Router, app
+  shell (rail, top bar, user menu), cmdk palette, ErrorBoundary/toasts/Skeleton/EmptyState,
+  `<ConnectionScreen>` for the R26 cases. Vitest split into `node` + `jsdom`; axe clean on every route.
 - **WP-05b — tray, close-to-tray, single instance, autostart, LNA check.** Tray menu (Open · Close to
-  tray · Start with Windows · Open logs · Exit completely) via the `tray-icon` feature +
-  `tauri-plugin-single-instance` 2.4.5 and `tauri-plugin-autostart` 2.5.1; preferences in
-  `<dataDir>\shell-settings.json` (R28), close-to-tray on by default (D-14). `loopback.rs` also serves the
-  read-only, prefix-locked `backend_get` — the **finding-F9 fallback** (R27). **LNA measured**
-  (docs/research/webview2-local-network-access.md): with the flags on the loopback `fetch` *never settles*,
-  so the fallback is driven by a timeout, not a rejection. 439 tests; cargo 46; A-D end-to-end passes.
+  tray · Start with Windows · Open logs · Exit completely) via `tray-icon` + `tauri-plugin-single-instance`
+  2.4.5 and `tauri-plugin-autostart` 2.5.1; preferences in `<dataDir>\shell-settings.json` (R28),
+  close-to-tray on by default (D-14). `loopback.rs` also serves the prefix-locked `backend_get` — the
+  **F9 fallback** (R27). **LNA measured** (docs/research/webview2-local-network-access.md): with the flags
+  on, the loopback `fetch` *never settles*, so the fallback is driven by a timeout, not a rejection.
 - **WP-05a — Tauri shell + backend supervision.** `apps/desktop` (React 19 + Vite 8, own tsconfig per R6)
   with `src-tauri` inside; `rust-toolchain.toml` pins 1.98.1 (R1). Rust: `backoff` (1→2→4…60 s, 5 crashes/
   10 min → FAILED), `ready` (R7), `secret` (32 fresh bytes per spawn, A2), `paths` (A20), `job`
@@ -102,42 +106,38 @@
 - **WP-04c — DB-backed job runner.** Migration 0001 = `job_state` (§6.2 columns + `kind`, `last_outcome`,
   `last_duration_ms`, `last_error_message`, CHECKs from the contracts enums, index on `next_due_at`);
   `packages/contracts/src/jobs.ts` (JobKind SCRAPE/LLM/GENERAL, JobTrigger, JobOutcome + ABORTED/CRASHED,
-  JobSnapshot). `apps/backend/src/jobs/`: `schedule` (jitter, 15→30→60 min…12 h), `outcome` (state
-  machine), `store` (conditional-UPDATE claim = single-flight), `run`, `scheduler` (30 s tick, catch-up,
-  2 scrape / 1 LLM / 4 general, stale lease → CRASHED, SKIPPED_OFFLINE, manual `trigger()`, `resources`
-  stop hook), `online` (interface-table check, no network call). Wired in `main.ts` with **no jobs
-  registered** — each later WP registers its own. 422 tests green. **No new dependencies.**
+  JobSnapshot). `apps/backend/src/jobs/`: `schedule` (jitter, 15→30→60 min…12 h), `outcome` (state machine),
+  `store` (conditional-UPDATE claim = single-flight), `run`, `scheduler` (30 s tick, catch-up, 2 scrape /
+  1 LLM / 4 general, stale lease → CRASHED, SKIPPED_OFFLINE, manual `trigger()`), `online` (interface-table
+  check). Wired in `main.ts` with **no jobs registered** — each later WP registers its own.
 - **WP-04b — SQLite + Drizzle + migrations + data-dir lock + UUIDv7.** better-sqlite3 13.0.3, drizzle-orm
   0.45.2 (drizzle-kit 0.31.10 dev). `ids.ts` UUIDv7 (RFC 9562, monotonic, clock-regression safe); `lock.ts`
   `<dataDir>\backend.lock` (R15); `db.ts` R16 PRAGMAs + `quick_check` + checkpoint/close; `migrate.ts`
   journal pending detection + `VACUUM INTO backups-local\pre-migration-*.db` (keep 5), failure →
   MIGRATION_FAILED; migration 0000 = `app_meta`; no `drizzle-kit push` (a test enforces it). Also the
-  WP-04a review fixes R11–R18 and the bundle's `native\` + `migrations\` (R17). 340 tests green.
+  WP-04a review fixes R11–R18 and the bundle's `native\` + `migrations\` (R17).
 - **WP-04a — backend app factory**. `apps/backend`: zod config (flags > env > defaults, `--data-dir`,
   `PORT`, `--dev`, `--stdin-lifeline`, dirs `data/logs/tmp/backups-local` created + write-probed), pino via
   `multistream` → in-house daily-rotating file (keep 14, injectable clock) + stderr in `--dev`, deep key-based
   redaction, `AppError` → RFC 9457 `problem+json` (R5) with `X-Request-Id` everywhere, Host + `X-CompIntel-Client`
   (`timingSafeEqual`) + `@fastify/cors` (R9), `GET /api/v1/health`, `POST /api/v1/system/shutdown`,
-  `buildApp()` (no listen) + `main.ts` (READY line, signals, stdin EOF, 10 s hard timeout, empty shutdown registry).
-  Deps: fastify 5.12.5, @fastify/cors 11.3.0, fastify-type-provider-zod 7.0.0, pino 10.3.1, zod 4.6.5,
-  tsx 4.23.13, esbuild 0.28.2 (needs `allowBuilds`). 217 tests green. Rulings R1–R10 → §21 (spec v1.1.1).
+  `buildApp()` (no listen) + `main.ts` (READY line, signals, stdin EOF, 10 s hard timeout). Deps: fastify
+  5.12.5, @fastify/cors 11.3.0, fastify-type-provider-zod 7.0.0, pino 10.3.1, zod 4.6.5, tsx 4.23.13,
+  esbuild 0.28.2 (needs `allowBuilds`). Rulings R1–R10 → §21 (spec v1.1.1).
 - **WP-03b — monorepo scaffold + `pnpm verify`**. pnpm workspace (`apps/*`, `packages/*`, `tools/*`),
   engines `>=24.19 <25`, `.npmrc` save-exact + engine-strict. **TypeScript 6.0.3** — not 7.0.2, because
-  typescript-eslint 8.70.0 supports `>=4.8.4 <6.1.0`. ESLint 10.11.0 flat config (TypeChecked +
-  `no-explicit-any`, `no-floating-promises`, `consistent-type-imports`), Prettier 3.9.8 (`docs/` excluded),
-  Vitest 5.0.1. `packages/contracts` (zod 4.6.5): API_VERSION, the 5 spec enums, ProblemDetails + ErrorCode.
-  Verified green from a fresh `git clone` + `--frozen-lockfile`; injected lint/type/test faults each exit 1.
+  typescript-eslint 8.70.0 supports `>=4.8.4 <6.1.0`. ESLint 10.11.0 flat config, Prettier 3.9.8 (`docs/`
+  excluded), Vitest 5.0.1. `packages/contracts` (zod 4.6.5): API_VERSION, the 5 spec enums, ProblemDetails +
+  ErrorCode. Verified green from a fresh clone + `--frozen-lockfile`; injected faults each exit 1.
 - **WP-03a — toolchain install + build probes.** VS Build Tools 2022, rustup + stable-msvc, pnpm 12.4.2.
   **Probe A**: better-sqlite3 → SQLite 3.53.4, WAL, FTS5 porter + trigram, a JS `haversine()` from SQL,
-  `db.backup()` 4.1 ms, `VACUUM INTO` 2.9 ms; @node-rs/argon2 2.2.1 argon2id m=19456/t=2/p=1 →
-  **12.8 ms per hash**. Prebuilds only. **Probe B**: a Tauri 2 hello world built in **2m 13s** cold.
-
-- **WP-00…WP-02b — recon, spec, ADRs, source feasibility** (d159c78, 6955690, 58f7f4f, 7b61c80, ef8bd55;
-  architect review → spec v1.1 in d781885). Repo and docs/ tree; ARCHITECTURE.md verbatim + ADR-0001…0015 +
-  DECISIONS.md; docs/handoff/WP-01-review.md (10 findings, 20 ambiguities, per-WP sizes and splits);
-  **source matrix** in docs/research/source-feasibility.md — CTFtime/CLIST/Devfolio APPROVED_WITH_LIMITS
-  (CLIST blocked on an API key), **Devpost and Unstop MANUAL_IMPORT_ONLY**, 117 college sites PENDING_REVIEW;
-  sanitized fixtures for CTFtime + Devfolio; 13 platform robots.txt in docs/research/robots/.
+  `db.backup()` 4.1 ms, `VACUUM INTO` 2.9 ms; @node-rs/argon2 2.2.1 m=19456/t=2/p=1 → **12.8 ms/hash**.
+  Prebuilds only. **Probe B**: a Tauri 2 hello world built in **2m 13s** cold.
+- **WP-00…WP-02b — recon, spec, ADRs, source feasibility** (d159c78…ef8bd55; architect review → spec v1.1
+  in d781885). ARCHITECTURE.md + ADR-0001…0015 + DECISIONS.md; docs/handoff/WP-01-review.md (10 findings,
+  20 ambiguities); **source matrix** in docs/research/source-feasibility.md — CTFtime/CLIST/Devfolio
+  APPROVED_WITH_LIMITS (CLIST needs an API key), **Devpost and Unstop MANUAL_IMPORT_ONLY**, 117 college
+  sites PENDING_REVIEW; fixtures for CTFtime + Devfolio; 13 robots.txt in docs/research/robots/.
 
 ## Open issues
 All WP-01/WP-02 findings are ruled on in ARCHITECTURE.md §21. Still open:

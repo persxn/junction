@@ -122,4 +122,31 @@
       transparent 60%
     );
   }
+  /*
+   * One step of the setup wizard arriving. §16.3 allows 120-200 ms ease-out for
+   * "list changes", which is what a step is: the card stays, its contents
+   * change. `prefers-reduced-motion` turns it off rather than shortening it -
+   * a fade that still moves is still motion.
+   */
+  .ci-step {
+    animation: ci-step-in var(--ci-motion-slow) var(--ci-motion-ease) both;
+  }
+
+  @keyframes ci-step-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ci-step {
+      animation: none;
+    }
+  }
 }
