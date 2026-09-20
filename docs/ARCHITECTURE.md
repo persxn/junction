@@ -1,6 +1,6 @@
 # Competition Intel — Architecture Specification
 
-**Version:** 1.1 · **Date:** 20 Sep 2026 · **Status:** ACCEPTED — implementation baseline (amended after WP-00…WP-02b)
+**Version:** 1.1.1 · **Date:** 20 Sep 2026 · **Status:** ACCEPTED — implementation baseline (amended after WP-00…WP-02b)
 **Author:** Architect (Claude, Cowork session) · **Implementer:** Claude Code (worker session)
 
 > **How to use this document.** This is the implementation source of truth. The worker must not
@@ -16,6 +16,7 @@
 |---|---|---|
 | 1.0-draft | 20 Sep 2026 | First complete architecture. |
 | **1.1** | 20 Sep 2026 | Folded in the WP-01 engineering review and WP-02 source research: new decisions D-26…D-33; user actions U1–U6 (§2.1); SSE over authenticated fetch streams; per-spawn client secret + header names; stdin-EOF orphan detection; Job Object owned by the shell; packaged layout; custom SQL migrations for FTS5/triggers; plain local pre-migration copies; robots Crawl-delay precedence; per-source cadence; PII stripping at the adapter boundary; URL-import restrictions; typo tolerance redefined; EventQuery date/unknown/distance semantics; progress and permission clarifications; roadmap split into smaller WPs and re-scoped (Devpost adapter removed); ADR-0016…0018; rulings index (§21). |
+| 1.1.1 | 20 Sep 2026 | Rulings R1–R10 after WP-03a/03b (see §21). |
 
 ---
 
@@ -1487,6 +1488,8 @@ Q1 requires) · auto-updater · SSO · Devpost/Unstop adapters if permission is 
 
 Traceability for every finding and question raised in WP-01 (F = finding, A = ambiguity) and WP-02/02b.
 
+Rows R1… are later rulings; they take precedence over the section text until the next consolidated version.
+
 | Ref | Ruling | Where |
 |---|---|---|
 | F1 Smart App Control | Off on the build machine (U1). Pilot host: IT turns it off or we sign everything (Q10). | §2, §2.1, ADR-0018 |
@@ -1524,6 +1527,16 @@ Traceability for every finding and question raised in WP-01 (F = finding, A = am
 | WP-02 Q6 Case competitions | Out of MVP scope. | D-31 |
 | WP-02b long paths / Defender | Enable long paths (U2); Defender exclusions optional (U6). | §2.1 |
 | Missing requirements doc | Supplied by the architect: `docs/requirements/master-requirements.md`. | — |
+| R1 Rust pin | rust-toolchain.toml pins 1.98.1 (+ rustfmt, clippy) in apps/desktop/src-tauri (WP-05a); bump deliberately. | ADR-0018 |
+| R2 MSVC | Stay on VS Build Tools 2022 (MSVC 14.44). | ADR-0018 |
+| R3 Cargo target | Default target dir (gitignored); `cargo clean` when free disk < 20 GB. | — |
+| R4 Dependency audit | `pnpm audit:deps` (network) outside verify; run in WPs that add deps and before releases. Supersedes §15 last bullet. | §15 |
+| R5 ProblemDetails | Required: type (`urn:compintel:problem:<code>`), title, status, code, requestId. Optional: detail, instance, hint, retryable, errors[] ({path, message}). | §4.4 |
+| R6 Desktop package | apps/desktop (React + Vite) with src-tauri inside; own tsconfig (DOM libs, Bundler resolution, react-jsx); base tsconfig stays Node-only; React lint plugins scoped to apps/desktop. | §3.4 |
+| R7 stdout protocol | Backend stdout carries only the READY / failed-start JSON line; logs go to files (+ stderr in --dev). | §3.2 |
+| R8 Log destination | pino + in-house daily-rotating file destination (no worker-thread transports), keep 14 files. | §4.14 |
+| R9 CORS preflight | OPTIONS preflight from allowlisted origins passes without the client secret; everything else requires it. | §3.2, ADR-0017 |
+| R10 .gitignore | Remove broad bin/ and obj/ patterns inherited from WP-00. | — |
 
 ---
 

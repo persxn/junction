@@ -2,7 +2,7 @@
 
 ## Current
 - **Next WP: WP-04a.** Toolchain and scaffold are ready; no user action blocks it.
-- Spec: docs/ARCHITECTURE.md **v1.1 — ACCEPTED** (changelog at the top; rulings index §21; roadmap §19 = 46 WPs, 41 remaining).
+- Spec: docs/ARCHITECTURE.md **v1.1.1 — ACCEPTED** (changelog at the top; rulings index §21; roadmap §19 = 46 WPs, 6 done, 40 remaining).
 - ADR-0001…0018 Accepted (several amended). Decisions register: docs/DECISIONS.md (D-01…D-33, Q1…Q13, user actions U1…U6).
 
 ## Environment facts
