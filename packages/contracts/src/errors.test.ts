@@ -4,11 +4,16 @@ import {
   AUTH_ERROR_CODES,
   COMMON_ERROR_CODES,
   DB_ERROR_CODES,
+  ERROR_CODE_DOMAINS,
   ERROR_CODES,
   ErrorCode,
+  EVENT_ERROR_CODES,
+  GEO_ERROR_CODES,
+  IMPORT_ERROR_CODES,
   PROBLEM_TYPE_PREFIX,
   ProblemDetails,
   ProblemFieldError,
+  SEARCH_ERROR_CODES,
   SETUP_ERROR_CODES,
   SOURCE_ERROR_CODES,
   problemType,
@@ -57,6 +62,31 @@ describe('ErrorCode', () => {
       'SETUP_PATH_UNUSABLE',
       'SETUP_PASSPHRASE_WEAK',
       'SOURCE_UNREACHABLE',
+      'SOURCE_NOT_APPROVED',
+      'SOURCE_ROBOTS_DISALLOWED',
+      'SOURCE_RATE_LIMITED',
+      'SOURCE_SCHEMA_CHANGED',
+      'SOURCE_PARSE_FAILED',
+      'EVENT_NOT_FOUND',
+      'EVENT_STALE_VERSION',
+      'EVENT_ALREADY_MERGED',
+      'EVENT_MERGE_CONFLICT',
+      'EVENT_NOT_MERGED',
+      'EVENT_INVALID_DATES',
+      'EVENT_OVERRIDE_INVALID',
+      'GEO_GAZETTEER_UNAVAILABLE',
+      'GEO_PLACE_UNKNOWN',
+      'GEO_COORDINATES_INVALID',
+      'GEO_POLICY_INVALID',
+      'SEARCH_QUERY_INVALID',
+      'SEARCH_INDEX_UNAVAILABLE',
+      'SEARCH_TOO_BROAD',
+      'SEARCH_SAVED_NOT_FOUND',
+      'IMPORT_FILE_UNREADABLE',
+      'IMPORT_FORMAT_UNSUPPORTED',
+      'IMPORT_SOURCE_NOT_ALLOWED',
+      'IMPORT_ROW_INVALID',
+      'IMPORT_TOO_LARGE',
       'DB_UNAVAILABLE',
       'DB_CONSTRAINT_VIOLATED',
     ]);
@@ -68,6 +98,10 @@ describe('ErrorCode', () => {
       ...AUTH_ERROR_CODES,
       ...SETUP_ERROR_CODES,
       ...SOURCE_ERROR_CODES,
+      ...EVENT_ERROR_CODES,
+      ...GEO_ERROR_CODES,
+      ...SEARCH_ERROR_CODES,
+      ...IMPORT_ERROR_CODES,
       ...DB_ERROR_CODES,
     ]);
   });
@@ -203,6 +237,62 @@ describe('ProblemDetails', () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error.issues[0]?.path).toStrictEqual(['status']);
+    }
+  });
+});
+
+describe('the error-code domains (ruling R12)', () => {
+  it('gives every non-common code a registered domain prefix', () => {
+    const common = new Set<string>(COMMON_ERROR_CODES);
+    for (const code of ERROR_CODES) {
+      if (common.has(code)) {
+        continue;
+      }
+      const domain = code.slice(0, code.indexOf('_'));
+      expect(ERROR_CODE_DOMAINS, code).toContain(domain);
+    }
+  });
+
+  it('uses SCREAMING_SNAKE throughout', () => {
+    for (const code of ERROR_CODES) {
+      expect(code, code).toMatch(/^[A-Z]+(_[A-Z0-9]+)*$/);
+    }
+  });
+
+  it('gives every non-common code a DOMAIN_NAME shape', () => {
+    const common = new Set<string>(COMMON_ERROR_CODES);
+    for (const code of ERROR_CODES) {
+      if (!common.has(code)) {
+        expect(code, code).toMatch(/^[A-Z]+_[A-Z0-9_]+$/);
+      }
+    }
+  });
+
+  it('has no duplicates across the whole enum', () => {
+    expect(new Set(ERROR_CODES).size).toBe(ERROR_CODES.length);
+  });
+
+  it('declares no domain that nothing uses', () => {
+    const used = new Set(
+      ERROR_CODES.filter((code) => !new Set<string>(COMMON_ERROR_CODES).has(code)).map((code) =>
+        code.slice(0, code.indexOf('_')),
+      ),
+    );
+    expect([...ERROR_CODE_DOMAINS].sort()).toStrictEqual([...used].sort());
+  });
+
+  it('carries the blocks M1 needs', () => {
+    expect(ERROR_CODES).toContain('EVENT_STALE_VERSION');
+    expect(ERROR_CODES).toContain('GEO_PLACE_UNKNOWN');
+    expect(ERROR_CODES).toContain('SEARCH_QUERY_INVALID');
+    expect(ERROR_CODES).toContain('IMPORT_SOURCE_NOT_ALLOWED');
+    expect(ERROR_CODES).toContain('SOURCE_ROBOTS_DISALLOWED');
+  });
+
+  it('still builds a problem type URN for every one of them', () => {
+    for (const code of ERROR_CODES) {
+      expect(problemType(code)).toBe(`${PROBLEM_TYPE_PREFIX}${code}`);
+      expect(ProblemDetails.shape.type.safeParse(problemType(code)).success, code).toBe(true);
     }
   });
 });

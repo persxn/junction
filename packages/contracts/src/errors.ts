@@ -3,8 +3,13 @@ import { z } from 'zod';
 /**
  * Ruling R12: one closed `ErrorCode` enum, composed from per-domain lists so a
  * work package can add its own codes without touching anybody else's. Everything
- * outside the common list is prefixed with its domain (`DB_`, `SOURCE_`, and
- * later `AUTH_`, `SCRAPE_`, ...).
+ * outside the common list is prefixed with its domain, and every domain is named
+ * in `ERROR_CODE_DOMAINS` below.
+ *
+ * The M1 blocks (`EVENT_`, `GEO_`, `SEARCH_`, `IMPORT_`) are declared here in
+ * advance of the code that raises them. That is deliberate: a work package that
+ * has to invent an error code mid-flight invents an inconsistent one, and the UI
+ * switches on these strings, so they are part of the API contract.
  */
 export const COMMON_ERROR_CODES = [
   'INTERNAL',
@@ -43,8 +48,69 @@ export const SETUP_ERROR_CODES = [
   'SETUP_PASSPHRASE_WEAK',
 ] as const;
 
-/** Event-source and scraping failures (§7.7). */
-export const SOURCE_ERROR_CODES = ['SOURCE_UNREACHABLE'] as const;
+/**
+ * Event-source and scraping failures (§7.7, §7.2). The compliance gate is a
+ * refusal by *us*, not by the site, which is why it is not an HTTP-shaped code:
+ * the answer the user needs is "this source is not approved for scraping", not
+ * "403".
+ */
+export const SOURCE_ERROR_CODES = [
+  'SOURCE_UNREACHABLE',
+  'SOURCE_NOT_APPROVED',
+  'SOURCE_ROBOTS_DISALLOWED',
+  'SOURCE_RATE_LIMITED',
+  'SOURCE_SCHEMA_CHANGED',
+  'SOURCE_PARSE_FAILED',
+] as const;
+
+/**
+ * Events, and the merge/override decisions on top of them (§6.2 Events, §7.5,
+ * §7.6). `EVENT_STALE_VERSION` is the optimistic-concurrency 409 from §6.1's
+ * `version` column; `EVENT_MERGE_CONFLICT` is two events that cannot be merged
+ * because a field disagrees in a way only a person can settle.
+ */
+export const EVENT_ERROR_CODES = [
+  'EVENT_NOT_FOUND',
+  'EVENT_STALE_VERSION',
+  'EVENT_ALREADY_MERGED',
+  'EVENT_MERGE_CONFLICT',
+  'EVENT_NOT_MERGED',
+  'EVENT_INVALID_DATES',
+  'EVENT_OVERRIDE_INVALID',
+] as const;
+
+/**
+ * Geography and the offline gazetteer (§4.17, §7.4). A place the gazetteer does
+ * not know is `GEO_PLACE_UNKNOWN` and is *not* an error the user caused: §6.1's
+ * "unknown is not false" applies to locations too, and the event stays, flagged.
+ */
+export const GEO_ERROR_CODES = [
+  'GEO_GAZETTEER_UNAVAILABLE',
+  'GEO_PLACE_UNKNOWN',
+  'GEO_COORDINATES_INVALID',
+  'GEO_POLICY_INVALID',
+] as const;
+
+/** Search and the `EventQuery` DSL (§8). */
+export const SEARCH_ERROR_CODES = [
+  'SEARCH_QUERY_INVALID',
+  'SEARCH_INDEX_UNAVAILABLE',
+  'SEARCH_TOO_BROAD',
+  'SEARCH_SAVED_NOT_FOUND',
+] as const;
+
+/**
+ * Manual and URL import (§7, D-31): the path Devpost and Unstop take, since
+ * WP-02 ruled them MANUAL_IMPORT_ONLY. `IMPORT_SOURCE_NOT_ALLOWED` is the
+ * URL-import restriction, not a network failure.
+ */
+export const IMPORT_ERROR_CODES = [
+  'IMPORT_FILE_UNREADABLE',
+  'IMPORT_FORMAT_UNSUPPORTED',
+  'IMPORT_SOURCE_NOT_ALLOWED',
+  'IMPORT_ROW_INVALID',
+  'IMPORT_TOO_LARGE',
+] as const;
 
 /** Database failures the API may surface at request time (WP-04b). */
 export const DB_ERROR_CODES = ['DB_UNAVAILABLE', 'DB_CONSTRAINT_VIOLATED'] as const;
@@ -58,8 +124,30 @@ export const ERROR_CODES = [
   ...AUTH_ERROR_CODES,
   ...SETUP_ERROR_CODES,
   ...SOURCE_ERROR_CODES,
+  ...EVENT_ERROR_CODES,
+  ...GEO_ERROR_CODES,
+  ...SEARCH_ERROR_CODES,
+  ...IMPORT_ERROR_CODES,
   ...DB_ERROR_CODES,
 ] as const;
+
+/**
+ * The prefix every non-common code carries, and the list a test checks against.
+ * A new domain is added here at the same time as its block, so "which domains
+ * exist" has one answer rather than being inferred from the strings.
+ */
+export const ERROR_CODE_DOMAINS = [
+  'AUTH',
+  'SETUP',
+  'SOURCE',
+  'EVENT',
+  'GEO',
+  'SEARCH',
+  'IMPORT',
+  'DB',
+] as const;
+export type ErrorCodeDomain = (typeof ERROR_CODE_DOMAINS)[number];
+
 export const ErrorCode = z.enum(ERROR_CODES);
 export type ErrorCode = z.infer<typeof ErrorCode>;
 
