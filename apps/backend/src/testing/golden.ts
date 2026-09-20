@@ -54,9 +54,10 @@ function sortKeys(value: unknown): unknown {
   if (value instanceof Date) {
     return value.toISOString();
   }
+  const entries = value as Record<string, unknown>;
   const sorted: Record<string, unknown> = {};
-  for (const key of Object.keys(value as Record<string, unknown>).sort()) {
-    const item = (value as Record<string, unknown>)[key];
+  for (const key of Object.keys(entries).sort()) {
+    const item = entries[key];
     if (item !== undefined) {
       sorted[key] = sortKeys(item);
     }

@@ -118,7 +118,7 @@ describe('the recorded source fixtures', () => {
     for (const source of SOURCES) {
       for (const name of readdirSync(path.join(fixturesDir(), source))) {
         const raw = readFileSync(path.join(fixturesDir(), source, name), 'utf8');
-        expect(() => JSON.parse(raw), `${source}/${name}`).not.toThrow();
+        expect(() => JSON.parse(raw) as unknown, `${source}/${name}`).not.toThrow();
       }
     }
   });
