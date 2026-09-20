@@ -76,7 +76,8 @@
   registry**. `modules/users/` = admin CRUD, last-admin protection, `version` 409s. Shell `files.rs`:
   `pick_folder`/`save_text_file` limited to a folder picked in this run (R43, `tauri-plugin-dialog`
   2.7.3, Rust API only). **1736 tests** (1429 node + 307 desktop); cargo 56; **`smoke:bundle` now drives
-  the whole wizard on a fresh data dir**, second launch skips it.
+  the whole wizard on a fresh data dir**. Clicked through in the **built exe** (CDP + `WM_SETTEXT` for the
+  native dialogs — see the handoff); second launch goes straight to sign-in.
 - **WP-07a — auth core.** Contracts `permissions.ts` (R32 matrix) + `auth.ts`; migrations 0002/0003
   (organization + identity + `audit_log`, append-only triggers, seeded roles); `modules/auth/` — Argon2id
   **m=128 MiB t=6 p=1, 322-409 ms here** (R17 addon path), opaque SHA-256 sessions (R33), the R34 lockout

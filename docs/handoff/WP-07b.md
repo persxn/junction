@@ -32,6 +32,15 @@ Tests/commands & results:
 - Rust (R19): `cargo fmt --check` clean · `cargo clippy --all-targets -D warnings` clean ·
   `cargo test` **56 passed** (49 lib incl. 7 new `files::tests`, 7 supervisor).
 - `pnpm audit:deps` — no known vulnerabilities (moderate and above).
+- **GUI click-through of the built exe** (`tauri build --debug --no-bundle`, fresh `COMPINTEL_DATA_DIR`,
+  driven over the WebView2 DevTools protocol with real mouse and key events): all nine steps, both native
+  dialogs, screenshots per step. Folder check reported "Looks good — 28.8 GB free"; Finish stayed disabled
+  with the file saved and only one box ticked, and enabled on the second; the exported
+  `compintel-recovery-20260920.txt` (1726 bytes) carries `age1…` and the armored block and **no plaintext
+  identity and no recovery code**; Finish → sign in → shell. Then Admin → Users: created a colleague, the
+  one-time password was shown once, the row read "Professor · Active · Must change password". A **second
+  launch on the same data directory went straight to sign-in, not the wizard**; signing in with the
+  one-time password forced the password change, after which the professor's shell has **no ADMIN section**.
 - Manual run on a throwaway data directory (`%LOCALAPPDATA%\CompIntel-dev\manual-wp07b`, bundled
   backend, script kept out of the repo): health 200 · `/auth/login` and `/me` both 409 SETUP_REQUIRED ·
   `setup/status` required=true · check-path ok with 31.4 GB free · `setup/complete` 200 in **978 ms**
@@ -79,8 +88,9 @@ Known issues / tech debt:
   directory. Both refuse it; only the reason string is less specific.
 - `smoke:bundle` cleanup is best-effort (`removeTempDir`): Windows holds the SQLite/addon handles for a
   moment after exit, and the old `rmSync` in the `finally` masked real failures with EPERM.
-- The GUI click-through of the wizard in the built app was **not** re-done in this session (the
-  equivalent was driven headlessly against the bundled backend, see above).
+- Driving the built app needs `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=9222`
+  and Win32 `WM_SETTEXT`/`BM_CLICK` for the native folder dialogs — UIA exposes them as bare panes and
+  `SendKeys` does not reach the folder edit. Worth a project skill if the GUI run is repeated.
 
 Questions for the architect:
 1. The recovery **code** is stored as `auth.recoveryCodeHash` but nothing consumes it yet — which WP
