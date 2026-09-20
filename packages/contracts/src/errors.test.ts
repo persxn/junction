@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  AUTH_ERROR_CODES,
   COMMON_ERROR_CODES,
   DB_ERROR_CODES,
   ERROR_CODES,
@@ -44,6 +45,12 @@ describe('ErrorCode', () => {
       'NOT_FOUND',
       'CONFLICT',
       'RATE_LIMITED',
+      'AUTH_INVALID_CREDENTIALS',
+      'AUTH_ACCOUNT_LOCKED',
+      'AUTH_ACCOUNT_DISABLED',
+      'AUTH_SESSION_EXPIRED',
+      'AUTH_PASSWORD_CHANGE_REQUIRED',
+      'AUTH_RECOVERY_INVALID',
       'SOURCE_UNREACHABLE',
       'DB_UNAVAILABLE',
       'DB_CONSTRAINT_VIOLATED',
@@ -53,6 +60,7 @@ describe('ErrorCode', () => {
   it('is the concatenation of the per-domain lists (R12)', () => {
     expect([...ERROR_CODES]).toStrictEqual([
       ...COMMON_ERROR_CODES,
+      ...AUTH_ERROR_CODES,
       ...SOURCE_ERROR_CODES,
       ...DB_ERROR_CODES,
     ]);
@@ -63,6 +71,7 @@ describe('ErrorCode', () => {
   });
 
   it.each([
+    ['AUTH_', AUTH_ERROR_CODES],
     ['SOURCE_', SOURCE_ERROR_CODES],
     ['DB_', DB_ERROR_CODES],
   ])('prefixes every %s domain code', (prefix, codes) => {

@@ -100,8 +100,17 @@ pub fn hide_to_tray(app: AppHandle) {
 /// WebView2 will not let the page reach `127.0.0.1` itself. Only GETs under
 /// `/api/v1/` are allowed through - the WebView is the least trusted part of the
 /// app, and this must not become a general-purpose local HTTP client.
+///
+/// Ruling R27 adds `authorization`: the session bearer token the page already
+/// holds, forwarded so that authenticated reads work over the fallback too. It
+/// widens nothing else - the method and the path prefix are locked exactly as
+/// they were, and the shell never stores the token.
 #[tauri::command]
-pub fn backend_get(state: State<'_, ShellState>, path: String) -> Result<LoopbackResponse, String> {
+pub fn backend_get(
+    state: State<'_, ShellState>,
+    path: String,
+    authorization: Option<String>,
+) -> Result<LoopbackResponse, String> {
     if !loopback::is_proxyable("GET", &path) {
         return Err(format!("{path} is not a proxyable API path"));
     }
@@ -112,5 +121,12 @@ pub fn backend_get(state: State<'_, ShellState>, path: String) -> Result<Loopbac
         .next()
         .and_then(|port| port.parse::<u16>().ok())
         .ok_or_else(|| format!("cannot read a port out of {}", connection.base_url))?;
-    loopback::request("GET", &path, port, &connection.client_secret, PROXY_TIMEOUT)
+    loopback::request(
+        "GET",
+        &path,
+        port,
+        &connection.client_secret,
+        authorization.as_deref(),
+        PROXY_TIMEOUT,
+    )
 }

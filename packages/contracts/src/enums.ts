@@ -59,3 +59,12 @@ export const SCRAPE_ERROR_KINDS = [
 ] as const;
 export const ScrapeErrorKind = z.enum(SCRAPE_ERROR_KINDS);
 export type ScrapeErrorKind = z.infer<typeof ScrapeErrorKind>;
+
+/**
+ * `audit_log.actor_kind` (§6.2 Audit & system). Not every row has a person
+ * behind it: the scheduler writes rows, and so will the AI once it can act, so
+ * "who did this" has to be able to answer something other than a user id.
+ */
+export const AUDIT_ACTOR_KINDS = ['USER', 'SYSTEM', 'SCHEDULER', 'AI'] as const;
+export const AuditActorKind = z.enum(AUDIT_ACTOR_KINDS);
+export type AuditActorKind = z.infer<typeof AuditActorKind>;

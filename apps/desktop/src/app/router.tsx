@@ -1,39 +1,60 @@
+import type { Action } from '@compintel/contracts';
 import {
   createMemoryHistory,
-  createRootRoute,
+  createRootRouteWithContext,
   createRoute,
   createRouter,
+  redirect,
 } from '@tanstack/react-router';
 
 import { AppShell } from './AppShell.js';
-import { MAIN_NAV, type NavItem } from './nav.js';
+import { ADMIN_NAV, MAIN_NAV, type NavItem } from './nav.js';
 import { NotFoundPage } from './routes/NotFoundPage.js';
 import { PlaceholderPage } from './routes/PlaceholderPage.js';
 
 /**
  * Code-based routes (§4.2: TanStack Router, typed routes).
  *
- * Each rail item is written out rather than generated from `MAIN_NAV` in a loop,
- * because a loop erases the literal paths and with them the point of a typed
- * router: `<Link to="/discover">` is checked, `<Link to="/discvoer">` is a build
- * error. `MAIN_NAV` still owns the labels and icons, so the two cannot drift.
+ * Each rail item is written out rather than generated in a loop, because a loop
+ * erases the literal paths and with them the point of a typed router:
+ * `<Link to="/discover">` is checked, `<Link to="/discvoer">` is a build error.
+ * `nav.ts` still owns the labels and icons, so the two cannot drift.
  *
- * Admin routes are not here. See the seam in `nav.ts`: registering them before
- * anything knows the user's role would make them reachable by URL.
+ * The admin routes are guarded by `beforeLoad` against the router context, which
+ * `RouterProvider` refreshes from `/me` (ruling R32). That guard is not the
+ * security — §10.1 is explicit that the UI only hides controls — it is what stops
+ * a stale bookmark landing on a screen that will only ever show 403s.
  */
 
+export interface RouterContext {
+  /** Actions the signed-in account holds, from `/me` (§10.1). */
+  readonly can: (action: Action) => boolean;
+}
+
 function navItem(id: string): NavItem {
-  const item = MAIN_NAV.find((candidate) => candidate.id === id);
+  const item = [...MAIN_NAV, ...ADMIN_NAV].find((candidate) => candidate.id === id);
   if (item === undefined) {
     throw new Error(`nav.ts has no item "${id}"`);
   }
   return item;
 }
 
-const rootRoute = createRootRoute({
+const rootRoute = createRootRouteWithContext<RouterContext>()({
   component: AppShell,
   notFoundComponent: NotFoundPage,
 });
+
+/** The one place an admin route's guard is written. */
+function adminGuard(action: Action) {
+  return ({ context }: { context: RouterContext }): void => {
+    if (!context.can(action)) {
+      // TanStack Router signals a redirect by throwing its own marker object,
+      // which is deliberately not an Error.
+      // eslint-disable-next-line @typescript-eslint/only-throw-error
+      throw redirect({ to: '/' });
+    }
+  };
+}
 
 const dashboardRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -77,6 +98,62 @@ const notificationsRoute = createRoute({
   component: () => <PlaceholderPage item={navItem('notifications')} />,
 });
 
+const adminUsersRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin/users',
+  beforeLoad: adminGuard('user.manage'),
+  component: () => <PlaceholderPage item={navItem('admin-users')} />,
+});
+
+const adminSourcesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin/sources',
+  beforeLoad: adminGuard('source.manage'),
+  component: () => <PlaceholderPage item={navItem('admin-sources')} />,
+});
+
+const adminCategoriesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin/categories',
+  beforeLoad: adminGuard('category.manage'),
+  component: () => <PlaceholderPage item={navItem('admin-categories')} />,
+});
+
+const adminDuplicatesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin/duplicates',
+  beforeLoad: adminGuard('duplicate.review'),
+  component: () => <PlaceholderPage item={navItem('admin-duplicates')} />,
+});
+
+const adminSettingsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin/settings',
+  beforeLoad: adminGuard('settings.manage'),
+  component: () => <PlaceholderPage item={navItem('admin-campus')} />,
+});
+
+const adminBackupsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin/backups',
+  beforeLoad: adminGuard('backup.restore'),
+  component: () => <PlaceholderPage item={navItem('admin-backups')} />,
+});
+
+const adminAuditRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin/audit',
+  beforeLoad: adminGuard('audit.view_all'),
+  component: () => <PlaceholderPage item={navItem('admin-audit')} />,
+});
+
+const adminHealthRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin/health',
+  beforeLoad: adminGuard('system.health.view'),
+  component: () => <PlaceholderPage item={navItem('admin-health')} />,
+});
+
 const routeTree = rootRoute.addChildren([
   dashboardRoute,
   discoverRoute,
@@ -85,7 +162,18 @@ const routeTree = rootRoute.addChildren([
   studentsRoute,
   assistantRoute,
   notificationsRoute,
+  adminUsersRoute,
+  adminSourcesRoute,
+  adminCategoriesRoute,
+  adminDuplicatesRoute,
+  adminSettingsRoute,
+  adminBackupsRoute,
+  adminAuditRoute,
+  adminHealthRoute,
 ]);
+
+/** Nobody may do anything until `/me` has answered. */
+const NO_PERMISSIONS: RouterContext = { can: () => false };
 
 /**
  * In-memory history, in the app as well as in tests.
@@ -94,12 +182,21 @@ const routeTree = rootRoute.addChildren([
  * packaged app is served by Tauri's asset protocol, which has no SPA fallback —
  * so a browser history would only add a way for a reload on `/discover` to land
  * on nothing. `initialPath` exists so a test can start on any route.
+ *
+ * `context` defaults to "nobody may do anything", which is the right answer until
+ * `/me` has been read; `<RouterProvider context={...}>` replaces it. A test that
+ * starts on an admin route passes it here instead, because `beforeLoad` runs on
+ * the first `load()` — before any provider has had a chance to update it.
  */
-export function createAppRouter(initialPath = '/'): AppRouter {
+export function createAppRouter(
+  initialPath = '/',
+  context: RouterContext = NO_PERMISSIONS,
+): AppRouter {
   return createRouter({
     routeTree,
     history: createMemoryHistory({ initialEntries: [initialPath] }),
     defaultPreload: false,
+    context,
   });
 }
 

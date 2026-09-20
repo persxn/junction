@@ -1,6 +1,7 @@
-import { LogOut, UserRound } from 'lucide-react';
+import { Lock, LogOut, PowerOff, UserRound } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
+import { useAuth } from '../auth/auth-context.js';
 import { useTheme } from '../theme/theme-context.js';
 import { THEME_CHOICES, type ThemeChoice } from '../theme/theme.js';
 
@@ -15,13 +16,14 @@ export interface UserMenuProps {
 }
 
 /**
- * The user menu from §16.1. It carries what exists today: the theme choice and
- * "Exit completely". Lock and sign out need a session, so they arrive with
- * WP-07a — there is no signed-in user to name yet, which is why the trigger says
- * "Preferences" rather than pretending to be an account.
+ * The user menu from §16.1: theme, lock, sign out, and "Exit completely".
+ *
+ * Lock and Exit completely are deliberately different things and are worded as
+ * such: locking leaves the backend scraping (§10.5), exiting stops it (§3.2).
  */
 export function UserMenu({ onExit }: UserMenuProps): React.JSX.Element {
   const { choice, setChoice } = useTheme();
+  const { me, lock, signOut } = useAuth();
   const [open, setOpen] = useState(false);
   const container = useRef<HTMLDivElement>(null);
 
@@ -59,15 +61,18 @@ export function UserMenu({ onExit }: UserMenuProps): React.JSX.Element {
         className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-fg-muted hover:bg-surface-hover"
       >
         <UserRound aria-hidden="true" className="size-4" />
-        Preferences
+        <span className="max-w-40 truncate">{me?.user.displayName ?? 'Account'}</span>
       </button>
 
       {open && (
         <div
           role="menu"
-          aria-label="Preferences"
+          aria-label="Account"
           className="absolute right-0 z-30 mt-1 w-56 rounded-md border border-line bg-surface-raised p-1 shadow-[var(--ci-shadow-popover)]"
         >
+          {me !== undefined && (
+            <p className="truncate px-2 py-1 text-xs text-fg-subtle">{me.user.email}</p>
+          )}
           <p className="px-2 py-1 text-xs text-fg-subtle" id="user-menu-theme">
             Theme
           </p>
@@ -94,11 +99,39 @@ export function UserMenu({ onExit }: UserMenuProps): React.JSX.Element {
             role="menuitem"
             onClick={() => {
               setOpen(false);
+              lock();
+            }}
+            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left hover:bg-surface-hover"
+          >
+            <Lock aria-hidden="true" className="size-4" />
+            Lock
+          </button>
+
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              void signOut();
+            }}
+            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left hover:bg-surface-hover"
+          >
+            <LogOut aria-hidden="true" className="size-4" />
+            Sign out
+          </button>
+
+          <hr className="my-1 border-line" />
+
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
               onExit();
             }}
             className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-danger hover:bg-surface-hover"
           >
-            <LogOut aria-hidden="true" className="size-4" />
+            <PowerOff aria-hidden="true" className="size-4" />
             Exit completely
           </button>
         </div>

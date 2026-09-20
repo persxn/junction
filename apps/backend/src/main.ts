@@ -5,6 +5,10 @@ import { buildApp, type App } from './app.js';
 import { hasNetworkInterface } from './jobs/online.js';
 import { Scheduler } from './jobs/scheduler.js';
 import { JobStore } from './jobs/store.js';
+import { setArgon2BindingPath } from './modules/auth/argon2-binding.js';
+import { AuthRepository } from './modules/auth/repository.js';
+import { AuthService } from './modules/auth/service.js';
+import { AuditLog } from './platform/audit.js';
 import { ensureDataDirs, loadConfig, writeDevConnectionFile } from './platform/config.js';
 import { openDatabase } from './platform/db.js';
 import { installLifecycle } from './platform/lifecycle.js';
@@ -12,6 +16,7 @@ import { acquireDataDirLock } from './platform/lock.js';
 import { createLogger, type LoggerHandle } from './platform/logger.js';
 import { recordAppMeta, runMigrations } from './platform/migrate.js';
 import { resolveResources } from './platform/resources.js';
+import { SettingsStore } from './platform/settings.js';
 import { ShutdownRegistry } from './platform/shutdown.js';
 import { StartupError, toStartupFailure } from './platform/startup-error.js';
 
@@ -58,12 +63,28 @@ async function main(): Promise<void> {
     shutdown.register('resources', 'data-dir-lock', lock.release);
 
     const resources = resolveResources(config, import.meta.url);
+    // R17: in the bundle both addons are named explicitly; in a checkout this is
+    // `undefined` and normal module resolution finds them.
+    setArgon2BindingPath(resources.argon2Binding);
     const db = openDatabase(config, { logger, shutdown, nativeBinding: resources.nativeBinding });
     const migrations = runMigrations(config, db, {
       migrationsDir: resources.migrationsDir,
       logger,
     });
     recordAppMeta(config, db);
+
+    // Accounts and sessions (§4.12, §10). Built before the HTTP layer because
+    // every guarded route resolves through it on the way in.
+    const settings = new SettingsStore(db, {
+      onInvalid: (key, reason) => {
+        logger.warn({ setting: key, reason }, 'a stored setting was unreadable; using the default');
+      },
+    });
+    const auth = new AuthService({
+      repository: new AuthRepository(db),
+      settings,
+      audit: new AuditLog(db),
+    });
 
     // Constructed before the HTTP layer so its `resources` hook is registered
     // even if the process is asked to stop during startup (R14); started only
@@ -81,6 +102,7 @@ async function main(): Promise<void> {
     const lifecycle: { start: (reason: string) => void } = { start: () => undefined };
     const app = buildApp(config, logger, {
       shutdown,
+      auth: () => auth,
       onShutdownRequested: () => {
         lifecycle.start('api');
       },
@@ -113,6 +135,7 @@ async function main(): Promise<void> {
         migrationsApplied: migrations.applied,
         migrationsTotal: migrations.total,
         jobs: scheduler.registered().length,
+        autoLockMinutes: settings.get('auth.autoLockMinutes'),
       },
       'backend listening',
     );

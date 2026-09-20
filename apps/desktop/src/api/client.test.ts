@@ -205,8 +205,23 @@ describe('the API transport (finding F9, ruling R27)', () => {
     shell({ connection: CONNECTION, proxy: { status: 200, body: JSON.stringify(HEALTH) } });
 
     await expect(fetchHealth(CONNECTION)).resolves.toStrictEqual(HEALTH);
-    expect(invoke).toHaveBeenCalledWith('backend_get', { path: '/api/v1/health' });
+    expect(invoke).toHaveBeenCalledWith('backend_get', {
+      path: '/api/v1/health',
+      authorization: null,
+    });
     expect(apiTransport()).toBe('SHELL');
+  });
+
+  it('forwards the session token over the fallback too (ruling R27)', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+    shell({ connection: CONNECTION, proxy: { status: 200, body: JSON.stringify(HEALTH) } });
+    setAuthToken('session-token');
+
+    await expect(apiGet(CONNECTION, '/api/v1/me')).resolves.toStrictEqual(HEALTH);
+    expect(invoke).toHaveBeenCalledWith('backend_get', {
+      path: '/api/v1/me',
+      authorization: 'Bearer session-token',
+    });
   });
 
   it('falls back when the request is silently held open, not just rejected', async () => {

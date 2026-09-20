@@ -87,6 +87,22 @@ try {
     `/health 200: database.ok=true migrationsApplied=${health.database.migrationsApplied.toString()}`,
   );
 
+  // Proves the Argon2id addon under `native\` loaded (R17). A login for an
+  // account that does not exist still hashes, so a 401 with this code means the
+  // addon ran; a bundle that could not load it would answer 500 instead.
+  const login = await fetch(`${baseUrl}/api/v1/auth/login`, {
+    method: 'POST',
+    headers: { 'X-CompIntel-Client': clientSecret, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: 'nobody@example.edu', password: 'not-the-password' }),
+  });
+  const loginBody = (await login.json()) as { code?: string };
+  check(
+    login.status === 401 && loginBody.code === 'AUTH_INVALID_CREDENTIALS',
+    `/auth/login answered ${login.status.toString()} ${String(loginBody.code)}, ` +
+      'expected 401 AUTH_INVALID_CREDENTIALS (the Argon2id addon did not load)',
+  );
+  steps.push('/auth/login 401 AUTH_INVALID_CREDENTIALS: the Argon2id addon loaded from native\\');
+
   check(
     preMigrationCopies().length === 0,
     'a new database should not produce a pre-migration copy',

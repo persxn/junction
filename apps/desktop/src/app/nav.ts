@@ -1,10 +1,19 @@
+import type { Action } from '@compintel/contracts';
 import {
+  Activity,
+  Archive,
   Bell,
   Compass,
+  Copy,
+  Database,
   GraduationCap,
   LayoutDashboard,
+  MapPin,
+  Radio,
   Sparkles,
+  Tags,
   Trophy,
+  UserCog,
   Users,
   type LucideIcon,
 } from 'lucide-react';
@@ -85,20 +94,82 @@ export type NavPath = (typeof MAIN_NAV)[number]['path'];
 /**
  * The admin section of §16.1.
  *
- * **Seam for WP-07a.** These are listed here so the eventual implementation has
- * one place to start from, but they are deliberately *not* registered as routes
- * and *not* rendered: nothing in the app today knows who is signed in, so any
- * admin navigation would either be a fake permission check or a screen reachable
- * by typing its URL. When WP-07a can answer "is this user an admin", register
- * these under a `beforeLoad` guard and render them from the same list.
+ * Each item names the §10.2 capability it needs. The rail shows an item only
+ * when `/me` says the signed-in account holds that permission, and the router
+ * guards the route with the same answer — but neither is the security: §10.1 is
+ * explicit that hiding a control is cosmetic and the server re-decides every
+ * read and write with `assertCan`.
  */
-export const ADMIN_NAV: readonly { readonly id: string; readonly label: string }[] = [
-  { id: 'admin-users', label: 'Users' },
-  { id: 'admin-sources', label: 'Sources & scraper' },
-  { id: 'admin-categories', label: 'Categories & rules' },
-  { id: 'admin-duplicates', label: 'Duplicates' },
-  { id: 'admin-campus', label: 'Campus & settings' },
-  { id: 'admin-backups', label: 'Backups' },
-  { id: 'admin-audit', label: 'Audit log' },
-  { id: 'admin-health', label: 'System health' },
-] as const;
+export interface AdminNavItem extends NavItem {
+  /** The permission that reveals it (ruling R32). */
+  readonly action: Action;
+}
+
+export const ADMIN_NAV = [
+  {
+    id: 'admin-users',
+    label: 'Users',
+    path: '/admin/users',
+    icon: UserCog,
+    action: 'user.manage',
+    summary: 'Accounts, roles and password resets.',
+  },
+  {
+    id: 'admin-sources',
+    label: 'Sources & scraper',
+    path: '/admin/sources',
+    icon: Radio,
+    action: 'source.manage',
+    summary: 'Which sites are scraped, how often, and what went wrong.',
+  },
+  {
+    id: 'admin-categories',
+    label: 'Categories & rules',
+    path: '/admin/categories',
+    icon: Tags,
+    action: 'category.manage',
+    summary: 'The taxonomy events are sorted into, and the rules that do it.',
+  },
+  {
+    id: 'admin-duplicates',
+    label: 'Duplicates',
+    path: '/admin/duplicates',
+    icon: Copy,
+    action: 'duplicate.review',
+    summary: 'Events the matcher thinks are the same, waiting for a decision.',
+  },
+  {
+    id: 'admin-campus',
+    label: 'Campus & settings',
+    path: '/admin/settings',
+    icon: MapPin,
+    action: 'settings.manage',
+    summary: 'Where the institution is, and how the app behaves.',
+  },
+  {
+    id: 'admin-backups',
+    label: 'Backups',
+    path: '/admin/backups',
+    icon: Database,
+    action: 'backup.restore',
+    summary: 'Scheduled backups, restores and their history.',
+  },
+  {
+    id: 'admin-audit',
+    label: 'Audit log',
+    path: '/admin/audit',
+    icon: Archive,
+    action: 'audit.view_all',
+    summary: 'Everything that happened, in order, with its hash chain.',
+  },
+  {
+    id: 'admin-health',
+    label: 'System health',
+    path: '/admin/health',
+    icon: Activity,
+    action: 'system.health.view',
+    summary: 'Jobs, disk, the LLM sidecar and the freshness of every source.',
+  },
+] as const satisfies readonly AdminNavItem[];
+
+export type AdminPath = (typeof ADMIN_NAV)[number]['path'];

@@ -15,6 +15,20 @@
       "when": 1789894930034,
       "tag": "0001_sad_boomer",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1789904159127,
+      "tag": "0002_wet_black_crow",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1789904174511,
+      "tag": "0003_audit_append_only_and_role_seed",
+      "breakpoints": true
     }
   ]
 }

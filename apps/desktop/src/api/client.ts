@@ -130,7 +130,10 @@ async function viaShell(path: string, options: ApiRequestOptions): Promise<unkno
       path,
     });
   }
-  const answer = await backendGet(path);
+  // Ruling R27: the fallback forwards the session token, so an authenticated
+  // read works on a machine where the WebView cannot reach loopback itself.
+  const token = authToken();
+  const answer = await backendGet(path, token === undefined ? undefined : `Bearer ${token}`);
   let body: unknown;
   try {
     body = answer.body === '' ? undefined : JSON.parse(answer.body);

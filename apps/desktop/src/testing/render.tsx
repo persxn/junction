@@ -3,9 +3,11 @@ import { RouterProvider } from '@tanstack/react-router';
 import { render, screen, type RenderResult } from '@testing-library/react';
 
 import { createQueryClient } from '../api/query.js';
+import type { AuthView } from '../auth/auth-context.js';
 import { createAppRouter } from '../app/router.js';
 import { ToastProvider } from '../components/toast/ToastProvider.js';
 import { ThemeProvider } from '../theme/theme-context.js';
+import { mockAuth, MockAuthProvider, type MockAuthOptions } from './auth.js';
 
 /**
  * Renders a component inside the providers the real app gives it. Tests that
@@ -21,16 +23,35 @@ export function renderWithProviders(ui: React.ReactNode): RenderResult {
   );
 }
 
+export interface AppRenderResult extends RenderResult {
+  /** The stubbed session the shell was rendered with; its calls are spies. */
+  readonly auth: AuthView;
+}
+
 /**
- * The whole app shell on a given route, with its own router per test.
+ * The whole app shell on a given route, signed in.
+ *
+ * The shell needs a session: since WP-07a the rail and the user menu both call
+ * `useAuth()`, and the admin routes are guarded against the router context. The
+ * default account is a professor — an ordinary user with no admin capabilities —
+ * and `{ roles: ['ADMINISTRATOR'] }` is how a test asks for the other case.
  *
  * It is async because TanStack Router renders nothing until its first `load()`
  * has resolved; awaiting the rail is what tells us the shell is really up.
  */
-export async function renderApp(initialPath = '/'): Promise<RenderResult> {
-  const router = createAppRouter(initialPath);
+export async function renderApp(
+  initialPath = '/',
+  options: MockAuthOptions = {},
+): Promise<AppRenderResult> {
+  const auth = mockAuth(options);
+  const context = { can: auth.can };
+  const router = createAppRouter(initialPath, context);
   await router.load();
-  const result = renderWithProviders(<RouterProvider router={router} />);
+  const result = renderWithProviders(
+    <MockAuthProvider value={auth}>
+      <RouterProvider router={router} context={context} />
+    </MockAuthProvider>,
+  );
   await screen.findByRole('navigation', { name: 'Main' });
-  return result;
+  return { ...result, auth };
 }

@@ -13,10 +13,13 @@ export interface ResourcePaths {
    * resolution works (a source checkout with `node_modules`).
    */
   readonly nativeBinding: string | undefined;
+  /** Explicit path to the Argon2id addon, same rule (R17). */
+  readonly argon2Binding: string | undefined;
 }
 
-/** File the bundle carries its addon as (ruling R17). */
+/** Files the bundle carries its addons as (ruling R17). */
 export const BUNDLED_NATIVE_BINDING = path.join('native', 'better_sqlite3.node');
+export const BUNDLED_ARGON2_BINDING = path.join('native', 'argon2.node');
 
 function firstExisting(candidates: readonly (string | undefined)[]): string | undefined {
   return candidates.find((candidate) => candidate !== undefined && existsSync(candidate));
@@ -53,5 +56,6 @@ export function resolveResources(config: Config, entryUrl: string): ResourcePath
       config.nativeBinding,
       path.join(baseDir, BUNDLED_NATIVE_BINDING),
     ]),
+    argon2Binding: firstExisting([path.join(baseDir, BUNDLED_ARGON2_BINDING)]),
   };
 }

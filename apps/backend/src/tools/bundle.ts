@@ -25,8 +25,8 @@ const CJS_SHIM = [
   'const __dirname=__compintelDirname(__filename);',
 ].join('');
 
-/** The prebuilt addon for this platform, copied next to the bundle (R17). */
-function nativeBindingSource(): string {
+/** The prebuilt addons for this platform, copied next to the bundle (R17). */
+function sqliteBindingSource(): string {
   const require = createRequire(import.meta.url);
   const packageJson = require.resolve('better-sqlite3/package.json');
   return path.join(
@@ -34,6 +34,17 @@ function nativeBindingSource(): string {
     'prebuilds',
     `${process.platform}-${process.arch}.node`,
   );
+}
+
+/**
+ * `@node-rs/argon2` ships the addon in a per-platform package whose `main` *is*
+ * the `.node` file, so resolving the package resolves the file.
+ */
+function argon2BindingSource(): string {
+  const require = createRequire(import.meta.url);
+  const platform =
+    process.platform === 'win32' ? 'win32-x64-msvc' : `${process.platform}-${process.arch}`;
+  return require.resolve(`@node-rs/argon2-${platform}`);
 }
 
 rmSync(OUT_DIR, { recursive: true, force: true });
@@ -56,9 +67,10 @@ if (result.errors.length > 0) {
   throw new Error(`esbuild reported ${result.errors.length.toString()} error(s).`);
 }
 
-cpSync(nativeBindingSource(), path.join(OUT_DIR, 'native', 'better_sqlite3.node'));
+cpSync(sqliteBindingSource(), path.join(OUT_DIR, 'native', 'better_sqlite3.node'));
+cpSync(argon2BindingSource(), path.join(OUT_DIR, 'native', 'argon2.node'));
 cpSync(MIGRATIONS_SRC, path.join(OUT_DIR, 'migrations'), { recursive: true });
 
 process.stdout.write(
-  `  copied native\\better_sqlite3.node and migrations\\ into ${path.relative(process.cwd(), OUT_DIR)}\n`,
+  `  copied native\\better_sqlite3.node, native\\argon2.node and migrations\\ into ${path.relative(process.cwd(), OUT_DIR)}\n`,
 );

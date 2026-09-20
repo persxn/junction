@@ -71,11 +71,18 @@ export async function setAutostart(enabled: boolean): Promise<Settings> {
 /**
  * The finding-F9 fallback transport (ruling R27): the shell makes the GET on the
  * page's behalf when WebView2 will not let it reach `127.0.0.1` itself. Read-only
- * and prefix-locked on the Rust side; widening it needs a ruling. WP-07a extends
- * it to forward `Authorization`.
+ * and prefix-locked on the Rust side; widening it needs a ruling. It forwards
+ * the session bearer token, and nothing else.
  */
-export async function backendGet(path: string): Promise<ProxyResponse> {
-  return LoopbackResponse.parse(await invoke<unknown>('backend_get', { path }));
+export async function backendGet(path: string, authorization?: string): Promise<ProxyResponse> {
+  return LoopbackResponse.parse(
+    await invoke<unknown>('backend_get', {
+      path,
+      // Ruling R27: the session token is forwarded so authenticated reads work
+      // over the fallback too. The shell never keeps it.
+      authorization: authorization ?? null,
+    }),
+  );
 }
 
 /** Subscribes to lifecycle transitions; the returned function unsubscribes. */

@@ -9,8 +9,8 @@
 
 ## Environment facts
 - **OS / CPU / RAM / GPU:** Windows 11 **Home** 25H2 (build 26200.9457) · AMD Ryzen 7 5700, 8c/16t · 16 GB RAM ·
-  NVIDIA RTX 4060 8 GB · no NPU · **C: 30.4 GB free of 119 GB** (single fixed drive; 52 GB before the
-  toolchain; `apps/desktop/src-tauri/target` alone is 9.3 GB).
+  NVIDIA RTX 4060 8 GB · no NPU · **C: 31 GB free of 119 GB** (single fixed drive; 52 GB before the
+  toolchain; `apps/desktop/src-tauri/target` alone is 8.0 GB).
   This box is the **GPU tier**, not the 8 GB target; Home edition has no Hyper-V, so there is no 8 GB test VM (affects WP-15, WP-31).
 - **Toolchain (all verified WP-03a):** node **v24.19.0** · npm **11.17.0** · pnpm **12.4.2** (`%APPDATA%\npm`, on PATH) ·
   rustup **1.29.1** · rustc/cargo **1.98.1** (`stable-x86_64-pc-windows-msvc`, default host, only target installed) ·
@@ -38,7 +38,7 @@
   source file with PowerShell `Add-Content`** — it writes CRLF and `format:check` fails.
 - `corepack enable` **fails without admin** (EPERM on `C:\Program Files\nodejs\pnpx`). pnpm is installed
   globally via `npm i -g pnpm@12.4.2`; `packageManager` in package.json pins it regardless.
-- **Test/dev data lives in `%LOCALAPPDATA%\CompIntel-dev	est-tmp`** (`src/testing/temp.ts`), never in
+- **Test/dev data lives in `%LOCALAPPDATA%\CompIntel-dev\test-tmp`** (`src/testing/temp.ts`), never in
   the system temp folder: Windows holds SQLite handles briefly after close, so cleanup must be retrying.
 - `pnpm --filter @compintel/backend db:generate` (+ `db:generate:custom` for FTS5/triggers).
   **`drizzle-kit push` is banned** and `scripts.test.ts` fails if any manifest adds it.
@@ -67,16 +67,24 @@
 - `npm i -g` now warns about unrun install scripts (npm 11.17 `allow-scripts` gate) — harmless for pnpm's shim.
 
 ## Completed
-- **WP-06 — UI foundation** (this WP). Tailwind v4 (`@tailwindcss/vite`) + `src/styles/tokens.css`: one
-  `--ci-*` token set, both themes, mapped onto Tailwind's namespaces with `@theme inline`, so
-  `[data-theme='dark']` re-points every utility at once; every text/surface pair is **measured** at
-  >= 4.5:1 in a test. Theme light/dark/**system** (`localStorage compintel.theme`, live
-  `prefers-color-scheme`). `src/shell/backend.ts` is now IPC only; the API client moved to `src/api/`
-  (typed `ApiProblem`, `Authorization` seam, generation retry, R27's **2 s** timeout, cursor types).
-  TanStack Query + Router (7 placeholder routes, **no admin routes** — seam in `app/nav.ts`), app shell
-  (collapsible rail, top bar, user menu), cmdk palette, ErrorBoundary/toasts/Skeleton/EmptyState and one
-  `<ConnectionScreen>` for the R26 cases. Vitest split into `node` + `jsdom` projects; **635 tests green**
-  (was 439), axe clean on every route. Manual run verified incl. DATA_DIR_LOCKED → Retry → shell.
+- **WP-07a — auth core** (this WP). Contracts `permissions.ts` (R32 matrix, ~500 generated cases) + `auth.ts`;
+  migrations 0002/0003 (organization + identity + `audit_log`, append-only triggers, seeded roles);
+  `modules/auth/` — Argon2id **m=128 MiB t=6 p=1, 322-409 ms measured here** (R17 addon path), opaque
+  SHA-256-hashed sessions (R33), the R34 lockout ladder, `policy.assertCan` off the contracts map;
+  `platform/` audit hash chain + `verifyChain` (R35), typed settings, the session preHandler (R38), SSE hub
+  (R36); routes `/auth/*`, `/me`, `/me/permissions`, `/stream`, `/system/client-log`. UI: login/lock/forced-change
+  screens, idle timer, admin rail and routes by permission, **token in memory only** (asserted), SSE client with
+  the R30 polling degradation. `backend_get` forwards `Authorization` (R27). **1607 tests** (1347 node + 260
+  desktop). **Fixed on the built app: `/stream` wrote its head raw and dropped the CORS headers, so the WebView
+  blocked every stream** — now carried over, with a test. `seed:dev` makes the first accounts until WP-07b.
+- **WP-06 — UI foundation.** Tailwind v4 (`@tailwindcss/vite`) + `src/styles/tokens.css`: one `--ci-*` token
+  set, both themes, mapped onto Tailwind's namespaces with `@theme inline`, so `[data-theme='dark']` re-points
+  every utility at once; every text/surface pair is **measured** at >= 4.5:1 in a test. Theme light/dark/**system**.
+  `src/shell/backend.ts` is IPC only; the API client lives in `src/api/` (typed `ApiProblem`, `Authorization`
+  seam, generation retry, R27's **2 s** timeout). TanStack Query + Router, app shell (collapsible rail, top bar,
+  user menu), cmdk palette, ErrorBoundary/toasts/Skeleton/EmptyState, `<ConnectionScreen>` for the R26 cases.
+  Vitest split into `node` + `jsdom` projects; axe clean on every route. Manual run verified incl.
+  DATA_DIR_LOCKED → Retry → shell.
 - **WP-05b — tray, close-to-tray, single instance, autostart, LNA check.** Tray menu (Open · Close to
   tray · Start with Windows · Open logs · Exit completely) via the `tray-icon` feature +
   `tauri-plugin-single-instance` 2.4.5 and `tauri-plugin-autostart` 2.5.1; preferences in
@@ -124,26 +132,18 @@
   `db.backup()` 4.1 ms, `VACUUM INTO` 2.9 ms; @node-rs/argon2 2.2.1 argon2id m=19456/t=2/p=1 →
   **12.8 ms per hash**. Prebuilds only. **Probe B**: a Tauri 2 hello world built in **2m 13s** cold.
 
-- **Architect review of WP-00…WP-02b → spec v1.1** (commit d781885, docs only, delivered by the user).
-  All WP-01 findings and WP-02 questions ruled on (§21); `docs/requirements/master-requirements.md` supplied.
-- **WP-00 — environment recon & bootstrap** (d159c78). Repo, .gitignore, docs/ tree; system/toolchain report;
-  13 platform robots.txt in docs/research/robots/.
-- **WP-01 — spec install, ADRs, engineering review** (6955690). ARCHITECTURE.md committed verbatim; §20 split into
-  ADR-0001…0015; DECISIONS.md created; docs/handoff/WP-01-review.md holds 10 ranked findings, 20 ambiguities and
-  S/M/L sizes for every WP with suggested splits (WP-04, 05, 07, 08, 09, 15, 16, 20, 25, 27).
-- **WP-02 — source feasibility & compliance** (58f7f4f). **CTFtime APPROVED_WITH_LIMITS** (API only, Crawl-delay 10,
-  30 min cadence per D-27) · **CLIST APPROVED_WITH_LIMITS but blocked** on a human account + API key ·
-  **Devfolio APPROVED_WITH_LIMITS** (ToS silent → permission email, drop participant PII) ·
-  **Devpost MANUAL_IMPORT_ONLY** (ToS forbids scraping — conflicts with roadmap WP-12) ·
-  **Unstop MANUAL_IMPORT_ONLY** until a human reads its JS-only Terms · **117 college sites PENDING_REVIEW**.
-  Sanitized fixtures for CTFtime + Devfolio only. Matrix: docs/research/source-feasibility.md.
-- **WP-02b — fresh-session housekeeping** (7b61c80, ef8bd55). CLAUDE.md fresh-session rules; this file created.
+- **WP-00…WP-02b — recon, spec, ADRs, source feasibility** (d159c78, 6955690, 58f7f4f, 7b61c80, ef8bd55;
+  architect review → spec v1.1 in d781885). Repo and docs/ tree; ARCHITECTURE.md verbatim + ADR-0001…0015 +
+  DECISIONS.md; docs/handoff/WP-01-review.md (10 findings, 20 ambiguities, per-WP sizes and splits);
+  **source matrix** in docs/research/source-feasibility.md — CTFtime/CLIST/Devfolio APPROVED_WITH_LIMITS
+  (CLIST blocked on an API key), **Devpost and Unstop MANUAL_IMPORT_ONLY**, 117 college sites PENDING_REVIEW;
+  sanitized fixtures for CTFtime + Devfolio; 13 platform robots.txt in docs/research/robots/.
 
 ## Open issues
 All WP-01/WP-02 findings are ruled on in ARCHITECTURE.md §21. Still open:
 1. ~~U1/U2~~ **done in WP-03a.** **U3** — Unstop Terms unread (blocks WP-13). **U4** — CLIST API key (blocks live WP-11 runs).
 2. **Pilot host unknown** (Q2/Q10): check its SAC/WDAC state and disk encryption before WP-31.
 3. **No 8 GB test machine**: needed for WP-31/32 (real laptop or VirtualBox VM).
-4. **Disk headroom: 30.4 GB free** (was 33 after WP-05b). `apps/desktop/src-tauri/target` alone is **9.3 GB**. R3 says `cargo clean` under 20 GB free; WP-15/26/27 add models, so this is the next thing to bite.
+4. **Disk headroom: 31 GB free.** `apps/desktop/src-tauri/target` alone is **8.0 GB**. R3 says `cargo clean` under 20 GB free; WP-15/26/27 add models, so this is the next thing to bite.
 5. Q1, Q3–Q9, Q11, Q12 open with defaults (DECISIONS.md); Q4 blocks WP-23.
 6. No BitLocker here → synthetic data only (D-33).

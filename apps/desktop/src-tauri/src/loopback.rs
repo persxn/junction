@@ -25,6 +25,9 @@ pub const API_PREFIX: &str = "/api/v1/";
 /// Header carrying the per-spawn client secret (ADR-0017).
 pub const CLIENT_SECRET_HEADER: &str = "X-CompIntel-Client";
 
+/// Header carrying the session bearer token (ADR-0017, ruling R27).
+pub const AUTHORIZATION_HEADER: &str = "Authorization";
+
 /// Bodies larger than this are truncated; the shell only proxies small JSON.
 pub const MAX_RESPONSE_BYTES: usize = 256 * 1024;
 
@@ -39,16 +42,41 @@ pub struct LoopbackResponse {
 /// The exact bytes sent. `Connection: close` keeps this a one-shot exchange, and
 /// the Host header has to match the port the backend bound, because the backend
 /// rejects anything else as a DNS-rebinding attempt (ruling A3).
-pub fn build_request(method: &str, path: &str, port: u16, secret: &str) -> String {
+///
+/// `authorization` is the session bearer token (ruling R27). Without it the
+/// fallback transport could only ever reach `/health`, so on a machine where
+/// WebView2 blocks loopback the app would be unusable after signing in. The
+/// value is dropped unless it is safe to put in a header, so nothing can smuggle
+/// a second header — or a second request — through this string.
+pub fn build_request(
+    method: &str,
+    path: &str,
+    port: u16,
+    secret: &str,
+    authorization: Option<&str>,
+) -> String {
+    let auth_line = match authorization {
+        Some(value) if is_header_safe(value) => format!("{AUTHORIZATION_HEADER}: {value}\r\n"),
+        _ => String::new(),
+    };
     format!(
         "{method} {path} HTTP/1.1\r\n\
          Host: 127.0.0.1:{port}\r\n\
          {CLIENT_SECRET_HEADER}: {secret}\r\n\
+         {auth_line}\
          Accept: application/json\r\n\
          Content-Length: 0\r\n\
          Connection: close\r\n\
          \r\n"
     )
+}
+
+/// A header value must not be able to end the header or start another one.
+pub fn is_header_safe(value: &str) -> bool {
+    !value.is_empty()
+        && value.len() <= 8192
+        && value.is_ascii()
+        && !value.contains(['\r', '\n', '\0'])
 }
 
 /// Reads the status code out of an HTTP status line.
@@ -83,6 +111,7 @@ pub fn request(
     path: &str,
     port: u16,
     secret: &str,
+    authorization: Option<&str>,
     timeout: Duration,
 ) -> Result<LoopbackResponse, String> {
     let address = SocketAddr::from(([127, 0, 0, 1], port));
@@ -94,7 +123,7 @@ pub fn request(
         .map_err(|cause| format!("cannot set a timeout on the request: {cause}"))?;
 
     stream
-        .write_all(build_request(method, path, port, secret).as_bytes())
+        .write_all(build_request(method, path, port, secret, authorization).as_bytes())
         .and_then(|()| stream.flush())
         .map_err(|cause| format!("cannot send {method} {path}: {cause}"))?;
 
@@ -121,7 +150,7 @@ pub fn request(
 /// A refusal (401, 404) or a network error is not fatal: the caller falls back to
 /// killing the process tree, which is why the error is a message, not a panic.
 pub fn request_shutdown(port: u16, secret: &str, timeout: Duration) -> Result<u16, String> {
-    request("POST", SHUTDOWN_PATH, port, secret, timeout).map(|response| response.status)
+    request("POST", SHUTDOWN_PATH, port, secret, None, timeout).map(|response| response.status)
 }
 
 /// True for the paths the UI is allowed to ask the shell to fetch. The WebView is
@@ -165,12 +194,51 @@ mod tests {
 
     #[test]
     fn the_request_carries_the_secret_and_a_matching_host() {
-        let request = build_request("POST", SHUTDOWN_PATH, 52991, "abc123");
+        let request = build_request("POST", SHUTDOWN_PATH, 52991, "abc123", None);
         assert!(request.starts_with("POST /api/v1/system/shutdown HTTP/1.1\r\n"));
         assert!(request.contains("Host: 127.0.0.1:52991\r\n"));
         assert!(request.contains("X-CompIntel-Client: abc123\r\n"));
         assert!(request.contains("Content-Length: 0\r\n"));
         assert!(request.ends_with("\r\n\r\n"));
+        // No session, no Authorization header at all.
+        assert!(!request.contains("Authorization"));
+    }
+
+    #[test]
+    fn the_request_forwards_a_session_token_when_there_is_one() {
+        let request = build_request(
+            "GET",
+            "/api/v1/me",
+            52991,
+            "abc123",
+            Some("Bearer 0123456789abcdef"),
+        );
+        assert!(request.contains("Authorization: Bearer 0123456789abcdef\r\n"));
+        // Still exactly one request, correctly terminated.
+        assert_eq!(request.matches("HTTP/1.1\r\n").count(), 1);
+        assert!(request.ends_with("\r\n\r\n"));
+    }
+
+    #[test]
+    fn a_header_value_cannot_smuggle_another_header_or_request() {
+        for hostile in [
+            "Bearer x\r\nX-Admin: true",
+            "Bearer x\nX-Admin: true",
+            "Bearer x\r\n\r\nGET /api/v1/secrets HTTP/1.1",
+            "Bearer \0",
+            "",
+        ] {
+            assert!(!is_header_safe(hostile), "{hostile:?} should be refused");
+            let request = build_request("GET", "/api/v1/me", 1, "s", Some(hostile));
+            assert!(!request.contains("X-Admin"));
+            assert_eq!(request.matches("HTTP/1.1\r\n").count(), 1);
+        }
+        assert!(is_header_safe("Bearer abc123"));
+        // A long but plausible token is fine; an absurd one is not.
+        assert!(is_header_safe(&format!("Bearer {}", "a".repeat(1024))));
+        assert!(!is_header_safe(&"a".repeat(9000)));
+        // Non-ASCII has no business in a bearer token.
+        assert!(!is_header_safe("Bearer café"));
     }
 
     #[test]
@@ -217,6 +285,7 @@ mod tests {
             "/api/v1/health",
             port,
             "secret",
+            None,
             Duration::from_secs(5),
         )
         .expect("answered");
@@ -226,6 +295,27 @@ mod tests {
         let request = server.join().expect("server thread");
         assert!(request.starts_with("GET /api/v1/health HTTP/1.1\r\n"));
         assert!(request.contains("Accept: application/json"));
+    }
+
+    #[test]
+    fn an_authenticated_proxied_get_reaches_the_backend_with_both_headers() {
+        let (port, server) =
+            echo_server("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n{\"user\":{}}");
+
+        let response = request(
+            "GET",
+            "/api/v1/me",
+            port,
+            "secret",
+            Some("Bearer deadbeef"),
+            Duration::from_secs(5),
+        )
+        .expect("answered");
+        assert_eq!(response.status, 200);
+
+        let request = server.join().expect("server thread");
+        assert!(request.contains("X-CompIntel-Client: secret"));
+        assert!(request.contains("Authorization: Bearer deadbeef"));
     }
 
     #[test]

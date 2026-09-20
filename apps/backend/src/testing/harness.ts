@@ -6,11 +6,54 @@ import { API_VERSION } from '@compintel/contracts';
 import { pino, type Logger } from 'pino';
 
 import { buildApp, type App, type BuildAppOptions } from '../app.js';
+import { sessionExpired } from '../modules/auth/errors.js';
+import type { ActiveSession, AuthService } from '../modules/auth/service.js';
 import type { Config } from '../platform/config.js';
 import { APP_VERSION } from '../platform/version.js';
 
 /** Long enough to exercise the constant-time comparison honestly. */
 export const TEST_CLIENT_SECRET = 'test-client-secret-0123456789abcdef';
+
+/** The bearer token {@link authedFetch} sends and {@link stubAuth} accepts. */
+export const TEST_SESSION_TOKEN = 'test-session-token';
+
+/** The session {@link stubAuth} hands out. */
+export const TEST_SESSION: ActiveSession = Object.freeze({
+  id: 'test-session',
+  user: {
+    id: 'test-user',
+    email: 'tester@example.edu',
+    displayName: 'Tester',
+    departmentId: null,
+    status: 'ACTIVE' as const,
+    mustChangePassword: false,
+    roles: ['ADMINISTRATOR' as const, 'PROFESSOR' as const],
+  },
+  idleExpiresAt: Number.MAX_SAFE_INTEGER,
+  absoluteExpiresAt: Number.MAX_SAFE_INTEGER,
+});
+
+/**
+ * A stand-in authenticator for tests that are **not** about authentication —
+ * error shapes, request logging, the Host allowlist. Since §10.3 put every route
+ * behind a session, those tests would otherwise all assert 401 and stop testing
+ * what they were written for.
+ *
+ * It accepts exactly one token and nothing else, so a test that forgets the
+ * header still fails. Tests that *are* about auth build a real `AuthService`
+ * over a real database (`testing/auth-server.ts`).
+ */
+export function stubAuth(): () => AuthService {
+  const service = {
+    authenticate: (token: string): ActiveSession => {
+      if (token !== TEST_SESSION_TOKEN) {
+        throw sessionExpired('This is not the test session token.');
+      }
+      return TEST_SESSION;
+    },
+  };
+  return () => service as unknown as AuthService;
+}
 
 /**
  * A config that touches no disk: the harness logger is disabled, so `dataDir` is
@@ -71,7 +114,10 @@ export function capturingLogger(level = 'debug'): { logger: Logger; lines: () =>
  */
 export async function startTestServer(options: StartTestServerOptions = {}): Promise<TestServer> {
   const config = options.config ?? testConfig();
-  const app = buildApp(config, options.logger ?? pino({ enabled: false }), options);
+  const app = buildApp(config, options.logger ?? pino({ enabled: false }), {
+    auth: stubAuth(),
+    ...options,
+  });
   options.extend?.(app);
 
   await app.server.listen({ host: config.host, port: config.port });
@@ -131,7 +177,11 @@ export function rawRequest(
   });
 }
 
-/** `fetch` with the client secret attached, which is what the UI always does. */
+/**
+ * `fetch` with both headers the UI always sends: the per-spawn client secret and
+ * the bearer token (ADR-0017). The token is {@link TEST_SESSION_TOKEN}, which
+ * only {@link stubAuth} accepts.
+ */
 export function authedFetch(
   server: TestServer,
   path_: string,
@@ -141,6 +191,7 @@ export function authedFetch(
     ...init,
     headers: {
       'X-CompIntel-Client': server.config.clientSecret,
+      Authorization: `Bearer ${TEST_SESSION_TOKEN}`,
       ...(init.headers ?? {}),
     },
   });

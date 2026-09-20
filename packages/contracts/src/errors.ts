@@ -16,6 +16,21 @@ export const COMMON_ERROR_CODES = [
   'RATE_LIMITED',
 ] as const;
 
+/**
+ * Authentication and session failures (§4.12, §10, rulings R33/R34/R38). Each
+ * one is a different thing for the UI to say, which is why they are not all
+ * `UNAUTHORIZED`: "wrong password", "locked for another 4 minutes" and "your
+ * session expired while you were away" need different screens.
+ */
+export const AUTH_ERROR_CODES = [
+  'AUTH_INVALID_CREDENTIALS',
+  'AUTH_ACCOUNT_LOCKED',
+  'AUTH_ACCOUNT_DISABLED',
+  'AUTH_SESSION_EXPIRED',
+  'AUTH_PASSWORD_CHANGE_REQUIRED',
+  'AUTH_RECOVERY_INVALID',
+] as const;
+
 /** Event-source and scraping failures (§7.7). */
 export const SOURCE_ERROR_CODES = ['SOURCE_UNREACHABLE'] as const;
 
@@ -28,6 +43,7 @@ export const DB_ERROR_CODES = ['DB_UNAVAILABLE', 'DB_CONSTRAINT_VIOLATED'] as co
  */
 export const ERROR_CODES = [
   ...COMMON_ERROR_CODES,
+  ...AUTH_ERROR_CODES,
   ...SOURCE_ERROR_CODES,
   ...DB_ERROR_CODES,
 ] as const;

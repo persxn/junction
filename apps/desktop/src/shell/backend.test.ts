@@ -94,7 +94,11 @@ describe('the IPC wrappers', () => {
       status: 200,
       body: '{}',
     });
-    expect(invoke).toHaveBeenCalledWith('backend_get', { path: '/api/v1/health' });
+    // Ruling R27: the token slot is always sent, null when there is no session.
+    expect(invoke).toHaveBeenCalledWith('backend_get', {
+      path: '/api/v1/health',
+      authorization: null,
+    });
   });
 
   it('refuses a proxy answer that is not the contract', async () => {
