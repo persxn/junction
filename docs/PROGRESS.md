@@ -1,7 +1,7 @@
 # Progress — newest first, keep < 150 lines
 
 ## Current
-- **Next WP: WP-03b** (monorepo scaffold). Toolchain is ready; no user action blocks it.
+- **Next WP: WP-04a.** Toolchain and scaffold are ready; no user action blocks it.
 - Spec: docs/ARCHITECTURE.md **v1.1 — ACCEPTED** (changelog at the top; rulings index §21; roadmap §19 = 46 WPs, 41 remaining).
 - ADR-0001…0018 Accepted (several amended). Decisions register: docs/DECISIONS.md (D-01…D-33, Q1…Q13, user actions U1…U6).
 
@@ -20,22 +20,37 @@
   Defender real-time ON, tamper protection ON, **no exclusions** (U6 not taken). No CodeIntegrity or Defender
   block events during the toolchain install or the first unsigned Tauri build.
 - **Disk cost of the toolchain:** VS Build Tools ≈ 6.7 GB · `~\.rustup` 1.28 GB · `~\.cargo` 0.5 GB ·
-  a *debug* Tauri `target/` ≈ **3.2 GB** per app — budget for this in WP-03b and keep `target/` out of backups.
+  a *debug* Tauri `target/` ≈ **3.2 GB** per app — budget for this from WP-04a on and keep `target/` out of backups.
 - **Network / proxy:** direct, no proxy. npm/crates.io/GitHub/PyPI/HuggingFace reachable.
 - **Repo location:** C:\Users\Calamity\Desktop\competition-intel — **not** inside OneDrive.
   Dev data belongs in `%LOCALAPPDATA%\CompIntel-dev`, never in the repo.
 
 ## Standard commands
+- `pnpm install --frozen-lockfile` · **`pnpm verify`** = `format:check && lint && typecheck && test`
+  (~6 s here, ~7 s from a cold clone; budget is < 2 min per §4.15).
+  Individually: `pnpm format` / `format:check` (Prettier) · `pnpm lint` (ESLint) · `pnpm typecheck` (`tsc -b`) ·
+  `pnpm test` (Vitest, single run) · `pnpm clean` (`tsc -b --clean`).
 - Git identity is repo-local: `Calamity <sohomaroy2005@gmail.com>`; `core.autocrlf=false`.
+  `.gitattributes` enforces LF everywhere except `*.ps1`; Prettier also writes LF, so **never append to a
+  source file with PowerShell `Add-Content`** — it writes CRLF and `format:check` fails.
 - `corepack enable` **fails without admin** (EPERM on `C:\Program Files\nodejs\pnpx`). pnpm is installed
-  globally via `npm i -g pnpm@12.4.2`; pin it with `packageManager` in package.json all the same.
+  globally via `npm i -g pnpm@12.4.2`; `packageManager` in package.json pins it regardless.
 - Rust/Tauri build: `pnpm tauri build --debug --no-bundle` (add `--no-bundle` whenever the installer isn't wanted).
 - **PATH caveat:** rustup added `%USERPROFILE%\.cargo\bin` to the *user* PATH; already-open terminals must be
   restarted or prepend it manually, otherwise `cargo`/`rustc` are not found.
+- **NodeNext:** relative imports need a `.js` extension even in `.ts` sources.
 - `npm i -g` now warns about unrun install scripts (npm 11.17 `allow-scripts` gate) — harmless for pnpm's shim.
 
 ## Completed
-- **WP-03a — toolchain install + build probes** (this WP). Prerequisites re-verified (SAC=0, LongPaths=1).
+- **WP-03b — monorepo scaffold + `pnpm verify`** (this WP). pnpm workspace (`apps/*`, `packages/*`, `tools/*`),
+  `packageManager` pnpm@12.4.2, engines `>=24.19 <25`, `.npmrc` save-exact + engine-strict, `onlyBuiltDependencies: []`
+  (nothing in the tree needs install scripts). **TypeScript 6.0.3** — not 7.0.2, because typescript-eslint 8.70.0
+  supports `>=4.8.4 <6.1.0`. ESLint 10.11.0 flat config (recommended+stylistic TypeChecked, `no-explicit-any`,
+  `no-floating-promises`, `consistent-type-imports` as errors), Prettier 3.9.8 (`docs/` and CLAUDE.md excluded),
+  Vitest 5.0.1, one root config. `packages/contracts` (zod 4.6.5): API_VERSION, the 5 spec enums, RFC 9457
+  ProblemDetails + ErrorCode, 57 tests. `apps/backend`: `describeBuild()` via `workspace:*`.
+  Verified green from a fresh `git clone` + `--frozen-lockfile`; injected lint/type/test faults each exit 1.
+- **WP-03a — toolchain install + build probes.** Prerequisites re-verified (SAC=0, LongPaths=1).
   Installed VS Build Tools 2022 (C++ workload, ~10 min), rustup + stable-msvc, pnpm 12.4.2.
   **Probe A passed**: better-sqlite3 13.0.3 → SQLite **3.53.4**, WAL, FTS5 `porter` + `tokenize='trigram'` both
   MATCHing, JS `haversine()` called from SQL, `db.backup()` 4.1 ms, `VACUUM INTO` 2.9 ms, both copies verified;
@@ -63,6 +78,6 @@ All WP-01/WP-02 findings are ruled on in ARCHITECTURE.md §21. Still open:
 1. ~~U1/U2~~ **done in WP-03a.** **U3** — Unstop Terms unread (blocks WP-13). **U4** — CLIST API key (blocks live WP-11 runs).
 2. **Pilot host unknown** (Q2/Q10): check its SAC/WDAC state and disk encryption before WP-31.
 3. **No 8 GB test machine**: needed for WP-31/32 (real laptop or VirtualBox VM).
-4. **Disk headroom**: 42 GB free. A full monorepo with several Rust targets plus models will eat it; watch this from WP-03b on.
+4. **Disk headroom**: ~42 GB free. A full monorepo with several Rust targets plus models will eat it; watch this from WP-04a on.
 5. Q1, Q3–Q9, Q11, Q12 open with defaults (DECISIONS.md); Q4 blocks WP-23.
 6. No BitLocker here → synthetic data only (D-33).
