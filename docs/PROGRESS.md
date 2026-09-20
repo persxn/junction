@@ -2,16 +2,20 @@
 
 ## Current
 - **pre-M1 DONE** (21 Sep 2026, `docs/handoff/pre-M1.md`) — consolidation, **no behaviour change**.
-  `platform/time.ts` = one `Clock` + local-day arithmetic (§7.3, no new dep); `src/domain/` exists with
-  four **linter-enforced** boundary rules + `max-lines: 400`; `withAudit()` puts a change and its audit
-  row in one transaction; settings are `define()`d by the owning module; `testing/golden.ts` +
-  `test/fixtures/` (byte-identical to `docs/research/`); R12 gains `EVENT_`/`GEO_`/`SEARCH_`/`IMPORT_`.
-  M0 debt cleared: `seed:dev` deleted, `check-path` precedence, retrying `removeDirectory`.
-  **1790 tests** (was 1736); `smoke:bundle` PASSED; built exe verified wizard → sign-in → shell.
-  `cargo clean` freed **11.2 GiB**; C: 28.8 → 38.2 GB, then **34.9 GB** once `target/` was rebuilt (3.7 GB).
-  **Open for the architect:** `jobs/schedule.ts` cannot move to `domain/` until `JobDefinition.nextDueAt`
-  stops being typed against the Drizzle row — a jobs-layer refactor, see the handoff §4.
-- **Next: WP-08b.**
+  `platform/time.ts` = one `Clock` + local-day arithmetic; `src/domain/` with four linter-enforced
+  boundary rules + `max-lines: 400`; `withAudit()`; settings `define()`d by the owning module;
+  `testing/golden.ts`; R12 error blocks; M0 debt cleared. 1790 tests; built exe verified.
+  **Open for the architect:** `jobs/schedule.ts` cannot move to `domain/` until
+  `JobDefinition.nextDueAt` stops being typed against the Drizzle row (handoff §4).
+- **WP-08a IN PROGRESS** (~65%, `b9a6408`) — **read `docs/handoff/WP-08a.md` before writing any code.**
+  Done and green: rulings R48-R52 / spec v1.1.7 · contracts `events.ts` + `event-candidate.ts`
+  (`.strict()`, R50) · migration **0004** = event_series, events, event_deadlines, event_field_claims,
+  event_overrides, event_changes, institutions (R48; `source_record_id` carries no FK, R49) ·
+  `domain/normalize/` (11 modules, pure + clock-injected, R52) · **153 table-driven cases**.
+  **Left:** enum/CHECK tests · migration tests for the new tables · PII sweep over the fixtures ·
+  two golden files · a fast-check property test · `pnpm audit:deps` · PROGRESS + the closing report.
+  New deps: chrono-node 2.10.1, sanitize-html 2.17.7, turndown 7.2.4 (+2 @types, dev).
+  **1979 tests** (was 1790).
 - **Architect reviewed M0** (20 Sep 2026, `docs/handoff/M0-review.md`): R1–R44 accepted as written, plus
   R45–R47 (recovery-code sign-in → WP-30, Argon2id calibration deferred, `/system/shutdown` exemption).
   **Q1 RESOLVED** — standalone single-professor deployment, §3.1 amended, accounts/RBAC/audit retained.
@@ -81,18 +85,15 @@
 - **PATH caveat:** rustup added `%USERPROFILE%\.cargo\bin` to the *user* PATH; already-open terminals must be restarted, otherwise `cargo`/`rustc` are not found. **NodeNext:** relative imports need a `.js` extension even in `.ts` sources.
 
 ## Completed
-- **WP-07b — first-run wizard + user administration** (this WP, closes M0). R39 gate = 409
-  `SETUP_REQUIRED` before the session hook (exempt: `/health`, `/setup/*`, `/system/client-log`,
-  `/system/shutdown`); `modules/setup/` writes organization + department + campus + first admin +
-  settings + age keys in **one transaction** (R40); `modules/backup/keys.ts` = `age-encryption` 0.3.1
-  X25519 identity wrapped to a scrypt passphrase (**work factor 18**) + the recovery-file text (R42);
-  one-time recovery code hashed into `auth.recoveryCodeHash` (R41); `settings.ts` is now the **one typed
-  registry**. `modules/users/` = admin CRUD, last-admin protection, `version` 409s. Shell `files.rs`:
-  `pick_folder`/`save_text_file` limited to a folder picked in this run (R43, `tauri-plugin-dialog`
-  2.7.3, Rust API only). **1736 tests** (1429 node + 307 desktop); cargo 56; **`smoke:bundle` now drives
-  the whole wizard on a fresh data dir**. Clicked through in the **built exe** (CDP + `WM_SETTEXT` for the
-  native dialogs — see the handoff); second launch goes straight to sign-in.
-- **WP-07a — auth core.** Contracts `permissions.ts` (R32 matrix) + `auth.ts`; migrations 0002/0003
+- **WP-07b — first-run wizard + user administration** (closes M0). R39 gate = 409 `SETUP_REQUIRED`
+  before the session hook (exempt: `/health`, `/setup/*`, `/system/client-log`, `/system/shutdown`);
+  `modules/setup/` writes organization + department + campus + first admin + settings + age keys in
+  **one transaction** (R40); `modules/backup/keys.ts` = `age-encryption` 0.3.1 X25519 identity wrapped
+  to a scrypt passphrase (**work factor 18**) + the recovery-file text (R42); one-time recovery code
+  hashed into `auth.recoveryCodeHash` (R41). `modules/users/` = admin CRUD, last-admin protection,
+  `version` 409s. Shell `files.rs`: `pick_folder`/`save_text_file` limited to a folder picked in this
+  run (R43, `tauri-plugin-dialog` 2.7.3). 1736 tests; cargo 56; `smoke:bundle` drives the wizard.
+- **WP-07a — auth core.** Contracts `permissions.ts` (R32) + `auth.ts`; migrations 0002/0003
   (organization + identity + `audit_log`, append-only triggers, roles); `modules/auth/` — Argon2id
   **m=128 MiB t=6 p=1, 322-409 ms here** (R17 addon path), opaque SHA-256 sessions (R33), the R34 lockout
   ladder, `policy.assertCan`; `platform/` audit hash chain + `verifyChain` (R35), session preHandler (R38),
@@ -112,8 +113,7 @@
 - **WP-05a — Tauri shell + backend supervision.** `apps/desktop` (React 19 + Vite 8, own tsconfig per R6),
   `src-tauri` inside; `rust-toolchain.toml` pins 1.98.1 (R1). Rust: `backoff` (1→2→4…60 s, 5 crashes/10 min →
   FAILED), `ready` (R7), `secret` (32 fresh bytes per spawn, A2), `paths` (A20 + `COMPINTEL_DATA_DIR`), `job`
-  (KILL_ON_JOB_CLOSE, F7/A17), `supervisor`, `commands` + `backend://status`; `contracts/src/shell.ts` types
-  the IPC (R24). A named startup error is terminal, not a restart loop (R26).
+  (KILL_ON_JOB_CLOSE, F7/A17), `supervisor`, `commands`; `contracts/src/shell.ts` types the IPC (R24).
 - **WP-04c — DB-backed job runner.** Migration 0001 = `job_state`; `contracts/src/jobs.ts` (JobKind
   SCRAPE/LLM/GENERAL, JobTrigger, JobOutcome + ABORTED/CRASHED, JobSnapshot). `src/jobs/`: `outcome`
   (state machine), `store` (conditional-UPDATE claim = single-flight), `run`, `scheduler` (30 s tick,
