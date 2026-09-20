@@ -65,10 +65,8 @@
 - **LNA re-check** (F9, after any WebView2/Windows update): launch the exe with
   `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--enable-features=LocalNetworkAccessChecks,msWebViewAllowLocalNetworkAccessChecks`
   and confirm the window still reaches the backend - see docs/research/webview2-local-network-access.md.
-- **PATH caveat:** rustup added `%USERPROFILE%\.cargo\bin` to the *user* PATH; already-open terminals must be
-  restarted or prepend it manually, otherwise `cargo`/`rustc` are not found.
+- **PATH caveat:** rustup added `%USERPROFILE%\.cargo\bin` to the *user* PATH; already-open terminals must be restarted, otherwise `cargo`/`rustc` are not found.
 - **NodeNext:** relative imports need a `.js` extension even in `.ts` sources.
-- `npm i -g` now warns about unrun install scripts (npm 11.17 `allow-scripts` gate) — harmless for pnpm's shim.
 
 ## Completed
 - **WP-07b — first-run wizard + user administration** (this WP, closes M0). R39 gate = 409
