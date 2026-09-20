@@ -68,7 +68,8 @@ describe('ErrorCode', () => {
       'SOURCE_SCHEMA_CHANGED',
       'SOURCE_PARSE_FAILED',
       'EVENT_NOT_FOUND',
-      'EVENT_STALE_VERSION',
+      'EVENT_INVALID_CANDIDATE',
+      'EVENT_VERSION_CONFLICT',
       'EVENT_ALREADY_MERGED',
       'EVENT_MERGE_CONFLICT',
       'EVENT_NOT_MERGED',
@@ -282,7 +283,7 @@ describe('the error-code domains (ruling R12)', () => {
   });
 
   it('carries the blocks M1 needs', () => {
-    expect(ERROR_CODES).toContain('EVENT_STALE_VERSION');
+    expect(ERROR_CODES).toContain('EVENT_VERSION_CONFLICT');
     expect(ERROR_CODES).toContain('GEO_PLACE_UNKNOWN');
     expect(ERROR_CODES).toContain('SEARCH_QUERY_INVALID');
     expect(ERROR_CODES).toContain('IMPORT_SOURCE_NOT_ALLOWED');
