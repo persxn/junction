@@ -20,7 +20,7 @@ import {
 } from './errors.js';
 import { hashPassword, verifyPassword } from './password.js';
 import { normalizeEmail, type AuthRepository } from './repository.js';
-import { LoginRateLimiter, lockoutMinutesFor } from './throttle.js';
+import { LoginRateLimiter } from './throttle.js';
 import {
   ABSOLUTE_SESSION_MS,
   generateSessionToken,
@@ -28,6 +28,7 @@ import {
   SESSION_REFRESH_INTERVAL_MS,
   type RandomBytes,
 } from './tokens.js';
+import { lockoutMinutesFor } from '../../domain/lockout.js';
 import { nowMs, systemClock, type Clock } from '../../platform/time.js';
 
 /**

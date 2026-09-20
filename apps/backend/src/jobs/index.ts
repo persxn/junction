@@ -3,11 +3,11 @@ export { applyOutcome, type ApplyOutcomeOptions, type JobStatePatch } from './ou
 export {
   applyJitter,
   backoffDelayMs,
-  firstDueAt,
   isDue,
   isLeaseExpired,
-  nextDueAfterRun,
-} from './schedule.js';
+  type JobSchedulingState,
+} from '../domain/scheduling.js';
+export { firstDueAt, nextDueAfterRun } from './schedule.js';
 export { executeRun, type ExecuteRunOptions } from './run.js';
 export { Scheduler, type SchedulerOptions } from './scheduler.js';
 export { JobStore } from './store.js';

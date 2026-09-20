@@ -1,41 +1,12 @@
 import type { JobStateRow } from '../db/schema/index.js';
+import { applyJitter } from '../domain/scheduling.js';
 import type { RegisteredJob } from './types.js';
 
 /**
- * The scheduling arithmetic, kept pure so it can be tested without a database,
- * a clock or a timer. Everything here works in Unix milliseconds (§6.1).
+ * The two scheduling decisions that need a registered job definition. The
+ * arithmetic and the predicates they build on are pure and live in
+ * `domain/scheduling.ts`.
  */
-
-/**
- * Spreads a delay by up to ±`ratio`. `random` returns [0, 1) like `Math.random`,
- * and is injected so tests can pin the result. The delay never goes below zero
- * and never below one millisecond, so a jittered interval cannot become "now
- * again" and spin.
- */
-export function applyJitter(delayMs: number, ratio: number, random: () => number): number {
-  if (ratio <= 0 || delayMs <= 0) {
-    return Math.max(0, Math.round(delayMs));
-  }
-  const spread = delayMs * ratio;
-  const offset = (random() * 2 - 1) * spread;
-  return Math.max(1, Math.round(delayMs + offset));
-}
-
-/**
- * Exponential backoff: base, 2 × base, 4 × base … capped at `maxMs`
- * (§7.2: 15 → 30 → 60 min … max 12 h). `failures` is the number of consecutive
- * failures *including* the one that just happened, so the first retry waits
- * exactly `baseMs`.
- */
-export function backoffDelayMs(failures: number, baseMs: number, maxMs: number): number {
-  if (failures <= 0) {
-    return 0;
-  }
-  // 2 ** 1024 is Infinity, and Math.min keeps that honest, but clamping the
-  // exponent first avoids relying on that.
-  const steps = Math.min(failures - 1, 40);
-  return Math.min(maxMs, baseMs * 2 ** steps);
-}
 
 /**
  * When a job should next run after a completed attempt. A fixed-interval job
@@ -85,25 +56,4 @@ export function firstDueAt(job: RegisteredJob, at: Date, random: () => number): 
     });
   }
   return at.getTime() + applyJitter(job.definition.intervalMs ?? 0, job.jitterRatio, random);
-}
-
-/**
- * A job is due when its next due time has arrived, it is not backing off, and no
- * run holds it. Both `next_due_at` and `backoff_until` are checked because a
- * failure pushes the due time out *and* records the backoff, and a manual
- * `trigger()` may move the due time back without clearing the backoff.
- */
-export function isDue(row: JobStateRow, nowMs: number): boolean {
-  if (row.runningSince !== null) {
-    return false;
-  }
-  if (row.backoffUntil !== null && row.backoffUntil > nowMs) {
-    return false;
-  }
-  return row.nextDueAt <= nowMs;
-}
-
-/** True when a `running_since` lease is older than the job's allowance. */
-export function isLeaseExpired(row: JobStateRow, leaseMs: number, nowMs: number): boolean {
-  return row.runningSince !== null && row.runningSince + leaseMs <= nowMs;
 }

@@ -9,7 +9,8 @@ import {
   TEST_PASSWORD as PASSWORD,
   type AuthHarness,
 } from '../../testing/auth.js';
-import { LoginRateLimiter, LOCKOUT_LADDER_MINUTES } from './throttle.js';
+import { LOCKOUT_LADDER_MINUTES } from '../../domain/lockout.js';
+import { LoginRateLimiter } from './throttle.js';
 import { ABSOLUTE_SESSION_MS, hashToken } from './tokens.js';
 
 /**

@@ -5,7 +5,8 @@ import type { JobStateRow } from '../db/schema/index.js';
 import type { ShutdownRegistry } from '../platform/shutdown.js';
 import { applyOutcome } from './outcome.js';
 import { executeRun } from './run.js';
-import { firstDueAt, isLeaseExpired } from './schedule.js';
+import { isLeaseExpired } from '../domain/scheduling.js';
+import { firstDueAt } from './schedule.js';
 import { JobStore } from './store.js';
 import {
   DEFAULT_CONCURRENCY_LIMITS,
