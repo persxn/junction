@@ -29,7 +29,7 @@ describe('Scheduler catch-up', () => {
   it('runs a job that came due while the backend was asleep, exactly once', async () => {
     const time = clock();
     const runs = vi.fn();
-    const { scheduler, store } = harness({ now: time.now });
+    const { scheduler, store } = harness({ clock: time });
     scheduler.register(job({ firstRun: 'after-interval', run: runs }));
     expect(store.read('j')?.nextDueAt).toBe(T0 + 15 * MINUTE);
 
@@ -45,7 +45,7 @@ describe('Scheduler catch-up', () => {
 
   it('reschedules from when the run happened, so the cadence cannot drift', async () => {
     const time = clock();
-    const { scheduler, store } = harness({ now: time.now });
+    const { scheduler, store } = harness({ clock: time });
     scheduler.register(job({ firstRun: 'after-interval' }));
 
     time.advance(8 * 60 * MINUTE);
@@ -58,7 +58,7 @@ describe('Scheduler catch-up', () => {
   it('tags the first tick after a start as STARTUP_CATCHUP', async () => {
     const time = clock();
     const triggers: string[] = [];
-    const { scheduler } = harness({ now: time.now });
+    const { scheduler } = harness({ clock: time });
     scheduler.register(
       job({
         run: (context: JobContext) => {
@@ -73,7 +73,7 @@ describe('Scheduler catch-up', () => {
   });
 
   it('refuses to start twice', async () => {
-    const { scheduler } = harness({ now: clock().now });
+    const { scheduler } = harness({ clock: clock() });
     await scheduler.start();
     await expect(scheduler.start()).rejects.toThrow(/already started/);
   });
@@ -84,7 +84,7 @@ describe('Scheduler single-flight', () => {
     const time = clock();
     const gate = deferred();
     const runs = vi.fn(() => gate.promise);
-    const { scheduler } = harness({ now: time.now });
+    const { scheduler } = harness({ clock: time });
     scheduler.register(job({ run: runs }));
 
     const first = await scheduler.tick();
@@ -102,7 +102,7 @@ describe('Scheduler single-flight', () => {
   it('holds the lease in the database, not just in memory', async () => {
     const time = clock();
     const gate = deferred();
-    const { scheduler, store } = harness({ now: time.now });
+    const { scheduler, store } = harness({ clock: time });
     scheduler.register(job({ run: () => gate.promise }));
 
     await scheduler.tick();
@@ -117,7 +117,7 @@ describe('Scheduler single-flight', () => {
 describe('Scheduler stale leases', () => {
   it('reclaims a lease left behind by a crashed backend on the next start', async () => {
     const time = clock();
-    const { scheduler, store } = harness({ now: time.now });
+    const { scheduler, store } = harness({ clock: time });
     scheduler.register(job());
     // What a process killed mid-run leaves in the table (ruling R15 guarantees
     // the dead process was the only one that could have written it).
@@ -137,7 +137,7 @@ describe('Scheduler stale leases', () => {
 
   it('reclaims a lease that outlived its allowance while we are running', async () => {
     const time = clock();
-    const { scheduler, store } = harness({ now: time.now });
+    const { scheduler, store } = harness({ clock: time });
     scheduler.register(job({ leaseMs: 2 * MINUTE }));
     store.claim('j', T0);
 
@@ -153,7 +153,7 @@ describe('Scheduler stale leases', () => {
   it('leaves a live lease alone', async () => {
     const time = clock();
     const gate = deferred();
-    const { scheduler, store } = harness({ now: time.now });
+    const { scheduler, store } = harness({ clock: time });
     scheduler.register(job({ leaseMs: MINUTE, run: () => gate.promise }));
 
     await scheduler.tick();
@@ -173,7 +173,7 @@ describe('Scheduler backoff', () => {
     const runs = vi.fn(() => {
       throw new Error('source unreachable');
     });
-    const { scheduler, store } = harness({ now: time.now });
+    const { scheduler, store } = harness({ clock: time });
     scheduler.register(job({ intervalMs: MINUTE, run: runs }));
 
     await scheduler.tick();
@@ -197,7 +197,7 @@ describe('Scheduler backoff', () => {
   it('clears the streak as soon as a run succeeds', async () => {
     const time = clock();
     let fail = true;
-    const { scheduler, store } = harness({ now: time.now });
+    const { scheduler, store } = harness({ clock: time });
     scheduler.register(
       job({
         run: () => {
@@ -225,7 +225,7 @@ describe('Scheduler backoff', () => {
   it('tells the job which attempt this is', async () => {
     const time = clock();
     const attempts: number[] = [];
-    const { scheduler } = harness({ now: time.now });
+    const { scheduler } = harness({ clock: time });
     scheduler.register(
       job({
         run: (context: JobContext) => {

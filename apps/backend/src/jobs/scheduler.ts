@@ -17,12 +17,13 @@ import {
   type TickSummary,
   type TriggerResult,
 } from './types.js';
+import { systemClock, type Clock } from '../platform/time.js';
 
 export interface SchedulerOptions {
   readonly store: JobStore;
   readonly logger: Logger;
   /** Injected in tests; every scheduling decision reads this, never a counter. */
-  readonly now?: () => Date;
+  readonly clock?: Clock;
   /** Injected in tests so jitter is deterministic. */
   readonly random?: () => number;
   readonly tickIntervalMs?: number;
@@ -57,7 +58,7 @@ interface InFlight {
 export class Scheduler {
   readonly #store: JobStore;
   readonly #logger: Logger;
-  readonly #now: () => Date;
+  readonly #clock: Clock;
   readonly #random: () => number;
   readonly #tickIntervalMs: number;
   readonly #limits: Readonly<Record<JobKind, number>>;
@@ -74,7 +75,7 @@ export class Scheduler {
   constructor(options: SchedulerOptions) {
     this.#store = options.store;
     this.#logger = options.logger.child({ component: 'scheduler' });
-    this.#now = options.now ?? ((): Date => new Date());
+    this.#clock = options.clock ?? systemClock;
     this.#random = options.random ?? Math.random;
     this.#tickIntervalMs = options.tickIntervalMs ?? TICK_INTERVAL_MS;
     this.#limits = { ...DEFAULT_CONCURRENCY_LIMITS, ...options.limits };
@@ -93,7 +94,7 @@ export class Scheduler {
       throw new Error(`Job "${job.key}" is already registered.`);
     }
     this.#jobs.set(job.key, job);
-    const row = this.#store.ensure(job, firstDueAt(job, this.#now(), this.#random));
+    const row = this.#store.ensure(job, firstDueAt(job, this.#clock.now(), this.#random));
     this.#logger.debug(
       { job: job.key, kind: job.kind, nextDueAt: row.nextDueAt },
       'job registered',
@@ -141,7 +142,7 @@ export class Scheduler {
    * limits allow. Returns once the runs are started, not finished.
    */
   async tick(trigger: JobTrigger = 'SCHEDULE'): Promise<TickSummary> {
-    const at = this.#now();
+    const at = this.#clock.now();
     const atMs = at.getTime();
     if (this.#stopped) {
       return { at: atMs, started: [], deferred: [], skippedOffline: [], reclaimed: [] };
@@ -209,7 +210,7 @@ export class Scheduler {
       return { accepted: false, reason: 'AT_CAPACITY' };
     }
 
-    const at = this.#now();
+    const at = this.#clock.now();
     const atMs = at.getTime();
     let row = this.#store.read(key);
     if (row === undefined) {
@@ -298,22 +299,22 @@ export class Scheduler {
    * the table when this process starts belonged to one that is gone.
    */
   #reclaimCrashedRuns(): void {
-    const at = this.#now();
+    const at = this.#clock.now();
     for (const row of this.#store.running()) {
       this.#reclaim(row, at, 'the backend stopped while this job was running');
     }
   }
 
   /** Runtime safety net: a lease held longer than the job's allowance. */
-  #reclaimExpiredLeases(nowMs: number): readonly string[] {
+  #reclaimExpiredLeases(atMs: number): readonly string[] {
     const reclaimed: string[] = [];
     for (const row of this.#store.running()) {
       const job = this.#jobs.get(row.jobKey);
       if (job === undefined || this.#inFlight.has(row.jobKey)) {
         continue;
       }
-      if (isLeaseExpired(row, job.leaseMs, nowMs)) {
-        this.#reclaim(row, new Date(nowMs), `the lease expired after ${job.leaseMs.toString()} ms`);
+      if (isLeaseExpired(row, job.leaseMs, atMs)) {
+        this.#reclaim(row, new Date(atMs), `the lease expired after ${job.leaseMs.toString()} ms`);
         reclaimed.push(row.jobKey);
       }
     }
@@ -373,7 +374,7 @@ export class Scheduler {
       at,
       store: this.#store,
       logger: this.#logger,
-      now: this.#now,
+      clock: this.#clock,
       random: this.#random,
       signal: this.#abort.signal,
     }).finally(() => {

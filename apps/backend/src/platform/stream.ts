@@ -1,4 +1,5 @@
 import type { StreamEvent, StreamEventType } from '@compintel/contracts';
+import { nowMs, systemClock, type Clock } from './time.js';
 
 /**
  * The server half of `/api/v1/stream` (ruling R36, ADR-0017, §4.4).
@@ -36,13 +37,13 @@ export interface Subscriber {
 }
 
 export interface StreamHubOptions {
-  readonly now?: () => number;
+  readonly clock?: Clock;
   readonly maxEvents?: number;
   readonly maxAgeMs?: number;
 }
 
 export class StreamHub {
-  readonly #now: () => number;
+  readonly #clock: Clock;
   readonly #maxEvents: number;
   readonly #maxAgeMs: number;
   readonly #subscribers = new Set<Subscriber>();
@@ -51,9 +52,14 @@ export class StreamHub {
   #closed = false;
 
   constructor(options: StreamHubOptions = {}) {
-    this.#now = options.now ?? Date.now;
+    this.#clock = options.clock ?? systemClock;
     this.#maxEvents = options.maxEvents ?? REPLAY_MAX_EVENTS;
     this.#maxAgeMs = options.maxAgeMs ?? REPLAY_MAX_AGE_MS;
+  }
+
+  /** Milliseconds since the epoch, the shape every timestamp column wants. */
+  get #nowMs(): number {
+    return nowMs(this.#clock);
   }
 
   get lastEventId(): number {
@@ -68,7 +74,7 @@ export class StreamHub {
   publish(type: StreamEventType, payload: Readonly<Record<string, unknown>> = {}): StreamEvent {
     this.#lastId += 1;
     const event: StreamEvent = { id: this.#lastId, type, payload: { ...payload } };
-    this.#buffer.push({ event, at: this.#now() });
+    this.#buffer.push({ event, at: this.#nowMs });
     this.#prune();
     for (const subscriber of this.#subscribers) {
       subscriber.send(event);
@@ -77,7 +83,7 @@ export class StreamHub {
   }
 
   #prune(): void {
-    const cutoff = this.#now() - this.#maxAgeMs;
+    const cutoff = this.#nowMs - this.#maxAgeMs;
     this.#buffer = this.#buffer.filter((entry) => entry.at >= cutoff).slice(-this.#maxEvents);
   }
 

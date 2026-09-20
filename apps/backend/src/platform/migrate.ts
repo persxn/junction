@@ -10,6 +10,7 @@ import { APP_META_LAST_APP_VERSION, APP_META_SCHEMA_CREATED_AT } from '../db/sch
 import { dataSubdir, type Config } from './config.js';
 import type { DatabaseHandle } from './db.js';
 import { StartupError } from './startup-error.js';
+import { systemClock, type Clock } from './time.js';
 
 /** Drizzle's bookkeeping table; it owns the schema, we only read it. */
 export const MIGRATIONS_TABLE = '__drizzle_migrations';
@@ -38,7 +39,7 @@ export interface RunMigrationsOptions {
   /** Defaults to `<dataDir>\backups-local`. */
   readonly backupDir?: string;
   /** Injected in tests so file names are deterministic. */
-  readonly now?: () => Date;
+  readonly clock?: Clock;
 }
 
 function readJournal(migrationsDir: string): z.infer<typeof Journal> {
@@ -108,14 +109,14 @@ export function prunePreMigrationCopies(backupDir: string, keep = PRE_MIGRATION_
  * database, taken only when an existing database is about to change. It needs no
  * keys and is not the encrypted backup pipeline (§14).
  */
-function copyBeforeMigrating(raw: SqliteDatabase, backupDir: string, now: () => Date): string {
+function copyBeforeMigrating(raw: SqliteDatabase, backupDir: string, clock: Clock): string {
   mkdirSync(backupDir, { recursive: true });
-  let file = path.join(backupDir, `pre-migration-${stamp(now())}.db`);
+  let file = path.join(backupDir, `pre-migration-${stamp(clock.now())}.db`);
   let suffix = 1;
   // VACUUM INTO refuses an existing target, and two migrations inside one second
   // is entirely possible in tests.
   while (existsSync(file)) {
-    file = path.join(backupDir, `pre-migration-${stamp(now())}-${suffix.toString()}.db`);
+    file = path.join(backupDir, `pre-migration-${stamp(clock.now())}-${suffix.toString()}.db`);
     suffix += 1;
   }
   raw.prepare('VACUUM INTO ?').run(file);
@@ -133,7 +134,7 @@ export function runMigrations(
   db: DatabaseHandle,
   options: RunMigrationsOptions,
 ): MigrationResult {
-  const now = options.now ?? ((): Date => new Date());
+  const clock = options.clock ?? systemClock;
   const backupDir = options.backupDir ?? dataSubdir(config, 'backups-local');
   const journal = readJournal(options.migrationsDir);
 
@@ -148,7 +149,7 @@ export function runMigrations(
   const isFirstRun = latest === undefined;
   let backupFile: string | undefined;
   if (!isFirstRun) {
-    backupFile = copyBeforeMigrating(db.raw, backupDir, now);
+    backupFile = copyBeforeMigrating(db.raw, backupDir, clock);
     prunePreMigrationCopies(backupDir);
     options.logger.info(
       { backupFile, pending: pending.map((entry) => entry.tag) },
@@ -184,9 +185,9 @@ export function runMigrations(
 export function recordAppMeta(
   config: Config,
   db: DatabaseHandle,
-  now: () => Date = () => new Date(),
+  clock: Clock = systemClock,
 ): void {
-  const at = now();
+  const at = clock.now();
   const insertOnce = db.raw.prepare(
     `insert into app_meta (key, value, updated_at) values (?, ?, ?) on conflict(key) do nothing`,
   );

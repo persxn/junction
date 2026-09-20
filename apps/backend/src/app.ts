@@ -22,6 +22,7 @@ import { meRoutes } from './routes/me.js';
 import { setupRoutes } from './routes/setup.js';
 import { streamRoutes } from './routes/stream.js';
 import { systemRoutes } from './routes/system.js';
+import { systemClock, type Clock } from './platform/time.js';
 
 /** Request bodies larger than this are rejected before they are parsed. */
 export const BODY_LIMIT_BYTES = 1024 * 1024;
@@ -36,7 +37,7 @@ export interface BuildAppOptions {
   /** Called once `POST /system/shutdown` has answered 202. */
   readonly onShutdownRequested?: () => void;
   /** Injected in tests so `uptimeSec` is deterministic. */
-  readonly now?: () => Date;
+  readonly clock?: Clock;
   /** Injected in tests; defaults to the moment `buildApp` was called. */
   readonly startedAt?: Date;
   /** Read on every `/health` call, so it reflects the handle's current state. */
@@ -79,8 +80,8 @@ export function buildApp(
   logger: FastifyBaseLogger,
   options: BuildAppOptions = {},
 ): App {
-  const startedAt = options.startedAt ?? new Date();
-  const now = options.now ?? ((): Date => new Date());
+  const clock = options.clock ?? systemClock;
+  const startedAt = options.startedAt ?? clock.now();
   const database = options.database ?? ((): HealthDatabase => NO_DATABASE);
 
   const server = Fastify({
@@ -124,7 +125,9 @@ export function buildApp(
   });
 
   const onShutdownRequested = options.onShutdownRequested ?? ((): void => undefined);
-  void server.register(healthRoutes({ config, startedAt, now, database }), { prefix: API_PREFIX });
+  void server.register(healthRoutes({ config, startedAt, clock, database }), {
+    prefix: API_PREFIX,
+  });
   void server.register(systemRoutes({ onShutdownRequested }), { prefix: API_PREFIX });
   void server.register(authRoutes({ auth }), { prefix: API_PREFIX });
   void server.register(meRoutes({ auth }), { prefix: API_PREFIX });

@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { API_PREFIX } from '../app.js';
 import { authedFetch, startTestServer, testConfig, type TestServer } from '../testing/harness.js';
+import { fixedClock } from '../platform/time.js';
 
 let server: TestServer | undefined;
 
@@ -16,7 +17,7 @@ describe('GET /health', () => {
     const startedAt = new Date('2026-09-20T09:00:00.000Z');
     server = await startTestServer({
       startedAt,
-      now: () => new Date('2026-09-20T09:02:05.400Z'),
+      clock: fixedClock('2026-09-20T09:02:05.400Z'),
       database: () => ({ ok: true, migrationsApplied: 3 }),
     });
 
@@ -64,7 +65,7 @@ describe('GET /health', () => {
   it('never reports a negative uptime if the clock steps back', async () => {
     server = await startTestServer({
       startedAt: new Date('2026-09-20T09:00:00.000Z'),
-      now: () => new Date('2026-09-20T08:59:00.000Z'),
+      clock: fixedClock('2026-09-20T08:59:00.000Z'),
     });
     const health = HealthResponse.parse(
       await (await authedFetch(server, `${API_PREFIX}/health`)).json(),

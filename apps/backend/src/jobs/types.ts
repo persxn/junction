@@ -2,6 +2,7 @@ import type { JobKind, JobOutcome, JobTrigger } from '@compintel/contracts';
 import type { Logger } from 'pino';
 
 import type { JobStateRow } from '../db/schema/index.js';
+import type { Clock } from '../platform/time.js';
 
 /**
  * The tick interval from §4.9. Everything else about scheduling is a timestamp
@@ -50,7 +51,7 @@ export interface JobContext {
   readonly signal: AbortSignal;
   /** Child logger already tagged with the job key and trigger. */
   readonly logger: Logger;
-  readonly now: () => Date;
+  readonly clock: Clock;
   /** The row as it was when the run was claimed. */
   readonly state: JobStateRow;
 }

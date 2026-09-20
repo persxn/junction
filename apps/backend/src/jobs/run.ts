@@ -5,6 +5,7 @@ import type { JobStateRow } from '../db/schema/index.js';
 import { applyOutcome } from './outcome.js';
 import type { JobStore } from './store.js';
 import type { JobContext, JobRunResult, RegisteredJob } from './types.js';
+import type { Clock } from '../platform/time.js';
 
 export interface ExecuteRunOptions {
   readonly job: RegisteredJob;
@@ -15,7 +16,7 @@ export interface ExecuteRunOptions {
   readonly at: Date;
   readonly store: JobStore;
   readonly logger: Logger;
-  readonly now: () => Date;
+  readonly clock: Clock;
   readonly random: () => number;
   /** Aborted when the backend is shutting down. */
   readonly signal: AbortSignal;
@@ -31,7 +32,7 @@ export interface ExecuteRunOptions {
  * The returned promise never rejects; the outcome is the answer.
  */
 export async function executeRun(options: ExecuteRunOptions): Promise<JobOutcome> {
-  const { job, row, trigger, at, store, now, signal } = options;
+  const { job, row, trigger, at, store, clock, signal } = options;
   const logger = options.logger.child({ job: job.key, trigger });
   const context: JobContext = {
     key: job.key,
@@ -39,7 +40,7 @@ export async function executeRun(options: ExecuteRunOptions): Promise<JobOutcome
     attempt: row.consecutiveFailures + 1,
     signal,
     logger,
-    now,
+    clock,
     state: row,
   };
 
@@ -64,7 +65,7 @@ export async function executeRun(options: ExecuteRunOptions): Promise<JobOutcome
     outcome = 'ABORTED';
   }
 
-  const finishedAt = now();
+  const finishedAt = clock.now();
   const patch = applyOutcome({
     outcome,
     previous: row,

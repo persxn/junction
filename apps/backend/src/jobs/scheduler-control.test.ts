@@ -33,7 +33,7 @@ describe('Scheduler offline handling', () => {
   it('skips a network job without calling it and without blaming it (D-23)', async () => {
     const time = clock();
     const runs = vi.fn();
-    const { scheduler, store } = harness({ now: time.now, isOnline: () => false });
+    const { scheduler, store } = harness({ clock: time, isOnline: () => false });
     scheduler.register(job({ requiresNetwork: true, run: runs }));
 
     const summary = await scheduler.tick();
@@ -50,7 +50,7 @@ describe('Scheduler offline handling', () => {
 
   it('still runs jobs that do not need the network', async () => {
     const time = clock();
-    const { scheduler } = harness({ now: time.now, isOnline: () => false });
+    const { scheduler } = harness({ clock: time, isOnline: () => false });
     scheduler.register(job({ key: 'local' }));
     scheduler.register(job({ key: 'remote', requiresNetwork: true }));
 
@@ -63,7 +63,7 @@ describe('Scheduler offline handling', () => {
   it('asks once per tick, not once per job', async () => {
     const time = clock();
     const isOnline = vi.fn(() => true);
-    const { scheduler } = harness({ now: time.now, isOnline });
+    const { scheduler } = harness({ clock: time, isOnline });
     scheduler.register(job({ key: 'a', requiresNetwork: true }));
     scheduler.register(job({ key: 'b', requiresNetwork: true }));
 
@@ -77,7 +77,7 @@ describe('Scheduler concurrency limits', () => {
   it('runs at most two scrapes at once and defers the rest (§4.9)', async () => {
     const time = clock();
     const gate = deferred();
-    const { scheduler } = harness({ now: time.now });
+    const { scheduler } = harness({ clock: time });
     for (const key of ['s1', 's2', 's3']) {
       scheduler.register(job({ key, kind: 'SCRAPE', run: () => gate.promise }));
     }
@@ -98,7 +98,7 @@ describe('Scheduler concurrency limits', () => {
   it('runs one LLM job at a time', async () => {
     const time = clock();
     const gate = deferred();
-    const { scheduler } = harness({ now: time.now });
+    const { scheduler } = harness({ clock: time });
     scheduler.register(job({ key: 'l1', kind: 'LLM', run: () => gate.promise }));
     scheduler.register(job({ key: 'l2', kind: 'LLM', run: () => gate.promise }));
 
@@ -113,7 +113,7 @@ describe('Scheduler concurrency limits', () => {
   it('keeps the pools separate', async () => {
     const time = clock();
     const gate = deferred();
-    const { scheduler } = harness({ now: time.now, limits: { SCRAPE: 1, LLM: 1, GENERAL: 1 } });
+    const { scheduler } = harness({ clock: time, limits: { SCRAPE: 1, LLM: 1, GENERAL: 1 } });
     scheduler.register(job({ key: 'scrape', kind: 'SCRAPE', run: () => gate.promise }));
     scheduler.register(job({ key: 'llm', kind: 'LLM', run: () => gate.promise }));
     scheduler.register(job({ key: 'local', kind: 'GENERAL', run: () => gate.promise }));
@@ -130,7 +130,7 @@ describe('Scheduler manual trigger', () => {
   it('runs a job that is not due yet', async () => {
     const time = clock();
     const runs = vi.fn();
-    const { scheduler } = harness({ now: time.now });
+    const { scheduler } = harness({ clock: time });
     scheduler.register(job({ firstRun: 'after-interval', run: runs }));
 
     const result = scheduler.trigger('j');
@@ -142,14 +142,14 @@ describe('Scheduler manual trigger', () => {
   });
 
   it('refuses an unknown job', () => {
-    const { scheduler } = harness({ now: clock().now });
+    const { scheduler } = harness({ clock: clock() });
     expect(scheduler.trigger('nope')).toStrictEqual({ accepted: false, reason: 'UNKNOWN_JOB' });
   });
 
   it('refuses a job that is already running', async () => {
     const time = clock();
     const gate = deferred();
-    const { scheduler } = harness({ now: time.now });
+    const { scheduler } = harness({ clock: time });
     scheduler.register(job({ run: () => gate.promise }));
 
     await scheduler.tick();
@@ -164,7 +164,7 @@ describe('Scheduler manual trigger', () => {
     const runs = vi.fn(() => {
       throw new Error('nope');
     });
-    const { scheduler, store } = harness({ now: time.now });
+    const { scheduler, store } = harness({ clock: time });
     scheduler.register(job({ run: runs }));
 
     await scheduler.tick();
@@ -185,13 +185,13 @@ describe('Scheduler manual trigger', () => {
 describe('Scheduler shutdown', () => {
   it('registers itself in the resources phase (ruling R14)', () => {
     const shutdown = new ShutdownRegistry();
-    harness({ now: clock().now, shutdown });
+    harness({ clock: clock(), shutdown });
     expect(shutdown.names('resources')).toStrictEqual(['scheduler']);
   });
 
   it('aborts a running job and leaves it due for the next start', async () => {
     const time = clock();
-    const { scheduler, store } = harness({ now: time.now });
+    const { scheduler, store } = harness({ clock: time });
     scheduler.register(
       job({
         firstRun: 'immediate',
@@ -218,7 +218,7 @@ describe('Scheduler shutdown', () => {
   it('gives up on a job that ignores the abort and lets the next start reclaim it', async () => {
     const time = clock();
     const gate = deferred();
-    const { scheduler: first, store, database } = harness({ now: time.now, drainTimeoutMs: 5 });
+    const { scheduler: first, store, database } = harness({ clock: time, drainTimeoutMs: 5 });
     first.register(job({ run: () => gate.promise }));
 
     await first.tick();
@@ -233,7 +233,7 @@ describe('Scheduler shutdown', () => {
       store,
       logger: pino({ enabled: false }),
       random: () => 0.5,
-      now: time.now,
+      clock: time,
     });
     second.register(job());
     await second.start();
@@ -249,7 +249,7 @@ describe('Scheduler shutdown', () => {
   it('does nothing on a tick or a trigger after it has stopped', async () => {
     const time = clock();
     const runs = vi.fn();
-    const { scheduler } = harness({ now: time.now });
+    const { scheduler } = harness({ clock: time });
     scheduler.register(job({ run: runs }));
 
     await scheduler.stop('shutdown');
@@ -259,7 +259,7 @@ describe('Scheduler shutdown', () => {
   });
 
   it('is idempotent, because two shutdown paths can race', async () => {
-    const { scheduler } = harness({ now: clock().now });
+    const { scheduler } = harness({ clock: clock() });
     await scheduler.stop('first');
     await expect(scheduler.stop('second')).resolves.toBeUndefined();
   });
@@ -267,7 +267,7 @@ describe('Scheduler shutdown', () => {
 
 describe('Scheduler registration', () => {
   it('refuses two definitions for one key', () => {
-    const { scheduler } = harness({ now: clock().now });
+    const { scheduler } = harness({ clock: clock() });
     scheduler.register(job());
     expect(() => {
       scheduler.register(job());
@@ -275,7 +275,7 @@ describe('Scheduler registration', () => {
   });
 
   it('lists what it is running and hands out contract-shaped snapshots', () => {
-    const { scheduler } = harness({ now: clock().now });
+    const { scheduler } = harness({ clock: clock() });
     scheduler.register(job({ key: 'deadline-evaluator' }));
     scheduler.register(job({ key: 'scrape:ctftime', kind: 'SCRAPE' }));
 
@@ -290,7 +290,7 @@ describe('Scheduler registration', () => {
 
   it('leaves rows belonging to jobs this build does not know about alone', async () => {
     const time = clock();
-    const { scheduler, store } = harness({ now: time.now });
+    const { scheduler, store } = harness({ clock: time });
     scheduler.register(job());
     store.ensure(registerable(job({ key: 'from-a-newer-build' })), T0 - MINUTE);
 

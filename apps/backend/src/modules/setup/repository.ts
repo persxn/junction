@@ -12,6 +12,7 @@ import {
 } from '../../db/schema/index.js';
 import type { DatabaseHandle } from '../../platform/db.js';
 import { uuid7 } from '../../platform/ids.js';
+import { nowMs, systemClock, type Clock } from '../../platform/time.js';
 
 /**
  * Every query the setup module makes. As with the auth repository, nothing here
@@ -20,7 +21,7 @@ import { uuid7 } from '../../platform/ids.js';
  */
 
 export interface SetupRepositoryOptions {
-  readonly now?: () => number;
+  readonly clock?: Clock;
   readonly newId?: () => Uuid7;
 }
 
@@ -47,13 +48,18 @@ export interface SetupWriteResult {
 
 export class SetupRepository {
   readonly #db: DatabaseHandle;
-  readonly #now: () => number;
+  readonly #clock: Clock;
   readonly #newId: () => Uuid7;
 
   constructor(db: DatabaseHandle, options: SetupRepositoryOptions = {}) {
     this.#db = db;
-    this.#now = options.now ?? Date.now;
+    this.#clock = options.clock ?? systemClock;
     this.#newId = options.newId ?? uuid7;
+  }
+
+  /** Milliseconds since the epoch, the shape every timestamp column wants. */
+  get #nowMs(): number {
+    return nowMs(this.#clock);
   }
 
   get #drizzle(): DatabaseHandle['drizzle'] {
@@ -90,7 +96,7 @@ export class SetupRepository {
    */
   completeSetup(write: SetupWrite): SetupWriteResult {
     const apply = this.#db.raw.transaction((): SetupWriteResult => {
-      const now = this.#now();
+      const now = this.#nowMs;
       const organizationId = this.#newId();
       const departmentId = this.#newId();
       const campusId = this.#newId();

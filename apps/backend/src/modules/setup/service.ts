@@ -15,6 +15,7 @@ import { normalizeEmail } from '../auth/repository.js';
 import { checkBackupPath, type PathCheckOptions } from './paths.js';
 import { generateRecoveryCode, normalizeRecoveryCode } from './recovery-code.js';
 import type { SetupRepository } from './repository.js';
+import { systemClock, type Clock } from '../../platform/time.js';
 
 /**
  * First-run setup (rulings R39–R44).
@@ -32,7 +33,7 @@ export interface SetupServiceDependencies {
   /** The process data directory: the backup folder may not live inside it (R43). */
   readonly dataDir: string;
   readonly appVersion: string;
-  readonly now?: () => Date;
+  readonly clock?: Clock;
   readonly minFreeBytes?: number;
   /** Lowered in tests; scrypt at the real factor costs a second per call. */
   readonly scryptWorkFactor?: number;
@@ -86,7 +87,7 @@ export class SetupService {
   readonly #audit: AuditLog;
   readonly #dataDir: string;
   readonly #appVersion: string;
-  readonly #now: () => Date;
+  readonly #clock: Clock;
   readonly #minFreeBytes: number | undefined;
   readonly #scryptWorkFactor: number | undefined;
 
@@ -102,7 +103,7 @@ export class SetupService {
     this.#audit = dependencies.audit;
     this.#dataDir = dependencies.dataDir;
     this.#appVersion = dependencies.appVersion;
-    this.#now = dependencies.now ?? ((): Date => new Date());
+    this.#clock = dependencies.clock ?? systemClock;
     this.#minFreeBytes = dependencies.minFreeBytes;
     this.#scryptWorkFactor = dependencies.scryptWorkFactor;
   }
@@ -163,7 +164,7 @@ export class SetupService {
         : generateBackupKeys(request.backupPassphrase, this.#scryptWorkFactor),
     ]);
 
-    const createdAt = this.#now();
+    const createdAt = this.#clock.now();
     const settings: [string, string][] = [
       ['scraper.contactEmail', JSON.stringify(normalizeEmail(request.scraperContactEmail))],
       ['backup.publicKey', JSON.stringify(backupKeys.publicKey)],

@@ -4,6 +4,7 @@ import { and, eq, inArray } from 'drizzle-orm';
 import { roles, userRoles, users, type UserRow } from '../../db/schema/index.js';
 import type { DatabaseHandle } from '../../platform/db.js';
 import { uuid7 } from '../../platform/ids.js';
+import { nowMs, systemClock, type Clock } from '../../platform/time.js';
 
 /**
  * The queries user administration needs, on top of `AuthRepository` (which owns
@@ -17,19 +18,24 @@ export interface UserWithRoles {
 }
 
 export interface UsersRepositoryOptions {
-  readonly now?: () => number;
+  readonly clock?: Clock;
   readonly newId?: () => Uuid7;
 }
 
 export class UsersRepository {
   readonly #db: DatabaseHandle;
-  readonly #now: () => number;
+  readonly #clock: Clock;
   readonly #newId: () => Uuid7;
 
   constructor(db: DatabaseHandle, options: UsersRepositoryOptions = {}) {
     this.#db = db;
-    this.#now = options.now ?? Date.now;
+    this.#clock = options.clock ?? systemClock;
     this.#newId = options.newId ?? uuid7;
+  }
+
+  /** Milliseconds since the epoch, the shape every timestamp column wants. */
+  get #nowMs(): number {
+    return nowMs(this.#clock);
   }
 
   get #drizzle(): DatabaseHandle['drizzle'] {
@@ -96,7 +102,7 @@ export class UsersRepository {
   }
 
   setStatus(userId: string, status: 'ACTIVE' | 'DISABLED'): void {
-    const now = this.#now();
+    const now = this.#nowMs;
     this.#db.raw
       .prepare('update users set status = ?, updated_at = ?, version = version + 1 where id = ?')
       .run(status, now, userId);
@@ -112,7 +118,7 @@ export class UsersRepository {
     changes: { readonly displayName?: string; readonly roles?: readonly RoleKey[] },
   ): boolean {
     const apply = this.#db.raw.transaction((): boolean => {
-      const now = this.#now();
+      const now = this.#nowMs;
       const result = this.#db.raw
         .prepare(
           'update users set display_name = coalesce(?, display_name), updated_at = ?, ' +
@@ -147,7 +153,7 @@ export class UsersRepository {
         'update users set password_hash = ?, must_change_password = 1, failed_login_count = 0, ' +
           'locked_until = null, updated_at = ?, version = version + 1 where id = ?',
       )
-      .run(passwordHash, this.#now(), userId);
+      .run(passwordHash, this.#nowMs, userId);
   }
 
   /** Only used to mint ids for the audit trail's entity ids. */

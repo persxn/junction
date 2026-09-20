@@ -203,7 +203,7 @@ describe('what a row may carry', () => {
     harness = createTestDatabase('audit');
     let id = 0;
     const audit = new AuditLog(harness.db, {
-      now: () => 1_700_000_000_000,
+      clock: { now: () => new Date(1_700_000_000_000) },
       newId: () => {
         id += 1;
         return `0192f0c1-0000-7000-8000-${String(id).padStart(12, '0')}`;

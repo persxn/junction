@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { openMigratedDatabase, type MigratedDatabase } from '../testing/database.js';
 import { defaultSetting, SETTING_KEYS, SettingsStore } from './settings.js';
+import { fixedClock, type Clock } from './time.js';
 
 let database: MigratedDatabase | undefined;
 
@@ -10,14 +11,18 @@ afterEach(() => {
   database = undefined;
 });
 
-function open(now = (): number => 1_700_000_000_000): {
+function open(clock: Clock = fixedClock('2023-11-14T22:13:20.000Z')): {
   store: SettingsStore;
   invalid: ReturnType<typeof vi.fn>;
   database: MigratedDatabase;
 } {
   database = openMigratedDatabase(undefined, 'settings');
   const invalid = vi.fn();
-  return { store: new SettingsStore(database.db, { now, onInvalid: invalid }), invalid, database };
+  return {
+    store: new SettingsStore(database.db, { clock, onInvalid: invalid }),
+    invalid,
+    database,
+  };
 }
 
 describe('the typed setting registry (§6.2)', () => {
@@ -43,7 +48,7 @@ describe('the typed setting registry (§6.2)', () => {
   });
 
   it('records who changed it and when', () => {
-    const { store, database: h } = open(() => 1_700_000_000_000);
+    const { store, database: h } = open(fixedClock('2023-11-14T22:13:20.000Z'));
     store.set('auth.autoLockMinutes', 30, 'user-7');
     const row = h.db.raw
       .prepare('SELECT * FROM settings WHERE key = ?')

@@ -6,6 +6,7 @@ import { asc, desc } from 'drizzle-orm';
 import { auditLog, AUDIT_GENESIS_HASH, type AuditLogRow } from '../db/schema/index.js';
 import type { DatabaseHandle } from './db.js';
 import { uuid7 } from './ids.js';
+import { nowMs, systemClock, type Clock } from './time.js';
 
 /**
  * The append-only audit log (§6.2, ruling R35).
@@ -92,7 +93,7 @@ export function hashRow(row: HashableRow): string {
 }
 
 export interface AuditLogOptions {
-  readonly now?: () => number;
+  readonly clock?: Clock;
   readonly newId?: () => Uuid7;
 }
 
@@ -115,13 +116,18 @@ export interface ChainVerification {
  */
 export class AuditLog {
   readonly #db: DatabaseHandle;
-  readonly #now: () => number;
+  readonly #clock: Clock;
   readonly #newId: () => Uuid7;
 
   constructor(db: DatabaseHandle, options: AuditLogOptions = {}) {
     this.#db = db;
-    this.#now = options.now ?? Date.now;
+    this.#clock = options.clock ?? systemClock;
     this.#newId = options.newId ?? uuid7;
+  }
+
+  /** Milliseconds since the epoch, the shape every timestamp column wants. */
+  get #nowMs(): number {
+    return nowMs(this.#clock);
   }
 
   /** The hash of the newest row, or the genesis hash on an empty log. */
@@ -141,7 +147,7 @@ export class AuditLog {
       const prevHash = this.headHash();
       const row = {
         id: this.#newId(),
-        occurredAt: this.#now(),
+        occurredAt: this.#nowMs,
         actorKind: entry.actorKind,
         actorUserId: entry.actorUserId ?? null,
         action: entry.action,

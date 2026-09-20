@@ -42,7 +42,7 @@ describe('the lockout ladder (ruling R34)', () => {
 
 describe('the process-wide limiter (ruling R34)', () => {
   function limiter(now: () => number): LoginRateLimiter {
-    return new LoginRateLimiter({ now });
+    return new LoginRateLimiter({ clock: { now: () => new Date(now()) } });
   }
 
   it('allows ten attempts a minute and refuses the eleventh', () => {
@@ -85,7 +85,11 @@ describe('the process-wide limiter (ruling R34)', () => {
 
   it('takes its own limit and window', () => {
     let now = 0;
-    const rate = new LoginRateLimiter({ limit: 2, windowMs: 1_000, now: () => now });
+    const rate = new LoginRateLimiter({
+      limit: 2,
+      windowMs: 1_000,
+      clock: { now: () => new Date(now) },
+    });
     expect(rate.tryAcquire()).toBe(true);
     expect(rate.tryAcquire()).toBe(true);
     expect(rate.tryAcquire()).toBe(false);

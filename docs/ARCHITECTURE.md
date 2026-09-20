@@ -1,6 +1,6 @@
 # Competition Intel — Architecture Specification
 
-**Version:** 1.1.5 · **Date:** 20 Sep 2026 · **Status:** ACCEPTED — implementation baseline (amended after WP-00…WP-02b)
+**Version:** 1.1.6 · **Date:** 20 Sep 2026 · **Status:** ACCEPTED — implementation baseline (amended after WP-00…WP-02b)
 **Author:** Architect (Claude, Cowork session) · **Implementer:** Claude Code (worker session)
 
 > **How to use this document.** This is the implementation source of truth. The worker must not
@@ -21,6 +21,7 @@
 | 1.1.3 | 20 Sep 2026 | Rulings R19–R31 after WP-04c/05a/05b (see §21). |
 | 1.1.4 | 20 Sep 2026 | Rulings R32–R38 after WP-06; auth decisions for WP-07a (see §21). |
 | 1.1.5 | 20 Sep 2026 | Rulings R39–R44: setup wizard, recovery material, folder validation (see §21). |
+| 1.1.6 | 20 Sep 2026 | **Architect review closing M0** (docs/handoff/M0.md): Q1 resolved — standalone, single-professor deployment (§3.1 amended, accounts/RBAC retained); §10.3 corrected to list `/system/shutdown` as gate-exempt (matches shipped behaviour); rulings R45–R47 (recovery-code sign-in owner, Argon2id calibration deferred, shutdown exemption); ADR-0010 and ADR-0011 amended to fold in R33/R34/R37/R38 and R41/R42; two WP-05b open questions closed by rulings that already superseded them (R27, R28); U1/U2 and Q3 status corrected to match PROGRESS.md across this file and DECISIONS.md. See `docs/handoff/M0-review.md`. Also: **M1 released as a batch** (pre-M1 consolidation + WP-08a…WP-16b prompts under `docs/prompts/M1/`), the **appearance system** added as milestone M4.5 / WP-33 with ADR-0019 and rulings R67–R69, §16.3 extended, and §21 R48–R66 reserved for the M1 prompts' own STEP 0 blocks. |
 
 ---
 
@@ -83,26 +84,26 @@ Working name: **Competition Intel** (code/paths: `compintel`).
 
 | # | Question | Blocks | Proposed default (used until answered) |
 |---|---|---|---|
-| Q1 | Pilot host: one shared PC or individual professor machines? Is off-campus access required? | Client mode (post-M5); network security | Host mode on one machine. No off-campus access in MVP (later via university VPN — never exposed to the internet). |
+| Q1 | ~~Pilot host: one shared PC or individual professor machines? Is off-campus access required?~~ **RESOLVED, 20 Sep 2026 (owner):** standalone deployment — one professor, one machine, his own students. No campus server, no LAN, no forwarded ports, no off-campus access. Host mode is therefore the *only* mode for the pilot; client mode is not scheduled. Accounts/RBAC/audit are unchanged (see M0-review.md §1) because the owner reviewed and kept the security posture as specified, and because a second account (a co-professor, a TA, or ADMINISTRATOR-vs-PROFESSOR separation on the one box) is a real, cheap-to-support case, not speculative scope. | — | Host mode, single machine, no off-campus access. |
 | Q2 | Pilot facts: date, number of professors, host machine specs, who installs, IT restrictions (Smart App Control, WDAC/AppLocker, proxy), who maintains scrapers. **Partly answered:** the build machine is Windows 11 Home, Ryzen 7 5700, 16 GB, RTX 4060 8 GB (GPU tier), SAC was ON, no BitLocker. The pilot host is still unknown — check it for Smart App Control and disk encryption. | WP-26 model choice, WP-31 packaging | Build-machine facts until the pilot host is known. |
-| Q3 | Campus name and coordinates. | WP-07 setup wizard (entered at runtime — not blocking code) | — |
+| Q3 | ~~Campus name and coordinates.~~ **CLOSED — collected at runtime by WP-07b's setup wizard** (`campuses.name/lat/lon`, R43). | — | — |
 | Q4 | Notification recipients and thresholds. | WP-23 | Competition/stage/task deadlines → primary + co-mentors; watched-event changes → users who saved it; saved-search matches → owner; scraper/backup failures → admins. Thresholds 7 / 3 / 1 days + due day + overdue. |
-| Q5 | Permission defaults in §10 (student profile edits, event corrections, co-mentor rights). | WP-07, WP-17, WP-19 | As in the §10 matrix. |
+| Q5 | ~~Permission defaults in §10~~ **RESOLVED → R32 (v1.1.4):** the §10.2 matrix *is* the MVP matrix, and `packages/contracts/src/permissions.ts` is its single source. | — | — |
 | Q6 | Can teams include students from other colleges? (Other departments are already allowed.) | WP-17/18 | Supported in the data model (`is_external`); UI behind an admin setting, off by default. |
 | Q7 | Outcome fields in MVP. | WP-21 | Team-level: result, rank, prize text, certificate reference, result URL, notes. |
 | Q8 | Student personal fields & consent; does the university have a data-protection policy/officer? | WP-17 | Fields as in §6.2; phone off by default; record "privacy notice acknowledged" date. |
 | Q9 | Audit log retention and visibility. | WP-30 | Admins see all; professors see activity timelines of records they can view; retain 3 years (login events 1 year). |
 | Q10 | Does university IT have a code-signing certificate or signing service? Will the project be open source? **More important after WP-01:** Smart App Control was ON on the build machine, so a pilot host may have it on too — then either IT turns it off or everything we ship must be signed. | WP-31 | Unsigned internal pilot if Smart App Control/WDAC allow (§18). |
 | Q11 | University identity provider (Google Workspace / Microsoft 365). | Post-MVP SSO | — |
-| Q12 | Hybrid events whose physical venue is outside India: show as "online participation possible" or hide? | WP-08 | Show, labelled "Hybrid — online participation" (configurable). |
+| Q12 | Hybrid events whose physical venue is outside India: show as "online participation possible" or hide? | WP-08b | Show, labelled "Hybrid — online participation" (configurable). |
 | Q13 | ~~Sources whose ToS forbid automated access~~ **RESOLVED → D-26, D-30:** manual entry only, plus an optional permission request. | — | — |
 
 ### 2.1 User actions (outside the codebase)
 
 | # | Action | Blocks | Status |
 |---|---|---|---|
-| U1 | Turn **Smart App Control off** on the build machine (Windows Security → App & browser control → Smart App Control → Off). Every Rust/Tauri build creates new unsigned executables, which SAC blocks. Defender antivirus stays on; since the April 2026 update SAC can be turned back on later. | WP-03a and every build after it | OPEN |
-| U2 | Approve the toolchain installs (Visual Studio Build Tools C++ workload ~6–8 GB, rustup + stable Rust ~2 GB, pnpm) and **enable Windows long paths** (admin, one registry value + restart). | WP-03a | OPEN |
+| U1 | Turn **Smart App Control off** on the build machine (Windows Security → App & browser control → Smart App Control → Off). Every Rust/Tauri build creates new unsigned executables, which SAC blocks. Defender antivirus stays on; since the April 2026 update SAC can be turned back on later. | WP-03a and every build after it | **DONE (WP-03a)** — `VerifiedAndReputablePolicyState=0` |
+| U2 | Approve the toolchain installs (Visual Studio Build Tools C++ workload ~6–8 GB, rustup + stable Rust ~2 GB, pnpm) and **enable Windows long paths** (admin, one registry value + restart). | WP-03a | **DONE (WP-03a)** — `LongPathsEnabled=1` + repo `core.longpaths=true` |
 | U3 | Read Unstop's Terms (<https://unstop.com/legal/terms-of-use>) in a browser; search for "scrap", "crawl", "robot", "automat", "spider", "extract", "data mining"; paste any matching clauses to the architect. | Unstop adapter (WP-13) | OPEN |
 | U4 | Create a free CLIST account and API key (keep it private; it is entered in the app's settings later, or as `COMPINTEL_CLIST_API_KEY` for development). | Live CLIST runs (WP-11) | OPEN |
 | U5 | Optional: send the permission e-mails in `docs/research/permission-request-template.md` (Devfolio courtesy note; Devpost permission request), ideally from a university address. | Nothing (Devpost stays manual unless permission arrives) | OPEN |
@@ -114,12 +115,19 @@ Working name: **Competition Intel** (code/paths: `compintel`).
 
 ### 3.1 Deployment modes
 
-- **Host mode (MVP / pilot).** One Windows machine runs the desktop shell, backend and (optionally)
-  the LLM. Professors and admins sign in with app accounts; they may share the machine.
-- **Client mode (post-MVP, when Q1 requires it).** Desktop apps on professor laptops connect to a
-  backend on a campus machine over the LAN with TLS. The backend is the same build, run as a Windows
-  service or on a tray host. The only UI change is configuration (server URL + certificate pinning).
-  The API reports its version; the UI refuses to run against an incompatible major version.
+- **Host mode (the only mode for the pilot — Q1 RESOLVED).** One Windows machine runs the desktop
+  shell, backend and (optionally) the LLM. The pilot deployment is one professor on his own machine
+  with his own students — no campus server, no LAN, no forwarded ports, no off-campus access. The app
+  still supports multiple local accounts sharing one machine (an administrator account distinct from
+  the professor account, or a co-professor/TA added later): that costs nothing extra since WP-07a/07b
+  already built it, and the owner reviewed the security posture (Argon2id, lockout, audit chain,
+  auto-lock, recovery material) and chose to keep it exactly as specified rather than trim it for a
+  single-user pilot.
+- **Client mode (speculative, not scheduled).** Kept as a design option, not a roadmap item: desktop
+  apps on professor laptops would connect to a backend on a campus machine over the LAN with TLS, same
+  build, run as a Windows service or on a tray host, with the API reporting its version and the UI
+  refusing an incompatible major version. Revisit only if a future deployment actually needs more than
+  one machine.
 - **Future.** The backend can serve the same React UI to browsers; `department_id` scoping already
   exists in the schema for multi-department use.
 
@@ -1106,7 +1114,7 @@ Roles map to permissions in code; resource-level checks use ownership predicates
 (`policy.can(user, action, resource?)`), a full test matrix, and services call `assertCan(...)`.
 The UI reads `/api/v1/me/permissions` only to hide or disable controls (cosmetic, not security).
 
-### 10.2 Permission matrix (defaults — [OPEN Q5])
+### 10.2 Permission matrix (closed by R32)
 
 | Capability | Professor | Admin |
 |---|---|---|
@@ -1133,7 +1141,10 @@ The UI reads `/api/v1/me/permissions` only to hide or disable controls (cosmetic
 
 Bind `127.0.0.1` only · per-launch client secret header · Host header allowlist (DNS-rebinding
 defence) · CORS only for the Tauri origin · strict CSP in the WebView · all endpoints except
-`/health` and `/auth/login` require a valid session · login rate limiting.
+`/health`, `/auth/login`, `/api/v1/setup/*` (R39) and `/api/v1/system/shutdown` (R47) require a valid
+session · login rate limiting. `/system/shutdown` stays session-less **by design** (R47): it must work
+from the lock screen and from inside the setup wizard, and it is still gated by the per-spawn client
+secret, which only the local shell process ever holds.
 
 ### 10.4 Ownership transfer
 
@@ -1326,6 +1337,18 @@ popover) · notifications bell · user menu (theme, lock, sign out).
   open, S save, A assign, Esc close.
 - **Windows feel:** follows the system light/dark theme; Mica backdrop where supported; native window
   behaviour.
+- **Appearance (WP-33, ADR-0019, R67–R69).** The `--ci-*` semantic tokens above are a stable contract;
+  beneath them sits a swappable **palette layer** — Catppuccin *Latte* (default light), *Frappé*,
+  *Macchiato*, *Mocha* (default dark), plus *Classic*, the neutral set this section originally described.
+  A palette never wins an argument with the measured contrast test: accent hues are used for borders,
+  glows, chart marks and fills, and text uses the `text`/`subtext` ramp, until every pair passes in every
+  flavour. Decorative motion and glow live in one **effect tier** setting — CALM (none; forced by
+  `prefers-reduced-motion`), STANDARD (default: gradients, hover glows, shimmer skeletons, eased progress,
+  counters), SHOWCASE (animated gradient borders, glow pulses, RGB hue-cycle presets, gradient text) —
+  and no effect ever carries meaning on its own: the "never colour alone" rule extends to "never glow
+  alone", and CALM must lose no information. Decorative animation stops when the window is hidden or in
+  the tray, and uses compositor-only properties, because §19's 72-hour tray soak (WP-32) has to pass with
+  SHOWCASE on.
 
 ---
 
@@ -1405,6 +1428,7 @@ milestone. Letter suffixes (03a/03b…) are splits recommended by the WP-01 revi
 ### M1 — Events · *real events, trustworthy and searchable*
 | WP | Scope | Acceptance criteria |
 |---|---|---|
+| pre-M1 | Consolidation refactor: shared time layer (`Clock`, IANA, A7 day bounds), mechanical layer boundaries + `max-lines: 400` lint, `withAudit` unit-of-work, module-owned settings registry, golden-fixture harness, error-code domains, M0 tech debt, `cargo clean` | No behaviour change; test count ≥ 1736; a boundary violation demonstrably fails the lint |
 | WP-08a | Event schema, `EventCandidate` contract, normalization library (dates/tz, fees, team size, mode, edition_year, PII redaction) | ≥ 100 cases incl. invalid dates/timezones; no e-mail/phone survives |
 | WP-08b | Gazetteer build, institutions seed, geocoder, distance, geography + event-type policies | Policy-hidden events stored but invisible |
 | WP-09a | PoliteHttpClient (per-host robots, delay rule, retries, conditional GET, TLS/403 handling, proxy), compliance gate, source seeds (D-26), scrape runs/state, scrape jobs, snapshots | Failure-mode tests: timeout, 429, 5xx, robots disallow, TLS error, 403, format change, offline |
@@ -1445,6 +1469,11 @@ milestone. Letter suffixes (03a/03b…) are splits recommended by the WP-01 revi
 | WP-27a | LLM supervisor (lazy load, memory guard, idle unload, first-run backend selection), planner, entity resolution & clarification, fallbacks | Eval gates met; LLM-down fallback test |
 | WP-27b | Grounded summaries + validator, Assistant UI, AI query log | Grounding tests; no ungrounded numbers/dates shown |
 
+### M4.5 — Delight · *the app people want to open*
+| WP | Scope | Acceptance criteria |
+|---|---|---|
+| WP-33 | Appearance system: Catppuccin palette layer (Latte/Frappé/Macchiato/Mocha + Classic) under the existing semantic tokens, effect tiers CALM/STANDARD/SHOWCASE, motion & glow layer (shimmer, eased progress, counters, gradient borders, RGB hue-cycle presets), and the **Insights** surface — participation over time, funnel, outcomes, mentor load, deadline-hit rate, source contribution, streaks | Contrast matrix passes in all five flavours; CALM loses no information and is forced by reduced-motion; idle tray CPU ≈ 0 % and 60 fps at SHOWCASE; every Insights number reconciles with the list view it summarises |
+
 ### M5 — Hardening & pilot · *safe to hand to professors*
 | WP | Scope | Acceptance criteria |
 |---|---|---|
@@ -1454,7 +1483,7 @@ milestone. Letter suffixes (03a/03b…) are splits recommended by the WP-01 revi
 | WP-31 | Packaging: NSIS per-user installer, data-dir choice, model download/side-load, first run, uninstall, upgrade replaces all binaries, signing decision; install on an 8 GB machine/VM | Clean 8 GB install succeeds |
 | WP-32 | Performance, accessibility & reliability pass; 72 h tray soak (sleep/resume, network loss); pilot checklist | No leaks/crashes in soak; checklist signed off |
 
-**Count:** 46 work packages, 4 done → **42 remaining**.
+**Count:** 48 work packages (46 original + pre-M1 + WP-33), **14 done → 34 remaining**.
 
 **Phase 2 candidates:** AI actions with confirmation · AI category suggestions and ingest-time
 summaries · team/skill-based recommendations · .ics calendar export · accreditation-style
@@ -1485,6 +1514,7 @@ Q1 requires) · auto-updater · SSO · Devpost/Unstop adapters if permission is 
 | 0016 | Source verdicts, cadence, politeness, PII stripping and attribution (D-26…D-32) |
 | 0017 | Connection security: per-spawn client secret, bearer sessions, fetch-based SSE, CORS/Host allowlists |
 | 0018 | Build-machine prerequisites: Smart App Control off, long paths, synthetic data only (U1, U2, D-33) |
+| 0019 | Appearance system: palette layer under the semantic tokens, effect tiers, computed insights (WP-33) |
 
 ---
 
@@ -1570,12 +1600,19 @@ ative\ (better-sqlite3 `nativeBinding`); the bundle must run from a folder with 
 | R36 SSE | `/api/v1/stream` per ADR-0017: `fetch` + ReadableStream, event ids from one monotonic counter, `Last-Event-ID` replayed from an in-memory ring buffer (last 200 events or 5 minutes, whichever is smaller), a comment heartbeat every 15 s, and the stream registered as a **`streams`**-phase shutdown hook (R14). Nothing user-identifying in an event body beyond ids. | ADR-0017, R14 |
 | R37 Auto-lock | Enforced server-side by `idle_expires_at`; the lock screen is cosmetic. `POST /auth/unlock` re-verifies the password and extends the *same* session, so the token the UI holds in memory stays valid. | §10.5 |
 | R38 Forced password change | `must_change_password` lets login succeed but every route except `/auth/change-password`, `/auth/logout` and `/me` answers 403 `AUTH_PASSWORD_CHANGE_REQUIRED`. | §4.12 |
-| R39 Setup gate | Until an ACTIVE ADMINISTRATOR exists, every route except `/health`, `/api/v1/setup/*` and `/system/client-log` answers **409** with code `SETUP_REQUIRED`. The UI cannot route past the wizard, and the gate is server-side so it cannot be skipped by a reload. | §4.12, §19 |
+| R39 Setup gate | Until an ACTIVE ADMINISTRATOR exists, every route except `/health`, `/api/v1/setup/*`, `/system/client-log` and `/system/shutdown` answers **409** with code `SETUP_REQUIRED`. The UI cannot route past the wizard, and the gate is server-side so it cannot be skipped by a reload. *(Corrected in v1.1.6 to match what WP-07b shipped — `/system/shutdown` was already exempt so the tray can exit from inside the wizard; the table here had fallen out of sync with PROGRESS.md.)* | §4.12, §19 |
 | R40 Setup is one transaction | Organization, managing department, primary campus, the first admin with their roles, the `settings` rows and the backup key material are written in a single SQLite transaction. A failure leaves no partial setup. `POST /setup/complete` is refused once an admin exists. | §6.2, §14 |
 | R41 Recovery material | Two separate secrets. (1) A one-time **admin recovery code**: 32 random bytes, Crockford base32 in groups of 5, shown once, stored only as an Argon2id hash in `settings` (`auth.recoveryCodeHash`). (2) The **backup passphrase**, which never leaves the moment it is typed: it encrypts the age private key. The wizard cannot be finished until the user confirms in writing (an explicit checkbox per item) that both the code and the exported recovery file are saved. | §4.12, §14 |
 | R42 Backup keys | `age-encryption` (the TypeScript implementation) generates the X25519 identity at setup. `settings.backup.publicKey` holds the public key in the clear, `settings.backup.privateKeyEncrypted` holds the identity encrypted to a scrypt (passphrase) recipient. Unattended daily backups use the public key only. The recovery file is `compintel-recovery-<yyyyMMdd>.txt` and contains the public key, the passphrase-encrypted identity, the schema version and instructions for the standard `age` CLI — no plaintext key, no admin recovery code. Passphrase rules: ≥ 12 characters, typed twice, and not equal to the admin password. | §14, ADR-0011 |
 | R43 Folders | The **data folder is fixed for the process** by the shell (`--data-dir`), so the wizard shows it read-only with a note that changing it is an installer choice (WP-31). The **backup destination** is chosen in the wizard and validated by the backend: exists, writable (write-probe, not `fs.access`), not inside the data directory, and ≥ 1 GB free. Both the folder picker and writing the recovery file are shell concerns and go through Tauri commands restricted to a path the user just picked in a native dialog. | §4.13, §3.2 |
 | R44 Scraper contact | `settings.scraper.contactEmail` is required by the wizard and validated as an e-mail; ruling A10 stands — no source may be scraped before setup is complete, and WP-09a asserts that. | §7.2, A10 |
+| R45 Recovery-code sign-in | `auth.recoveryCodeHash` (R41) is written but nothing consumes it yet. **WP-30** owns "sign in with the recovery code" (a `POST /auth/recover` that verifies the code, forces a password reset, and rotates the code), next to the health/audit surface it already owns — it's an admin-recovery tool, not core auth, and every WP between here and WP-30 can reach an admin through the normal login. | §4.12, WP-30, R41 |
+| R46 Argon2id calibration | Fixed parameters (m=128 MiB, t=6, p=1) stand through M1–M4: WP-07a's open question (calibrate per host?) is deferred, not answered. Before the pilot, WP-31 must re-measure on the actual pilot host (Q2/Q10) or the 8 GB reference machine; only if that measures materially slower than the 322–409 ms seen here does WP-31 add calibration. Do not add calibration speculatively. | §4.12, WP-07a Q2, WP-31 |
+| R47 Shutdown auth exemption | `POST /api/v1/system/shutdown` requires no session (§10.3) — only the per-spawn client secret — so "Exit completely" works from the lock screen and from inside the setup wizard. This is deliberate, not an oversight: nothing it does (stop the scheduler, close the DB, exit) needs a signed-in user, and the secret is unknown outside the local shell process. | §10.3, ADR-0010 |
+| R48–R66 | **Reserved.** Issued in advance by the M1 prompts' STEP 0 blocks (WP-08a R48–R52 · WP-08b R53–R57 · WP-09a R58–R61 · WP-09b R62–R63 · WP-10 R64–R66), each recorded in this table when its WP lands, together with spec versions 1.1.7–1.1.11. A WP that finds its numbers taken uses the next free ones and says so in its report. | §19, docs/prompts/M1/ |
+| R67 Palette layer | The `--ci-*` semantic tokens from WP-06 are a contract and are never renamed; flavours are a palette layer beneath them (Catppuccin Latte default light, Mocha default dark, Frappé/Macchiato optional, Classic = the WP-06 neutrals). The measured contrast test decides: accent hues take non-text roles (borders, glows, chart marks, fills) and text uses the `text`/`subtext` ramp until every pair passes in every flavour. A failing pair is remapped, never exempted. | §16.3, WP-33, ADR-0019 |
+| R68 Effect tiers | One `appearance.effects` setting: CALM · STANDARD (default) · SHOWCASE. `prefers-reduced-motion: reduce` forces CALM regardless of the stored value. No effect carries meaning alone — "never colour alone" (§16.3) extends to "never glow alone", and CALM must lose no information. Decorative animation uses compositor-only properties (`transform`/`opacity`/`filter`) and **stops when the document is hidden or the window is in the tray**, so WP-32's 72-hour soak passes with SHOWCASE on. RGB hue-cycle presets apply to borders, glows and accent fills only — never to text or to a status colour. | §16.3, WP-33, WP-32 |
+| R69 Insights are computed, never invented | Every number on the Insights surface comes from a deterministic SQL read model over rows the app already holds — no AI commentary (§9 is read-only), no estimates, no extrapolation, and no new data collection or telemetry. A fresh install gets an empty state that says what will appear, not a page of zeros. Milestone celebrations are permitted at STANDARD+ as one-shot, dismissible acknowledgements of recorded outcomes; streak-loss warnings, artificial urgency and counters that exist only to be incremented are not. | §16.2, WP-33, D-11, ADR-0019 |
 
 ---
 

@@ -11,6 +11,7 @@ import {
 } from '../../db/schema/index.js';
 import type { DatabaseHandle } from '../../platform/db.js';
 import { uuid7 } from '../../platform/ids.js';
+import { nowMs, systemClock, type Clock } from '../../platform/time.js';
 
 /**
  * Every query the auth module makes, in one place. Nothing here decides
@@ -37,7 +38,7 @@ export interface NewSession {
 }
 
 export interface AuthRepositoryOptions {
-  readonly now?: () => number;
+  readonly clock?: Clock;
   readonly newId?: () => Uuid7;
 }
 
@@ -48,13 +49,18 @@ export function normalizeEmail(email: string): string {
 
 export class AuthRepository {
   readonly #db: DatabaseHandle;
-  readonly #now: () => number;
+  readonly #clock: Clock;
   readonly #newId: () => Uuid7;
 
   constructor(db: DatabaseHandle, options: AuthRepositoryOptions = {}) {
     this.#db = db;
-    this.#now = options.now ?? Date.now;
+    this.#clock = options.clock ?? systemClock;
     this.#newId = options.newId ?? uuid7;
+  }
+
+  /** Milliseconds since the epoch, the shape every timestamp column wants. */
+  get #nowMs(): number {
+    return nowMs(this.#clock);
   }
 
   get #drizzle(): DatabaseHandle['drizzle'] {
@@ -91,7 +97,7 @@ export class AuthRepository {
    */
   createUser(user: NewUser): UserRow {
     const write = this.#db.raw.transaction((): UserRow => {
-      const now = this.#now();
+      const now = this.#nowMs;
       const row = {
         id: this.#newId(),
         departmentId: user.departmentId ?? null,
@@ -138,7 +144,7 @@ export class AuthRepository {
       .set({
         failedLoginCount: next,
         ...(lockedUntil === undefined ? {} : { lockedUntil }),
-        updatedAt: this.#now(),
+        updatedAt: this.#nowMs,
       })
       .where(eq(users.id, userId))
       .run();
@@ -147,7 +153,7 @@ export class AuthRepository {
 
   /** A success clears both the counter and any lock (R34). */
   recordSuccessfulLogin(userId: string): void {
-    const now = this.#now();
+    const now = this.#nowMs;
     this.#drizzle
       .update(users)
       .set({ failedLoginCount: 0, lockedUntil: null, lastLoginAt: now, updatedAt: now })
@@ -158,13 +164,13 @@ export class AuthRepository {
   setLockedUntil(userId: string, lockedUntil: number | null): void {
     this.#drizzle
       .update(users)
-      .set({ lockedUntil, updatedAt: this.#now() })
+      .set({ lockedUntil, updatedAt: this.#nowMs })
       .where(eq(users.id, userId))
       .run();
   }
 
   setPassword(userId: string, passwordHash: string): void {
-    const now = this.#now();
+    const now = this.#nowMs;
     this.#drizzle
       .update(users)
       .set({ passwordHash, mustChangePassword: false, updatedAt: now })
@@ -173,7 +179,7 @@ export class AuthRepository {
   }
 
   createSession(session: NewSession): SessionRow {
-    const now = this.#now();
+    const now = this.#nowMs;
     const row = {
       id: this.#newId(),
       userId: session.userId,

@@ -3,14 +3,15 @@ import { pino } from 'pino';
 import { JobStore } from '../jobs/store.js';
 import { Scheduler, type SchedulerOptions } from '../jobs/scheduler.js';
 import type { JobDefinition } from '../jobs/types.js';
+import type { Clock } from '../platform/time.js';
 import { openMigratedDatabase, type MigratedDatabase } from './database.js';
 
 /** Fixed point in time every scheduler test measures from. */
 export const T0 = Date.UTC(2026, 8, 20, 12, 0, 0);
 export const MINUTE = 60_000;
 
-/** A clock the test moves by hand; the scheduler only ever reads it. */
-export function clock(at = T0): { now: () => Date; advance: (ms: number) => void } {
+/** A {@link Clock} the test moves by hand; the scheduler only ever reads it. */
+export function clock(at = T0): Clock & { advance: (ms: number) => void } {
   let current = at;
   return {
     now: () => new Date(current),

@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { settings } from '../db/schema/index.js';
 import type { DatabaseHandle } from './db.js';
+import { nowMs, systemClock, type Clock } from './time.js';
 
 /**
  * The typed setting registry (§6.2 `settings`: "typed registry in code").
@@ -96,20 +97,25 @@ export function defaultSetting<K extends SettingKey>(key: K): SettingValue<K> {
 }
 
 export interface SettingsStoreOptions {
-  readonly now?: () => number;
+  readonly clock?: Clock;
   /** Called when a stored value cannot be parsed; the default is used instead. */
   readonly onInvalid?: (key: SettingKey, reason: string) => void;
 }
 
 export class SettingsStore {
   readonly #db: DatabaseHandle;
-  readonly #now: () => number;
+  readonly #clock: Clock;
   readonly #onInvalid: (key: SettingKey, reason: string) => void;
 
   constructor(db: DatabaseHandle, options: SettingsStoreOptions = {}) {
     this.#db = db;
-    this.#now = options.now ?? Date.now;
+    this.#clock = options.clock ?? systemClock;
     this.#onInvalid = options.onInvalid ?? ((): void => undefined);
+  }
+
+  /** Milliseconds since the epoch, the shape every timestamp column wants. */
+  get #nowMs(): number {
+    return nowMs(this.#clock);
   }
 
   /** The stored value, or this key's default when it is absent or unreadable. */
@@ -139,7 +145,7 @@ export class SettingsStore {
     const row = {
       key,
       valueJson: JSON.stringify(parsed),
-      updatedAt: this.#now(),
+      updatedAt: this.#nowMs,
       updatedBy: updatedBy ?? null,
     };
     this.#db.drizzle

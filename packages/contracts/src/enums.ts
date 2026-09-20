@@ -68,3 +68,14 @@ export type ScrapeErrorKind = z.infer<typeof ScrapeErrorKind>;
 export const AUDIT_ACTOR_KINDS = ['USER', 'SYSTEM', 'SCHEDULER', 'AI'] as const;
 export const AuditActorKind = z.enum(AUDIT_ACTOR_KINDS);
 export type AuditActorKind = z.infer<typeof AuditActorKind>;
+
+/**
+ * `events.date_precision` (§6.1, §7.3, ADR-0015). Sources state dates with
+ * wildly different precision and a wrong deadline is worse than an unknown one,
+ * so how much a date actually says is stored next to it and shown to the user:
+ * `DATE` means "that day in the event timezone, time not stated", `MONTH` means
+ * only the month is known, `UNKNOWN` means nothing usable was found.
+ */
+export const DATE_PRECISIONS = ['DATETIME', 'DATE', 'MONTH', 'UNKNOWN'] as const;
+export const DatePrecision = z.enum(DATE_PRECISIONS);
+export type DatePrecision = z.infer<typeof DatePrecision>;

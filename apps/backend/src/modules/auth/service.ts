@@ -28,6 +28,7 @@ import {
   SESSION_REFRESH_INTERVAL_MS,
   type RandomBytes,
 } from './tokens.js';
+import { nowMs, systemClock, type Clock } from '../../platform/time.js';
 
 /**
  * The auth rules (ARCHITECTURE.md §4.12, §10.5, rulings R33, R34, R37, R38).
@@ -71,7 +72,7 @@ export interface AuthServiceDependencies {
   readonly repository: AuthRepository;
   readonly settings: SettingsStore;
   readonly audit: AuditLog;
-  readonly now?: () => number;
+  readonly clock?: Clock;
   readonly random?: RandomBytes;
   readonly rateLimiter?: LoginRateLimiter;
 }
@@ -80,7 +81,7 @@ export class AuthService {
   readonly #repo: AuthRepository;
   readonly #settings: SettingsStore;
   readonly #audit: AuditLog;
-  readonly #now: () => number;
+  readonly #clock: Clock;
   readonly #random: RandomBytes | undefined;
   readonly #rateLimiter: LoginRateLimiter;
 
@@ -88,10 +89,14 @@ export class AuthService {
     this.#repo = dependencies.repository;
     this.#settings = dependencies.settings;
     this.#audit = dependencies.audit;
-    this.#now = dependencies.now ?? Date.now;
+    this.#clock = dependencies.clock ?? systemClock;
     this.#random = dependencies.random;
-    this.#rateLimiter =
-      dependencies.rateLimiter ?? new LoginRateLimiter({ now: dependencies.now ?? Date.now });
+    this.#rateLimiter = dependencies.rateLimiter ?? new LoginRateLimiter({ clock: this.#clock });
+  }
+
+  /** Milliseconds since the epoch, the shape every timestamp column wants. */
+  get #nowMs(): number {
+    return nowMs(this.#clock);
   }
 
   /** Minutes of inactivity before the idle window lapses (`auth.autoLockMinutes`). */
@@ -116,7 +121,7 @@ export class AuthService {
   }
 
   #issueSession(userId: string, context: LoginContext): LoginResult {
-    const now = this.#now();
+    const now = this.#nowMs;
     const token = generateSessionToken(this.#random);
     const row = this.#repo.createSession({
       userId,
@@ -153,7 +158,7 @@ export class AuthService {
       throw tooManyAttempts();
     }
 
-    const now = this.#now();
+    const now = this.#nowMs;
     const row = this.#repo.findUserByEmail(request.email);
     if (row === undefined) {
       // Still hash something, so "no such account" and "wrong password" take a
@@ -230,7 +235,7 @@ export class AuthService {
    * account that has since been disabled — is one 401 with a different sentence.
    */
   authenticate(token: string): ActiveSession {
-    const now = this.#now();
+    const now = this.#nowMs;
     const row = this.#repo.findSessionByTokenHash(hashToken(token));
     if (row === undefined) {
       throw sessionExpired('This sign-in is no longer valid.');
@@ -262,7 +267,7 @@ export class AuthService {
   }
 
   logout(session: ActiveSession, requestId?: string): void {
-    this.#repo.revokeSession(session.id, this.#now());
+    this.#repo.revokeSession(session.id, this.#nowMs);
     this.#audit.append({
       actorKind: 'USER',
       actorUserId: session.user.id,
@@ -301,7 +306,7 @@ export class AuthService {
       });
       throw invalidCredentials();
     }
-    const now = this.#now();
+    const now = this.#nowMs;
     const idleExpiresAt = Math.min(
       now + this.autoLockMinutes() * 60_000,
       session.absoluteExpiresAt,
@@ -336,7 +341,7 @@ export class AuthService {
       throw invalidCredentials();
     }
     this.#repo.setPassword(session.user.id, await hashPassword(newPassword));
-    const revoked = this.#repo.revokeAllSessionsFor(session.user.id, this.#now(), session.id);
+    const revoked = this.#repo.revokeAllSessionsFor(session.user.id, this.#nowMs, session.id);
     this.#audit.append({
       actorKind: 'USER',
       actorUserId: session.user.id,

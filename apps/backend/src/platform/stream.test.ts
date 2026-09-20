@@ -122,7 +122,7 @@ describe('Last-Event-ID replay (ruling R36)', () => {
 
   it('drops events older than five minutes', () => {
     let now = 1_000_000;
-    const hub = new StreamHub({ now: () => now });
+    const hub = new StreamHub({ clock: { now: () => new Date(now) } });
     hub.publish('data.invalidated');
     hub.publish('data.invalidated');
     now += REPLAY_MAX_AGE_MS + 1;
@@ -134,7 +134,7 @@ describe('Last-Event-ID replay (ruling R36)', () => {
 
   it('reports a gap rather than inventing history', () => {
     let now = 1_000_000;
-    const hub = new StreamHub({ now: () => now, maxEvents: 3 });
+    const hub = new StreamHub({ clock: { now: () => new Date(now) }, maxEvents: 3 });
     for (let index = 0; index < 10; index += 1) {
       hub.publish('data.invalidated');
     }

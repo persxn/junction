@@ -1,3 +1,5 @@
+import { nowMs, systemClock, type Clock } from '../../platform/time.js';
+
 /**
  * Login throttling (ruling R34, §4.12, §10.3).
  *
@@ -35,7 +37,7 @@ export const LOGIN_RATE_WINDOW_MS = 60_000;
 export interface LoginRateLimiterOptions {
   readonly limit?: number;
   readonly windowMs?: number;
-  readonly now?: () => number;
+  readonly clock?: Clock;
 }
 
 /**
@@ -47,13 +49,18 @@ export interface LoginRateLimiterOptions {
 export class LoginRateLimiter {
   readonly #limit: number;
   readonly #windowMs: number;
-  readonly #now: () => number;
+  readonly #clock: Clock;
   #attempts: number[] = [];
 
   constructor(options: LoginRateLimiterOptions = {}) {
     this.#limit = options.limit ?? LOGIN_RATE_LIMIT;
     this.#windowMs = options.windowMs ?? LOGIN_RATE_WINDOW_MS;
-    this.#now = options.now ?? Date.now;
+    this.#clock = options.clock ?? systemClock;
+  }
+
+  /** Milliseconds since the epoch, the shape every timestamp column wants. */
+  get #nowMs(): number {
+    return nowMs(this.#clock);
   }
 
   /**
@@ -61,7 +68,7 @@ export class LoginRateLimiter {
    * recorded, so a client hammering the door cannot extend its own timeout.
    */
   tryAcquire(): boolean {
-    const now = this.#now();
+    const now = this.#nowMs;
     this.#attempts = this.#attempts.filter((at) => now - at < this.#windowMs);
     if (this.#attempts.length >= this.#limit) {
       return false;
@@ -72,7 +79,7 @@ export class LoginRateLimiter {
 
   /** Attempts still counted in the current window; for tests and diagnostics. */
   used(): number {
-    const now = this.#now();
+    const now = this.#nowMs;
     return this.#attempts.filter((at) => now - at < this.#windowMs).length;
   }
 }

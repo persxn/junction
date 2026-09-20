@@ -2,13 +2,14 @@ import { HealthResponse, type HealthDatabase } from '@compintel/contracts';
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod';
 
 import type { Config } from '../platform/config.js';
+import type { Clock } from '../platform/time.js';
 
 export interface HealthRouteOptions {
   readonly config: Config;
   /** When this process finished starting; fixed for the life of the process. */
   readonly startedAt: Date;
   /** Injected in tests so `uptimeSec` is deterministic. */
-  readonly now: () => Date;
+  readonly clock: Clock;
   /** Current database state; read per request, never cached. */
   readonly database: () => HealthDatabase;
 }
@@ -22,7 +23,7 @@ export const healthRoutes =
   (options: HealthRouteOptions): FastifyPluginCallbackZod =>
   (app, _opts, done) => {
     app.get('/health', { schema: { response: { 200: HealthResponse } } }, () => {
-      const elapsedMs = options.now().getTime() - options.startedAt.getTime();
+      const elapsedMs = options.clock.now().getTime() - options.startedAt.getTime();
       return {
         status: 'ok' as const,
         appVersion: options.config.appVersion,

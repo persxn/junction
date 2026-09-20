@@ -15,6 +15,7 @@ import {
   runMigrations,
 } from './migrate.js';
 import { StartupError } from './startup-error.js';
+import { fixedClock } from './time.js';
 
 const silent = pino({ enabled: false });
 const SECRET = '0123456789abcdef0123456789abcdef';
@@ -327,8 +328,8 @@ describe('recordAppMeta', () => {
       logger: silent,
     });
 
-    recordAppMeta(config, db, () => new Date('2026-09-20T09:00:00.000Z'));
-    recordAppMeta(config, db, () => new Date('2026-09-21T09:00:00.000Z'));
+    recordAppMeta(config, db, fixedClock('2026-09-20T09:00:00.000Z'));
+    recordAppMeta(config, db, fixedClock('2026-09-21T09:00:00.000Z'));
 
     const rows = Object.fromEntries(
       (

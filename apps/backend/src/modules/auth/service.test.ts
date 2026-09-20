@@ -85,8 +85,8 @@ describe('login', () => {
       password: PASSWORD,
       clientKind: 'DESKTOP',
     });
-    expect(session.idleExpiresAt).toBe(clock.now() + 20 * 60_000);
-    expect(session.absoluteExpiresAt).toBe(clock.now() + ABSOLUTE_SESSION_MS);
+    expect(session.idleExpiresAt).toBe(clock.nowMs() + 20 * 60_000);
+    expect(session.absoluteExpiresAt).toBe(clock.nowMs() + ABSOLUTE_SESSION_MS);
   });
 });
 
@@ -108,7 +108,7 @@ describe('the lockout ladder (ruling R34)', () => {
     await failTimes(h, 1);
     const locked = h.repository.findUserByEmail(EMAIL);
     expect(locked?.failedLoginCount).toBe(5);
-    expect(locked?.lockedUntil).toBe(clock.now() + 5 * 60_000);
+    expect(locked?.lockedUntil).toBe(clock.nowMs() + 5 * 60_000);
   });
 
   it('refuses even a correct password while locked, and does not touch the counter', async () => {
@@ -146,9 +146,9 @@ describe('the lockout ladder (ruling R34)', () => {
     for (let lockout = 0; lockout < 6; lockout += 1) {
       await failTimes(h, 5);
       const lockedUntil = h.repository.findUserByEmail(EMAIL)?.lockedUntil ?? 0;
-      seen.push(Math.round((lockedUntil - clock.now()) / 60_000));
+      seen.push(Math.round((lockedUntil - clock.nowMs()) / 60_000));
       // Wait it out so the next five failures are actually recorded.
-      clock.advanceMs(lockedUntil - clock.now() + 1);
+      clock.advanceMs(lockedUntil - clock.nowMs() + 1);
     }
     expect(seen).toStrictEqual([...LOCKOUT_LADDER_MINUTES, 60]);
   });

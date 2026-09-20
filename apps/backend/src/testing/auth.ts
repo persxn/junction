@@ -8,6 +8,7 @@ import { AuthService } from '../modules/auth/service.js';
 import { LoginRateLimiter } from '../modules/auth/throttle.js';
 import { AuditLog } from '../platform/audit.js';
 import { SettingsStore } from '../platform/settings.js';
+import type { Clock } from '../platform/time.js';
 import type { UserRow } from '../db/schema/index.js';
 import { CHEAP_ARGON2, openMigratedDatabase, type MigratedDatabase } from './database.js';
 
@@ -20,15 +21,18 @@ import { CHEAP_ARGON2, openMigratedDatabase, type MigratedDatabase } from './dat
  * quietly stops testing the interesting case.
  */
 
-/** A clock the test moves by hand. */
-export class TestClock {
+/** A {@link Clock} the test moves by hand. */
+export class TestClock implements Clock {
   #now: number;
 
   constructor(start = Date.UTC(2026, 8, 20, 9, 0, 0)) {
     this.#now = start;
   }
 
-  now = (): number => this.#now;
+  now = (): Date => new Date(this.#now);
+
+  /** The same instant as milliseconds, which is what the assertions compare. */
+  nowMs = (): number => this.#now;
 
   advanceMs(ms: number): void {
     this.#now += ms;
@@ -74,15 +78,15 @@ export interface AuthHarnessOptions {
 export function createAuthHarness(options: AuthHarnessOptions = {}): AuthHarness {
   const database = openMigratedDatabase(undefined, 'auth');
   const clock = options.clock ?? new TestClock();
-  const repository = new AuthRepository(database.db, { now: clock.now });
-  const settings = new SettingsStore(database.db, { now: clock.now });
-  const audit = new AuditLog(database.db, { now: clock.now });
-  const rateLimiter = options.rateLimiter ?? new LoginRateLimiter({ now: clock.now });
+  const repository = new AuthRepository(database.db, { clock });
+  const settings = new SettingsStore(database.db, { clock });
+  const audit = new AuditLog(database.db, { clock });
+  const rateLimiter = options.rateLimiter ?? new LoginRateLimiter({ clock });
   const service = new AuthService({
     repository,
     settings,
     audit,
-    now: clock.now,
+    clock,
     rateLimiter,
     ...(options.random === undefined ? {} : { random: options.random }),
   });

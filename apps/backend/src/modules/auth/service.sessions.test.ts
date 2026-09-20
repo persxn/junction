@@ -59,7 +59,7 @@ describe('sessions (ruling R33)', () => {
   it('expires 12 hours after sign-in however busy the client is', async () => {
     const clock = new TestClock();
     const h = await withUser({ clock });
-    const startedAt = clock.now();
+    const startedAt = clock.nowMs();
     const token = await signIn(h);
 
     // Touch it every ten minutes — inside the 15-minute idle window every time,
@@ -76,7 +76,7 @@ describe('sessions (ruling R33)', () => {
     expect(codeOf(ended)).toBe('AUTH_SESSION_EXPIRED');
     expect((ended as AppError).detail).toMatch(/12 hours/);
     // 12 h after sign-in, to the ten-minute step the loop takes.
-    expect(clock.now()).toBe(startedAt + ABSOLUTE_SESSION_MS);
+    expect(clock.nowMs()).toBe(startedAt + ABSOLUTE_SESSION_MS);
   });
 
   it('moves the idle window forward at most once a minute', async () => {
@@ -94,8 +94,8 @@ describe('sessions (ruling R33)', () => {
     clock.advanceMs(2);
     h.service.authenticate(token);
     const refreshed = h.repository.findSessionByTokenHash(hashToken(token));
-    expect(refreshed?.lastSeenAt).toBe(clock.now());
-    expect(refreshed?.idleExpiresAt).toBe(clock.now() + h.service.autoLockMinutes() * 60_000);
+    expect(refreshed?.lastSeenAt).toBe(clock.nowMs());
+    expect(refreshed?.idleExpiresAt).toBe(clock.nowMs() + h.service.autoLockMinutes() * 60_000);
   });
 
   it('never pushes the idle window past the absolute one', async () => {
@@ -147,7 +147,7 @@ describe('unlock (ruling R37)', () => {
     // Same token, same session row, later idle expiry.
     expect(h.service.authenticate(token).id).toBe(session.id);
     expect(new Date(expiry.idleExpiresAt).getTime()).toBe(
-      clock.now() + h.service.autoLockMinutes() * 60_000,
+      clock.nowMs() + h.service.autoLockMinutes() * 60_000,
     );
   });
 
