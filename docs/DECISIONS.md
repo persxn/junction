@@ -47,7 +47,7 @@ When the architect resolves an open question, update its row (status → RESOLVE
 |---|---|---|---|---|
 | Q1 | OPEN | Pilot host: one shared PC or individual professor machines? Is off-campus access required? | Client mode (post-M5); network security | Host mode on one machine. No off-campus access in MVP (later via university VPN — never exposed to the internet). |
 | Q2 | PARTLY ANSWERED (build machine known; pilot host unknown — check SAC + disk encryption) | Pilot facts: date, number of professors, host machine specs, who installs, IT restrictions (Smart App Control, WDAC/AppLocker, proxy), who maintains scrapers. | WP-26 model choice, WP-31 packaging | Taken from WP-00/WP-01 recon of the build machine until the pilot host is known. |
-| Q3 | OPEN | Campus name and coordinates. | WP-07 setup wizard (entered at runtime — not blocking code) | — |
+| Q3 | CLOSED | Campus name and coordinates. | **Collected at runtime by WP-07b's setup wizard** (`campuses.name/lat/lon`, R43); no longer blocks anything. | WP-07b |
 | Q4 | OPEN | Notification recipients and thresholds. | WP-23 | Competition/stage/task deadlines → primary + co-mentors; watched-event changes → users who saved it; saved-search matches → owner; scraper/backup failures → admins. Thresholds 7 / 3 / 1 days + due day + overdue. |
 | Q5 | OPEN | Permission defaults in §10 (student profile edits, event corrections, co-mentor rights). | WP-07, WP-17, WP-19 | As in the §10 matrix. |
 | Q6 | OPEN | Can teams include students from other colleges? (Other departments are already allowed.) | WP-17/18 | Supported in the data model (`is_external`); UI behind an admin setting, off by default. |

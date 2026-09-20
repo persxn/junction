@@ -1,10 +1,10 @@
 # Progress — newest first, keep < 150 lines
 
 ## Current
-- **Next WP: WP-07b** (first-run setup wizard, user administration).
+- **Next WP: WP-08a.** M0 is complete: WP-07b shipped the first-run wizard and user administration.
 - **Architect is offline** (Sep 2026): this session acts as master + worker. Every architectural call is
   recorded in the handoff reports under "Minor decisions"/"Questions" for review when they are back.
-- Spec: docs/ARCHITECTURE.md **v1.1.4 — ACCEPTED** (changelog at the top; rulings index §21 incl. R1–R38; roadmap §19 = 46 WPs, 13 done, 33 remaining).
+- Spec: docs/ARCHITECTURE.md **v1.1.5 — ACCEPTED** (changelog at the top; rulings index §21 incl. R1–R44; roadmap §19 = 46 WPs, 14 done, 32 remaining).
 - ADR-0001…0018 Accepted (several amended). Decisions register: docs/DECISIONS.md (D-01…D-33, Q1…Q13, user actions U1…U6).
 
 ## Environment facts
@@ -145,5 +145,5 @@ All WP-01/WP-02 findings are ruled on in ARCHITECTURE.md §21. Still open:
 2. **Pilot host unknown** (Q2/Q10): check its SAC/WDAC state and disk encryption before WP-31.
 3. **No 8 GB test machine**: needed for WP-31/32 (real laptop or VirtualBox VM).
 4. **Disk headroom: 31 GB free.** `apps/desktop/src-tauri/target` alone is **8.0 GB**. R3 says `cargo clean` under 20 GB free; WP-15/26/27 add models, so this is the next thing to bite.
-5. Q1, Q3–Q9, Q11, Q12 open with defaults (DECISIONS.md); Q4 blocks WP-23.
+5. Q1, Q5–Q9, Q11, Q12 open with defaults (DECISIONS.md); Q4 blocks WP-23. **Q3 closed by WP-07b** (the wizard collects the campus).
 6. No BitLocker here → synthetic data only (D-33).

@@ -1,6 +1,6 @@
 # Competition Intel — Architecture Specification
 
-**Version:** 1.1.4 · **Date:** 20 Sep 2026 · **Status:** ACCEPTED — implementation baseline (amended after WP-00…WP-02b)
+**Version:** 1.1.5 · **Date:** 20 Sep 2026 · **Status:** ACCEPTED — implementation baseline (amended after WP-00…WP-02b)
 **Author:** Architect (Claude, Cowork session) · **Implementer:** Claude Code (worker session)
 
 > **How to use this document.** This is the implementation source of truth. The worker must not
@@ -20,6 +20,7 @@
 | 1.1.2 | 20 Sep 2026 | Rulings R11–R18 after WP-04a (see §21). |
 | 1.1.3 | 20 Sep 2026 | Rulings R19–R31 after WP-04c/05a/05b (see §21). |
 | 1.1.4 | 20 Sep 2026 | Rulings R32–R38 after WP-06; auth decisions for WP-07a (see §21). |
+| 1.1.5 | 20 Sep 2026 | Rulings R39–R44: setup wizard, recovery material, folder validation (see §21). |
 
 ---
 
@@ -1569,6 +1570,12 @@ ative\ (better-sqlite3 `nativeBinding`); the bundle must run from a folder with 
 | R36 SSE | `/api/v1/stream` per ADR-0017: `fetch` + ReadableStream, event ids from one monotonic counter, `Last-Event-ID` replayed from an in-memory ring buffer (last 200 events or 5 minutes, whichever is smaller), a comment heartbeat every 15 s, and the stream registered as a **`streams`**-phase shutdown hook (R14). Nothing user-identifying in an event body beyond ids. | ADR-0017, R14 |
 | R37 Auto-lock | Enforced server-side by `idle_expires_at`; the lock screen is cosmetic. `POST /auth/unlock` re-verifies the password and extends the *same* session, so the token the UI holds in memory stays valid. | §10.5 |
 | R38 Forced password change | `must_change_password` lets login succeed but every route except `/auth/change-password`, `/auth/logout` and `/me` answers 403 `AUTH_PASSWORD_CHANGE_REQUIRED`. | §4.12 |
+| R39 Setup gate | Until an ACTIVE ADMINISTRATOR exists, every route except `/health`, `/api/v1/setup/*` and `/system/client-log` answers **409** with code `SETUP_REQUIRED`. The UI cannot route past the wizard, and the gate is server-side so it cannot be skipped by a reload. | §4.12, §19 |
+| R40 Setup is one transaction | Organization, managing department, primary campus, the first admin with their roles, the `settings` rows and the backup key material are written in a single SQLite transaction. A failure leaves no partial setup. `POST /setup/complete` is refused once an admin exists. | §6.2, §14 |
+| R41 Recovery material | Two separate secrets. (1) A one-time **admin recovery code**: 32 random bytes, Crockford base32 in groups of 5, shown once, stored only as an Argon2id hash in `settings` (`auth.recoveryCodeHash`). (2) The **backup passphrase**, which never leaves the moment it is typed: it encrypts the age private key. The wizard cannot be finished until the user confirms in writing (an explicit checkbox per item) that both the code and the exported recovery file are saved. | §4.12, §14 |
+| R42 Backup keys | `age-encryption` (the TypeScript implementation) generates the X25519 identity at setup. `settings.backup.publicKey` holds the public key in the clear, `settings.backup.privateKeyEncrypted` holds the identity encrypted to a scrypt (passphrase) recipient. Unattended daily backups use the public key only. The recovery file is `compintel-recovery-<yyyyMMdd>.txt` and contains the public key, the passphrase-encrypted identity, the schema version and instructions for the standard `age` CLI — no plaintext key, no admin recovery code. Passphrase rules: ≥ 12 characters, typed twice, and not equal to the admin password. | §14, ADR-0011 |
+| R43 Folders | The **data folder is fixed for the process** by the shell (`--data-dir`), so the wizard shows it read-only with a note that changing it is an installer choice (WP-31). The **backup destination** is chosen in the wizard and validated by the backend: exists, writable (write-probe, not `fs.access`), not inside the data directory, and ≥ 1 GB free. Both the folder picker and writing the recovery file are shell concerns and go through Tauri commands restricted to a path the user just picked in a native dialog. | §4.13, §3.2 |
+| R44 Scraper contact | `settings.scraper.contactEmail` is required by the wizard and validated as an e-mail; ruling A10 stands — no source may be scraped before setup is complete, and WP-09a asserts that. | §7.2, A10 |
 
 ---
 
