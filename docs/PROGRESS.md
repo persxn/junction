@@ -9,8 +9,8 @@
 
 ## Environment facts
 - **OS / CPU / RAM / GPU:** Windows 11 **Home** 25H2 (build 26200.9457) · AMD Ryzen 7 5700, 8c/16t · 16 GB RAM ·
-  NVIDIA RTX 4060 8 GB · no NPU · **C: 33 GB free of 119 GB** (single fixed drive; 52 GB before the toolchain,
-  42 GB before the shell; `apps/desktop/src-tauri/target` alone is 5.3 GB).
+  NVIDIA RTX 4060 8 GB · no NPU · **C: 30.4 GB free of 119 GB** (single fixed drive; 52 GB before the
+  toolchain; `apps/desktop/src-tauri/target` alone is 9.3 GB).
   This box is the **GPU tier**, not the 8 GB target; Home edition has no Hyper-V, so there is no 8 GB test VM (affects WP-15, WP-31).
 - **Toolchain (all verified WP-03a):** node **v24.19.0** · npm **11.17.0** · pnpm **12.4.2** (`%APPDATA%\npm`, on PATH) ·
   rustup **1.29.1** · rustc/cargo **1.98.1** (`stable-x86_64-pc-windows-msvc`, default host, only target installed) ·
@@ -49,44 +49,48 @@
 - **Windows has no POSIX signals**: `child.kill('SIGTERM')` hard-terminates. The shell's real lifeline is
   stdin EOF (`--stdin-lifeline`) plus the Job Object; `fetch()` also silently drops a caller-set `Host` header,
   so Host-allowlist tests must use `node:http`.
-- Desktop shell: `pnpm --filter @compintel/desktop tauri:dev` (Vite on **localhost:5173**, strictPort - the CORS
-  allowlist has that exact origin) · `tauri:build` (= `tauri build --debug --no-bundle`) · `test:rust`
-  (`cargo test`, 34 tests, ~5 s) · `lint:rust` (clippy `-D warnings`) · `format:rust:check`.
-  **LNA re-check** (F9, after any WebView2/Windows update): launch the exe with
+- Desktop: `pnpm --filter @compintel/desktop tauri:dev` (Vite on **localhost:5173**, strictPort - the CORS
+  allowlist has that exact origin) · `build` (tsc + vite) · `tauri:build` (= `tauri build --debug
+  --no-bundle`) · `test:rust` · `lint:rust` (clippy `-D warnings`) · `format:rust:check`. **The Rust checks
+  are outside `pnpm verify`** (R19); run all three in any WP that touches `src-tauri`. A dev or built run
+  needs `pnpm --filter @compintel/backend bundle` first.
+- **Vitest runs two projects** (root `vitest.config.ts`): `node` for everything, `jsdom` for
+  `apps/desktop/**` (setup `apps/desktop/src/testing/setup.ts`: jest-dom, the axe matcher, matchMedia).
+  `pnpm vitest run --project desktop` runs only the UI tests. **vitest does not process CSS**, so a
+  `?raw` import of a stylesheet comes back empty - `tokens.contrast.test.ts` reads the file with `node:fs`.
+- **LNA re-check** (F9, after any WebView2/Windows update): launch the exe with
   `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--enable-features=LocalNetworkAccessChecks,msWebViewAllowLocalNetworkAccessChecks`
-  and confirm the window still shows a backend health line - procedure and results in
-  docs/research/webview2-local-network-access.md.
-  **The Rust checks are outside `pnpm verify`** (they need cargo and would blow the < 2 min budget);
-  run them in any WP that touches `src-tauri`. A dev run needs `pnpm --filter @compintel/backend bundle`
-  first: the shell starts `apps/backend/dist-bundle/main.mjs` with the system Node.
+  and confirm the window still reaches the backend - see docs/research/webview2-local-network-access.md.
 - **PATH caveat:** rustup added `%USERPROFILE%\.cargo\bin` to the *user* PATH; already-open terminals must be
   restarted or prepend it manually, otherwise `cargo`/`rustc` are not found.
 - **NodeNext:** relative imports need a `.js` extension even in `.ts` sources.
 - `npm i -g` now warns about unrun install scripts (npm 11.17 `allow-scripts` gate) — harmless for pnpm's shim.
 
 ## Completed
-- **WP-05b — tray, close-to-tray, single instance, autostart, LNA check** (this WP). Tauri `tray-icon`
-  feature + `tauri-plugin-single-instance` 2.4.5 and `tauri-plugin-autostart` 2.5.1. Tray menu: Open ·
-  Close to tray · Start with Windows · Open logs · Exit completely, with the two check items kept in step
-  with the UI. Preferences live in `<dataDir>\shell-settings.json` (`settings.rs`; close-to-tray **on** by
-  default per D-14), **not** in the backend's `settings` table - the tray must work before the backend is
-  up. `shutdown.rs` became `loopback.rs`: the same hand-written client now also serves a read-only,
-  prefix-locked `backend_get` command, which is the **finding-F9 fallback** (no HTTP plugin, no new dep).
-  **LNA measured** (docs/research/webview2-local-network-access.md): with the flags on, the page and IPC
-  still work but the loopback `fetch` **never settles** - it does not reject - so the direct call got a 5 s
-  timeout and the app now switches to the shell proxy automatically (verified on screen and in the log).
-  Also fixed: a UTF-8 BOM in the settings file silently reverted every preference. `pnpm verify` **439
-  tests green**; `cargo test` 46 green; clippy clean; A-D end-to-end script passes.
+- **WP-06 — UI foundation** (this WP). Tailwind v4 (`@tailwindcss/vite`) + `src/styles/tokens.css`: one
+  `--ci-*` token set, both themes, mapped onto Tailwind's namespaces with `@theme inline`, so
+  `[data-theme='dark']` re-points every utility at once; every text/surface pair is **measured** at
+  >= 4.5:1 in a test. Theme light/dark/**system** (`localStorage compintel.theme`, live
+  `prefers-color-scheme`). `src/shell/backend.ts` is now IPC only; the API client moved to `src/api/`
+  (typed `ApiProblem`, `Authorization` seam, generation retry, R27's **2 s** timeout, cursor types).
+  TanStack Query + Router (7 placeholder routes, **no admin routes** — seam in `app/nav.ts`), app shell
+  (collapsible rail, top bar, user menu), cmdk palette, ErrorBoundary/toasts/Skeleton/EmptyState and one
+  `<ConnectionScreen>` for the R26 cases. Vitest split into `node` + `jsdom` projects; **635 tests green**
+  (was 439), axe clean on every route. Manual run verified incl. DATA_DIR_LOCKED → Retry → shell.
+- **WP-05b — tray, close-to-tray, single instance, autostart, LNA check.** Tray menu (Open · Close to
+  tray · Start with Windows · Open logs · Exit completely) via the `tray-icon` feature +
+  `tauri-plugin-single-instance` 2.4.5 and `tauri-plugin-autostart` 2.5.1; preferences in
+  `<dataDir>\shell-settings.json` (R28), close-to-tray on by default (D-14). `loopback.rs` also serves the
+  read-only, prefix-locked `backend_get` — the **finding-F9 fallback** (R27). **LNA measured**
+  (docs/research/webview2-local-network-access.md): with the flags on the loopback `fetch` *never settles*,
+  so the fallback is driven by a timeout, not a rejection. 439 tests; cargo 46; A-D end-to-end passes.
 - **WP-05a — Tauri shell + backend supervision.** `apps/desktop` (React 19 + Vite 8, own tsconfig per R6)
-  with `src-tauri` inside; `rust-toolchain.toml` pins 1.98.1 (R1). Rust modules: `backoff` (1→2→4…60 s,
-  5 crashes/10 min → FAILED), `ready` (the one stdout line, R7), `secret` (32 fresh bytes per spawn, A2),
-  `paths` (A20 layout; dev falls back to the repo bundle + `CompIntel-dev`), `job` (KILL_ON_JOB_CLOSE,
-  F7/A17), `supervisor` (one thread: spawn → READY → watch → restart; `Phase` + `generation`), `commands`
-  + the `backend://status` event; `packages/contracts/src/shell.ts` types the IPC and the UI parses it.
-  A named startup error (DATA_DIR_LOCKED…) is terminal, not a restart loop. **Verified on the built exe:**
-  window close → graceful `reason:"api"` shutdown, exit 0, lock removed, nothing left; a hard kill takes
-  the backend with it; WebView2 reached `/api/v1/health` 200. Deps: react/react-dom 19.3.0,
-  @tauri-apps/api 2.11.1, vite 8.3.0, tauri 2.11.6, windows 0.62.2, getrandom 0.4.3 (details in the report).
+  with `src-tauri` inside; `rust-toolchain.toml` pins 1.98.1 (R1). Rust: `backoff` (1→2→4…60 s, 5 crashes/
+  10 min → FAILED), `ready` (R7), `secret` (32 fresh bytes per spawn, A2), `paths` (A20), `job`
+  (KILL_ON_JOB_CLOSE, F7/A17), `supervisor`, `commands` + the `backend://status` event;
+  `packages/contracts/src/shell.ts` types the IPC and the UI parses it (R24). A named startup error is
+  terminal, not a restart loop (R26). **Verified on the built exe:** clean exit 0 with no leftovers, a hard
+  kill takes the backend with it, WebView2 reached `/api/v1/health` 200.
 - **WP-04c — DB-backed job runner.** Migration 0001 = `job_state` (§6.2 columns + `kind`, `last_outcome`,
   `last_duration_ms`, `last_error_message`, CHECKs from the contracts enums, index on `next_due_at`);
   `packages/contracts/src/jobs.ts` (JobKind SCRAPE/LLM/GENERAL, JobTrigger, JobOutcome + ABORTED/CRASHED,
@@ -110,19 +114,15 @@
   Deps: fastify 5.12.5, @fastify/cors 11.3.0, fastify-type-provider-zod 7.0.0, pino 10.3.1, zod 4.6.5,
   tsx 4.23.13, esbuild 0.28.2 (needs `allowBuilds`). 217 tests green. Rulings R1–R10 → §21 (spec v1.1.1).
 - **WP-03b — monorepo scaffold + `pnpm verify`**. pnpm workspace (`apps/*`, `packages/*`, `tools/*`),
-  `packageManager` pnpm@12.4.2, engines `>=24.19 <25`, `.npmrc` save-exact + engine-strict, `onlyBuiltDependencies: []`
-  (nothing in the tree needs install scripts). **TypeScript 6.0.3** — not 7.0.2, because typescript-eslint 8.70.0
-  supports `>=4.8.4 <6.1.0`. ESLint 10.11.0 flat config (recommended+stylistic TypeChecked, `no-explicit-any`,
-  `no-floating-promises`, `consistent-type-imports` as errors), Prettier 3.9.8 (`docs/` and CLAUDE.md excluded),
-  Vitest 5.0.1, one root config. `packages/contracts` (zod 4.6.5): API_VERSION, the 5 spec enums, RFC 9457
-  ProblemDetails + ErrorCode, 57 tests. `apps/backend`: `describeBuild()` via `workspace:*`.
+  engines `>=24.19 <25`, `.npmrc` save-exact + engine-strict. **TypeScript 6.0.3** — not 7.0.2, because
+  typescript-eslint 8.70.0 supports `>=4.8.4 <6.1.0`. ESLint 10.11.0 flat config (TypeChecked +
+  `no-explicit-any`, `no-floating-promises`, `consistent-type-imports`), Prettier 3.9.8 (`docs/` excluded),
+  Vitest 5.0.1. `packages/contracts` (zod 4.6.5): API_VERSION, the 5 spec enums, ProblemDetails + ErrorCode.
   Verified green from a fresh `git clone` + `--frozen-lockfile`; injected lint/type/test faults each exit 1.
-- **WP-03a — toolchain install + build probes.** VS Build Tools 2022 (C++ workload), rustup + stable-msvc,
-  pnpm 12.4.2. **Probe A**: better-sqlite3 13.0.3 → SQLite 3.53.4, WAL, FTS5 porter + trigram, a JS
-  `haversine()` called from SQL, `db.backup()` 4.1 ms, `VACUUM INTO` 2.9 ms; @node-rs/argon2 2.2.1
-  argon2id m=19456/t=2/p=1 → **12.8 ms per hash**. Prebuilds only, no compiler needed.
-  **Probe B**: a Tauri 2 hello world built in **2m 13s** cold (471 crates), 12.4 MB debug exe, no
-  SAC/Defender block. Probe folder deleted afterwards.
+- **WP-03a — toolchain install + build probes.** VS Build Tools 2022, rustup + stable-msvc, pnpm 12.4.2.
+  **Probe A**: better-sqlite3 → SQLite 3.53.4, WAL, FTS5 porter + trigram, a JS `haversine()` from SQL,
+  `db.backup()` 4.1 ms, `VACUUM INTO` 2.9 ms; @node-rs/argon2 2.2.1 argon2id m=19456/t=2/p=1 →
+  **12.8 ms per hash**. Prebuilds only. **Probe B**: a Tauri 2 hello world built in **2m 13s** cold.
 
 - **Architect review of WP-00…WP-02b → spec v1.1** (commit d781885, docs only, delivered by the user).
   All WP-01 findings and WP-02 questions ruled on (§21); `docs/requirements/master-requirements.md` supplied.
@@ -144,6 +144,6 @@ All WP-01/WP-02 findings are ruled on in ARCHITECTURE.md §21. Still open:
 1. ~~U1/U2~~ **done in WP-03a.** **U3** — Unstop Terms unread (blocks WP-13). **U4** — CLIST API key (blocks live WP-11 runs).
 2. **Pilot host unknown** (Q2/Q10): check its SAC/WDAC state and disk encryption before WP-31.
 3. **No 8 GB test machine**: needed for WP-31/32 (real laptop or VirtualBox VM).
-4. **Disk headroom**: ~42 GB free. A full monorepo with several Rust targets plus models will eat it; watch this from WP-04a on.
+4. **Disk headroom: 30.4 GB free** (was 33 after WP-05b). `apps/desktop/src-tauri/target` alone is **9.3 GB**. R3 says `cargo clean` under 20 GB free; WP-15/26/27 add models, so this is the next thing to bite.
 5. Q1, Q3–Q9, Q11, Q12 open with defaults (DECISIONS.md); Q4 blocks WP-23.
 6. No BitLocker here → synthetic data only (D-33).

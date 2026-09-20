@@ -1,20 +1,14 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  apiGet,
-  ApiError,
-  apiTransport,
   BACKEND_STATUS_EVENT,
   backendConnection,
+  backendGet,
   backendStatus,
-  CLIENT_SECRET_HEADER,
   exitCompletely,
-  fetchHealth,
-  FETCH_TIMEOUT_MS,
   hideToTray,
   onBackendStatus,
   openLogsFolder,
-  resetApiTransport,
   retryBackend,
   setAutostart,
   setCloseToTray,
@@ -44,25 +38,11 @@ const CONNECTION = {
   generation: 2,
 };
 
-const HEALTH = {
-  status: 'ok',
-  appVersion: '0.1.0',
-  apiVersion: '1.0.0',
-  startedAt: '2026-09-20T12:00:00.000Z',
-  uptimeSec: 12,
-  database: { ok: true, migrationsApplied: 2 },
-};
-
 const SETTINGS = { closeToTray: true, autostart: false };
 
 beforeEach(() => {
   invoke.mockReset();
   listen.mockReset();
-  resetApiTransport();
-});
-
-afterEach(() => {
-  vi.unstubAllGlobals();
 });
 
 describe('the IPC wrappers', () => {
@@ -108,6 +88,20 @@ describe('the IPC wrappers', () => {
     ]);
   });
 
+  it('parses the proxy answer (the finding-F9 fallback, ruling R27)', async () => {
+    invoke.mockResolvedValue({ status: 200, body: '{}' });
+    await expect(backendGet('/api/v1/health')).resolves.toStrictEqual({
+      status: 200,
+      body: '{}',
+    });
+    expect(invoke).toHaveBeenCalledWith('backend_get', { path: '/api/v1/health' });
+  });
+
+  it('refuses a proxy answer that is not the contract', async () => {
+    invoke.mockResolvedValue({ status: 'ok', body: '{}' });
+    await expect(backendGet('/api/v1/health')).rejects.toThrow();
+  });
+
   it('subscribes to the status event and validates every payload', async () => {
     const seen: unknown[] = [];
     let emit: ((event: { payload: unknown }) => void) | undefined;
@@ -129,7 +123,7 @@ describe('the IPC wrappers', () => {
   });
 });
 
-describe('the shell settings (D-14)', () => {
+describe('the shell settings (D-14, ruling R28)', () => {
   it('reads them', async () => {
     invoke.mockResolvedValue(SETTINGS);
     await expect(shellSettings()).resolves.toStrictEqual(SETTINGS);
@@ -152,97 +146,5 @@ describe('the shell settings (D-14)', () => {
   it('refuses settings that are not booleans', async () => {
     invoke.mockResolvedValue({ closeToTray: 'yes', autostart: false });
     await expect(shellSettings()).rejects.toThrow();
-  });
-});
-
-describe('the API transport (finding F9)', () => {
-  it('uses fetch and sends the client secret', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve(HEALTH),
-    });
-    vi.stubGlobal('fetch', fetchMock);
-
-    await expect(fetchHealth(CONNECTION)).resolves.toStrictEqual(HEALTH);
-    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe('http://127.0.0.1:52991/api/v1/health');
-    expect(init.headers).toStrictEqual({ [CLIENT_SECRET_HEADER]: CONNECTION.clientSecret });
-    // The signal is what makes a silently held request fall back (finding F9).
-    expect(init.signal).toBeInstanceOf(AbortSignal);
-    expect(apiTransport()).toBe('FETCH');
-    expect(invoke).not.toHaveBeenCalled();
-  });
-
-  it('falls back to the shell when the WebView cannot reach loopback at all', async () => {
-    // What Local Network Access, a CORS refusal and a dead socket all look like.
-    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
-    invoke.mockResolvedValue({ status: 200, body: JSON.stringify(HEALTH) });
-
-    await expect(fetchHealth(CONNECTION)).resolves.toStrictEqual(HEALTH);
-    expect(invoke).toHaveBeenCalledWith('backend_get', { path: '/api/v1/health' });
-    expect(apiTransport()).toBe('SHELL');
-  });
-
-  it('falls back when the request is silently held open, not just rejected', async () => {
-    // What WebView2 actually does with Local Network Access checks on: no
-    // rejection and no answer. Without the timeout the UI waits for ever, which
-    // is how WP-05b found this. The real timeout is FETCH_TIMEOUT_MS; the test
-    // passes a short one rather than sitting here for five seconds.
-    expect(FETCH_TIMEOUT_MS).toBeGreaterThan(0);
-    vi.stubGlobal(
-      'fetch',
-      vi.fn((_url: string, init?: { signal?: AbortSignal }) => {
-        return new Promise((_resolve, reject) => {
-          init?.signal?.addEventListener('abort', () => {
-            reject(new DOMException('The operation was aborted.', 'TimeoutError'));
-          });
-        });
-      }),
-    );
-    invoke.mockResolvedValue({ status: 200, body: JSON.stringify(HEALTH) });
-
-    await expect(fetchHealth(CONNECTION, { timeoutMs: 30 })).resolves.toStrictEqual(HEALTH);
-    expect(invoke).toHaveBeenCalledWith('backend_get', { path: '/api/v1/health' });
-    expect(apiTransport()).toBe('SHELL');
-  });
-
-  it('stays on the fallback once it has switched, without trying fetch again', async () => {
-    const fetchMock = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
-    vi.stubGlobal('fetch', fetchMock);
-    invoke.mockResolvedValue({ status: 200, body: JSON.stringify(HEALTH) });
-
-    await fetchHealth(CONNECTION);
-    await fetchHealth(CONNECTION);
-
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(invoke).toHaveBeenCalledTimes(2);
-  });
-
-  it('treats an HTTP status as an answer, not as a broken transport', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({ ok: false, status: 401, json: () => Promise.resolve({}) }),
-    );
-
-    await expect(fetchHealth(CONNECTION)).rejects.toThrow(ApiError);
-    await expect(fetchHealth(CONNECTION)).rejects.toThrow(/401/);
-    // Still the direct transport: the server answered, it just said no.
-    expect(apiTransport()).toBe('FETCH');
-    expect(invoke).not.toHaveBeenCalled();
-  });
-
-  it('surfaces a non-2xx answer from the fallback too', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
-    invoke.mockResolvedValue({ status: 503, body: '{}' });
-
-    await expect(apiGet(CONNECTION, '/api/v1/health')).rejects.toThrow(/503/);
-  });
-
-  it('refuses a proxy answer that is not the contract', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
-    invoke.mockResolvedValue({ status: 'ok', body: '{}' });
-
-    await expect(apiGet(CONNECTION, '/api/v1/health')).rejects.toThrow();
   });
 });

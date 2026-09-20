@@ -1,0 +1,161 @@
+/*
+ * Design tokens (ARCHITECTURE.md §16.3).
+ *
+ * This file is the only place a raw colour, size or duration is written down.
+ * Components never use a literal: they use a token, so a theme change is a change
+ * here and nowhere else.
+ *
+ * Both themes are defined below. `:root` is the light theme and also the default
+ * when nothing has resolved yet; `:root[data-theme='dark']` is the dark one. The
+ * attribute is written by `src/theme/theme.ts` before the first render, so there
+ * is no flash of the wrong theme.
+ *
+ * Every text/background pair below is asserted at >= 4.5:1 in
+ * `tokens.contrast.test.ts` — the palette is not trusted, it is measured.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Surfaces: the page, cards sitting on it, and wells sunk into it. */
+  --ci-color-surface: #ffffff;
+  --ci-color-surface-raised: #f6f8fa;
+  --ci-color-surface-sunken: #eceff4;
+  /* A hovered row or a pressed toolbar button. */
+  --ci-color-surface-hover: #e6eaf0;
+  --ci-color-border: #d6dbe3;
+  --ci-color-border-strong: #9aa3b2;
+
+  /* Text. `muted` is for secondary labels, `subtle` for metadata. */
+  --ci-color-text: #12161d;
+  --ci-color-text-muted: #4a5361;
+  --ci-color-text-subtle: #5b6573;
+  /* Text drawn on an accent or semantic fill. */
+  --ci-color-text-on-accent: #ffffff;
+
+  /* One accent, per §16.3. */
+  --ci-color-accent: #1155c4;
+  --ci-color-accent-hover: #0e47a4;
+  --ci-color-accent-surface: #e8f0fd;
+
+  /* Semantic tokens. Each is a text colour; `-surface` is its quiet fill. */
+  --ci-color-success: #0b6e34;
+  --ci-color-success-surface: #e4f4ea;
+  --ci-color-warning: #7a4c00;
+  --ci-color-warning-surface: #fbf0dc;
+  --ci-color-danger: #a8231c;
+  --ci-color-danger-surface: #fceceb;
+  --ci-color-info: #1155c4;
+  --ci-color-info-surface: #e8f0fd;
+
+  /*
+   * Urgency ramp for countdowns and deadline badges (§16.3). The spec names
+   * "urgency levels" without fixing them; these five follow the deadline radar
+   * in §12 and are always paired with an icon and a label, never colour alone.
+   */
+  --ci-color-urgency-critical: #a8231c;
+  --ci-color-urgency-high: #8a4400;
+  --ci-color-urgency-medium: #6b5400;
+  --ci-color-urgency-low: #0b6e34;
+  --ci-color-urgency-none: #4a5361;
+
+  /* Focus ring — one ring everywhere, visible on every surface (§16.3). */
+  --ci-focus-ring-color: #1155c4;
+  --ci-focus-ring-width: 2px;
+  --ci-focus-ring-offset: 2px;
+
+  /* Type scale, §16.3: 12 / 13 / 14 / 16 / 20 / 24 / 32. */
+  --ci-font-sans: 'Segoe UI Variable Text', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
+  --ci-font-display:
+    'Segoe UI Variable Display', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
+  --ci-text-xs: 12px;
+  --ci-text-sm: 13px;
+  --ci-text-base: 14px;
+  --ci-text-md: 16px;
+  --ci-text-lg: 20px;
+  --ci-text-xl: 24px;
+  --ci-text-2xl: 32px;
+
+  /* 4 px base grid (§16.3). */
+  --ci-space-1: 4px;
+  --ci-space-2: 8px;
+  --ci-space-3: 12px;
+  --ci-space-4: 16px;
+  --ci-space-5: 20px;
+  --ci-space-6: 24px;
+  --ci-space-8: 32px;
+  --ci-space-10: 40px;
+  --ci-space-12: 48px;
+
+  --ci-radius-sm: 4px;
+  --ci-radius-md: 6px;
+  --ci-radius-lg: 10px;
+  --ci-radius-full: 9999px;
+
+  /* §16.3: 120-200 ms ease-out, drawers/popovers/list changes only. */
+  --ci-motion-fast: 120ms;
+  --ci-motion-base: 160ms;
+  --ci-motion-slow: 200ms;
+  --ci-motion-ease: cubic-bezier(0.2, 0, 0, 1);
+
+  /* The rail widths the app shell animates between. */
+  --ci-rail-width: 232px;
+  --ci-rail-width-collapsed: 56px;
+  --ci-topbar-height: 48px;
+
+  --ci-shadow-popover: 0 8px 24px rgb(9 12 18 / 14%);
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --ci-color-surface: #14181f;
+  --ci-color-surface-raised: #1b2029;
+  --ci-color-surface-sunken: #0e1116;
+  --ci-color-surface-hover: #242b36;
+  --ci-color-border: #2c3441;
+  --ci-color-border-strong: #5c6675;
+
+  --ci-color-text: #e9edf4;
+  --ci-color-text-muted: #aab4c2;
+  --ci-color-text-subtle: #99a4b3;
+  --ci-color-text-on-accent: #0a1020;
+
+  --ci-color-accent: #7fb0ff;
+  --ci-color-accent-hover: #a3c6ff;
+  --ci-color-accent-surface: #16233a;
+
+  --ci-color-success: #57cd86;
+  --ci-color-success-surface: #12301f;
+  --ci-color-warning: #e8ac54;
+  --ci-color-warning-surface: #33240c;
+  --ci-color-danger: #ff9089;
+  --ci-color-danger-surface: #3a1614;
+  --ci-color-info: #7fb0ff;
+  --ci-color-info-surface: #16233a;
+
+  --ci-color-urgency-critical: #ff9089;
+  --ci-color-urgency-high: #f5a55f;
+  --ci-color-urgency-medium: #e0c25e;
+  --ci-color-urgency-low: #57cd86;
+  --ci-color-urgency-none: #aab4c2;
+
+  --ci-focus-ring-color: #7fb0ff;
+
+  --ci-shadow-popover: 0 8px 24px rgb(0 0 0 / 46%);
+}
+
+/*
+ * §16.3: motion honours the system setting. Keeping this as one global rule means
+ * no component has to remember it, and a transition added later is covered too.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}

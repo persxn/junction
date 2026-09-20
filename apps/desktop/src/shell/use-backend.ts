@@ -7,11 +7,10 @@ import type {
 } from '@compintel/contracts';
 import { useCallback, useEffect, useState } from 'react';
 
+import { apiTransport, fetchHealth } from '../api/client.js';
 import {
-  apiTransport,
   backendConnection,
   backendStatus,
-  fetchHealth,
   onBackendStatus,
   setAutostart,
   setCloseToTray,

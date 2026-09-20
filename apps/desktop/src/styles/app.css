@@ -1,0 +1,125 @@
+/*
+ * The stylesheet the app loads. It does three things and nothing else:
+ *   1. pulls in Tailwind v4 and the design tokens,
+ *   2. maps the tokens onto Tailwind's theme namespaces, so `bg-surface`,
+ *      `text-fg-muted`, `text-md` and `rounded-md` all mean the token and follow
+ *      the theme at runtime,
+ *   3. sets the handful of element defaults every screen relies on.
+ *
+ * `@theme inline` is deliberate: it makes the generated utilities reference
+ * `var(--ci-...)` instead of copying its value, which is what lets
+ * `[data-theme='dark']` re-point every utility at once.
+ */
+
+@import 'tailwindcss';
+@import './tokens.css';
+
+@theme inline {
+  --color-surface: var(--ci-color-surface);
+  --color-surface-raised: var(--ci-color-surface-raised);
+  --color-surface-sunken: var(--ci-color-surface-sunken);
+  --color-surface-hover: var(--ci-color-surface-hover);
+  --color-line: var(--ci-color-border);
+  --color-line-strong: var(--ci-color-border-strong);
+
+  --color-fg: var(--ci-color-text);
+  --color-fg-muted: var(--ci-color-text-muted);
+  --color-fg-subtle: var(--ci-color-text-subtle);
+  --color-on-accent: var(--ci-color-text-on-accent);
+
+  --color-accent: var(--ci-color-accent);
+  --color-accent-hover: var(--ci-color-accent-hover);
+  --color-accent-surface: var(--ci-color-accent-surface);
+
+  --color-success: var(--ci-color-success);
+  --color-success-surface: var(--ci-color-success-surface);
+  --color-warning: var(--ci-color-warning);
+  --color-warning-surface: var(--ci-color-warning-surface);
+  --color-danger: var(--ci-color-danger);
+  --color-danger-surface: var(--ci-color-danger-surface);
+  --color-info: var(--ci-color-info);
+  --color-info-surface: var(--ci-color-info-surface);
+
+  --color-urgency-critical: var(--ci-color-urgency-critical);
+  --color-urgency-high: var(--ci-color-urgency-high);
+  --color-urgency-medium: var(--ci-color-urgency-medium);
+  --color-urgency-low: var(--ci-color-urgency-low);
+  --color-urgency-none: var(--ci-color-urgency-none);
+
+  --font-sans: var(--ci-font-sans);
+  --font-display: var(--ci-font-display);
+
+  --text-xs: var(--ci-text-xs);
+  --text-sm: var(--ci-text-sm);
+  --text-base: var(--ci-text-base);
+  --text-md: var(--ci-text-md);
+  --text-lg: var(--ci-text-lg);
+  --text-xl: var(--ci-text-xl);
+  --text-2xl: var(--ci-text-2xl);
+
+  /* The 4 px base grid: `p-2` is 8 px, `gap-3` is 12 px (§16.3). */
+  --spacing: var(--ci-space-1);
+
+  --radius-sm: var(--ci-radius-sm);
+  --radius-md: var(--ci-radius-md);
+  --radius-lg: var(--ci-radius-lg);
+
+  --ease-out-ui: var(--ci-motion-ease);
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--ci-color-surface);
+    color: var(--ci-color-text);
+    font-family: var(--ci-font-sans);
+    font-size: var(--ci-text-base);
+    line-height: 1.45;
+    /* Windows renders the UI font best without synthetic smoothing. */
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--ci-font-display);
+    font-weight: 600;
+    margin: 0;
+  }
+
+  /*
+   * §16.3: "full tab order and visible focus". One ring, defined once, so no
+   * component can quietly drop it.
+   */
+  :focus-visible {
+    outline: var(--ci-focus-ring-width) solid var(--ci-focus-ring-color);
+    outline-offset: var(--ci-focus-ring-offset);
+    border-radius: var(--ci-radius-sm);
+  }
+
+  ::selection {
+    background-color: var(--ci-color-accent-surface);
+  }
+}
+
+@layer components {
+  /*
+   * The Mica-like backdrop §16.3 asks for "where supported". WebView2 cannot read
+   * the real system material, so this is a cheap approximation on the chrome only
+   * (rail and top bar) and it never sits under body text — contrast comes first.
+   */
+  .ci-chrome {
+    background-color: var(--ci-color-surface-raised);
+    background-image: linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--ci-color-accent) 5%, transparent),
+      transparent 60%
+    );
+  }
+}

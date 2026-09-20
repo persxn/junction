@@ -10,7 +10,10 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "jsx": "react-jsx",
-    "types": ["vite/client"],
+    // `node` is here for the test files only — `tokens.contrast.test.ts` reads
+    // the token file off disk, because vitest does not process CSS. Application
+    // code must stay browser-only; a `node:` import in it fails `vite build`.
+    "types": ["vite/client", "node"],
     "emitDeclarationOnly": true
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],

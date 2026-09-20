@@ -1,3 +1,4 @@
+import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
@@ -7,7 +8,7 @@ import { defineConfig } from 'vite';
  * would be rejected by the API and look like a shell bug.
  */
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   clearScreen: false,
   server: { port: 5173, strictPort: true, host: '127.0.0.1' },
   build: { outDir: 'dist', emptyOutDir: true, target: 'chrome120', sourcemap: true },
