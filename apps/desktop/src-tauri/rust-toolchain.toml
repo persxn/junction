@@ -1,0 +1,7 @@
+# Ruling R1: the Rust version is pinned, and bumped deliberately in its own change.
+# 1.98.1 is what WP-03a installed and what probe B built a Tauri 2 app with.
+[toolchain]
+channel = "1.98.1"
+components = ["rustfmt", "clippy"]
+targets = ["x86_64-pc-windows-msvc"]
+profile = "minimal"

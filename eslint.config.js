@@ -2,6 +2,7 @@
 // (this file included) get the base JS rules.
 import js from '@eslint/js';
 import prettier from 'eslint-config-prettier';
+import reactHooks from 'eslint-plugin-react-hooks';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
@@ -12,6 +13,7 @@ export default tseslint.config(
       '**/dist-bundle/**',
       '**/coverage/**',
       '**/target/**',
+      '**/dist-types/**',
       '**/*.tsbuildinfo',
     ],
   },
@@ -19,13 +21,17 @@ export default tseslint.config(
   js.configs.recommended,
 
   {
-    files: ['**/*.ts'],
+    files: ['**/*.ts', '**/*.tsx'],
     extends: [...tseslint.configs.recommendedTypeChecked, ...tseslint.configs.stylisticTypeChecked],
     languageOptions: {
       parserOptions: {
         // These config files live outside every composite project.
         projectService: {
-          allowDefaultProject: ['vitest.config.ts', 'apps/backend/drizzle.config.ts'],
+          allowDefaultProject: [
+            'vitest.config.ts',
+            'apps/backend/drizzle.config.ts',
+            'apps/desktop/vite.config.ts',
+          ],
         },
         tsconfigRootDir: import.meta.dirname,
       },
@@ -49,6 +55,15 @@ export default tseslint.config(
         },
       ],
     },
+  },
+
+  // Ruling R6: the React plugins are scoped to the one package that has React in
+  // it, so a stray hook call in the backend is a missing import, not a lint rule.
+  // `configs.flat` is the plugin's flat-config export; its top-level
+  // `recommended-latest` is still eslintrc-shaped (plugins as an array).
+  {
+    files: ['apps/desktop/src/**/*.{ts,tsx}'],
+    extends: [reactHooks.configs.flat['recommended-latest']],
   },
 
   // Must stay last: turns off every rule Prettier owns.

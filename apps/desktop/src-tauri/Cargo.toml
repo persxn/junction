@@ -1,0 +1,33 @@
+[package]
+name = "compintel"
+version = "0.1.0"
+description = "CompIntel desktop shell: window, tray and backend supervision"
+edition = "2024"
+rust-version = "1.98"
+publish = false
+
+[lib]
+# The binary is a three-line wrapper so the whole shell can be unit-tested.
+name = "compintel_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+getrandom = "0.4"
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.62", features = [
+  "Win32_Foundation",
+  # CreateJobObjectW takes SECURITY_ATTRIBUTES, which lives behind this feature.
+  "Win32_Security",
+  "Win32_System_JobObjects",
+  "Win32_System_Threading",
+] }
+
+[profile.dev]
+incremental = true

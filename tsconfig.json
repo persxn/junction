@@ -1,5 +1,15 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "files": [],
-  "references": [{ "path": "./packages/contracts" }, { "path": "./apps/backend" }]
+  "references": [
+    {
+      "path": "./packages/contracts"
+    },
+    {
+      "path": "./apps/backend"
+    },
+    {
+      "path": "./apps/desktop"
+    }
+  ]
 }

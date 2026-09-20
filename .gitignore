@@ -68,6 +68,12 @@ tmp/
 # --- Backend bundle (WP-04a) ---
 dist-bundle/
 
+# --- Desktop shell (WP-05a) ---
+# `tsc -b` type output for apps/desktop (Vite emits the real bundle into dist/).
+dist-types/
+# Tauri regenerates its ACL schemas from capabilities/ on every build.
+**/src-tauri/gen/
+
 # --- Monorepo tooling (WP-03b) ---
 .eslintcache
 *.timestamp-*.mjs

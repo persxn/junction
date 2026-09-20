@@ -3,4 +3,5 @@ export * from './enums.js';
 export * from './errors.js';
 export * from './ids.js';
 export * from './jobs.js';
+export * from './shell.js';
 export * from './system.js';

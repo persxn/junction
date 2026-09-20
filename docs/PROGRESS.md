@@ -1,7 +1,7 @@
 # Progress — newest first, keep < 150 lines
 
 ## Current
-- **Next WP: WP-05a** (Tauri shell: spawn, Job Object, READY handshake, restart/backoff, Exit completely).
+- **Next WP: WP-05b** (tray menu, close-to-tray, single instance, autostart, loopback/CORS/LNA check).
 - **Architect is offline** (Sep 2026): this session acts as master + worker. Every architectural call is
   recorded in the handoff reports under "Minor decisions"/"Questions" for review when they are back.
 - Spec: docs/ARCHITECTURE.md **v1.1.2 — ACCEPTED** (changelog at the top; rulings index §21 incl. R1–R18; roadmap §19 = 46 WPs, 8 done, 38 remaining).
@@ -9,7 +9,8 @@
 
 ## Environment facts
 - **OS / CPU / RAM / GPU:** Windows 11 **Home** 25H2 (build 26200.9457) · AMD Ryzen 7 5700, 8c/16t · 16 GB RAM ·
-  NVIDIA RTX 4060 8 GB · no NPU · **C: 42 GB free of 119 GB** (single fixed drive; was 52 GB before the toolchain).
+  NVIDIA RTX 4060 8 GB · no NPU · **C: 33 GB free of 119 GB** (single fixed drive; 52 GB before the toolchain,
+  42 GB before the shell; `apps/desktop/src-tauri/target` alone is 5.3 GB).
   This box is the **GPU tier**, not the 8 GB target; Home edition has no Hyper-V, so there is no 8 GB test VM (affects WP-15, WP-31).
 - **Toolchain (all verified WP-03a):** node **v24.19.0** · npm **11.17.0** · pnpm **12.4.2** (`%APPDATA%\npm`, on PATH) ·
   rustup **1.29.1** · rustc/cargo **1.98.1** (`stable-x86_64-pc-windows-msvc`, default host, only target installed) ·
@@ -48,13 +49,30 @@
 - **Windows has no POSIX signals**: `child.kill('SIGTERM')` hard-terminates. The shell's real lifeline is
   stdin EOF (`--stdin-lifeline`) plus the Job Object; `fetch()` also silently drops a caller-set `Host` header,
   so Host-allowlist tests must use `node:http`.
-- Rust/Tauri build: `pnpm tauri build --debug --no-bundle` (add `--no-bundle` whenever the installer isn't wanted).
+- Desktop shell: `pnpm --filter @compintel/desktop tauri:dev` (Vite on **localhost:5173**, strictPort - the CORS
+  allowlist has that exact origin) · `tauri:build` (= `tauri build --debug --no-bundle`) · `test:rust`
+  (`cargo test`, 34 tests, ~5 s) · `lint:rust` (clippy `-D warnings`) · `format:rust:check`.
+  **The Rust checks are outside `pnpm verify`** (they need cargo and would blow the < 2 min budget);
+  run them in any WP that touches `src-tauri`. A dev run needs `pnpm --filter @compintel/backend bundle`
+  first: the shell starts `apps/backend/dist-bundle/main.mjs` with the system Node.
 - **PATH caveat:** rustup added `%USERPROFILE%\.cargo\bin` to the *user* PATH; already-open terminals must be
   restarted or prepend it manually, otherwise `cargo`/`rustc` are not found.
 - **NodeNext:** relative imports need a `.js` extension even in `.ts` sources.
 - `npm i -g` now warns about unrun install scripts (npm 11.17 `allow-scripts` gate) — harmless for pnpm's shim.
 
 ## Completed
+- **WP-05a — Tauri shell + backend supervision** (this WP). `apps/desktop` (React 19 + Vite 8, own tsconfig
+  per R6) with `src-tauri` inside: `rust-toolchain.toml` pins 1.98.1 (R1). Rust modules `backoff` (1→2→4…
+  60 s, 5 crashes/10 min), `ready` (the one stdout line, R7), `secret` (32 random bytes per spawn, A2),
+  `paths` (A20 `resources\` layout, dev fallback to the repo bundle + `CompIntel-dev`), `job`
+  (KILL_ON_JOB_CLOSE, F7/A17), `shutdown` (a hand-written loopback POST, no HTTP client), `supervisor`
+  (one thread: spawn → READY → watch → restart, `Phase` + `generation`), `commands` (`backend_status`,
+  `backend_connection`, `retry_backend`, `exit_completely`, `open_logs_folder`) and the `backend://status`
+  event. `packages/contracts/src/shell.ts` types the IPC; the UI parses every payload. **Verified on the
+  built exe:** window close → graceful `reason:"api"` shutdown, exit 0, lock removed, nothing left; hard
+  kill of the shell → the Job Object takes the backend with it; and WebView2 reached `/api/v1/health` 200.
+  `pnpm verify` **431 tests green**; `cargo test` 34 green; clippy clean. Deps: react/react-dom 19.3.0,
+  @tauri-apps/api 2.11.1, vite 8.3.0, tauri 2.11.6, windows 0.62.2, getrandom 0.4.3 (full list in the report).
 - **WP-04c — DB-backed job runner** (this WP). Migration 0001 = `job_state` (§6.2 columns + `kind`,
   `last_outcome`, `last_duration_ms`, `last_error_message`, CHECKs from the contracts enums, index on
   `next_due_at`). `packages/contracts/src/jobs.ts`: JobKind (SCRAPE/LLM/GENERAL), JobTrigger, JobOutcome
