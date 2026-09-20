@@ -1,6 +1,6 @@
 # Competition Intel — Architecture Specification
 
-**Version:** 1.1.1 · **Date:** 20 Sep 2026 · **Status:** ACCEPTED — implementation baseline (amended after WP-00…WP-02b)
+**Version:** 1.1.2 · **Date:** 20 Sep 2026 · **Status:** ACCEPTED — implementation baseline (amended after WP-00…WP-02b)
 **Author:** Architect (Claude, Cowork session) · **Implementer:** Claude Code (worker session)
 
 > **How to use this document.** This is the implementation source of truth. The worker must not
@@ -17,6 +17,7 @@
 | 1.0-draft | 20 Sep 2026 | First complete architecture. |
 | **1.1** | 20 Sep 2026 | Folded in the WP-01 engineering review and WP-02 source research: new decisions D-26…D-33; user actions U1–U6 (§2.1); SSE over authenticated fetch streams; per-spawn client secret + header names; stdin-EOF orphan detection; Job Object owned by the shell; packaged layout; custom SQL migrations for FTS5/triggers; plain local pre-migration copies; robots Crawl-delay precedence; per-source cadence; PII stripping at the adapter boundary; URL-import restrictions; typo tolerance redefined; EventQuery date/unknown/distance semantics; progress and permission clarifications; roadmap split into smaller WPs and re-scoped (Devpost adapter removed); ADR-0016…0018; rulings index (§21). |
 | 1.1.1 | 20 Sep 2026 | Rulings R1–R10 after WP-03a/03b (see §21). |
+| 1.1.2 | 20 Sep 2026 | Rulings R11–R18 after WP-04a (see §21). |
 
 ---
 
@@ -1537,6 +1538,15 @@ Rows R1… are later rulings; they take precedence over the section text until t
 | R8 Log destination | pino + in-house daily-rotating file destination (no worker-thread transports), keep 14 files. | §4.14 |
 | R9 CORS preflight | OPTIONS preflight from allowlisted origins passes without the client secret; everything else requires it. | §3.2, ADR-0017 |
 | R10 .gitignore | Remove broad bin/ and obj/ patterns inherited from WP-00. | — |
+| R11 Request logging | disableRequestLogging; one onResponse line (method, route, status, ms, requestId) at info; GET /health at debug; 5xx logged by the error handler. | §4.14 |
+| R12 Error codes | One closed ErrorCode enum in contracts, composed from per-domain lists; domain codes prefixed (AUTH_, SOURCE_, DB_…). | §4.4 |
+| R13 ProblemDetails.instance | Request path without query string. | §4.4 |
+| R14 Shutdown phases | 'streams' hooks run before server.close() (SSE etc.), 'resources' hooks after (DB, scheduler, LLM); exit 1 if any hook fails. | §3.2 |
+| R15 Data-dir lock | One backend per data dir: <dataDir>\backend.lock holds {pid, startedAt}; live pid → ready:false DATA_DIR_LOCKED; dead pid → take over with a warning. | §3.2 |
+| R16 DB startup/shutdown | PRAGMAs journal_mode=WAL, synchronous=NORMAL, foreign_keys=ON, busy_timeout=5000, cache_size=-32000, temp_store=MEMORY; PRAGMA quick_check at startup → ready:false DB_CORRUPT; on shutdown wal_checkpoint(TRUNCATE) + optimize, then close. | §4.5 |
+| R17 Native modules in the bundle | Loaded from explicit paths under <bundle>
+ative\ (better-sqlite3 `nativeBinding`); the bundle must run from a folder with no node_modules. | §4.13 |
+| R18 Auth vs CORS | Host/secret rejections stay CORS-less on purpose; session auth (WP-07a) runs after CORS (preHandler) so the UI can read 401 bodies. | ADR-0017 |
 
 ---
 
