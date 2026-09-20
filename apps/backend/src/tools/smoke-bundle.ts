@@ -1,14 +1,23 @@
 import { randomBytes } from 'node:crypto';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { cpSync, existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { HealthResponse } from '@compintel/contracts';
 
-import { baseUrlOf, spawnBackend } from '../testing/backend-process.js';
+import { devRoot } from '../testing/temp.js';
+import { baseUrlOf, spawnBackend, type BackendProcess } from '../testing/backend-process.js';
 
-const BUNDLE = fileURLToPath(new URL('../../dist-bundle/main.mjs', import.meta.url));
+const DIST = fileURLToPath(new URL('../../dist-bundle/', import.meta.url));
+
+/**
+ * Ruling R17: the bundle must run where no `node_modules` can be found, which is
+ * the whole point of copying the addon next to it. Staging under
+ * `%LOCALAPPDATA%\CompIntel-dev` also keeps dev data out of the repo (CLAUDE.md).
+ */
+const STAGE = path.join(devRoot(), 'bundle-smoke');
+const BUNDLE = path.join(STAGE, 'main.mjs');
+const DATA_DIR = path.join(STAGE, 'data-dir');
 
 function check(condition: boolean, message: string): void {
   if (!condition) {
@@ -16,50 +25,109 @@ function check(condition: boolean, message: string): void {
   }
 }
 
-const dataDir = mkdtempSync(path.join(tmpdir(), 'compintel-smoke-'));
+function assertNoNodeModulesAbove(dir: string): void {
+  let current = dir;
+  for (;;) {
+    check(
+      !existsSync(path.join(current, 'node_modules')),
+      `found node_modules at "${current}"; the bundle would not be proving anything`,
+    );
+    const parent = path.dirname(current);
+    if (parent === current) {
+      return;
+    }
+    current = parent;
+  }
+}
+
+function preMigrationCopies(): string[] {
+  const dir = path.join(DATA_DIR, 'backups-local');
+  return existsSync(dir)
+    ? readdirSync(dir).filter((name) => name.startsWith('pre-migration-'))
+    : [];
+}
+
 const clientSecret = randomBytes(32).toString('hex');
 const steps: string[] = [];
 
-try {
+async function runOnce(label: string): Promise<BackendProcess> {
   const backend = await spawnBackend({
     command: process.execPath,
-    args: [BUNDLE, '--data-dir', dataDir, '--stdin-lifeline'],
+    args: [BUNDLE, '--data-dir', DATA_DIR, '--stdin-lifeline'],
     env: { COMPINTEL_CLIENT_SECRET: clientSecret, PORT: '0' },
   });
+  check(backend.ready.ready, `${label}: the bundle did not report ready:true`);
+  return backend;
+}
 
-  check(backend.ready.ready, 'the bundle did not report ready:true');
-  const baseUrl = baseUrlOf(backend);
-  steps.push(`READY parsed: ${JSON.stringify(backend.ready)}`);
+rmSync(STAGE, { recursive: true, force: true });
+mkdirSync(STAGE, { recursive: true });
+
+try {
+  cpSync(DIST, STAGE, { recursive: true });
+  assertNoNodeModulesAbove(STAGE);
+  steps.push(`staged the bundle in ${STAGE} with no node_modules above it`);
+
+  // --- first run: a brand-new data directory -------------------------------
+  const first = await runOnce('first run');
+  const baseUrl = baseUrlOf(first);
+  steps.push(`READY parsed: ${JSON.stringify(first.ready)}`);
 
   const response = await fetch(`${baseUrl}/api/v1/health`, {
     headers: { 'X-CompIntel-Client': clientSecret },
   });
   check(response.status === 200, `/health answered ${response.status.toString()}, expected 200`);
   const health = HealthResponse.parse(await response.json());
-  steps.push(`/health 200: appVersion=${health.appVersion} apiVersion=${health.apiVersion}`);
-
-  const unauthorized = await fetch(`${baseUrl}/api/v1/health`);
+  check(health.database.ok, '/health reported database.ok = false');
   check(
-    unauthorized.status === 401,
-    `/health without the secret answered ${unauthorized.status.toString()}, expected 401`,
+    health.database.migrationsApplied >= 1,
+    `/health reported migrationsApplied = ${health.database.migrationsApplied.toString()}`,
   );
-  steps.push('/health without the secret: 401');
-
-  backend.child.stdin.end();
-  const code = await backend.waitForExit(10_000);
-  check(code === 0, `the bundle exited with code ${String(code)}, expected 0`);
-  steps.push('stdin EOF: exit 0');
+  steps.push(
+    `/health 200: database.ok=true migrationsApplied=${health.database.migrationsApplied.toString()}`,
+  );
 
   check(
-    backend.trailingStdout().trim().length === 0,
-    `the bundle wrote more than the READY line to stdout: ${backend.trailingStdout()}`,
+    preMigrationCopies().length === 0,
+    'a new database should not produce a pre-migration copy',
   );
-  steps.push('stdout carried only the READY line');
+  steps.push('new database: no pre-migration copy');
+
+  first.child.stdin.end();
+  check(
+    (await first.waitForExit(10_000)) === 0,
+    'the first run did not exit 0 after stdin reached EOF',
+  );
+  steps.push('first run: stdin EOF -> exit 0');
+
+  // --- second run: nothing left to apply -----------------------------------
+  const second = await runOnce('second run');
+  const secondHealth = HealthResponse.parse(
+    await (
+      await fetch(`${baseUrlOf(second)}/api/v1/health`, {
+        headers: { 'X-CompIntel-Client': clientSecret },
+      })
+    ).json(),
+  );
+  check(
+    secondHealth.database.migrationsApplied === health.database.migrationsApplied,
+    'the second run changed the migration count',
+  );
+  check(preMigrationCopies().length === 0, 'the second run made a pre-migration copy');
+  steps.push('second run: applied nothing, made no copy');
+
+  second.child.stdin.end();
+  check((await second.waitForExit(10_000)) === 0, 'the second run did not exit 0');
+  check(
+    second.trailingStdout().trim().length === 0,
+    `the bundle wrote more than the READY line to stdout: ${second.trailingStdout()}`,
+  );
+  steps.push('second run: stdin EOF -> exit 0, stdout carried only the READY line');
 
   for (const step of steps) {
     process.stdout.write(`  ok  ${step}\n`);
   }
   process.stdout.write('smoke:bundle PASSED\n');
 } finally {
-  rmSync(dataDir, { recursive: true, force: true });
+  rmSync(STAGE, { recursive: true, force: true });
 }

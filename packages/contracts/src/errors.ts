@@ -1,10 +1,12 @@
 import { z } from 'zod';
 
 /**
- * Stable, machine-readable error codes (ARCHITECTURE.md §4.4). The UI switches on
- * `code`, never on `title` or `status`, so these strings are part of the API contract.
+ * Ruling R12: one closed `ErrorCode` enum, composed from per-domain lists so a
+ * work package can add its own codes without touching anybody else's. Everything
+ * outside the common list is prefixed with its domain (`DB_`, `SOURCE_`, and
+ * later `AUTH_`, `SCRAPE_`, ...).
  */
-export const ERROR_CODES = [
+export const COMMON_ERROR_CODES = [
   'INTERNAL',
   'VALIDATION_FAILED',
   'UNAUTHORIZED',
@@ -12,7 +14,22 @@ export const ERROR_CODES = [
   'NOT_FOUND',
   'CONFLICT',
   'RATE_LIMITED',
-  'SOURCE_UNREACHABLE',
+] as const;
+
+/** Event-source and scraping failures (§7.7). */
+export const SOURCE_ERROR_CODES = ['SOURCE_UNREACHABLE'] as const;
+
+/** Database failures the API may surface at request time (WP-04b). */
+export const DB_ERROR_CODES = ['DB_UNAVAILABLE', 'DB_CONSTRAINT_VIOLATED'] as const;
+
+/**
+ * Stable, machine-readable error codes (ARCHITECTURE.md §4.4). The UI switches on
+ * `code`, never on `title` or `status`, so these strings are part of the API contract.
+ */
+export const ERROR_CODES = [
+  ...COMMON_ERROR_CODES,
+  ...SOURCE_ERROR_CODES,
+  ...DB_ERROR_CODES,
 ] as const;
 export const ErrorCode = z.enum(ERROR_CODES);
 export type ErrorCode = z.infer<typeof ErrorCode>;

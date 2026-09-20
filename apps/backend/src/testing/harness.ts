@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { API_VERSION } from '@compintel/contracts';
-import { pino } from 'pino';
+import { pino, type Logger } from 'pino';
 
 import { buildApp, type App, type BuildAppOptions } from '../app.js';
 import type { Config } from '../platform/config.js';
@@ -44,6 +44,24 @@ export interface StartTestServerOptions extends BuildAppOptions {
   readonly config?: Config;
   /** Runs before the instance boots, so a fixture route can still be added. */
   readonly extend?: (app: App) => void;
+  /** Defaults to a disabled logger; pass one to inspect what gets logged. */
+  readonly logger?: Logger;
+}
+
+/** A pino logger plus the JSON lines it has written, for logging assertions. */
+export function capturingLogger(level = 'debug'): { logger: Logger; lines: () => unknown[] } {
+  const raw: string[] = [];
+  const logger = pino(
+    { level, base: null, timestamp: false },
+    { write: (chunk: string) => raw.push(chunk) },
+  );
+  const lines = (): unknown[] =>
+    raw
+      .join('')
+      .split(/\r?\n/)
+      .filter((line) => line.trim().length > 0)
+      .map((line) => JSON.parse(line) as unknown);
+  return { logger, lines };
 }
 
 /**
@@ -53,7 +71,7 @@ export interface StartTestServerOptions extends BuildAppOptions {
  */
 export async function startTestServer(options: StartTestServerOptions = {}): Promise<TestServer> {
   const config = options.config ?? testConfig();
-  const app = buildApp(config, pino({ enabled: false }), options);
+  const app = buildApp(config, options.logger ?? pino({ enabled: false }), options);
   options.extend?.(app);
 
   await app.server.listen({ host: config.host, port: config.port });

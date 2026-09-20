@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  COMMON_ERROR_CODES,
+  DB_ERROR_CODES,
   ERROR_CODES,
   ErrorCode,
   PROBLEM_TYPE_PREFIX,
   ProblemDetails,
   ProblemFieldError,
+  SOURCE_ERROR_CODES,
   problemType,
 } from './errors.js';
 
@@ -42,7 +45,36 @@ describe('ErrorCode', () => {
       'CONFLICT',
       'RATE_LIMITED',
       'SOURCE_UNREACHABLE',
+      'DB_UNAVAILABLE',
+      'DB_CONSTRAINT_VIOLATED',
     ]);
+  });
+
+  it('is the concatenation of the per-domain lists (R12)', () => {
+    expect([...ERROR_CODES]).toStrictEqual([
+      ...COMMON_ERROR_CODES,
+      ...SOURCE_ERROR_CODES,
+      ...DB_ERROR_CODES,
+    ]);
+  });
+
+  it('has no duplicates across domains', () => {
+    expect(new Set(ERROR_CODES).size).toBe(ERROR_CODES.length);
+  });
+
+  it.each([
+    ['SOURCE_', SOURCE_ERROR_CODES],
+    ['DB_', DB_ERROR_CODES],
+  ])('prefixes every %s domain code', (prefix, codes) => {
+    for (const code of codes) {
+      expect(code.startsWith(prefix)).toBe(true);
+    }
+  });
+
+  it('keeps the common codes unprefixed', () => {
+    for (const code of COMMON_ERROR_CODES) {
+      expect(code).not.toMatch(/^[A-Z]+_[A-Z]+_/);
+    }
   });
 });
 

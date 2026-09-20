@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  HealthDatabase,
   HealthResponse,
   ReadyLine,
   ReadyLineFailed,
@@ -15,6 +16,7 @@ const health = {
   apiVersion: '1.0.0',
   startedAt: '2026-09-20T09:15:00.000Z',
   uptimeSec: 12,
+  database: { ok: true, migrationsApplied: 1 },
 } as const;
 
 describe('HealthResponse', () => {
@@ -39,7 +41,7 @@ describe('HealthResponse', () => {
     expect(HealthResponse.safeParse({ ...health, uptimeSec }).success).toBe(false);
   });
 
-  it.each(['appVersion', 'apiVersion', 'startedAt', 'uptimeSec', 'status'] as const)(
+  it.each(['appVersion', 'apiVersion', 'startedAt', 'uptimeSec', 'status', 'database'] as const)(
     'requires %s',
     (field) => {
       const { [field]: _omitted, ...rest } = health;
@@ -48,11 +50,36 @@ describe('HealthResponse', () => {
   );
 });
 
+describe('HealthDatabase', () => {
+  it('accepts a healthy database section', () => {
+    expect(HealthDatabase.parse({ ok: true, migrationsApplied: 3 })).toStrictEqual({
+      ok: true,
+      migrationsApplied: 3,
+    });
+  });
+
+  it('accepts a database that is not ok', () => {
+    expect(HealthDatabase.safeParse({ ok: false, migrationsApplied: 0 }).success).toBe(true);
+  });
+
+  it.each([-1, 1.5, '3', null])('rejects the migrationsApplied %p', (migrationsApplied) => {
+    expect(HealthDatabase.safeParse({ ok: true, migrationsApplied }).success).toBe(false);
+  });
+
+  it('rejects a non-boolean ok', () => {
+    expect(HealthDatabase.safeParse({ ok: 'yes', migrationsApplied: 0 }).success).toBe(false);
+  });
+});
+
 describe('StartupErrorCode', () => {
   it('holds exactly the codes main.ts can emit', () => {
     expect([...STARTUP_ERROR_CODES]).toStrictEqual([
       'CONFIG_INVALID',
       'DATA_DIR_UNUSABLE',
+      'DATA_DIR_LOCKED',
+      'DB_OPEN_FAILED',
+      'DB_CORRUPT',
+      'MIGRATION_FAILED',
       'LISTEN_FAILED',
       'STARTUP_FAILED',
     ]);

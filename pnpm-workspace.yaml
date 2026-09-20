@@ -6,9 +6,20 @@ packages:
 # Only these packages may run install scripts (ARCHITECTURE.md §15).
 # Every entry must be justified in the WP report that adds it.
 allowBuilds:
+  # better-sqlite3 downloads and unpacks its win32-x64 prebuild in install; without
+  # it the module cannot load. No compiler is involved (verified in WP-03a probe A).
+  better-sqlite3: true
   # esbuild's postinstall moves the platform binary (@esbuild/win32-x64) into place;
   # without it `esbuild` cannot run. Needed by the backend `bundle` script (WP-04a).
   esbuild: true
 
 minimumReleaseAgeExclude:
   - tsx@4.23.15
+
+# Transitive pins. Every entry must be justified in the WP report that adds it.
+overrides:
+  # drizzle-kit still drags in the deprecated @esbuild-kit packages, which pin
+  # esbuild 0.18 (GHSA-67mh-4wv8-2f99, dev-server request forgery). Nothing here
+  # runs that dev server, but `pnpm audit:deps` (R4) must stay clean, and 0.28.2
+  # is the version the backend bundle already uses. Added in WP-04b.
+  '@esbuild-kit/core-utils>esbuild': 0.28.2

@@ -15,18 +15,24 @@
     "build": "tsc -b",
     "dev": "tsx watch src/main.ts --dev",
     "start": "tsx src/main.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:generate:custom": "drizzle-kit generate --custom",
     "bundle": "tsx src/tools/bundle.ts",
     "smoke:bundle": "pnpm bundle && tsx src/tools/smoke-bundle.ts"
   },
   "dependencies": {
     "@compintel/contracts": "workspace:*",
     "@fastify/cors": "11.3.0",
+    "better-sqlite3": "13.0.3",
+    "drizzle-orm": "0.45.2",
     "fastify": "5.12.5",
     "fastify-type-provider-zod": "7.0.0",
     "pino": "10.3.1",
     "zod": "4.6.5"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "9.6.0",
+    "drizzle-kit": "0.31.10",
     "esbuild": "0.28.2",
     "tsx": "4.23.13"
   }

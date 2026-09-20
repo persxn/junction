@@ -23,8 +23,10 @@ export default tseslint.config(
     extends: [...tseslint.configs.recommendedTypeChecked, ...tseslint.configs.stylisticTypeChecked],
     languageOptions: {
       parserOptions: {
-        // vitest.config.ts lives outside every composite project.
-        projectService: { allowDefaultProject: ['vitest.config.ts'] },
+        // These config files live outside every composite project.
+        projectService: {
+          allowDefaultProject: ['vitest.config.ts', 'apps/backend/drizzle.config.ts'],
+        },
         tsconfigRootDir: import.meta.dirname,
       },
     },

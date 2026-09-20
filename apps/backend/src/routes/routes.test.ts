@@ -17,6 +17,7 @@ describe('GET /health', () => {
     server = await startTestServer({
       startedAt,
       now: () => new Date('2026-09-20T09:02:05.400Z'),
+      database: () => ({ ok: true, migrationsApplied: 3 }),
     });
 
     const response = await authedFetch(server, `${API_PREFIX}/health`);
@@ -29,7 +30,35 @@ describe('GET /health', () => {
       apiVersion: server.config.apiVersion,
       startedAt: startedAt.toISOString(),
       uptimeSec: 125,
+      database: { ok: true, migrationsApplied: 3 },
     });
+  });
+
+  it('reports a database that is not ready, without failing the probe', async () => {
+    server = await startTestServer({ database: () => ({ ok: false, migrationsApplied: 0 }) });
+    const response = await authedFetch(server, `${API_PREFIX}/health`);
+
+    expect(response.status).toBe(200);
+    expect(HealthResponse.parse(await response.json()).database).toStrictEqual({
+      ok: false,
+      migrationsApplied: 0,
+    });
+  });
+
+  it('reads the database state per request, not once at boot', async () => {
+    let ok = false;
+    server = await startTestServer({ database: () => ({ ok, migrationsApplied: 1 }) });
+
+    const before = HealthResponse.parse(
+      await (await authedFetch(server, `${API_PREFIX}/health`)).json(),
+    );
+    ok = true;
+    const after = HealthResponse.parse(
+      await (await authedFetch(server, `${API_PREFIX}/health`)).json(),
+    );
+
+    expect(before.database.ok).toBe(false);
+    expect(after.database.ok).toBe(true);
   });
 
   it('never reports a negative uptime if the clock steps back', async () => {

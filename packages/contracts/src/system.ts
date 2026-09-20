@@ -1,5 +1,14 @@
 import { z } from 'zod';
 
+/** Database section of the health body (WP-04b). */
+export const HealthDatabase = z.object({
+  /** The handle is open and answering; false means the API cannot serve data. */
+  ok: z.boolean(),
+  /** How many migrations this database has on record. */
+  migrationsApplied: z.int().min(0),
+});
+export type HealthDatabase = z.infer<typeof HealthDatabase>;
+
 /** Body of `GET /api/v1/health`. Needs only the client secret (ADR-0017). */
 export const HealthResponse = z.object({
   status: z.literal('ok'),
@@ -11,6 +20,7 @@ export const HealthResponse = z.object({
   startedAt: z.iso.datetime({ offset: true }),
   /** Whole seconds since `startedAt`. */
   uptimeSec: z.int().min(0),
+  database: HealthDatabase,
 });
 export type HealthResponse = z.infer<typeof HealthResponse>;
 
@@ -18,6 +28,14 @@ export type HealthResponse = z.infer<typeof HealthResponse>;
 export const STARTUP_ERROR_CODES = [
   'CONFIG_INVALID',
   'DATA_DIR_UNUSABLE',
+  /** Another backend already owns this data directory (ruling R15). */
+  'DATA_DIR_LOCKED',
+  /** The database file could not be opened (ruling R16). */
+  'DB_OPEN_FAILED',
+  /** `PRAGMA quick_check` failed; the file must be restored from a backup (R16). */
+  'DB_CORRUPT',
+  /** A pending migration failed; the database is unchanged (§4.6). */
+  'MIGRATION_FAILED',
   'LISTEN_FAILED',
   'STARTUP_FAILED',
 ] as const;

@@ -7,6 +7,8 @@ import {
 import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { hasZodFastifySchemaValidationErrors } from 'fastify-type-provider-zod';
 
+import { pathOf } from './request-log.js';
+
 /** RFC 9457 media type used for every error body (ARCHITECTURE.md 4.4). */
 export const PROBLEM_CONTENT_TYPE = 'application/problem+json';
 
@@ -134,7 +136,9 @@ function toFieldErrors(error: unknown): ProblemFieldError[] {
 }
 
 function sendProblem(reply: FastifyReply, request: FastifyRequest, error: AppError): FastifyReply {
-  const problem = error.toProblemDetails(request.id, request.url);
+  // Ruling R13: `instance` is the path only. A query string can carry search
+  // terms and ids, and the problem body is the one thing the UI shows verbatim.
+  const problem = error.toProblemDetails(request.id, pathOf(request.url));
   return reply.status(error.status).type(PROBLEM_CONTENT_TYPE).send(problem);
 }
 
@@ -151,9 +155,9 @@ export function registerErrorHandling(app: FastifyInstance): void {
   });
 
   app.setNotFoundHandler((request, reply) => {
-    const error = notFound(`No route matches ${request.method} ${request.url}.`);
+    const error = notFound(`No route matches ${request.method} ${pathOf(request.url)}.`);
     request.log.info(
-      { code: error.code, method: request.method, url: request.url },
+      { code: error.code, method: request.method, path: pathOf(request.url) },
       'route missed',
     );
     return sendProblem(reply, request, error);

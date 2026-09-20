@@ -1,8 +1,8 @@
 # Progress — newest first, keep < 150 lines
 
 ## Current
-- **Next WP: WP-04b** (SQLite + Drizzle + migration runner). Nothing blocks it; the shutdown registry is ready for the DB hook.
-- Spec: docs/ARCHITECTURE.md **v1.1.1 — ACCEPTED** (changelog at the top; rulings index §21 incl. R1–R10; roadmap §19 = 46 WPs, 7 done, 39 remaining).
+- **Next WP: WP-04c** (DB-backed job runner). Nothing blocks it; `job_state` is the next migration.
+- Spec: docs/ARCHITECTURE.md **v1.1.2 — ACCEPTED** (changelog at the top; rulings index §21 incl. R1–R18; roadmap §19 = 46 WPs, 8 done, 38 remaining).
 - ADR-0001…0018 Accepted (several amended). Decisions register: docs/DECISIONS.md (D-01…D-33, Q1…Q13, user actions U1…U6).
 
 ## Environment facts
@@ -35,6 +35,10 @@
   source file with PowerShell `Add-Content`** — it writes CRLF and `format:check` fails.
 - `corepack enable` **fails without admin** (EPERM on `C:\Program Files\nodejs\pnpx`). pnpm is installed
   globally via `npm i -g pnpm@12.4.2`; `packageManager` in package.json pins it regardless.
+- **Test/dev data lives in `%LOCALAPPDATA%\CompIntel-dev	est-tmp`** (`src/testing/temp.ts`), never in
+  the system temp folder: Windows holds SQLite handles briefly after close, so cleanup must be retrying.
+- `pnpm --filter @compintel/backend db:generate` (+ `db:generate:custom` for FTS5/triggers).
+  **`drizzle-kit push` is banned** and `scripts.test.ts` fails if any manifest adds it.
 - Backend: `pnpm --filter @compintel/backend dev` (tsx watch, `--dev`) · `start` · `bundle` (esbuild → `dist-bundle/`)
   · `smoke:bundle`. Root `pnpm audit:deps` (network, R4) is **outside** verify.
 - **Windows has no POSIX signals**: `child.kill('SIGTERM')` hard-terminates. The shell's real lifeline is
@@ -47,7 +51,19 @@
 - `npm i -g` now warns about unrun install scripts (npm 11.17 `allow-scripts` gate) — harmless for pnpm's shim.
 
 ## Completed
-- **WP-04a — backend app factory** (this WP). `apps/backend`: zod config (flags > env > defaults, `--data-dir`,
+- **WP-04b — SQLite + Drizzle + migrations + data-dir lock + UUIDv7** (this WP). better-sqlite3 13.0.3 +
+  drizzle-orm 0.45.2 (drizzle-kit 0.31.10 dev). `platform/ids.ts` RFC 9562 UUIDv7 (monotonic counter,
+  clock-regression safe); `platform/lock.ts` `<dataDir>\backend.lock` (R15); `platform/db.ts` R16 PRAGMAs +
+  `quick_check` + checkpoint/optimize/close hook; `platform/migrate.ts` journal-based pending detection,
+  `VACUUM INTO backups-local\pre-migration-*.db` (keep 5) before touching a non-empty DB, rollback →
+  MIGRATION_FAILED; migration 0000 = `app_meta`. **No `drizzle-kit push` script** — a test enforces it.
+  WP-04a review fixes: R11 one onResponse log line (`/health` at debug), R12 per-domain ErrorCode lists,
+  R13 `instance` without query, R14 `streams`→`server.close()`→`resources` phases + exit 1 on hook failure,
+  stdin lifeline attached **before** listen with an already-ended check. Bundle carries `native\` +
+  `migrations\` (R17). `pnpm verify` **340 tests green (19 s)**; `smoke:bundle` passes from
+  `%LOCALAPPDATA%\CompIntel-dev\bundle-smoke` (no node_modules above it); `pnpm audit:deps` clean after
+  overriding the deprecated `@esbuild-kit>esbuild` 0.18. Rulings R11–R18 recorded in §21 (spec v1.1.2).
+- **WP-04a — backend app factory**. `apps/backend`: zod config (flags > env > defaults, `--data-dir`,
   `PORT`, `--dev`, `--stdin-lifeline`, dirs `data/logs/tmp/backups-local` created + write-probed), pino via
   `multistream` → in-house daily-rotating file (keep 14, injectable clock) + stderr in `--dev`, deep key-based
   redaction, `AppError` → RFC 9457 `problem+json` (R5) with `X-Request-Id` everywhere, Host + `X-CompIntel-Client`

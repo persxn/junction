@@ -28,5 +28,8 @@ describe('barrel', () => {
     expect(contracts.HealthResponse).toBeDefined();
     expect(contracts.ReadyLine).toBeDefined();
     expect(contracts.StartupErrorCode).toBeDefined();
+    expect(contracts.HealthDatabase).toBeDefined();
+    expect(contracts.Uuid7).toBeDefined();
+    expect(contracts.uuid7Timestamp).toBeDefined();
   });
 });

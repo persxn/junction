@@ -36,6 +36,13 @@ const ConfigSchema = z.object({
   /** Exit gracefully once stdin reaches end of file, i.e. the shell died (A17). */
   stdinLifeline: z.boolean(),
   logLevel: LogLevel,
+  /**
+   * Explicit path to the better-sqlite3 `.node` addon (ruling R17). Only set when
+   * the caller knows better than the bundle-relative default, e.g. a test.
+   */
+  nativeBinding: z.string().min(1).optional(),
+  /** Explicit path to the Drizzle migrations folder; defaults to bundle-relative. */
+  migrationsDir: z.string().min(1).optional(),
   appVersion: z.string().min(1),
   apiVersion: z.string().min(1),
 });
@@ -52,6 +59,8 @@ const CLI_OPTIONS = {
   'data-dir': { type: 'string' },
   port: { type: 'string' },
   'log-level': { type: 'string' },
+  'native-binding': { type: 'string' },
+  'migrations-dir': { type: 'string' },
   dev: { type: 'boolean' },
   'stdin-lifeline': { type: 'boolean' },
 } as const;
@@ -142,6 +151,15 @@ export function loadConfig(sources: ConfigSources = {}): Config {
     dev ? 'debug' : 'info',
   );
 
+  const nativeBinding = firstDefined(
+    flags['native-binding'] as string | undefined,
+    env.COMPINTEL_SQLITE_NATIVE_BINDING,
+  );
+  const migrationsDir = firstDefined(
+    flags['migrations-dir'] as string | undefined,
+    env.COMPINTEL_MIGRATIONS_DIR,
+  );
+
   const candidate = {
     dataDir: path.resolve(dataDirRaw),
     host: '127.0.0.1',
@@ -151,6 +169,8 @@ export function loadConfig(sources: ConfigSources = {}): Config {
     dev,
     stdinLifeline,
     logLevel,
+    ...(nativeBinding === undefined ? {} : { nativeBinding: path.resolve(nativeBinding) }),
+    ...(migrationsDir === undefined ? {} : { migrationsDir: path.resolve(migrationsDir) }),
     appVersion: APP_VERSION,
     apiVersion: API_VERSION,
   };

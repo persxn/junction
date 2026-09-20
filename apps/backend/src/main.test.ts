@@ -1,7 +1,6 @@
 import { randomBytes } from 'node:crypto';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -9,6 +8,7 @@ import { HealthResponse, ReadyLine } from '@compintel/contracts';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { baseUrlOf, spawnBackend, type BackendProcess } from './testing/backend-process.js';
+import { makeTempDir, removeTempDir } from './testing/temp.js';
 
 const MAIN = fileURLToPath(new URL('./main.ts', import.meta.url));
 // `--import` needs a file:// URL on Windows, not a drive-letter path.
@@ -18,7 +18,7 @@ const temps: string[] = [];
 const running: BackendProcess[] = [];
 
 function tempDir(): string {
-  const dir = mkdtempSync(path.join(tmpdir(), 'compintel-main-'));
+  const dir = makeTempDir('main');
   temps.push(dir);
   return dir;
 }
@@ -40,7 +40,7 @@ afterEach(() => {
     running.pop()?.child.kill();
   }
   while (temps.length > 0) {
-    rmSync(temps.pop() ?? '', { recursive: true, force: true });
+    removeTempDir(temps.pop() ?? '');
   }
 });
 
@@ -70,6 +70,7 @@ describe('startup handshake', () => {
     const health = HealthResponse.parse(await ok.json());
     expect(health.status).toBe('ok');
     expect(health.uptimeSec).toBeGreaterThanOrEqual(0);
+    expect(health.database).toStrictEqual({ ok: true, migrationsApplied: 1 });
 
     const denied = await fetch(`${baseUrl}/api/v1/health`);
     expect(denied.status).toBe(401);
@@ -140,6 +141,101 @@ describe('failed start', () => {
       expect(backend.ready.error.message).toContain('COMPINTEL_CLIENT_SECRET');
     }
     expect(await backend.waitForExit(5000)).toBe(1);
+  });
+});
+
+describe('database and data-dir lock', () => {
+  it('creates app.db, applies the migrations and reports them on /health', async () => {
+    const secret = randomBytes(32).toString('hex');
+    const dataDir = tempDir();
+    const backend = await start(['--data-dir', dataDir], { COMPINTEL_CLIENT_SECRET: secret });
+
+    expect(existsSync(path.join(dataDir, 'data', 'app.db'))).toBe(true);
+    const health = HealthResponse.parse(
+      await (
+        await fetch(`${baseUrlOf(backend)}/api/v1/health`, {
+          headers: { 'X-CompIntel-Client': secret },
+        })
+      ).json(),
+    );
+    expect(health.database.ok).toBe(true);
+    expect(health.database.migrationsApplied).toBeGreaterThanOrEqual(1);
+    expect(readdirSync(path.join(dataDir, 'backups-local'))).toStrictEqual([]);
+  });
+
+  it('holds backend.lock while it runs and removes it on a clean exit', async () => {
+    const dataDir = tempDir();
+    const backend = await start(['--data-dir', dataDir, '--stdin-lifeline'], {
+      COMPINTEL_CLIENT_SECRET: randomBytes(32).toString('hex'),
+    });
+
+    const lockFile = path.join(dataDir, 'backend.lock');
+    expect(JSON.parse(readFileSync(lockFile, 'utf8'))).toMatchObject({
+      pid: backend.child.pid,
+    });
+
+    backend.child.stdin.end();
+    expect(await backend.waitForExit(5000)).toBe(0);
+    expect(existsSync(lockFile)).toBe(false);
+  });
+
+  it('refuses a second backend on the same data directory (R15)', async () => {
+    const dataDir = tempDir();
+    const first = await start(['--data-dir', dataDir], {
+      COMPINTEL_CLIENT_SECRET: randomBytes(32).toString('hex'),
+    });
+    expect(first.ready.ready).toBe(true);
+
+    const second = await start(['--data-dir', dataDir], {
+      COMPINTEL_CLIENT_SECRET: randomBytes(32).toString('hex'),
+    });
+
+    expect(second.ready.ready).toBe(false);
+    if (!second.ready.ready) {
+      expect(second.ready.error.code).toBe('DATA_DIR_LOCKED');
+      expect(second.ready.error.message).toContain(dataDir);
+    }
+    expect(await second.waitForExit(5000)).toBe(1);
+
+    // The refusal must not have disturbed the backend that owns the directory.
+    expect(first.child.exitCode).toBeNull();
+  });
+
+  it('reports DB_CORRUPT and exits 1 when app.db is not a database', async () => {
+    const dataDir = tempDir();
+    mkdirSync(path.join(dataDir, 'data'), { recursive: true });
+    writeFileSync(path.join(dataDir, 'data', 'app.db'), 'not a database at all');
+
+    const backend = await start(['--data-dir', dataDir], {
+      COMPINTEL_CLIENT_SECRET: randomBytes(32).toString('hex'),
+    });
+
+    expect(backend.ready.ready).toBe(false);
+    if (!backend.ready.ready) {
+      expect(['DB_OPEN_FAILED', 'DB_CORRUPT', 'MIGRATION_FAILED']).toContain(
+        backend.ready.error.code,
+      );
+    }
+    expect(await backend.waitForExit(5000)).toBe(1);
+  });
+
+  it('restarts against an existing database without making a copy', async () => {
+    const secret = randomBytes(32).toString('hex');
+    const dataDir = tempDir();
+
+    const first = await start(['--data-dir', dataDir, '--stdin-lifeline'], {
+      COMPINTEL_CLIENT_SECRET: secret,
+    });
+    first.child.stdin.end();
+    expect(await first.waitForExit(5000)).toBe(0);
+
+    const second = await start(['--data-dir', dataDir, '--stdin-lifeline'], {
+      COMPINTEL_CLIENT_SECRET: secret,
+    });
+    expect(second.ready.ready).toBe(true);
+    expect(readdirSync(path.join(dataDir, 'backups-local'))).toStrictEqual([]);
+    second.child.stdin.end();
+    expect(await second.waitForExit(5000)).toBe(0);
   });
 });
 
