@@ -1,0 +1,120 @@
+{
+  "hackathon": {
+    "uuid": "72aac6f9ba9f4fc6b24fe9bfe979acaf",
+    "name": "Recursive",
+    "slug": "recursiveacm",
+    "type": "HACKATHON",
+    "tagline": "Maybe the best ideas start when you simply sit down.",
+    "desc": "****RECURSIVE — Shift-8 Hackathon 2026**** | The First ACM-Sponsored Hackathon at **GNIT**\n\nRECURSIVE is the first **ACM-sponsored hackathon** at **Guru Nanak Institute of Technology (GNIT)**, organized by the **Department of Information Technology, GNIT**, in association with ACM and the **GNIT Kolkata ACM Student Chapter**.\n\nRECURSIVE brings together **students, developers, designers, and problem-solvers** for an **intense 8-hour in-person hackathon** at GNIT, Kolkata. Working in **teams of 2–4**, participants will take on original real-world challenges and transform their ideas into functional solutions through technology, creativity, and collaboration.\n\n**From ideation and development** to UI/UX and practical implementation, RECURSIVE is designed to give participants the freedom to experiment, build, iterate, and bring meaningful ideas to life within a single, high-energy sprint.\n\n📍 **Event Details**\n\n**Event:** RECURSIVE — Shift-8 Hackathon\n**Venue:** Guru Nanak Institute of Technology, Kolkata\n**Duration:** 8 Hours of Building & Innovation\n**Date:** **8th October 2026**\n**Team Size:** 2–4 Members\n\n**Why join RECURSIVE?**\n\nBuild functional solutions to original real-world challenges\nExplore technology and innovation across different domains\nCollaborate with like-minded developers, designers, and problem-solvers\nLearn, experiment, and iterate through an intense **8-hour building experience**\nShowcase your ideas to mentors and judges\nWin **exciting prizes, certificates, and goodies**\n\nAt RECURSIVE, we believe that great ideas are not created in a single moment. They evolve through iterations — **thinking, building, testing, learning, and trying** again.\n\nWhether you are stepping into your first hackathon or are already an experienced builder, RECURSIVE — Shift-8 Hackathon gives you the space, time, and community to sit down, start building, and **turn an idea into something real.**\n\n**Maybe the best ideas start when you simply sit down.** 🪑\n\n**Follow us on:**\n[RECURSIVE — Shift-8 Hackathon 2026](https://www.recursiveacm.in)\n\n[GNIT Kolkata ACM Student Chapter](https://gnitkolkata.acm.org)",
+    "team_min": 2,
+    "team_max": 4,
+    "starts_at": "2026-10-08T04:30:00+00:00",
+    "ends_at": "2026-10-08T12:30:00+00:00",
+    "cover_img": "https://assets.devfolio.co/hackathons/72aac6f9ba9f4fc6b24fe9bfe979acaf/assets/cover/652.jpeg",
+    "is_online": false,
+    "devfolio_official": null,
+    "rating": 0,
+    "city": "Panihati",
+    "country": "India",
+    "timezone": "Asia/Calcutta",
+    "location": "Guru Nanak Institute of Technology, Nilgunj Road, Sahid Colony, Panihati, West Bengal, India",
+    "settings": {
+      "reg_ends_at": "2026-09-20T18:29:00+00:00",
+      "reg_starts_at": "2026-09-05T18:30:00+00:00",
+      "external_apply_url": null,
+      "is_hybrid": false,
+      "review": false,
+      "site": "https://www.recursiveacm.in/",
+      "twitter": null,
+      "slack": null,
+      "facebook": "https://www.facebook.com/share/1BsT4oB1t4/",
+      "instagram": "https://www.instagram.com/gnitkolkataacm?igsi=MWMwMGtxdW5wcjBzbA==",
+      "telegram": null,
+      "discord": "https://discord.gg/qyAur5UgP",
+      "linkedin": "https://www.linkedin.com/in/gnit-kolkata-acm-student-chapter",
+      "farcaster": null,
+      "medium": null,
+      "tokenproof_gating_enabled": false,
+      "coc_url": "https://devfolio.co/code-of-conduct",
+      "contact_email": "[email redacted]",
+      "show_more_hackathons": true,
+      "v2_application_enabled": false,
+      "quadratic_voting_enabled": false,
+      "quadratic_voting_starts_at": null,
+      "quadratic_voting_ends_at": null,
+      "paid": false,
+      "mentor_booking_enabled": false,
+      "mentorship_starts_at": null,
+      "mentorship_ends_at": null
+    },
+    "stakings": "[removed for fixture: personal data]",
+    "faqs": [
+      {
+        "uuid": "47ce31fd21a549d99b0b8d4dbf05b91a",
+        "question": "What is Recursive and who is organizing it?",
+        "answer": "Recursive is the inaugural flagship **8-hour in-person hackathon** hosted by the **GNIT ACM Student Chapter** in collaboration with the **Department of Information Technology at Guru Nanak Institute of Technology (GNIT), Kolkata**. It brings together developers, designers, and builders for eight hours of rapid **prototyping, honest software craft, and collaborative problem-solving.**",
+        "order": 1
+      },
+      {
+        "uuid": "76c7539401af491e939a68a8f37ec68a",
+        "question": "Who is eligible to participate?",
+        "answer": "**Any undergraduate, postgraduate, or diploma student** is eligible to participate. You will need to carry a **valid college ID card, or a government ID proof (Aadhaar, PAN, voter ID, passport, or driving licence)** if you cannot present one. Whether you are an experienced builder or attending your very first hackathon, beginners are warmly welcome—mentors will be on the floor throughout the event to help you.",
+        "order": 2
+      },
+      {
+        "uuid": "d6ebaf3a372146d692d[phone redacted]",
+        "question": "Is there any registration fee?",
+        "answer": "**No. Recursive is 100% free of cost.** **Admission, high-speed Wi-Fi access, meals, snacks, beverages, exclusive swag kits, and mentorship** are provided **completely free** to all shortlisted participants.",
+        "order": 3
+      },
+      {
+        "uuid": "d917542ab9fe4bebbdda5d0a865a0bf2",
+        "question": "How do I apply, and what is the idea submission process?",
+        "answer": "Applying for Recursive is done via **Devfolio** with an idea review round:\n\n**1.** **Register on Devfolio:** Click the '**Apply with Devfolio**' button and complete your profile. Form a team of **2 to 4 members** (min 2, max 4 builders).\n**2. Download the Idea Template:** Access the official **Recursive ACM Idea Submission Template** on Google Slides.\n**3. Prepare Your Proposal:** Fill out the slides with your problem statement, target track, **technical architecture**, and impact.\n**4.** **Export as PDF & Upload:** Save your completed deck as a **PDF (max 5–6 slides)** and upload it directly in your **Devfolio application form** before registration closes.\n**5. Review & RSVP: **Applications will be reviewed by the organizing committee. **Shortlisted teams** will receive an** acceptance invitation on Devfolio** and **email to confirm their attendance (RSVP)** for the **in-person hackathon at GNIT.**",
+        "order": 4
+      },
+      {
+        "uuid": "f001b42990704ee1a9ab421699e237a6",
+        "question": "What should be included in our Idea Submission PPT?",
+        "answer": "Keep your presentation concise and impactful **(5 to 6 slides)**. We recommend following this structure:\n\n• **Slide 1 — Team & Track:** Team name, members, college, contact info, and chosen track.\n• **Slide 2 — Problem Statement:** The real-world friction, inefficiency, or challenge you aim to solve.\n• **Slide 3 — Proposed Solution:** Your approach, key features, and core innovation.\n• **Slide 4 — System Architecture & Stack:** Software frameworks, databases, external APIs, ML models, or hardware components.\n• **Slide 5 — 8-Hour Execution Plan:** Minimum Viable Product (MVP) scope to be built and demonstrated live on stage.",
+        "order": 5
+      },
+      {
+        "uuid": "9b9f8fb1d0c344edb6f0d480dcab78db",
+        "question": "What is the team size and can I apply solo?",
+        "answer": "**Teams** must consist of a **minimum of 2 and a maximum of 4 members (2–4 builders)**. ****Solo participation is not permitted****. If you don't have a team yet, you can team up with fellow participants before registration closes or connect with other builders in our Discord community to form your squad.",
+        "order": 6
+      },
+      {
+        "uuid": "ad528b406f04446f8cb2b9e1c429cfdb",
+        "question": "Where is the venue and what is the schedule?",
+        "answer": "The hackathon takes place **in person at Guru Nanak Institute of Technology (GNIT), Sodepur, Kolkata.** **Check-in starts at 9:00 AM**, the official **8-hour hacking sprint** runs from **10:00 AM to 6:00 PM**, followed immediately by **project demos, judging, and the award ceremony.**",
+        "order": 7
+      },
+      {
+        "uuid": "4d2f4495f5ba48a5a[phone redacted]e7422",
+        "question": "Can I work on a pre-existing project or start early?",
+        "answer": "****No. All code and designs must be created during the official 8-hour hacking window.**** You are encouraged to **come with ideas, sketches, and plans**, and you may **use open-source libraries, public APIs, and frameworks,** but ****writing core application code beforehand is strictly prohibited.****",
+        "order": 8
+      },
+      {
+        "uuid": "82d83b4e4c[phone redacted]cba02c33",
+        "question": "What should I bring on the day of the event?",
+        "answer": "Please **bring your laptop, charger, power strip/extension cord, a valid college ID card (or government ID proof if you don't have one)**, and any **specific hardware components your project might require.** High-speed campus Wi-Fi, dedicated power stations, meals, and snacks will be provided throughout the day.",
+        "order": 9
+      },
+      {
+        "uuid": "24f18d5171e44345a77274d751c0d8f2",
+        "question": "How will projects be evaluated and what are the prizes?",
+        "answer": "Projects will be evaluated by **industry judges and academic mentors** based on **four core criteria: technical depth, problem innovation, design/UX craft, and the quality of your live demo**. Cash prizes, track awards, certificates, and sponsor perks will be awarded to **top teams.**",
+        "order": 10
+      }
+    ],
+    "sponsor_tiers": "[removed for fixture: personal data]",
+    "hackathon_partnership": null
+  },
+  "aggregatePrizeValue": 0,
+  "aggregatePrizeCurrency": "USD",
+  "prizeDetails": [],
+  "judges": "[removed for fixture: personal data]"
+}

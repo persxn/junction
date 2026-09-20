@@ -12,3 +12,8 @@ apps/backend/migrations
 # Architect-owned documents: committed verbatim, never reformatted.
 docs/
 CLAUDE.md
+
+# Recorded source responses and golden files: they are evidence, not source.
+# Reformatting them would break the byte-identical check against docs/research
+# and turn every golden into a diff the first time Prettier ran.
+apps/backend/test/fixtures
