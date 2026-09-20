@@ -23,6 +23,17 @@ function tempDir(): string {
   return dir;
 }
 
+/** How many migrations this build ships, read from the journal the migrator uses. */
+function journalEntryCount(): number {
+  const journal = JSON.parse(
+    readFileSync(
+      path.resolve(import.meta.dirname, '..', 'migrations', 'meta', '_journal.json'),
+      'utf8',
+    ),
+  ) as { entries: unknown[] };
+  return journal.entries.length;
+}
+
 /** Runs `src/main.ts` the way the shell runs the bundle: a real child process. */
 function start(args: readonly string[], env: NodeJS.ProcessEnv = {}): Promise<BackendProcess> {
   return spawnBackend({
@@ -70,7 +81,9 @@ describe('startup handshake', () => {
     const health = HealthResponse.parse(await ok.json());
     expect(health.status).toBe('ok');
     expect(health.uptimeSec).toBeGreaterThanOrEqual(0);
-    expect(health.database).toStrictEqual({ ok: true, migrationsApplied: 1 });
+    expect(health.database.ok).toBe(true);
+    // Every migration this build ships is applied; the count grows per WP.
+    expect(health.database.migrationsApplied).toBe(journalEntryCount());
 
     const denied = await fetch(`${baseUrl}/api/v1/health`);
     expect(denied.status).toBe(401);
@@ -161,6 +174,27 @@ describe('database and data-dir lock', () => {
     expect(health.database.ok).toBe(true);
     expect(health.database.migrationsApplied).toBeGreaterThanOrEqual(1);
     expect(readdirSync(path.join(dataDir, 'backups-local'))).toStrictEqual([]);
+  });
+
+  it('starts the job runner and stops it before the database closes (WP-04c)', async () => {
+    const dataDir = tempDir();
+    const backend = await start(['--data-dir', dataDir, '--stdin-lifeline'], {
+      COMPINTEL_CLIENT_SECRET: randomBytes(32).toString('hex'),
+    });
+
+    backend.child.stdin.end();
+    expect(await backend.waitForExit(5000)).toBe(0);
+
+    const log = readFileSync(path.join(dataDir, 'logs', logFileName()), 'utf8');
+    expect(log).toContain('scheduler started');
+    expect(log).toContain('scheduler stopped');
+    // Registration order in main.ts puts the scheduler after the database, and
+    // `resources` hooks run newest first, so the runner is quiet before the
+    // database is checkpointed and closed (ruling R14).
+    expect(log.indexOf('graceful shutdown started')).toBeLessThan(log.indexOf('scheduler stopped'));
+    expect(log.indexOf('scheduler stopped')).toBeLessThan(
+      log.indexOf('graceful shutdown finished'),
+    );
   });
 
   it('holds backend.lock while it runs and removes it on a clean exit', async () => {

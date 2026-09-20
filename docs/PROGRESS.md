@@ -1,7 +1,9 @@
 # Progress — newest first, keep < 150 lines
 
 ## Current
-- **Next WP: WP-04c** (DB-backed job runner). Nothing blocks it; `job_state` is the next migration.
+- **Next WP: WP-05a** (Tauri shell: spawn, Job Object, READY handshake, restart/backoff, Exit completely).
+- **Architect is offline** (Sep 2026): this session acts as master + worker. Every architectural call is
+  recorded in the handoff reports under "Minor decisions"/"Questions" for review when they are back.
 - Spec: docs/ARCHITECTURE.md **v1.1.2 — ACCEPTED** (changelog at the top; rulings index §21 incl. R1–R18; roadmap §19 = 46 WPs, 8 done, 38 remaining).
 - ADR-0001…0018 Accepted (several amended). Decisions register: docs/DECISIONS.md (D-01…D-33, Q1…Q13, user actions U1…U6).
 
@@ -39,6 +41,8 @@
   the system temp folder: Windows holds SQLite handles briefly after close, so cleanup must be retrying.
 - `pnpm --filter @compintel/backend db:generate` (+ `db:generate:custom` for FTS5/triggers).
   **`drizzle-kit push` is banned** and `scripts.test.ts` fails if any manifest adds it.
+  **Run `pnpm typecheck` first** whenever a schema file imports `@compintel/contracts`: drizzle-kit loads
+  the package's built `dist`, so a stale build makes CHECK-constraint helpers read `undefined`.
 - Backend: `pnpm --filter @compintel/backend dev` (tsx watch, `--dev`) · `start` · `bundle` (esbuild → `dist-bundle/`)
   · `smoke:bundle`. Root `pnpm audit:deps` (network, R4) is **outside** verify.
 - **Windows has no POSIX signals**: `child.kill('SIGTERM')` hard-terminates. The shell's real lifeline is
@@ -51,18 +55,22 @@
 - `npm i -g` now warns about unrun install scripts (npm 11.17 `allow-scripts` gate) — harmless for pnpm's shim.
 
 ## Completed
-- **WP-04b — SQLite + Drizzle + migrations + data-dir lock + UUIDv7** (this WP). better-sqlite3 13.0.3 +
-  drizzle-orm 0.45.2 (drizzle-kit 0.31.10 dev). `platform/ids.ts` RFC 9562 UUIDv7 (monotonic counter,
-  clock-regression safe); `platform/lock.ts` `<dataDir>\backend.lock` (R15); `platform/db.ts` R16 PRAGMAs +
-  `quick_check` + checkpoint/optimize/close hook; `platform/migrate.ts` journal-based pending detection,
-  `VACUUM INTO backups-local\pre-migration-*.db` (keep 5) before touching a non-empty DB, rollback →
-  MIGRATION_FAILED; migration 0000 = `app_meta`. **No `drizzle-kit push` script** — a test enforces it.
-  WP-04a review fixes: R11 one onResponse log line (`/health` at debug), R12 per-domain ErrorCode lists,
-  R13 `instance` without query, R14 `streams`→`server.close()`→`resources` phases + exit 1 on hook failure,
-  stdin lifeline attached **before** listen with an already-ended check. Bundle carries `native\` +
-  `migrations\` (R17). `pnpm verify` **340 tests green (19 s)**; `smoke:bundle` passes from
-  `%LOCALAPPDATA%\CompIntel-dev\bundle-smoke` (no node_modules above it); `pnpm audit:deps` clean after
-  overriding the deprecated `@esbuild-kit>esbuild` 0.18. Rulings R11–R18 recorded in §21 (spec v1.1.2).
+- **WP-04c — DB-backed job runner** (this WP). Migration 0001 = `job_state` (§6.2 columns + `kind`,
+  `last_outcome`, `last_duration_ms`, `last_error_message`, CHECKs from the contracts enums, index on
+  `next_due_at`). `packages/contracts/src/jobs.ts`: JobKind (SCRAPE/LLM/GENERAL), JobTrigger, JobOutcome
+  (+ ABORTED, CRASHED), JobSnapshot. `apps/backend/src/jobs/`: `schedule.ts` (jitter, 15→30→60 min…12 h
+  backoff, due/lease predicates), `outcome.ts` (state machine), `store.ts` (conditional-UPDATE claim =
+  single-flight), `run.ts` (one run, never throws), `scheduler.ts` (30 s tick, catch-up, limits 2 scrape /
+  1 LLM / 4 general, lease reclaim → CRASHED, `SKIPPED_OFFLINE`, manual `trigger()`, `resources` stop hook),
+  `online.ts` (interface-table offline check, no network call). Wired in `main.ts` with **no jobs
+  registered** — each later WP registers its own. `pnpm verify` **422 tests green (21 s)**; `smoke:bundle`
+  and `audit:deps` clean. **No new dependencies.**
+- **WP-04b — SQLite + Drizzle + migrations + data-dir lock + UUIDv7.** better-sqlite3 13.0.3, drizzle-orm
+  0.45.2 (drizzle-kit 0.31.10 dev). `ids.ts` UUIDv7 (RFC 9562, monotonic, clock-regression safe); `lock.ts`
+  `<dataDir>\backend.lock` (R15); `db.ts` R16 PRAGMAs + `quick_check` + checkpoint/close; `migrate.ts`
+  journal pending detection + `VACUUM INTO backups-local\pre-migration-*.db` (keep 5), failure →
+  MIGRATION_FAILED; migration 0000 = `app_meta`; no `drizzle-kit push` (a test enforces it). Also the
+  WP-04a review fixes R11–R18 and the bundle's `native\` + `migrations\` (R17). 340 tests green.
 - **WP-04a — backend app factory**. `apps/backend`: zod config (flags > env > defaults, `--data-dir`,
   `PORT`, `--dev`, `--stdin-lifeline`, dirs `data/logs/tmp/backups-local` created + write-probed), pino via
   `multistream` → in-house daily-rotating file (keep 14, injectable clock) + stderr in `--dev`, deep key-based
@@ -70,8 +78,7 @@
   (`timingSafeEqual`) + `@fastify/cors` (R9), `GET /api/v1/health`, `POST /api/v1/system/shutdown`,
   `buildApp()` (no listen) + `main.ts` (READY line, signals, stdin EOF, 10 s hard timeout, empty shutdown registry).
   Deps: fastify 5.12.5, @fastify/cors 11.3.0, fastify-type-provider-zod 7.0.0, pino 10.3.1, zod 4.6.5,
-  tsx 4.23.13, esbuild 0.28.2 (needs `allowBuilds`). `pnpm verify` 217 tests green (7 s); `smoke:bundle` passes
-  (2.2 MB `dist-bundle/main.mjs`); `pnpm audit:deps` clean. Rulings R1–R10 recorded in §21 (spec v1.1.1).
+  tsx 4.23.13, esbuild 0.28.2 (needs `allowBuilds`). 217 tests green. Rulings R1–R10 → §21 (spec v1.1.1).
 - **WP-03b — monorepo scaffold + `pnpm verify`**. pnpm workspace (`apps/*`, `packages/*`, `tools/*`),
   `packageManager` pnpm@12.4.2, engines `>=24.19 <25`, `.npmrc` save-exact + engine-strict, `onlyBuiltDependencies: []`
   (nothing in the tree needs install scripts). **TypeScript 6.0.3** — not 7.0.2, because typescript-eslint 8.70.0

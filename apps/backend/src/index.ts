@@ -30,6 +30,39 @@ export {
   type AppErrorInit,
 } from './platform/errors.js';
 export { createUuid7, uuid7, type Uuid7Generator } from './platform/ids.js';
+export {
+  applyJitter,
+  applyOutcome,
+  executeRun,
+  backoffDelayMs,
+  firstDueAt,
+  hasNetworkInterface,
+  isDue,
+  isLeaseExpired,
+  JobStore,
+  nextDueAfterRun,
+  registerable,
+  Scheduler,
+  DEFAULT_BACKOFF_BASE_MS,
+  DEFAULT_BACKOFF_MAX_MS,
+  DEFAULT_CONCURRENCY_LIMITS,
+  DEFAULT_DRAIN_TIMEOUT_MS,
+  DEFAULT_JITTER_RATIO,
+  DEFAULT_LEASE_MS,
+  TICK_INTERVAL_MS,
+  TRIGGER_REFUSALS,
+  type ApplyOutcomeOptions,
+  type ExecuteRunOptions,
+  type JobContext,
+  type JobDefinition,
+  type JobRunResult,
+  type JobStatePatch,
+  type RegisteredJob,
+  type SchedulerOptions,
+  type TickSummary,
+  type TriggerRefusal,
+  type TriggerResult,
+} from './jobs/index.js';
 export { acquireDataDirLock, lockPath, LOCK_FILE, type DataDirLock } from './platform/lock.js';
 export { createLogger, LOG_RETENTION_FILES, type LoggerHandle } from './platform/logger.js';
 export {

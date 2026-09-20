@@ -2,6 +2,9 @@ import type { HealthDatabase, ReadyLine } from '@compintel/contracts';
 import type { Logger } from 'pino';
 
 import { buildApp, type App } from './app.js';
+import { hasNetworkInterface } from './jobs/online.js';
+import { Scheduler } from './jobs/scheduler.js';
+import { JobStore } from './jobs/store.js';
 import { ensureDataDirs, loadConfig, writeDevConnectionFile } from './platform/config.js';
 import { openDatabase } from './platform/db.js';
 import { installLifecycle } from './platform/lifecycle.js';
@@ -62,6 +65,17 @@ async function main(): Promise<void> {
     });
     recordAppMeta(config, db);
 
+    // Constructed before the HTTP layer so its `resources` hook is registered
+    // even if the process is asked to stop during startup (R14); started only
+    // once we are listening. Jobs themselves are registered by the work packages
+    // that own them (scrapes in WP-11, deadlines in WP-20, backups in WP-25).
+    const scheduler = new Scheduler({
+      store: new JobStore(db),
+      logger,
+      shutdown,
+      isOnline: hasNetworkInterface,
+    });
+
     // The shutdown route needs the trigger, which needs the built app; one
     // mutable hop breaks the cycle without leaking process concerns into app.ts.
     const lifecycle: { start: (reason: string) => void } = { start: () => undefined };
@@ -85,6 +99,7 @@ async function main(): Promise<void> {
 
     await app.server.listen({ host: config.host, port: config.port });
     const port = listeningPort(app);
+    await scheduler.start();
 
     if (config.dev && config.clientSecretGenerated) {
       const file = writeDevConnectionFile(config, port);
@@ -97,6 +112,7 @@ async function main(): Promise<void> {
         dataDir: config.dataDir,
         migrationsApplied: migrations.applied,
         migrationsTotal: migrations.total,
+        jobs: scheduler.registered().length,
       },
       'backend listening',
     );
