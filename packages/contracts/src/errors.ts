@@ -53,14 +53,24 @@ export const SETUP_ERROR_CODES = [
  * refusal by *us*, not by the site, which is why it is not an HTTP-shaped code:
  * the answer the user needs is "this source is not approved for scraping", not
  * "403".
+ *
+ * WP-09a replaced the placeholder `SOURCE_NOT_APPROVED` with
+ * `SOURCE_BLOCKED_BY_POLICY`, which is §7.7's own name for the row it maps to
+ * and covers the three refusals that share one message — not approved,
+ * disabled, or outside `allowed_paths_json`. Nothing consumed the old name.
+ * `SOURCE_SETUP_INCOMPLETE` is A10/R44: the wizard has not recorded a contact
+ * address, so no request may be made at all.
  */
 export const SOURCE_ERROR_CODES = [
+  'SOURCE_NOT_FOUND',
   'SOURCE_UNREACHABLE',
-  'SOURCE_NOT_APPROVED',
+  'SOURCE_BLOCKED_BY_POLICY',
   'SOURCE_ROBOTS_DISALLOWED',
   'SOURCE_RATE_LIMITED',
   'SOURCE_SCHEMA_CHANGED',
   'SOURCE_PARSE_FAILED',
+  'SOURCE_REFRESH_TOO_SOON',
+  'SOURCE_SETUP_INCOMPLETE',
 ] as const;
 
 /**

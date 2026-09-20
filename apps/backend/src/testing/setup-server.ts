@@ -2,8 +2,14 @@ import { AuthRepository } from '../modules/auth/repository.js';
 import { AuthService } from '../modules/auth/service.js';
 import { SetupRepository } from '../modules/setup/repository.js';
 import { SetupService } from '../modules/setup/service.js';
+import { SourceRecordsRepository } from '../modules/sources/records.js';
+import { SourcesRepository } from '../modules/sources/repository.js';
+import { SourcesService } from '../modules/sources/service.js';
 import { UsersRepository } from '../modules/users/repository.js';
 import { UsersService } from '../modules/users/service.js';
+import { AdapterRegistry } from '../sources/registry.js';
+import { fakeTransport, silentLogger, testScrapingHttp } from './scraping.js';
+import { systemClock } from '../platform/time.js';
 import { AuditLog } from '../platform/audit.js';
 import { SettingsStore } from '../platform/settings.js';
 import { openMigratedDatabase, type MigratedDatabase } from './database.js';
@@ -25,6 +31,9 @@ export interface SetupTestServer {
   readonly setup: SetupService;
   readonly users: UsersService;
   readonly auth: AuthService;
+  readonly sources: SourcesService;
+  /** Empty in WP-09a; a test registers an adapter when it needs one. */
+  readonly registry: AdapterRegistry;
   readonly settings: SettingsStore;
   readonly audit: AuditLog;
   /** A folder outside the data directory that a backup destination may use. */
@@ -71,10 +80,27 @@ export async function startSetupTestServer(
     },
   });
 
+  // The source module, wired to a transport that answers nothing: the route
+  // tests are about permissions, versions and the manual floor, and a request
+  // that reached the network would mean one of those had already failed.
+  const registry = new AdapterRegistry();
+  const sources = new SourcesService({
+    sources: new SourcesRepository(database.db),
+    records: new SourceRecordsRepository(database.db),
+    registry,
+    audit,
+    logger: silentLogger,
+    runtime: {
+      http: testScrapingHttp({ transport: fakeTransport({}), clock: systemClock }),
+      setupComplete: () => !setup.isRequired(),
+    },
+  });
+
   const server = await startTestServer({
     auth: () => auth,
     setup: () => setup,
     users: () => users,
+    sources: () => sources,
   });
 
   return {
@@ -83,6 +109,8 @@ export async function startSetupTestServer(
     setup,
     users,
     auth,
+    sources,
+    registry,
     settings,
     audit,
     backupDir,

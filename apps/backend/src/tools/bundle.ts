@@ -8,6 +8,10 @@ import { build } from 'esbuild';
 /** Where the packaged shell expects the backend (ARCHITECTURE.md 3.2, A20). */
 const OUT_DIR = fileURLToPath(new URL('../../dist-bundle/', import.meta.url));
 const MIGRATIONS_SRC = fileURLToPath(new URL('../../migrations/', import.meta.url));
+/** Shipped reference data: the institutions seed (WP-08b) travels with the bundle. */
+const INSTITUTIONS_SRC = fileURLToPath(
+  new URL('../../../../resources/institutions/', import.meta.url),
+);
 
 /**
  * esbuild emits ESM, but Fastify, pino and better-sqlite3 are CommonJS inside and
@@ -70,7 +74,8 @@ if (result.errors.length > 0) {
 cpSync(sqliteBindingSource(), path.join(OUT_DIR, 'native', 'better_sqlite3.node'));
 cpSync(argon2BindingSource(), path.join(OUT_DIR, 'native', 'argon2.node'));
 cpSync(MIGRATIONS_SRC, path.join(OUT_DIR, 'migrations'), { recursive: true });
+cpSync(INSTITUTIONS_SRC, path.join(OUT_DIR, 'resources', 'institutions'), { recursive: true });
 
 process.stdout.write(
-  `  copied native\\better_sqlite3.node, native\\argon2.node and migrations\\ into ${path.relative(process.cwd(), OUT_DIR)}\n`,
+  `  copied native\\, migrations\\ and resources\\institutions\\ into ${path.relative(process.cwd(), OUT_DIR)}\n`,
 );

@@ -21,6 +21,13 @@ export interface ResourcePaths {
    * (ruling R54: that is a warning, never a failure).
    */
   readonly gazetteerFile: string | undefined;
+  /**
+   * The committed institutions seed. Like the gazetteer it is shipped reference
+   * data, so the bundle carries a copy and the path cannot be derived from the
+   * module's own location — `import.meta.dirname` is five directories from the
+   * repository root in a checkout and one from the bundle.
+   */
+  readonly institutionsSeedFile: string | undefined;
 }
 
 /** Files the bundle carries its addons as (ruling R17). */
@@ -29,6 +36,9 @@ export const BUNDLED_ARGON2_BINDING = path.join('native', 'argon2.node');
 
 /** Where the packaged backend carries the gazetteer (A20, ruling R53). */
 export const BUNDLED_GAZETTEER = path.join('resources', 'gazetteer', 'gazetteer.db');
+
+/** Where the packaged backend carries the institutions seed (WP-08b). */
+export const BUNDLED_INSTITUTIONS_SEED = path.join('resources', 'institutions', 'seed.json');
 
 function firstExisting(candidates: readonly (string | undefined)[]): string | undefined {
   return candidates.find((candidate) => candidate !== undefined && existsSync(candidate));
@@ -83,6 +93,12 @@ export function resolveResources(config: Config, entryUrl: string): ResourcePath
       path.join(baseDir, BUNDLED_GAZETTEER),
       path.join(baseDir, '..', '..', 'gazetteer', 'gazetteer.db'),
       devGazetteerFile(),
+    ]),
+    institutionsSeedFile: firstExisting([
+      // Next to the bundle, then up out of `apps/backend/src/` in a checkout.
+      path.join(baseDir, BUNDLED_INSTITUTIONS_SEED),
+      path.join(baseDir, '..', '..', '..', BUNDLED_INSTITUTIONS_SEED),
+      path.join(baseDir, '..', '..', '..', '..', BUNDLED_INSTITUTIONS_SEED),
     ]),
   };
 }

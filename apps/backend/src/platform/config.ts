@@ -16,13 +16,13 @@ export const LogLevel = z.enum(LOG_LEVELS);
 export type LogLevel = z.infer<typeof LogLevel>;
 
 /** Sub-directories created under `dataDir`, each checked writable at startup. */
-export const DATA_SUBDIRS = ['data', 'logs', 'tmp', 'backups-local'] as const;
+export const DATA_SUBDIRS = ['data', 'logs', 'tmp', 'backups-local', 'snapshots'] as const;
 
 /** Name of the file `--dev` writes so WP-06 can find a backend started by hand. */
 export const DEV_CONNECTION_FILE = 'dev-connection.json';
 
 const ConfigSchema = z.object({
-  /** Absolute path; holds `data`, `logs`, `tmp`, `backups-local`. */
+  /** Absolute path; holds `data`, `logs`, `tmp`, `backups-local`, `snapshots`. */
   dataDir: z.string().min(1),
   /** Never configurable: the API is loopback-only (ARCHITECTURE.md 10.3). */
   host: z.literal('127.0.0.1'),

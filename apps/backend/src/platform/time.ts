@@ -239,7 +239,16 @@ export function toUtcInstant(parts: ZonedParts, timeZone: string): Date {
   if (wallClockMs(timeZone, new Date(candidate)) === naive) {
     return new Date(candidate);
   }
-  return new Date(firstInstantReaching(timeZone, naive, candidate, guess));
+  // `candidate` and `guess` bracket the gap, but which of them is the earlier
+  // one depends on the hemisphere: a spring-forward *increases* the offset, so
+  // in Sydney the corrected candidate lands after the guess and in New York
+  // before it. Ordering them is what makes the bisection below well defined in
+  // both — without it, a Sydney event at 02:00 on the day the clocks go forward
+  // resolved to 01:00, an hour *early*, which for a deadline is the one error
+  // that must not happen.
+  const low = Math.min(candidate, guess);
+  const high = Math.max(candidate, guess);
+  return new Date(firstInstantReaching(timeZone, naive, low, high));
 }
 
 /**

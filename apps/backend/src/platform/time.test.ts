@@ -146,6 +146,27 @@ describe('local days', () => {
     ).toBe('2026-03-09T06:30:00.000Z');
   });
 
+  it('resolves a southern-hemisphere spring-forward gap forward too', () => {
+    // Found by the fast-check property in `domain/normalize/dates.property.test.ts`
+    // on a fresh seed, and it was a real bug: a spring-forward *increases* the
+    // offset, so the corrected candidate lands after the guess in Sydney and
+    // before it in New York. The bisection was given its bounds in the northern
+    // order and silently answered 01:00 AEST — an hour early — for 02:00 on the
+    // day Australia's clocks go forward.
+    const sydney = 'Australia/Sydney';
+    const instant = toUtcInstant({ year: 2025, month: 10, day: 5, hour: 2, minute: 0 }, sydney);
+    expect(instant.toISOString()).toBe('2025-10-04T16:00:00.000Z');
+    // The wall clock at the resolved instant is 03:00, never earlier than asked.
+    expect(offsetMinutesAt(sydney, instant)).toBe(660);
+    // A real 02:00 the day before and the day after is untouched.
+    expect(
+      toUtcInstant({ year: 2025, month: 10, day: 4, hour: 2, minute: 0 }, sydney).toISOString(),
+    ).toBe('2025-10-03T16:00:00.000Z');
+    expect(
+      toUtcInstant({ year: 2025, month: 10, day: 6, hour: 2, minute: 0 }, sydney).toISOString(),
+    ).toBe('2025-10-05T15:00:00.000Z');
+  });
+
   it('takes the earlier instant when a fall-back repeats a local reading', () => {
     // 01:30 on 1 November 2026 happens twice in New York; the first one wins.
     const instant = toUtcInstant({ year: 2026, month: 11, day: 1, hour: 1, minute: 30 }, NEW_YORK);

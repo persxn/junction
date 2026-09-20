@@ -25,10 +25,24 @@ import { SettingsStore } from './platform/settings.js';
 import { ShutdownRegistry } from './platform/shutdown.js';
 import { StartupError, toStartupFailure } from './platform/startup-error.js';
 import { openGazetteer, unavailableGazetteer } from './platform/gazetteer.js';
+import { systemClock } from './platform/time.js';
 import { Geocoder } from './modules/geo/geocoder.js';
-import { loadInstitutions, seedInstitutions } from './modules/geo/seed.js';
+import { loadInstitutions, loadSeedFile, seedInstitutions } from './modules/geo/seed.js';
 import { EventsRepository } from './modules/events/repository.js';
 import { EventsService } from './modules/events/service.js';
+import { SourceRecordsRepository } from './modules/sources/records.js';
+import { SourcesRepository } from './modules/sources/repository.js';
+import { SourcesService } from './modules/sources/service.js';
+import {
+  HttpCacheStore,
+  ScrapingHttp,
+  closeTransport,
+  undiciFetcher,
+} from './scraping/http/index.js';
+import { registerScrapeJobs } from './scraping/jobs.js';
+import { SnapshotStore } from './scraping/snapshots.js';
+import { SCRAPER_CONTACT_EMAIL } from './modules/org/settings.js';
+import { adapterRegistry } from './sources/registry.js';
 import './settings.js';
 
 /**
@@ -129,7 +143,11 @@ async function main(): Promise<void> {
         'geocoding will answer UNKNOWN until a gazetteer is built',
       );
     }
-    const seeded = seedInstitutions(db, audit);
+    const seeded = seedInstitutions(db, audit, {
+      ...(resources.institutionsSeedFile === undefined
+        ? {}
+        : { seed: loadSeedFile(resources.institutionsSeedFile) }),
+    });
     logger.info(seeded, 'institutions seeded');
     const geocoder = new Geocoder({ gazetteer, institutions: loadInstitutions(db) });
     const eventsService = new EventsService({
@@ -142,16 +160,62 @@ async function main(): Promise<void> {
     // routes). Constructed here so a startup failure surfaces at startup.
     void eventsService;
 
+    // Event ingestion (§7, rulings R58-R61). The transport is the only place a
+    // socket is opened, and it is injected here and nowhere else: every test
+    // passes a fake, which is what makes "no test opens an internet socket"
+    // something the wiring guarantees rather than something a reviewer checks.
+    const scrapingHttp = new ScrapingHttp({
+      fetcher: undiciFetcher,
+      logger,
+      cache: new HttpCacheStore(db),
+      appVersion: config.appVersion,
+      contactEmail: () => settings.get(SCRAPER_CONTACT_EMAIL),
+      // A10/R44: nothing is contacted before the wizard has finished.
+      setupComplete: () => !setup.isRequired(),
+      hasNetworkInterface,
+    });
+    shutdown.register('resources', 'scraping-transport', closeTransport);
+    const snapshots = new SnapshotStore({ config, logger });
+    const sourcesRepository = new SourcesRepository(db);
+    const sourceRecords = new SourceRecordsRepository(db);
+    const scrapeRuntime = {
+      http: scrapingHttp,
+      snapshots,
+      setupComplete: () => !setup.isRequired(),
+    };
+    const sourcesService = new SourcesService({
+      sources: sourcesRepository,
+      records: sourceRecords,
+      registry: adapterRegistry,
+      audit,
+      logger,
+      runtime: scrapeRuntime,
+    });
+
     // Constructed before the HTTP layer so its `resources` hook is registered
     // even if the process is asked to stop during startup (R14); started only
     // once we are listening. Jobs themselves are registered by the work packages
-    // that own them (scrapes in WP-11, deadlines in WP-20, backups in WP-25).
+    // that own them (deadlines in WP-22, backups in WP-28); the scrape jobs
+    // below are WP-09a's, and there are none until an adapter is registered.
     const scheduler = new Scheduler({
       store: new JobStore(db),
       logger,
       shutdown,
       isOnline: hasNetworkInterface,
     });
+    const scrapeJobs = registerScrapeJobs(scheduler, {
+      sources: sourcesService,
+      registry: adapterRegistry,
+      runtime: {
+        records: sourceRecords,
+        http: scrapingHttp,
+        snapshots,
+        clock: systemClock,
+        logger,
+      },
+      logger,
+    });
+    logger.info({ scrapeJobs, adapters: adapterRegistry.size }, 'scrape jobs registered');
 
     // The shutdown route needs the trigger, which needs the built app; one
     // mutable hop breaks the cycle without leaking process concerns into app.ts.
@@ -161,6 +225,7 @@ async function main(): Promise<void> {
       auth: () => auth,
       setup: () => setup,
       users: () => users,
+      sources: () => sourcesService,
       onShutdownRequested: () => {
         lifecycle.start('api');
       },

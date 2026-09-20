@@ -232,12 +232,18 @@ importers:
       pino:
         specifier: 10.3.1
         version: 10.3.1
+      robots-parser:
+        specifier: 3.0.1
+        version: 3.0.1
       sanitize-html:
         specifier: 2.17.7
         version: 2.17.7
       turndown:
         specifier: 7.2.4
         version: 7.2.4
+      undici:
+        specifier: 8.10.2
+        version: 8.10.2
       zod:
         specifier: 4.6.5
         version: 4.6.5
@@ -2659,6 +2665,10 @@ packages:
   rfdc@1.4.1:
     resolution: {integrity: sha512-q1b3N5QkRUWUl7iyylaaj3kOpIT0N2i9MqIEQXP73GVsN9cw3fdx8X63cEmWhJGi2PPCF23Ijp7ktmd39rawIA==}
 
+  robots-parser@3.0.1:
+    resolution: {integrity: sha512-s+pyvQeIKIZ0dx5iJiQk1tPLJAWln39+MI5jtM8wnyws+G5azk+dMnMX0qfbqNetKKNgcWWOdi0sfm+FbQbgdQ==}
+    engines: {node: '>=10.0.0'}
+
   rolldown@1.2.9:
     resolution: {integrity: sha512-hx/Pv0N1haXRb11qkfnK5MXB/iqr7i0yjWQqmO9uHqZpBgQSqzc8UsSnEpalsh+j1I8qQ2CkXAkJC8Br3dKSlg==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -4948,6 +4958,8 @@ snapshots:
   reusify@1.1.0: {}
 
   rfdc@1.4.1: {}
+
+  robots-parser@3.0.1: {}
 
   rolldown@1.2.9:
     dependencies:

@@ -6,19 +6,27 @@
   `define()`d by the owning module, `testing/golden.ts`, R12 error blocks, M0 debt cleared.
   **Open for the architect:** `jobs/schedule.ts` cannot move to `domain/` until
   `JobDefinition.nextDueAt` stops being typed against the Drizzle row (handoff §4).
-- **WP-08a DONE** (`docs/handoff/WP-08a.md`) — event schema, `EventCandidate`, normalization.
-  Contracts `events.ts` + `event-candidate.ts` (`.strict()` = R50 enforced by the schema); migration
-  **0004** creates all seven tables (R48), `source_record_id` carries no FK by design (R49);
-  `domain/normalize/` = 12 pure clock-injected modules (R52), **156 cases** + fast-check properties.
-  Deps: chrono-node 2.10.1, sanitize-html 2.17.7, turndown 7.2.4, +3 dev (fast-check 4.10.2).
-- **WP-08b DONE** (21 Sep 2026, `docs/handoff/WP-08b.md`) — gazetteer, institutions, geocoder,
-  distance, visibility policies. `pnpm gazetteer:build` → **588 362 places / 68.5 MB, not committed**
-  (R53); the committed 53 KB `mini.db` + TSV samples mean **verify passes with no gazetteer and no
-  network** (R54, checked by moving the real one aside). Geocoder walks R55's ladder and *drops a
-  rung* rather than guessing — "Hyderabad" with no country resolves to nothing. One haversine, shared
-  with SQL as `haversine_km` (R56). Policies are pure + settings-driven; the §19 criterion passes.
-  **116 institutions**, 11 CAMPUS / 105 CITY, every coordinate from GeoNames. **2132 tests.**
-  No new runtime dependency (the zip reader is 40 lines of `node:zlib`).
+- **WP-08a DONE** (`docs/handoff/WP-08a.md`) — event schema, `EventCandidate`, normalization. Contracts
+  `events.ts` + `event-candidate.ts` (`.strict()` = R50 enforced by the schema); migration **0004**
+  creates all seven tables (R48), `source_record_id` carries no FK by design (R49); `domain/normalize/`
+  = 12 pure clock-injected modules (R52), **156 cases** + fast-check properties. Deps: chrono-node
+  2.10.1, sanitize-html 2.17.7, turndown 7.2.4, +3 dev (fast-check 4.10.2).
+- **WP-08b DONE** (`docs/handoff/WP-08b.md`) — gazetteer, institutions, geocoder, distance, visibility
+  policies. `pnpm gazetteer:build` → **588 362 places / 68.5 MB, not committed** (R53); the committed
+  53 KB `mini.db` + TSV samples mean **verify passes with no gazetteer and no network** (R54). The
+  geocoder walks R55's ladder and *drops a rung* rather than guessing. One haversine, shared with SQL
+  as `haversine_km` (R56). Policies are pure + settings-driven; the §19 criterion passes.
+  **116 institutions**, 11 CAMPUS / 105 CITY, every coordinate from GeoNames.
+- **WP-09a DONE** (21 Sep 2026, `docs/handoff/WP-09a.md`) — PoliteHttpClient, compliance gate, source
+  seeds, scrape runs, jobs, snapshots. Migration **0005** = `sources`/`source_state`/`scrape_runs`/
+  `source_records`/`http_cache` (R58); **0006** seeds the five D-26 rows with fixed UUIDs. The gate is
+  one pure function both the client and the orchestrator call; `allowed_paths_json` entries are
+  **host-qualified** with `!` denials, which keeps `*.devfolio.co` off `api.devfolio.co`. All eight §19
+  failure modes are proved on a fake transport — **no test opens an internet socket**, and a grep test
+  keeps `undiciFetcher` referenced only by `main.ts`. `detail-refresh` writes no `scrape_runs` row.
+  **The registry ships empty, so no `scrape:` job exists yet** (WP-09b adds the first). **2370 tests.**
+  Deps: undici 8.10.2, robots-parser 3.0.1. Also fixed `smoke:bundle`, broken since WP-08b (the
+  institutions seed path; it now resolves through `platform/resources.ts`).
 - **Next: WP-09b.** WP-08b's two questions are still open (handoff §6): the gazetteer is 68.5 MB of
   which 95% are zero-population hamlets that also *harm* matching — §4.17 says "towns/cities" where
   R53 says feature class P; and GeoNames has almost no Indian campuses, so the INSTITUTION rung is
@@ -28,12 +36,12 @@
   **Q1 RESOLVED** — standalone single-professor deployment, §3.1 amended, accounts/RBAC/audit retained.
   ADR-0010/0011 amended (R33/R34/R37/R38, R41/R42); DECISIONS.md drift fixed (U1/U2, Q3).
 - **M1 released as a batch** (`docs/prompts/`, index `prompts/README.md`). Order: pre-M1 · WP-08a ·
-  **08b** · 09a · 09b · 10 · 11 · 12 · 13 · 14 · 15a · 15b · 16a · 16b (first three done).
-  Zip `docs/` and send it back when M1 closes. §21 R58–R66 stay reserved.
+  **08b** · **09a** · 09b · 10 · 11 · 12 · 13 · 14 · 15a · 15b · 16a · 16b (first four done).
+  Zip `docs/` and send it back when M1 closes. §21 R62–R66 stay reserved.
 - **New: WP-33** (`prompts/M4/WP-33.md`, milestone **M4.5**, just before M5) — appearance system
   (Catppuccin palettes, CALM/STANDARD/SHOWCASE effect tiers, motion & glow) + Insights. ADR-0019, R67–R69.
 - **Owner, 20 Sep 2026:** standalone app — one professor, one machine (§3.1). Security posture left unchanged; less security framing in prose from here on.
-- Spec: docs/ARCHITECTURE.md **v1.1.9 — ACCEPTED** (§21 R1–R61 + R67–R69; §19 = **48 WPs, 18 done, 30 remaining**).
+- Spec: docs/ARCHITECTURE.md **v1.1.9 — ACCEPTED** (§21 R1–R61 + R67–R69; §19 = **48 WPs, 19 done, 29 remaining**).
 - ADR-0001…0019 Accepted. Decisions register: docs/DECISIONS.md (D-01…D-33, Q1 RESOLVED, U1/U2 DONE).
 
 ## Environment facts
@@ -56,7 +64,7 @@
 
 ## Standard commands
 - `pnpm install --frozen-lockfile` · **`pnpm verify`** = `format:check && lint && typecheck && test`
-  (~90 s here with 2132 tests; budget is < 2 min per §4.15).
+  (~75 s here with 2371 tests; budget is < 2 min per §4.15).
   Individually: `pnpm format` / `format:check` (Prettier) · `pnpm lint` (ESLint) · `pnpm typecheck` (`tsc -b`) ·
   `pnpm test` (Vitest, single run) · `pnpm clean` (`tsc -b --clean`).
 - Git identity is repo-local: `Calamity <sohomaroy2005@gmail.com>`; `core.autocrlf=false`.
@@ -89,54 +97,45 @@
 
 ## Completed
 - **WP-07b — first-run wizard + user administration** (closes M0). R39 gate = 409 `SETUP_REQUIRED`
-  before the session hook (exempt: `/health`, `/setup/*`, `/system/client-log`, `/system/shutdown`);
+  before the session hook (exempt `/health`, `/setup/*`, `/system/client-log`, `/system/shutdown`);
   `modules/setup/` writes the whole organization in **one transaction** (R40); `modules/backup/keys.ts`
-  = `age-encryption` 0.3.1 X25519 identity wrapped to a scrypt passphrase (**work factor 18**) + the
-  recovery file (R42); recovery code hashed into `auth.recoveryCodeHash` (R41). `modules/users/` =
-  admin CRUD, last-admin protection. Shell `files.rs`: folder picked in this run only (R43).
+  = `age-encryption` 0.3.1 X25519 wrapped to a scrypt passphrase (wf 18) + the recovery file (R42),
+  recovery code hashed into `auth.recoveryCodeHash` (R41); `modules/users/` = admin CRUD (R43).
 - **WP-07a — auth core.** Contracts `permissions.ts` (R32) + `auth.ts`; migrations 0002/0003
   (organization + identity + `audit_log`, append-only triggers, roles); `modules/auth/` — Argon2id
   **m=128 MiB t=6 p=1, 322-409 ms here** (R17 addon path), opaque SHA-256 sessions (R33), the R34
-  ladder, `policy.assertCan`; audit hash chain + `verifyChain` (R35), session preHandler (R38), SSE
-  hub (R36); routes `/auth/*`, `/me`, `/stream`. UI: login/lock/forced-change, idle timer, rail by
-  permission, **token in memory only**.
+  ladder, `policy.assertCan`; audit hash chain + `verifyChain` (R35), session preHandler (R38), SSE hub
+  (R36); routes `/auth/*`, `/me`, `/stream`; UI login/lock/forced-change, **token in memory only**.
   **`/stream` must write its head through Fastify or the WebView loses the CORS headers.**
-- **WP-06 — UI foundation.** Tailwind v4 + `src/styles/tokens.css`: one `--ci-*` token set, both themes via
-  `@theme inline`, every text/surface pair **measured** at >= 4.5:1 in a test; light/dark/**system**.
-  `src/shell/backend.ts` is IPC only; the API client lives in `src/api/` (typed `ApiProblem`, generation
-  retry, R27's **2 s** timeout). TanStack Query + Router, app shell, cmdk palette, ErrorBoundary/toasts/
-  Skeleton/EmptyState, `<ConnectionScreen>` (R26). Vitest `node` + `jsdom`; axe clean on every route.
-- **WP-05b — tray, close-to-tray, single instance, autostart, LNA check.** Tray menu via `tray-icon` +
+- **WP-06 — UI foundation.** Tailwind v4 + `src/styles/tokens.css`: one `--ci-*` token set, both themes,
+  every text/surface pair **measured** at >= 4.5:1; light/dark/**system**. `src/shell/backend.ts` is IPC
+  only, the API client is `src/api/` (R27's 2 s timeout); TanStack Query + Router, cmdk palette, axe clean.
+- **WP-05b — tray, close-to-tray, single instance, autostart, LNA check.** `tray-icon` +
   `tauri-plugin-single-instance` 2.4.5 and `tauri-plugin-autostart` 2.5.1; preferences in
   `<dataDir>\shell-settings.json` (R28), close-to-tray on by default (D-14). `loopback.rs` serves the
-  prefix-locked `backend_get` — the **F9 fallback** (R27). **LNA measured**: with the flags on, the
+  prefix-locked `backend_get` — the **F9 fallback** (R27). **LNA measured**: with the flags on the
   loopback `fetch` *never settles*, so the fallback runs on a timeout.
-- **WP-05a — Tauri shell + backend supervision.** `apps/desktop` (React 19 + Vite 8, own tsconfig per R6),
-  `src-tauri` inside; `rust-toolchain.toml` pins 1.98.1 (R1). Rust: `backoff` (1→2→4…60 s, 5 crashes/10 min →
-  FAILED), `ready` (R7), `secret` (32 fresh bytes per spawn, A2), `paths` (A20 + `COMPINTEL_DATA_DIR`), `job`
-  (KILL_ON_JOB_CLOSE, F7/A17), `supervisor`, `commands`; `contracts/src/shell.ts` types the IPC (R24).
-- **WP-04c — DB-backed job runner.** Migration 0001 = `job_state`; `contracts/src/jobs.ts`.
-  `src/jobs/`: `outcome` (state machine), `store` (conditional-UPDATE claim = single-flight), `run`,
-  `scheduler` (30 s tick, catch-up, 2 scrape / 1 LLM / 4 general, stale lease → CRASHED,
-  SKIPPED_OFFLINE, manual `trigger()`); the arithmetic is `domain/scheduling.ts` since pre-M1.
-  **No jobs registered** — each WP adds its own.
-- **WP-04b — SQLite + Drizzle + migrations + data-dir lock + UUIDv7.** better-sqlite3 13.0.3, drizzle-orm
-  0.45.2 (drizzle-kit 0.31.10 dev). `ids.ts` UUIDv7 (RFC 9562, monotonic, clock-regression safe); `lock.ts`
-  `<dataDir>\backend.lock` (R15); `db.ts` R16 PRAGMAs + `quick_check` + checkpoint/close; `migrate.ts` journal
-  pending detection + `VACUUM INTO backups-local\pre-migration-*.db` (keep 5) → MIGRATION_FAILED on failure;
-  migration 0000 = `app_meta`; no `drizzle-kit push` (a test enforces it). Plus the WP-04a review fixes
-  R11–R18 and the bundle's `native\` + `migrations\` (R17).
-- **WP-04a — backend app factory**. zod config (flags > env > defaults), pino `multistream` → daily-rotating
-  file (keep 14) + deep redaction, `AppError` → RFC 9457 `problem+json` (R5) with `X-Request-Id`, Host +
-  `X-CompIntel-Client` (`timingSafeEqual`) + CORS (R9), `/health`, `/system/shutdown`, `buildApp()` +
-  `main.ts` (READY line, stdin EOF, 10 s hard timeout). Deps: fastify 5.12.5, pino 10.3.1, zod 4.6.5.
-- **WP-03a/03b — toolchain + monorepo scaffold.** VS Build Tools 2022, rustup stable-msvc, pnpm workspace,
-  engines `>=24.19 <25`, save-exact. **TypeScript 6.0.3**, not 7.x (typescript-eslint caps at `<6.1.0`).
-  Probe A: SQLite 3.53.4 WAL + FTS5 porter/trigram, `VACUUM INTO` 2.9 ms, argon2 prebuilds only.
+- **WP-05a — Tauri shell + backend supervision.** `apps/desktop` (React 19 + Vite 8, own tsconfig, R6),
+  `src-tauri` inside, toolchain pinned 1.98.1 (R1); Rust `backoff`/`ready`/`secret`/`paths`/`job`/
+  `supervisor`/`commands` (R7, A2, A20, F7/A17); `contracts/src/shell.ts` types the IPC (R24).
+- **WP-04c — DB-backed job runner.** Migration 0001 = `job_state`; `contracts/src/jobs.ts`. `src/jobs/`:
+  `outcome`, `store` (conditional-UPDATE claim = single-flight), `run`, `scheduler` (30 s tick,
+  catch-up, 2 scrape / 1 LLM / 4 general, stale lease → CRASHED, SKIPPED_OFFLINE, manual `trigger()`);
+  the arithmetic is `domain/scheduling.ts` since pre-M1. **WP-09a registered the first jobs.**
+- **WP-04b — SQLite + Drizzle + migrations + data-dir lock + UUIDv7.** better-sqlite3 13.0.3,
+  drizzle-orm 0.45.2. `ids.ts` UUIDv7 (RFC 9562, monotonic); `lock.ts` (R15); `db.ts` R16 PRAGMAs +
+  `quick_check`; `migrate.ts` + `VACUUM INTO` pre-migration copies (keep 5); 0000 = `app_meta`.
+- **WP-04a — backend app factory**. zod config (flags > env > defaults), pino `multistream` →
+  daily-rotating file (keep 14) + deep redaction, `AppError` → RFC 9457 `problem+json` (R5) with
+  `X-Request-Id`, Host + `X-CompIntel-Client` (`timingSafeEqual`) + CORS (R9), `/health`,
+  `/system/shutdown`, `buildApp()` + `main.ts` (READY line, stdin EOF, 10 s hard timeout).
+- **WP-03a/03b — toolchain + monorepo scaffold.** VS Build Tools 2022, rustup stable-msvc, pnpm
+  workspace, engines `>=24.19 <25`, save-exact. **TypeScript 6.0.3**, not 7.x (typescript-eslint caps
+  at `<6.1.0`). Probe A: SQLite 3.53.4 WAL + FTS5, `VACUUM INTO` 2.9 ms, argon2 prebuilds only.
 - **WP-00…WP-02b — recon, spec, ADRs, source feasibility** (d159c78…ef8bd55; review → v1.1 in d781885).
-  **Source matrix** (`docs/research/source-feasibility.md`): CTFtime/CLIST/Devfolio APPROVED_WITH_LIMITS
-  (CLIST needs a key), **Devpost and Unstop MANUAL_IMPORT_ONLY**, 117 college sites PENDING_REVIEW;
-  fixtures + 13 robots.txt under `docs/research/`.
+  **Source matrix** (`docs/research/source-feasibility.md`, its verdicts bind): CTFtime/CLIST/Devfolio
+  APPROVED_WITH_LIMITS, **Devpost and Unstop MANUAL_IMPORT_ONLY**, 117 college sites PENDING_REVIEW;
+  fixtures + 13 robots.txt under `docs/research/` — WP-09a's seeds are asserted against them.
 ## Open issues
 All WP-01/WP-02 findings are ruled on in ARCHITECTURE.md §21. Still open:
 1. **U3** — Unstop Terms unread (blocks WP-13). **U4** — CLIST API key (blocks live WP-11 runs).

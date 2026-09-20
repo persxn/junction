@@ -7,6 +7,7 @@ import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod
 import type { AuthService } from './modules/auth/service.js';
 import { registerSetupGate } from './modules/setup/gate.js';
 import type { SetupService } from './modules/setup/service.js';
+import type { SourcesService } from './modules/sources/service.js';
 import type { UsersService } from './modules/users/service.js';
 import { registerAuthentication } from './platform/authn.js';
 import type { Config } from './platform/config.js';
@@ -20,6 +21,7 @@ import { authRoutes } from './routes/auth.js';
 import { healthRoutes } from './routes/health.js';
 import { meRoutes } from './routes/me.js';
 import { setupRoutes } from './routes/setup.js';
+import { sourcesRoutes } from './routes/sources.js';
 import { streamRoutes } from './routes/stream.js';
 import { systemRoutes } from './routes/system.js';
 import { systemClock, type Clock } from './platform/time.js';
@@ -55,6 +57,8 @@ export interface BuildAppOptions {
   /** Resolved per request for the same reason as `auth`; drives the R39 gate. */
   readonly setup?: () => SetupService | undefined;
   readonly users?: () => UsersService | undefined;
+  /** Resolved per request; absent on a backend built without a database. */
+  readonly sources?: () => SourcesService | undefined;
   /** Shared so jobs and services can publish; one hub per process (R36). */
   readonly streamHub?: StreamHub;
   /** Injected in tests so a heartbeat does not take fifteen real seconds. */
@@ -105,6 +109,7 @@ export function buildApp(
   const auth = options.auth ?? ((): AuthService | undefined => undefined);
   const setup = options.setup ?? ((): SetupService | undefined => undefined);
   const users = options.users ?? ((): UsersService | undefined => undefined);
+  const sources = options.sources ?? ((): SourcesService | undefined => undefined);
 
   // Order is hook order, and this order is the point: a request on a fresh
   // install is refused for being unconfigured (R39) before it is refused for
@@ -133,6 +138,7 @@ export function buildApp(
   void server.register(meRoutes({ auth }), { prefix: API_PREFIX });
   void server.register(setupRoutes({ setup }), { prefix: API_PREFIX });
   void server.register(adminUsersRoutes({ users }), { prefix: API_PREFIX });
+  void server.register(sourcesRoutes({ sources }), { prefix: API_PREFIX });
   void server.register(
     streamRoutes({
       hub: streamHub,

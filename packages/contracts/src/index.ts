@@ -10,4 +10,5 @@ export * from './permissions.js';
 export * from './policy.js';
 export * from './setup.js';
 export * from './shell.js';
+export * from './sources.js';
 export * from './system.js';
