@@ -2,7 +2,13 @@ import { HealthResponse } from '@compintel/contracts';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { API_PREFIX } from '../app.js';
-import { authedFetch, startTestServer, testConfig, type TestServer } from '../testing/harness.js';
+import {
+  authedFetch,
+  rawRequestWithBody,
+  startTestServer,
+  testConfig,
+  type TestServer,
+} from '../testing/harness.js';
 import { fixedClock } from '../platform/time.js';
 
 let server: TestServer | undefined;
@@ -107,12 +113,19 @@ describe('POST /system/shutdown', () => {
 describe('body limit', () => {
   it('refuses a body larger than 1 MB', async () => {
     server = await startTestServer({ config: testConfig() });
-    const response = await authedFetch(server, `${API_PREFIX}/system/shutdown`, {
+    // Over node:http, not fetch: Fastify answers and hangs up while the body is
+    // still being written, and undici reports that as ECONNRESET rather than as
+    // the 413 it already has.
+    const response = await rawRequestWithBody(server, {
+      path: `${API_PREFIX}/system/shutdown`,
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CompIntel-Client': server.config.clientSecret,
+      },
       body: JSON.stringify({ padding: 'x'.repeat(1024 * 1024 + 16) }),
     });
     expect(response.status).toBe(413);
-    expect(response.headers.get('content-type')).toContain('application/problem+json');
+    expect(response.headers['content-type']).toContain('application/problem+json');
   });
 });

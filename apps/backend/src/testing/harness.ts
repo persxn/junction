@@ -179,6 +179,59 @@ export function rawRequest(
 }
 
 /**
+ * A request whose body is written after the headers, over `node:http`.
+ *
+ * `fetch` cannot be used for a body the server will refuse mid-upload: Fastify
+ * answers 413 and hangs up while the client is still writing, and undici turns
+ * that into a rejected promise with `ECONNRESET` instead of handing over the
+ * response it already received. `node:http` emits `response` either way, so the
+ * refusal can actually be asserted on rather than raced against.
+ */
+export function rawRequestWithBody(
+  server: TestServer,
+  options: { path: string; method?: string; headers?: Record<string, string>; body: string },
+): Promise<RawResponse> {
+  const url = new URL(server.baseUrl);
+  return new Promise((resolve, reject) => {
+    const request = httpRequest(
+      {
+        host: url.hostname,
+        port: url.port,
+        path: options.path,
+        method: options.method ?? 'POST',
+        headers: {
+          'Content-Length': Buffer.byteLength(options.body).toString(),
+          ...(options.headers ?? {}),
+        },
+      },
+      (response) => {
+        let body = '';
+        response.setEncoding('utf8');
+        response.on('data', (chunk: string) => {
+          body += chunk;
+        });
+        const finish = (): void => {
+          resolve({ status: response.statusCode ?? 0, headers: response.headers, body });
+        };
+        response.on('end', finish);
+        // The server may destroy the socket the moment it has answered; the
+        // status line and headers are already in hand, so that is not an error.
+        response.on('aborted', finish);
+        response.on('error', finish);
+      },
+    );
+    // Likewise for the write side: an EPIPE here means the refusal arrived
+    // before we finished sending, which is exactly the behaviour under test.
+    request.on('error', (error: NodeJS.ErrnoException) => {
+      if (error.code !== 'ECONNRESET' && error.code !== 'EPIPE') {
+        reject(error);
+      }
+    });
+    request.end(options.body);
+  });
+}
+
+/**
  * `fetch` with both headers the UI always sends: the per-spawn client secret and
  * the bearer token (ADR-0017). The token is {@link TEST_SESSION_TOKEN}, which
  * only {@link stubAuth} accepts.

@@ -1,4 +1,4 @@
-import { mkdirSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
@@ -66,6 +66,36 @@ describe('checkBackupPath (ruling R43)', () => {
       reason: 'INSIDE_DATA_DIR',
     });
     expect(checkBackupPath(inside, { dataDir })).toMatchObject({
+      ok: false,
+      reason: 'INSIDE_DATA_DIR',
+    });
+  });
+
+  /**
+   * Both reasons are true of a folder that does not exist inside the data
+   * directory, and only one of them ends the conversation: told "MISSING", a
+   * user creates the folder and is refused again.
+   */
+  it('says INSIDE_DATA_DIR rather than MISSING for a folder that is both', () => {
+    const dataDir = tempDir('paths-data');
+    const missingInside = path.join(dataDir, 'not-created-yet');
+
+    expect(existsSync(missingInside)).toBe(false);
+    expect(checkBackupPath(missingInside, { dataDir })).toMatchObject({
+      ok: false,
+      reason: 'INSIDE_DATA_DIR',
+    });
+
+    // The other order still holds: outside the data directory, missing is missing.
+    const missingOutside = path.join(tempDir('paths-elsewhere'), 'not-created-yet');
+    expect(checkBackupPath(missingOutside, { dataDir })).toMatchObject({
+      ok: false,
+      reason: 'MISSING',
+    });
+
+    // And creating it changes nothing about the first answer.
+    mkdirSync(missingInside, { recursive: true });
+    expect(checkBackupPath(missingInside, { dataDir })).toMatchObject({
       ok: false,
       reason: 'INSIDE_DATA_DIR',
     });

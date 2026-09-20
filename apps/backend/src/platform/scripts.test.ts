@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -65,6 +65,23 @@ describe('package scripts', () => {
         .map(([script]) => `${manifest.name}: ${script}`),
     );
     expect(offenders).toStrictEqual([]);
+  });
+
+  /**
+   * WP-07b's wizard creates the first administrator, so the stopgap that used to
+   * do it is gone. Leaving the script behind would leave a second, unaudited way
+   * to mint an account with a password printed to a terminal.
+   */
+  it('no longer offers seed:dev, which the setup wizard replaced', () => {
+    const offenders = manifests().flatMap((manifest) =>
+      Object.entries(manifest.scripts)
+        .filter(([script, command]) => script === 'seed:dev' || command.includes('seed-dev-user'))
+        .map(([script]) => `${manifest.name}: ${script}`),
+    );
+    expect(offenders).toStrictEqual([]);
+    expect(
+      existsSync(path.join(REPO_ROOT, 'apps', 'backend', 'src', 'tools', 'seed-dev-user.ts')),
+    ).toBe(false);
   });
 
   it('does offer the generate scripts the workflow needs', () => {

@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 import { HealthResponse } from '@compintel/contracts';
 
-import { devRoot, removeTempDir } from '../testing/temp.js';
+import { devRoot, removeDirectory } from '../testing/temp.js';
 import { baseUrlOf, spawnBackend, type BackendProcess } from '../testing/backend-process.js';
 
 const DIST = fileURLToPath(new URL('../../dist-bundle/', import.meta.url));
@@ -109,7 +109,7 @@ async function runOnce(label: string): Promise<BackendProcess> {
   return backend;
 }
 
-removeTempDir(STAGE);
+removeDirectory(STAGE);
 mkdirSync(STAGE, { recursive: true });
 mkdirSync(BACKUP_DIR, { recursive: true });
 
@@ -238,8 +238,13 @@ try {
   }
   process.stdout.write('smoke:bundle PASSED\n');
 } finally {
-  // Best-effort, and deliberately not `rmSync`: Windows holds the SQLite and
-  // addon handles for a moment after the child exits, and an EPERM here used to
-  // replace the real failure with a cleanup error.
-  removeTempDir(STAGE);
+  // Windows holds the SQLite and addon handles for a moment after the child
+  // exits, so this retries to a deadline rather than failing on the first EPERM
+  // — a cleanup error here used to replace the real failure. It still never
+  // throws: a staged copy left behind is worth saying out loud, not worth
+  // turning a passing smoke run into a failing one.
+  if (!removeDirectory(STAGE)) {
+    process.stdout.write(`  note  could not remove ${STAGE}; the next run replaces it
+`);
+  }
 }

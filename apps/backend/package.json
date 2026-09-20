@@ -19,7 +19,6 @@
     "db:generate:custom": "drizzle-kit generate --custom",
     "argon:cost": "tsx src/tools/argon-cost.ts",
     "bundle": "tsx src/tools/bundle.ts",
-    "seed:dev": "tsx src/tools/seed-dev-user.ts --dev",
     "smoke:bundle": "pnpm bundle && tsx src/tools/smoke-bundle.ts"
   },
   "dependencies": {

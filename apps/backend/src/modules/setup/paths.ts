@@ -7,8 +7,9 @@ import type { PathCheckReason, PathCheckResult } from '@compintel/contracts';
 /**
  * Is this folder usable as a backup destination (ruling R43)?
  *
- * Four questions, in the order that makes the answer useful: does it exist, is
- * it a folder, can we actually write in it, and is there room. The writability
+ * The questions are asked in the order that makes the answer useful: is it
+ * somewhere a backup may go at all, does it exist, is it a folder, can we
+ * actually write in it, and is there room. The writability
  * check is a real write and delete rather than `fs.access`, because on Windows
  * `access` reports the DACL and not what the filesystem will do — a network
  * share, a read-only removable drive and a folder under Controlled Folder
@@ -79,6 +80,15 @@ function canWrite(directory: string): boolean {
 export function checkBackupPath(candidate: string, options: PathCheckOptions): PathCheckResult {
   const resolvedPath = path.resolve(candidate);
 
+  // `INSIDE_DATA_DIR` is decided before the folder is looked for, and that order
+  // matters for the one case a user actually hits: typing a path *inside* the
+  // data directory that does not exist yet. "That folder is missing" invites
+  // them to create it and try again, and the answer will still be no. "A backup
+  // cannot live inside the data directory" is the reason that ends the loop.
+  if (isInside(resolvedPath, options.dataDir)) {
+    return refuse(resolvedPath, 'INSIDE_DATA_DIR');
+  }
+
   let stats;
   try {
     stats = statSync(resolvedPath);
@@ -87,9 +97,6 @@ export function checkBackupPath(candidate: string, options: PathCheckOptions): P
   }
   if (!stats.isDirectory()) {
     return refuse(resolvedPath, 'NOT_A_DIRECTORY');
-  }
-  if (isInside(resolvedPath, options.dataDir)) {
-    return refuse(resolvedPath, 'INSIDE_DATA_DIR');
   }
   if (!canWrite(resolvedPath)) {
     return refuse(resolvedPath, 'NOT_WRITABLE');
