@@ -1,6 +1,6 @@
 # Competition Intel — Architecture Specification
 
-**Version:** 1.1.2 · **Date:** 20 Sep 2026 · **Status:** ACCEPTED — implementation baseline (amended after WP-00…WP-02b)
+**Version:** 1.1.3 · **Date:** 20 Sep 2026 · **Status:** ACCEPTED — implementation baseline (amended after WP-00…WP-02b)
 **Author:** Architect (Claude, Cowork session) · **Implementer:** Claude Code (worker session)
 
 > **How to use this document.** This is the implementation source of truth. The worker must not
@@ -18,6 +18,7 @@
 | **1.1** | 20 Sep 2026 | Folded in the WP-01 engineering review and WP-02 source research: new decisions D-26…D-33; user actions U1–U6 (§2.1); SSE over authenticated fetch streams; per-spawn client secret + header names; stdin-EOF orphan detection; Job Object owned by the shell; packaged layout; custom SQL migrations for FTS5/triggers; plain local pre-migration copies; robots Crawl-delay precedence; per-source cadence; PII stripping at the adapter boundary; URL-import restrictions; typo tolerance redefined; EventQuery date/unknown/distance semantics; progress and permission clarifications; roadmap split into smaller WPs and re-scoped (Devpost adapter removed); ADR-0016…0018; rulings index (§21). |
 | 1.1.1 | 20 Sep 2026 | Rulings R1–R10 after WP-03a/03b (see §21). |
 | 1.1.2 | 20 Sep 2026 | Rulings R11–R18 after WP-04a (see §21). |
+| 1.1.3 | 20 Sep 2026 | Rulings R19–R31 after WP-04c/05a/05b (see §21). |
 
 ---
 
@@ -1547,6 +1548,19 @@ Rows R1… are later rulings; they take precedence over the section text until t
 | R17 Native modules in the bundle | Loaded from explicit paths under <bundle>
 ative\ (better-sqlite3 `nativeBinding`); the bundle must run from a folder with no node_modules. | §4.13 |
 | R18 Auth vs CORS | Host/secret rejections stay CORS-less on purpose; session auth (WP-07a) runs after CORS (preHandler) so the UI can read 401 bodies. | ADR-0017 |
+| R19 Rust checks | `cargo test` / `clippy -D warnings` / `fmt --check` stay OUTSIDE `pnpm verify` (cargo is not on every contributor's PATH and §4.15 budgets verify at < 2 min). Any WP touching apps/desktop/src-tauri must run all three and report the output. | §4.15 |
+| R20 Job observability | No `/api/v1/system/jobs` yet and `/health` is unchanged; `job_state` is surfaced by WP-30's System health screen. `JobSnapshot` stays in contracts for it. | §4.9, WP-30 |
+| R21 Job state semantics | A reclaimed lease (`CRASHED`) counts as a failure, so a job that kills the backend backs off instead of crash-looping. `job_state.kind` follows the code on every start; a class change is never a migration. | §4.9, §6.2 |
+| R22 Job owners | `scrape:<source>` + `detail-refresh` → WP-09a · `deadline-evaluator` → WP-22 · `saved-search-evaluator` → WP-24 · `backup:daily` → WP-28 · `cleanup` + `health-snapshot` → WP-30. Each WP registers its own job; WP-04c deliberately ships none. | §4.9, §19 |
+| R23 Offline detection | The interface-table check (`os.networkInterfaces`, no network call) is the MVP answer. A real reachability probe belongs to WP-09a's PoliteHttpClient, honouring that source's crawl-delay. | §4.9, D-23 |
+| R24 Shell IPC DTOs | `packages/contracts/src/shell.ts` is their home, beside the API DTOs: they are a contract between two processes in this repo and the UI validates every payload Rust sends. | §3.4 |
+| R25 Shell logging | The shell keeps no log of its own before WP-30. Until then "Copy diagnostics" must include `backend_status()` and the shell settings verbatim. | §4.14, WP-30 |
+| R26 Terminal startup errors | A named startup error (DATA_DIR_LOCKED, DB_CORRUPT, MIGRATION_FAILED) is terminal: no backoff loop, message shown verbatim, Retry is the only way out. The UI gives DATA_DIR_LOCKED and DB_CORRUPT their own copy. | §3.2 |
+| R27 F9 fallback | The shell's read-only, prefix-locked `backend_get` is the Local Network Access fallback (not tauri-plugin-http). Widening it — another method, another path prefix — needs a ruling. WP-07a extends it to forward `Authorization` so authenticated GETs also work. The direct-fetch timeout drops to **2 s**. | §3.2, F9 |
+| R28 Shell preferences | Close-to-tray and autostart stay in `<dataDir>\shell-settings.json`; the WP-07b wizard does not move them into the `settings` table. Autostart stays per-Windows-user (HKCU Run); per-machine is out of scope. | §4.1, D-14 |
+| R29 Tray state | A FAILED badge, a tooltip phase and the §16.1 freshness line land with WP-30's health surface. The tray stays static until then. | §16.1, WP-30 |
+| R30 SSE has no proxy | The shell proxy is request/response only, so SSE has no fallback transport. WP-07a's client must degrade to polling with a visible "live updates unavailable" note, never a hard error. | ADR-0017, F9 |
+| R31 SOURCE_UNREACHABLE | Keeps its name: `SOURCE_` is its domain prefix, so R12 is satisfied. | §4.4, R12 |
 
 ---
 

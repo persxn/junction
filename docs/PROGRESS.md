@@ -1,10 +1,10 @@
 # Progress — newest first, keep < 150 lines
 
 ## Current
-- **Next WP: WP-06** (UI foundation: tokens, app shell, Ctrl+K stub, API client, error boundary, toasts).
+- **Next WP: WP-07a** (accounts, login, sessions, permissions, SSE client).
 - **Architect is offline** (Sep 2026): this session acts as master + worker. Every architectural call is
   recorded in the handoff reports under "Minor decisions"/"Questions" for review when they are back.
-- Spec: docs/ARCHITECTURE.md **v1.1.2 — ACCEPTED** (changelog at the top; rulings index §21 incl. R1–R18; roadmap §19 = 46 WPs, 11 done, 35 remaining).
+- Spec: docs/ARCHITECTURE.md **v1.1.3 — ACCEPTED** (changelog at the top; rulings index §21 incl. R1–R31; roadmap §19 = 46 WPs, 12 done, 34 remaining).
 - ADR-0001…0018 Accepted (several amended). Decisions register: docs/DECISIONS.md (D-01…D-33, Q1…Q13, user actions U1…U6).
 
 ## Environment facts
