@@ -6,28 +6,34 @@
   `define()`d by the owning module, `testing/golden.ts`, R12 error blocks, M0 debt cleared.
   **Open for the architect:** `jobs/schedule.ts` cannot move to `domain/` until
   `JobDefinition.nextDueAt` stops being typed against the Drizzle row (handoff §4).
-- **WP-08a DONE** (21 Sep 2026, `docs/handoff/WP-08a.md`) — event schema, `EventCandidate`, the
-  normalization library. Contracts `events.ts` + `event-candidate.ts` (`.strict()` = R50 enforced by
-  the schema, not by discipline); migration **0004** creates all seven tables (R48), `source_record_id`
-  carries no FK and a test records that as deliberate (R49); `domain/normalize/` = 12 pure,
-  clock-injected modules (R52) behind `normalizeCandidate()`; **156 table-driven cases** + fast-check
-  properties over ten timezones. Three bugs the tests found: a comma read as a fee amount (a 500-rupee
-  event shown free), `Date.parse` resolving naive timestamps in the *host* zone, and Turndown escaping
-  a source's own Markdown. **2038 tests** (was 1790). New deps: chrono-node 2.10.1, sanitize-html
-  2.17.7, turndown 7.2.4, +3 dev (@types x2, fast-check 4.10.2).
-- **Next: WP-08b** — its STEP 0 is already recorded (spec **v1.1.8**, R53–R57); start at BUILD.
-  Q12 stays OPEN in both ARCHITECTURE.md §2 and DECISIONS.md.
+- **WP-08a DONE** (`docs/handoff/WP-08a.md`) — event schema, `EventCandidate`, normalization.
+  Contracts `events.ts` + `event-candidate.ts` (`.strict()` = R50 enforced by the schema); migration
+  **0004** creates all seven tables (R48), `source_record_id` carries no FK by design (R49);
+  `domain/normalize/` = 12 pure clock-injected modules (R52), **156 cases** + fast-check properties.
+  Deps: chrono-node 2.10.1, sanitize-html 2.17.7, turndown 7.2.4, +3 dev (fast-check 4.10.2).
+- **WP-08b DONE** (21 Sep 2026, `docs/handoff/WP-08b.md`) — gazetteer, institutions, geocoder,
+  distance, visibility policies. `pnpm gazetteer:build` → **588 362 places / 68.5 MB, not committed**
+  (R53); the committed 53 KB `mini.db` + TSV samples mean **verify passes with no gazetteer and no
+  network** (R54, checked by moving the real one aside). Geocoder walks R55's ladder and *drops a
+  rung* rather than guessing — "Hyderabad" with no country resolves to nothing. One haversine, shared
+  with SQL as `haversine_km` (R56). Policies are pure + settings-driven; the §19 criterion passes.
+  **116 institutions**, 11 CAMPUS / 105 CITY, every coordinate from GeoNames. **2132 tests.**
+  No new runtime dependency (the zip reader is 40 lines of `node:zlib`).
+- **Next: WP-09a.** Two questions for the architect first (handoff §6): the gazetteer is 68.5 MB of
+  which 95% are zero-population hamlets that also *harm* matching — §4.17 says "towns/cities" where
+  R53 says feature class P; and GeoNames has almost no Indian campuses, so the INSTITUTION rung is
+  mostly unreachable. Q12 stays OPEN in ARCHITECTURE.md §2 and DECISIONS.md.
 - **Architect reviewed M0** (20 Sep 2026, `docs/handoff/M0-review.md`): R1–R44 accepted as written, plus
   R45–R47 (recovery-code sign-in → WP-30, Argon2id calibration deferred, `/system/shutdown` exemption).
   **Q1 RESOLVED** — standalone single-professor deployment, §3.1 amended, accounts/RBAC/audit retained.
   ADR-0010/0011 amended (R33/R34/R37/R38, R41/R42); DECISIONS.md drift fixed (U1/U2, Q3).
-- **M1 released as a batch**; `docs/prompts/` is organized by milestone (index: `prompts/README.md`).
-  Order: pre-M1 · **WP-08a** · 08b · 09a · 09b · 10 · 11 · 12 · 13 · 14 · 15a · 15b · 16a · 16b
-  (first two done). Zip `docs/` and send it back when M1 closes. §21 R58–R66 stay reserved.
+- **M1 released as a batch** (`docs/prompts/`, index `prompts/README.md`). Order: pre-M1 · WP-08a ·
+  **08b** · 09a · 09b · 10 · 11 · 12 · 13 · 14 · 15a · 15b · 16a · 16b (first three done).
+  Zip `docs/` and send it back when M1 closes. §21 R58–R66 stay reserved.
 - **New: WP-33** (`prompts/M4/WP-33.md`, milestone **M4.5**, just before M5) — appearance system
   (Catppuccin palettes, CALM/STANDARD/SHOWCASE effect tiers, motion & glow) + Insights. ADR-0019, R67–R69.
-- **Owner, 20 Sep 2026:** standalone app — one professor, one machine (§3.1). Security posture reviewed and **left unchanged**; less security framing in prose from here on.
-- Spec: docs/ARCHITECTURE.md **v1.1.8 — ACCEPTED** (§21 R1–R57 + R67–R69; §19 = **48 WPs, 17 done, 31 remaining**).
+- **Owner, 20 Sep 2026:** standalone app — one professor, one machine (§3.1). Security posture left unchanged; less security framing in prose from here on.
+- Spec: docs/ARCHITECTURE.md **v1.1.8 — ACCEPTED** (§21 R1–R57 + R67–R69; §19 = **48 WPs, 18 done, 30 remaining**).
 - ADR-0001…0019 Accepted. Decisions register: docs/DECISIONS.md (D-01…D-33, Q1 RESOLVED, U1/U2 DONE).
 
 ## Environment facts
@@ -41,17 +47,16 @@
   MSVC **14.44.35207** + **Windows 11 SDK 10.0.26100.0** · tauri-cli **2.11.4** · create-tauri-app 4.7.4 ·
   python 3.13.15 · git 2.55.0.windows.3 · winget 1.29.290 · WebView2 runtime 153.0.4234.32.
   **Still absent (do not install without approval):** dotnet, pwsh 7, llama.cpp, any model.
-- **SAC / long paths / encryption:** Smart App Control **OFF** (`VerifiedAndReputablePolicyState=0`, U1 done) ·
-  OS **`LongPathsEnabled=1`** (U2 done) + repo `core.longpaths=true` · **no BitLocker** → synthetic data only (D-33) ·
-  Defender real-time ON, tamper protection ON, **no exclusions** (U6 not taken). No CodeIntegrity or Defender
-  block events during the toolchain install or the first unsigned Tauri build.
+- **SAC / long paths / encryption:** Smart App Control **OFF** (U1 done) · OS `LongPathsEnabled=1`
+  (U2) + repo `core.longpaths=true` · **no BitLocker** → synthetic data only (D-33) · Defender
+  real-time ON, **no exclusions** (U6 not taken); no CodeIntegrity or Defender blocks so far.
 - **Disk cost of the toolchain:** VS Build Tools ≈ 6.7 GB · `~\.rustup` 1.28 GB · `~\.cargo` 0.5 GB · a *debug* Tauri `target/` ≈ **3.7 GB** — keep `target/` out of backups.
 - **Network / proxy:** direct, no proxy. npm/crates.io/GitHub/PyPI/HuggingFace reachable.
 - **Repo location:** C:\Users\Calamity\Desktop\competition-intel — **not** inside OneDrive. Dev data belongs in `%LOCALAPPDATA%\CompIntel-dev`, never in the repo.
 
 ## Standard commands
 - `pnpm install --frozen-lockfile` · **`pnpm verify`** = `format:check && lint && typecheck && test`
-  (~60 s here with 1790 tests; budget is < 2 min per §4.15).
+  (~90 s here with 2132 tests; budget is < 2 min per §4.15).
   Individually: `pnpm format` / `format:check` (Prettier) · `pnpm lint` (ESLint) · `pnpm typecheck` (`tsc -b`) ·
   `pnpm test` (Vitest, single run) · `pnpm clean` (`tsc -b --clean`).
 - Git identity is repo-local: `Calamity <sohomaroy2005@gmail.com>`; `core.autocrlf=false`.
@@ -60,25 +65,23 @@
 - `corepack enable` **fails without admin** (EPERM on `C:\Program Files\nodejs\pnpx`). pnpm is installed
   globally via `npm i -g pnpm@12.4.2`; `packageManager` in package.json pins it regardless.
 - **Test/dev data lives in `%LOCALAPPDATA%\CompIntel-dev\test-tmp`** (`src/testing/temp.ts`), never in
-  the system temp folder: Windows holds SQLite handles briefly after close, so cleanup must be retrying.
+  the system temp folder: Windows holds SQLite handles briefly after close, so cleanup retries.
 - `pnpm --filter @compintel/backend db:generate` (+ `db:generate:custom` for FTS5/triggers).
   **`drizzle-kit push` is banned** and `scripts.test.ts` fails if any manifest adds it.
-  **Run `pnpm typecheck` first** whenever a schema file imports `@compintel/contracts`: drizzle-kit loads
-  the package's built `dist`, so a stale build makes CHECK-constraint helpers read `undefined`.
-- Backend: `pnpm --filter @compintel/backend dev` (tsx watch, `--dev`) · `start` · `bundle` (esbuild → `dist-bundle/`)
-  · `smoke:bundle`. Root `pnpm audit:deps` (network, R4) is **outside** verify.
-- **Windows has no POSIX signals**: `child.kill('SIGTERM')` hard-terminates. The shell's real lifeline is
-  stdin EOF (`--stdin-lifeline`) plus the Job Object; `fetch()` also silently drops a caller-set `Host` header,
-  so Host-allowlist tests must use `node:http`.
-- Desktop: `pnpm --filter @compintel/desktop tauri:dev` (Vite on **localhost:5173**, strictPort - the CORS
-  allowlist has that exact origin) · `build` (tsc + vite) · `tauri:build` (= `tauri build --debug
-  --no-bundle`) · `test:rust` · `lint:rust` (clippy `-D warnings`) · `format:rust:check`. **The Rust checks
-  are outside `pnpm verify`** (R19); run all three in any WP that touches `src-tauri`. A dev or built run
-  needs `pnpm --filter @compintel/backend bundle` first.
+  **Run `pnpm typecheck` first** whenever a schema file imports `@compintel/contracts`: drizzle-kit
+  loads the package's built `dist`, so a stale build makes CHECK helpers read `undefined`.
+- **`pnpm gazetteer:build`** writes `%LOCALAPPDATA%\CompIntel-dev\gazetteer\gazetteer.db` (68 MB, not
+  committed, needs network). `--mini` rebuilds the committed 53 KB test fixture with no network.
+- **Windows has no POSIX signals**: `child.kill('SIGTERM')` hard-terminates; the shell's lifeline is
+  stdin EOF (`--stdin-lifeline`) plus the Job Object. `fetch()` silently drops a caller-set `Host`
+  header, so Host-allowlist tests must use `node:http`.
+- Desktop: `tauri:dev` (Vite on **localhost:5173**, strictPort — the CORS allowlist has that exact
+  origin) · `build` · `tauri:build` (= `tauri build --debug --no-bundle`) · `test:rust` ·
+  `lint:rust` · `format:rust:check`. **The Rust checks are outside `pnpm verify`** (R19); run all
+  three in any WP touching `src-tauri`. A dev or built run needs `backend bundle` first.
 - **Vitest runs two projects** (root `vitest.config.ts`): `node` for everything, `jsdom` for
-  `apps/desktop/**` (setup `apps/desktop/src/testing/setup.ts`: jest-dom, the axe matcher, matchMedia).
-  `pnpm vitest run --project desktop` runs only the UI tests. **vitest does not process CSS**, so a
-  `?raw` import of a stylesheet comes back empty - `tokens.contrast.test.ts` reads the file with `node:fs`.
+  `apps/desktop/**`. `pnpm vitest run --project desktop` runs only the UI tests. **vitest does not
+  process CSS**, so a `?raw` stylesheet import is empty — `tokens.contrast.test.ts` uses `node:fs`.
 - **LNA re-check** (F9, after any WebView2/Windows update): launch the exe with
   `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--enable-features=LocalNetworkAccessChecks,msWebViewAllowLocalNetworkAccessChecks`
   and confirm the window still reaches the backend - see docs/research/webview2-local-network-access.md.
@@ -87,19 +90,17 @@
 ## Completed
 - **WP-07b — first-run wizard + user administration** (closes M0). R39 gate = 409 `SETUP_REQUIRED`
   before the session hook (exempt: `/health`, `/setup/*`, `/system/client-log`, `/system/shutdown`);
-  `modules/setup/` writes organization + department + campus + first admin + settings + age keys in
-  **one transaction** (R40); `modules/backup/keys.ts` = `age-encryption` 0.3.1 X25519 identity wrapped
-  to a scrypt passphrase (**work factor 18**) + the recovery-file text (R42); one-time recovery code
-  hashed into `auth.recoveryCodeHash` (R41). `modules/users/` = admin CRUD, last-admin protection,
-  `version` 409s. Shell `files.rs`: `pick_folder`/`save_text_file` limited to a folder picked in this
-  run (R43, `tauri-plugin-dialog` 2.7.3). 1736 tests; cargo 56; `smoke:bundle` drives the wizard.
+  `modules/setup/` writes the whole organization in **one transaction** (R40); `modules/backup/keys.ts`
+  = `age-encryption` 0.3.1 X25519 identity wrapped to a scrypt passphrase (**work factor 18**) + the
+  recovery file (R42); recovery code hashed into `auth.recoveryCodeHash` (R41). `modules/users/` =
+  admin CRUD, last-admin protection. Shell `files.rs`: folder picked in this run only (R43).
 - **WP-07a — auth core.** Contracts `permissions.ts` (R32) + `auth.ts`; migrations 0002/0003
   (organization + identity + `audit_log`, append-only triggers, roles); `modules/auth/` — Argon2id
-  **m=128 MiB t=6 p=1, 322-409 ms here** (R17 addon path), opaque SHA-256 sessions (R33), the R34 lockout
-  ladder, `policy.assertCan`; `platform/` audit hash chain + `verifyChain` (R35), session preHandler (R38),
-  SSE hub (R36); routes `/auth/*`, `/me`, `/me/permissions`, `/stream`, `/system/client-log`. UI: login/lock/
-  forced-change, idle timer, rail and routes by permission, **token in memory only**, SSE client with R30
-  degradation. **`/stream` must write its head through Fastify or the WebView loses the CORS headers.**
+  **m=128 MiB t=6 p=1, 322-409 ms here** (R17 addon path), opaque SHA-256 sessions (R33), the R34
+  ladder, `policy.assertCan`; audit hash chain + `verifyChain` (R35), session preHandler (R38), SSE
+  hub (R36); routes `/auth/*`, `/me`, `/stream`. UI: login/lock/forced-change, idle timer, rail by
+  permission, **token in memory only**.
+  **`/stream` must write its head through Fastify or the WebView loses the CORS headers.**
 - **WP-06 — UI foundation.** Tailwind v4 + `src/styles/tokens.css`: one `--ci-*` token set, both themes via
   `@theme inline`, every text/surface pair **measured** at >= 4.5:1 in a test; light/dark/**system**.
   `src/shell/backend.ts` is IPC only; the API client lives in `src/api/` (typed `ApiProblem`, generation
@@ -114,11 +115,11 @@
   `src-tauri` inside; `rust-toolchain.toml` pins 1.98.1 (R1). Rust: `backoff` (1→2→4…60 s, 5 crashes/10 min →
   FAILED), `ready` (R7), `secret` (32 fresh bytes per spawn, A2), `paths` (A20 + `COMPINTEL_DATA_DIR`), `job`
   (KILL_ON_JOB_CLOSE, F7/A17), `supervisor`, `commands`; `contracts/src/shell.ts` types the IPC (R24).
-- **WP-04c — DB-backed job runner.** Migration 0001 = `job_state`; `contracts/src/jobs.ts` (JobKind
-  SCRAPE/LLM/GENERAL, JobTrigger, JobOutcome + ABORTED/CRASHED, JobSnapshot). `src/jobs/`: `outcome`
-  (state machine), `store` (conditional-UPDATE claim = single-flight), `run`, `scheduler` (30 s tick,
-  catch-up, 2 scrape / 1 LLM / 4 general, stale lease → CRASHED, SKIPPED_OFFLINE, manual `trigger()`),
-  `online`; the arithmetic is `domain/scheduling.ts` since pre-M1. **No jobs registered** — each WP adds its own.
+- **WP-04c — DB-backed job runner.** Migration 0001 = `job_state`; `contracts/src/jobs.ts`.
+  `src/jobs/`: `outcome` (state machine), `store` (conditional-UPDATE claim = single-flight), `run`,
+  `scheduler` (30 s tick, catch-up, 2 scrape / 1 LLM / 4 general, stale lease → CRASHED,
+  SKIPPED_OFFLINE, manual `trigger()`); the arithmetic is `domain/scheduling.ts` since pre-M1.
+  **No jobs registered** — each WP adds its own.
 - **WP-04b — SQLite + Drizzle + migrations + data-dir lock + UUIDv7.** better-sqlite3 13.0.3, drizzle-orm
   0.45.2 (drizzle-kit 0.31.10 dev). `ids.ts` UUIDv7 (RFC 9562, monotonic, clock-regression safe); `lock.ts`
   `<dataDir>\backend.lock` (R15); `db.ts` R16 PRAGMAs + `quick_check` + checkpoint/close; `migrate.ts` journal
@@ -136,7 +137,6 @@
   **Source matrix** (`docs/research/source-feasibility.md`): CTFtime/CLIST/Devfolio APPROVED_WITH_LIMITS
   (CLIST needs a key), **Devpost and Unstop MANUAL_IMPORT_ONLY**, 117 college sites PENDING_REVIEW;
   fixtures + 13 robots.txt under `docs/research/`.
-
 ## Open issues
 All WP-01/WP-02 findings are ruled on in ARCHITECTURE.md §21. Still open:
 1. **U3** — Unstop Terms unread (blocks WP-13). **U4** — CLIST API key (blocks live WP-11 runs).
