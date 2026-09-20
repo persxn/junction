@@ -1,6 +1,5 @@
 import type {
   AuthUser,
-  ClientKind,
   LoginRequest,
   PermissionEntry,
   RoleKey,
@@ -9,7 +8,6 @@ import type {
 } from '@compintel/contracts';
 import { permissionsFor } from '@compintel/contracts';
 
-import type { AuditLog } from '../../platform/audit.js';
 import type { SettingsStore } from '../../platform/settings.js';
 import {
   accountDisabled,
@@ -20,7 +18,9 @@ import {
 } from './errors.js';
 import { hashPassword, verifyPassword } from './password.js';
 import { normalizeEmail, type AuthRepository } from './repository.js';
+import { loginFailureEntry } from './audit-entries.js';
 import { LoginRateLimiter } from './throttle.js';
+import type { ActiveSession, LoginContext, LoginResult, Principal } from './types.js';
 import {
   ABSOLUTE_SESSION_MS,
   generateSessionToken,
@@ -29,6 +29,7 @@ import {
   type RandomBytes,
 } from './tokens.js';
 import { lockoutMinutesFor } from '../../domain/lockout.js';
+import { recordAudit, withAudit, type AuditLog } from '../../platform/audit.js';
 import { nowMs, systemClock, type Clock } from '../../platform/time.js';
 
 /**
@@ -39,35 +40,6 @@ import { nowMs, systemClock, type Clock } from '../../platform/time.js';
  * expiries and the 60-second refresh window are all *time* behaviour, and a test
  * that has to wait five real minutes is a test nobody runs.
  */
-
-export interface Principal {
-  readonly id: string;
-  readonly email: string;
-  readonly displayName: string;
-  readonly departmentId: string | null;
-  readonly status: UserStatus;
-  readonly mustChangePassword: boolean;
-  readonly roles: readonly RoleKey[];
-}
-
-export interface ActiveSession {
-  readonly id: string;
-  readonly user: Principal;
-  readonly idleExpiresAt: number;
-  readonly absoluteExpiresAt: number;
-}
-
-export interface LoginContext {
-  readonly clientKind?: ClientKind;
-  readonly clientLabel?: string | undefined;
-  readonly requestId?: string | undefined;
-}
-
-export interface LoginResult {
-  /** The one time this ever exists outside the client's memory. */
-  readonly token: string;
-  readonly session: ActiveSession;
-}
 
 export interface AuthServiceDependencies {
   readonly repository: AuthRepository;
@@ -182,51 +154,51 @@ export class AuthService {
     }
 
     if (!(await verifyPassword(row.passwordHash, request.password))) {
-      const failures = this.#repo.recordFailedLogin(row.id, undefined);
-      const lockMinutes = lockoutMinutesFor(failures);
-      if (lockMinutes !== undefined) {
-        this.#repo.setLockedUntil(row.id, now + lockMinutes * 60_000);
-      }
-      this.#auditFailure(row.id, row.email, 'wrong password', context, {
-        failedLoginCount: failures,
-        ...(lockMinutes === undefined ? {} : { lockedForMinutes: lockMinutes }),
-      });
+      // The counter, the lock it may trigger and the audit row are one unit:
+      // a lock nobody can see in the log is a support call with no answer.
+      withAudit(
+        this.#audit,
+        (failures: number) =>
+          loginFailureEntry(row.id, row.email, 'wrong password', context, {
+            failedLoginCount: failures,
+            ...(lockoutMinutesFor(failures) === undefined
+              ? {}
+              : { lockedForMinutes: lockoutMinutesFor(failures) }),
+          }),
+        (): number => {
+          const failures = this.#repo.recordFailedLogin(row.id, undefined);
+          const lockMinutes = lockoutMinutesFor(failures);
+          if (lockMinutes !== undefined) {
+            this.#repo.setLockedUntil(row.id, now + lockMinutes * 60_000);
+          }
+          return failures;
+        },
+      );
       throw invalidCredentials();
     }
 
-    this.#repo.recordSuccessfulLogin(row.id);
-    const result = this.#issueSession(row.id, context);
-    this.#audit.append({
-      actorKind: 'USER',
-      actorUserId: row.id,
-      action: 'auth.login.succeeded',
-      entityKind: 'session',
-      entityId: result.session.id,
-      summary: `${row.email} signed in`,
-      diff: { clientKind: context.clientKind ?? 'DESKTOP' },
-      requestId: context.requestId ?? null,
-    });
-    return result;
+    return withAudit(
+      this.#audit,
+      (result: LoginResult) => ({
+        actorKind: 'USER' as const,
+        actorUserId: row.id,
+        action: 'auth.login.succeeded',
+        entityKind: 'session',
+        entityId: result.session.id,
+        summary: `${row.email} signed in`,
+        diff: { clientKind: context.clientKind ?? 'DESKTOP' },
+        requestId: context.requestId ?? null,
+      }),
+      (): LoginResult => {
+        this.#repo.recordSuccessfulLogin(row.id);
+        return this.#issueSession(row.id, context);
+      },
+    );
   }
 
-  /** A failed attempt is audited, never with the password (R34). */
-  #auditFailure(
-    userId: string | null,
-    email: string,
-    reason: string,
-    context: LoginContext,
-    extra: Readonly<Record<string, unknown>> = {},
-  ): void {
-    this.#audit.append({
-      actorKind: 'USER',
-      actorUserId: userId,
-      action: 'auth.login.failed',
-      entityKind: 'user',
-      entityId: userId ?? email,
-      summary: `Sign-in refused for ${email}: ${reason}`,
-      diff: { reason, ...extra },
-      requestId: context.requestId ?? null,
-    });
+  /** A refusal that changed nothing: the audit row is the whole unit of work. */
+  #auditFailure(userId: string | null, email: string, reason: string, context: LoginContext): void {
+    recordAudit(this.#audit, loginFailureEntry(userId, email, reason, context));
   }
 
   /**
@@ -268,16 +240,21 @@ export class AuthService {
   }
 
   logout(session: ActiveSession, requestId?: string): void {
-    this.#repo.revokeSession(session.id, this.#nowMs);
-    this.#audit.append({
-      actorKind: 'USER',
-      actorUserId: session.user.id,
-      action: 'auth.logout',
-      entityKind: 'session',
-      entityId: session.id,
-      summary: `${session.user.email} signed out`,
-      requestId: requestId ?? null,
-    });
+    withAudit(
+      this.#audit,
+      {
+        actorKind: 'USER',
+        actorUserId: session.user.id,
+        action: 'auth.logout',
+        entityKind: 'session',
+        entityId: session.id,
+        summary: `${session.user.email} signed out`,
+        requestId: requestId ?? null,
+      },
+      () => {
+        this.#repo.revokeSession(session.id, this.#nowMs);
+      },
+    );
   }
 
   /**
@@ -296,7 +273,7 @@ export class AuthService {
       throw sessionExpired('The account this session belongs to no longer exists.');
     }
     if (!(await verifyPassword(row.passwordHash, password))) {
-      this.#audit.append({
+      recordAudit(this.#audit, {
         actorKind: 'USER',
         actorUserId: row.id,
         action: 'auth.unlock.failed',
@@ -312,16 +289,21 @@ export class AuthService {
       now + this.autoLockMinutes() * 60_000,
       session.absoluteExpiresAt,
     );
-    this.#repo.touchSession(session.id, now, idleExpiresAt);
-    this.#audit.append({
-      actorKind: 'USER',
-      actorUserId: row.id,
-      action: 'auth.unlock',
-      entityKind: 'session',
-      entityId: session.id,
-      summary: `${row.email} unlocked the app`,
-      requestId: requestId ?? null,
-    });
+    withAudit(
+      this.#audit,
+      {
+        actorKind: 'USER',
+        actorUserId: row.id,
+        action: 'auth.unlock',
+        entityKind: 'session',
+        entityId: session.id,
+        summary: `${row.email} unlocked the app`,
+        requestId: requestId ?? null,
+      },
+      () => {
+        this.#repo.touchSession(session.id, now, idleExpiresAt);
+      },
+    );
     return this.expiryOf({ ...session, idleExpiresAt });
   }
 
@@ -341,19 +323,27 @@ export class AuthService {
     if (row === undefined || !(await verifyPassword(row.passwordHash, currentPassword))) {
       throw invalidCredentials();
     }
-    this.#repo.setPassword(session.user.id, await hashPassword(newPassword));
-    const revoked = this.#repo.revokeAllSessionsFor(session.user.id, this.#nowMs, session.id);
-    this.#audit.append({
-      actorKind: 'USER',
-      actorUserId: session.user.id,
-      action: 'auth.password.changed',
-      entityKind: 'user',
-      entityId: session.user.id,
-      // Neither password appears here, nor anywhere else (R34, §15).
-      summary: `${row.email} changed their password`,
-      diff: { otherSessionsRevoked: revoked, mustChangePassword: false },
-      requestId: requestId ?? null,
-    });
+    // Hashing is the slow, asynchronous part, so it happens before the
+    // transaction rather than inside it.
+    const passwordHash = await hashPassword(newPassword);
+    withAudit(
+      this.#audit,
+      (revoked: number) => ({
+        actorKind: 'USER' as const,
+        actorUserId: session.user.id,
+        action: 'auth.password.changed',
+        entityKind: 'user',
+        entityId: session.user.id,
+        // Neither password appears here, nor anywhere else (R34, §15).
+        summary: `${row.email} changed their password`,
+        diff: { otherSessionsRevoked: revoked, mustChangePassword: false },
+        requestId: requestId ?? null,
+      }),
+      (): number => {
+        this.#repo.setPassword(session.user.id, passwordHash);
+        return this.#repo.revokeAllSessionsFor(session.user.id, this.#nowMs, session.id);
+      },
+    );
   }
 
   /** The DTO shape of a session's clocks. */

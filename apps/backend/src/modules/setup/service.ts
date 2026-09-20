@@ -7,14 +7,14 @@ import {
 } from '@compintel/contracts';
 
 import { AppError } from '../../platform/errors.js';
-import type { AuditLog } from '../../platform/audit.js';
+import { withAudit, type AuditLog } from '../../platform/audit.js';
 import type { SettingsStore } from '../../platform/settings.js';
 import { generateBackupKeys, recoveryFileName, renderRecoveryFile } from '../backup/keys.js';
 import { hashPassword } from '../auth/password.js';
 import { normalizeEmail } from '../auth/repository.js';
 import { checkBackupPath, type PathCheckOptions } from './paths.js';
 import { generateRecoveryCode, normalizeRecoveryCode } from './recovery-code.js';
-import type { SetupRepository } from './repository.js';
+import type { SetupRepository, SetupWriteResult } from './repository.js';
 import { systemClock, type Clock } from '../../platform/time.js';
 
 /**
@@ -175,38 +175,43 @@ export class SetupService {
       ['auth.recoveryCodeHash', JSON.stringify(recoveryCodeHash)],
     ];
 
-    const written = this.#repository.completeSetup({
-      organization: request.organization,
-      department: request.department,
-      campus: request.campus,
-      admin: {
-        email: normalizeEmail(request.admin.email),
-        displayName: request.admin.displayName,
-        passwordHash,
-      },
-      settings,
-    });
+    // R40 already puts the whole wizard in one transaction; `withAudit` puts the
+    // audit row inside that same one, so an installation can never exist without
+    // the row that says when it was created and by whom. Audited as the admin who
+    // was just created: they are the actor, even though their own row is a
+    // millisecond old.
+    withAudit(
+      this.#audit,
+      (result: SetupWriteResult) => ({
+        actorKind: 'USER' as const,
+        actorUserId: result.adminUserId,
+        action: 'setup.completed',
+        entityKind: 'organization',
+        entityId: result.organizationId,
+        summary: `CompIntel was set up for ${request.organization.name}`,
+        diff: {
+          organization: request.organization.name,
+          department: request.department.name,
+          campus: request.campus.name,
+          adminEmail: normalizeEmail(request.admin.email),
+          backupDir: pathCheck.resolvedPath,
+        },
+      }),
+      (): SetupWriteResult =>
+        this.#repository.completeSetup({
+          organization: request.organization,
+          department: request.department,
+          campus: request.campus,
+          admin: {
+            email: normalizeEmail(request.admin.email),
+            displayName: request.admin.displayName,
+            passwordHash,
+          },
+          settings,
+        }),
+    );
 
     this.#administratorExists = true;
-
-    // Audited as the admin who was just created: they are the actor, even though
-    // the row describing them was written a millisecond ago (R40's transaction
-    // means it is committed by the time this runs).
-    this.#audit.append({
-      actorKind: 'USER',
-      actorUserId: written.adminUserId,
-      action: 'setup.completed',
-      entityKind: 'organization',
-      entityId: written.organizationId,
-      summary: `CompIntel was set up for ${request.organization.name}`,
-      diff: {
-        organization: request.organization.name,
-        department: request.department.name,
-        campus: request.campus.name,
-        adminEmail: normalizeEmail(request.admin.email),
-        backupDir: pathCheck.resolvedPath,
-      },
-    });
 
     return {
       recoveryCode,

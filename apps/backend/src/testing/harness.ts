@@ -7,7 +7,8 @@ import { pino, type Logger } from 'pino';
 
 import { buildApp, type App, type BuildAppOptions } from '../app.js';
 import { sessionExpired } from '../modules/auth/errors.js';
-import type { ActiveSession, AuthService } from '../modules/auth/service.js';
+import type { AuthService } from '../modules/auth/service.js';
+import type { ActiveSession } from '../modules/auth/types.js';
 import type { Config } from '../platform/config.js';
 import { APP_VERSION } from '../platform/version.js';
 

@@ -7,14 +7,16 @@ import type {
   UserSummary,
 } from '@compintel/contracts';
 
-import type { AuditLog } from '../../platform/audit.js';
+import { withAudit, type AuditLog } from '../../platform/audit.js';
 import { AppError, conflict, notFound } from '../../platform/errors.js';
 import type { AuthRepository } from '../auth/repository.js';
 import { normalizeEmail } from '../auth/repository.js';
 import { hashPassword } from '../auth/password.js';
 import { assertCan } from '../auth/policy.js';
-import type { Principal } from '../auth/service.js';
+import type { Principal } from '../auth/types.js';
+import type { UserRow } from '../../db/schema/index.js';
 import type { UsersRepository, UserWithRoles } from './repository.js';
+import { nowMs, systemClock, type Clock } from '../../platform/time.js';
 
 /**
  * User administration (§10.2 `user.manage`, roadmap WP-07b).
@@ -83,6 +85,7 @@ export interface UsersServiceDependencies {
   readonly repository: UsersRepository;
   readonly auth: AuthRepository;
   readonly audit: AuditLog;
+  readonly clock?: Clock;
   /** Invalidates the R39 gate's cache when the admin population changes. */
   readonly onAdministratorsChanged?: () => void;
 }
@@ -96,12 +99,14 @@ export class UsersService {
   readonly #repository: UsersRepository;
   readonly #auth: AuthRepository;
   readonly #audit: AuditLog;
+  readonly #clock: Clock;
   readonly #onAdministratorsChanged: () => void;
 
   constructor(dependencies: UsersServiceDependencies) {
     this.#repository = dependencies.repository;
     this.#auth = dependencies.auth;
     this.#audit = dependencies.audit;
+    this.#clock = dependencies.clock ?? systemClock;
     this.#onAdministratorsChanged = dependencies.onAdministratorsChanged ?? ((): void => undefined);
   }
 
@@ -122,27 +127,33 @@ export class UsersService {
     }
 
     const temporaryPassword = generateTemporaryPassword();
-    const row = this.#auth.createUser({
-      email,
-      displayName: request.displayName,
-      passwordHash: await hashPassword(temporaryPassword),
-      departmentId: request.departmentId ?? null,
-      // Ruling R38: the admin knows this password, so the new user must replace it.
-      mustChangePassword: true,
-      roles: request.roles,
-      createdBy: context.actor.id,
-    });
+    // Hashing is the slow, asynchronous part; the transaction below is not.
+    const passwordHash = await hashPassword(temporaryPassword);
+    const row = withAudit(
+      this.#audit,
+      (created: UserRow) => ({
+        actorKind: 'USER' as const,
+        actorUserId: context.actor.id,
+        action: 'user.created',
+        entityKind: 'user',
+        entityId: created.id,
+        summary: `Created the account ${email}`,
+        diff: { email, displayName: request.displayName, roles: [...request.roles] },
+        requestId: context.requestId ?? null,
+      }),
+      (): UserRow =>
+        this.#auth.createUser({
+          email,
+          displayName: request.displayName,
+          passwordHash,
+          departmentId: request.departmentId ?? null,
+          // Ruling R38: the admin knows this password, so the new user must replace it.
+          mustChangePassword: true,
+          roles: request.roles,
+          createdBy: context.actor.id,
+        }),
+    );
 
-    this.#audit.append({
-      actorKind: 'USER',
-      actorUserId: context.actor.id,
-      action: 'user.created',
-      entityKind: 'user',
-      entityId: row.id,
-      summary: `Created the account ${email}`,
-      diff: { email, displayName: request.displayName, roles: [...request.roles] },
-      requestId: context.requestId ?? null,
-    });
     if (request.roles.includes('ADMINISTRATOR')) {
       this.#onAdministratorsChanged();
     }
@@ -170,17 +181,22 @@ export class UsersService {
       }
     }
 
-    this.#repository.setStatus(userId, enabled ? 'ACTIVE' : 'DISABLED');
-    this.#audit.append({
-      actorKind: 'USER',
-      actorUserId: context.actor.id,
-      action: enabled ? 'user.enabled' : 'user.disabled',
-      entityKind: 'user',
-      entityId: userId,
-      summary: `${enabled ? 'Enabled' : 'Disabled'} the account ${target.user.email}`,
-      diff: { status: enabled ? 'ACTIVE' : 'DISABLED' },
-      requestId: context.requestId ?? null,
-    });
+    withAudit(
+      this.#audit,
+      {
+        actorKind: 'USER',
+        actorUserId: context.actor.id,
+        action: enabled ? 'user.enabled' : 'user.disabled',
+        entityKind: 'user',
+        entityId: userId,
+        summary: `${enabled ? 'Enabled' : 'Disabled'} the account ${target.user.email}`,
+        diff: { status: enabled ? 'ACTIVE' : 'DISABLED' },
+        requestId: context.requestId ?? null,
+      },
+      () => {
+        this.#repository.setStatus(userId, enabled ? 'ACTIVE' : 'DISABLED');
+      },
+    );
     this.#onAdministratorsChanged();
     return toSummary(this.#require(userId));
   }
@@ -201,25 +217,31 @@ export class UsersService {
       changes.roles = request.roles;
     }
 
-    if (!this.#repository.update(userId, request.version, changes)) {
-      throw conflict(
-        'Somebody else changed this account while you were editing it. Reload and try again.',
-      );
-    }
-
-    this.#audit.append({
-      actorKind: 'USER',
-      actorUserId: context.actor.id,
-      action: 'user.updated',
-      entityKind: 'user',
-      entityId: userId,
-      summary: `Updated the account ${target.user.email}`,
-      diff: {
-        ...(request.displayName === undefined ? {} : { displayName: request.displayName }),
-        ...(request.roles === undefined ? {} : { roles: [...request.roles] }),
+    withAudit(
+      this.#audit,
+      {
+        actorKind: 'USER',
+        actorUserId: context.actor.id,
+        action: 'user.updated',
+        entityKind: 'user',
+        entityId: userId,
+        summary: `Updated the account ${target.user.email}`,
+        diff: {
+          ...(request.displayName === undefined ? {} : { displayName: request.displayName }),
+          ...(request.roles === undefined ? {} : { roles: [...request.roles] }),
+        },
+        requestId: context.requestId ?? null,
       },
-      requestId: context.requestId ?? null,
-    });
+      () => {
+        // The optimistic-concurrency check throws from inside the transaction,
+        // so a losing write leaves no audit row claiming it happened.
+        if (!this.#repository.update(userId, request.version, changes)) {
+          throw conflict(
+            'Somebody else changed this account while you were editing it. Reload and try again.',
+          );
+        }
+      },
+    );
     if (request.roles !== undefined) {
       this.#onAdministratorsChanged();
     }
@@ -234,22 +256,27 @@ export class UsersService {
     const target = this.#require(userId);
 
     const temporaryPassword = generateTemporaryPassword();
-    this.#repository.resetPassword(userId, await hashPassword(temporaryPassword));
-    // Whoever was signed in as this account is not any more: the password they
-    // hold is dead, and a live session would outlive it (§4.12).
-    this.#auth.revokeAllSessionsFor(userId, Date.now());
-
-    this.#audit.append({
-      actorKind: 'USER',
-      actorUserId: context.actor.id,
-      action: 'user.password.reset',
-      entityKind: 'user',
-      entityId: userId,
-      summary: `Reset the password for ${target.user.email}`,
-      // Never the password itself, generated or not.
-      diff: { mustChangePassword: true },
-      requestId: context.requestId ?? null,
-    });
+    const passwordHash = await hashPassword(temporaryPassword);
+    withAudit(
+      this.#audit,
+      {
+        actorKind: 'USER',
+        actorUserId: context.actor.id,
+        action: 'user.password.reset',
+        entityKind: 'user',
+        entityId: userId,
+        summary: `Reset the password for ${target.user.email}`,
+        // Never the password itself, generated or not.
+        diff: { mustChangePassword: true },
+        requestId: context.requestId ?? null,
+      },
+      () => {
+        this.#repository.resetPassword(userId, passwordHash);
+        // Whoever was signed in as this account is not any more: the password
+        // they hold is dead, and a live session would outlive it (§4.12).
+        this.#auth.revokeAllSessionsFor(userId, nowMs(this.#clock));
+      },
+    );
     return { user: toSummary(this.#require(userId)), temporaryPassword };
   }
 

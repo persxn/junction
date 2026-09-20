@@ -1,7 +1,7 @@
 import { decide, effectiveRule, type Action, type OwnershipFacts } from '@compintel/contracts';
 
 import { forbidden } from '../../platform/errors.js';
-import type { Principal } from './service.js';
+import type { Principal } from './types.js';
 
 /**
  * The one place an authorization question is answered (§10.1, ruling R32).

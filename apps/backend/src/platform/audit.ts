@@ -141,6 +141,16 @@ export class AuditLog {
     return row?.hash ?? AUDIT_GENESIS_HASH;
   }
 
+  /**
+   * Runs `work` in one `IMMEDIATE` transaction, or inside the caller's if one is
+   * already open — better-sqlite3 turns a nested call into a SAVEPOINT, so a
+   * throw rolls back to where this started and propagates, taking the outer
+   * transaction with it. That nesting is what makes {@link withAudit} composable.
+   */
+  transaction<T>(work: () => T): T {
+    return this.#db.raw.transaction(work).immediate();
+  }
+
   /** Appends one row and returns it. The only way anything gets into the table. */
   append(entry: AuditEntry): AuditLogRow {
     const write = this.#db.raw.transaction((): AuditLogRow => {
@@ -195,4 +205,46 @@ export class AuditLog {
     }
     return { ok: true, checked };
   }
+}
+
+/**
+ * Appends one audit row, using the transaction the caller already opened.
+ *
+ * This is the same write as {@link AuditLog.append} — the nesting is what makes
+ * it safe — and it exists so a use case reads as one statement. §3.3 requires
+ * that "every mutating use-case writes its audit entry in the same DB
+ * transaction"; that is only true if the entry is written inside the block that
+ * made the change, which is what `tx` being an argument is for.
+ */
+export function recordAudit(tx: AuditLog, entry: AuditEntry): AuditLogRow {
+  return tx.append(entry);
+}
+
+/**
+ * Runs a change and its audit entry as one unit of work (§3.3, ruling R35).
+ *
+ * The two go in together or neither does: if `work` throws, the transaction
+ * rolls back and there is no audit row; if the audit write throws — a broken
+ * chain, a failed constraint — the change goes back with it. Doing this by hand
+ * is two statements a reviewer has to notice are adjacent, and M1 adds merge,
+ * unmerge, override, category change and source edits, which is five more
+ * chances to write the second one outside the first.
+ *
+ * `entry` may be a function when the entry needs the result — an id that only
+ * exists after the insert, or a summary that names what actually changed.
+ *
+ * `work` must be synchronous: better-sqlite3 transactions are, and an `await`
+ * inside one would commit at the wrong time. Hash the password, call the LLM,
+ * fetch the page *first*, then pass the synchronous write in here.
+ */
+export function withAudit<T>(
+  db: AuditLog,
+  entry: AuditEntry | ((result: T) => AuditEntry),
+  work: () => T,
+): T {
+  return db.transaction((): T => {
+    const result = work();
+    recordAudit(db, typeof entry === 'function' ? entry(result) : entry);
+    return result;
+  });
 }

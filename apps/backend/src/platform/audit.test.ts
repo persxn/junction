@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { AUDIT_GENESIS_HASH, auditLog } from '../db/schema/index.js';
 import { createTestDatabase, type TestDatabase } from '../testing/database.js';
-import { AuditLog, canonicalJson, hashRow } from './audit.js';
+import { AuditLog, canonicalJson, hashRow, recordAudit, withAudit } from './audit.js';
 
 /**
  * The append-only audit log (§6.2, ruling R35). Two independent guarantees are
@@ -235,5 +235,122 @@ describe('what a row may carry', () => {
         })
         .run(),
     ).toThrow(/CHECK constraint/i);
+  });
+});
+
+describe('the audit unit of work (§3.3)', () => {
+  /** A table the test can write to inside `withAudit`, standing in for a use case. */
+  function change(h: TestDatabase, value: string): void {
+    h.db.raw
+      .prepare('insert into app_meta (key, value, updated_at) values (?, ?, ?)')
+      .run('unit-of-work', value, 1);
+  }
+
+  function stored(h: TestDatabase): string | undefined {
+    const row = h.db.raw.prepare('select value from app_meta where key = ?').get('unit-of-work') as
+      { value: string } | undefined;
+    return row?.value;
+  }
+
+  it('chains two writes through withAudit and verifyChain accepts them', () => {
+    const { audit, harness: h } = open();
+
+    withAudit(audit, { ...ENTRY, entityId: 'first' }, () => {
+      change(h, 'one');
+    });
+    withAudit(audit, { ...ENTRY, entityId: 'second' }, () => {
+      h.db.raw.prepare('update app_meta set value = ? where key = ?').run('two', 'unit-of-work');
+    });
+
+    const rows = audit.all();
+    expect(rows.map((row) => row.entityId)).toStrictEqual(['first', 'second']);
+    expect(rows[0]?.prevHash).toBe(AUDIT_GENESIS_HASH);
+    expect(rows[1]?.prevHash).toBe(rows[0]?.hash);
+    expect(audit.verifyChain()).toStrictEqual({ ok: true, checked: 2 });
+    expect(stored(h)).toBe('two');
+  });
+
+  it('leaves neither the change nor the audit row when the work throws', () => {
+    const { audit, harness: h } = open();
+
+    expect(() =>
+      withAudit(audit, ENTRY, () => {
+        change(h, 'doomed');
+        throw new Error('the use case failed');
+      }),
+    ).toThrow('the use case failed');
+
+    expect(stored(h)).toBeUndefined();
+    expect(audit.all()).toHaveLength(0);
+    expect(audit.verifyChain()).toStrictEqual({ ok: true, checked: 0 });
+  });
+
+  it('rolls the change back when building the entry throws', () => {
+    const { audit, harness: h } = open();
+
+    // The audit row is written *after* the work, so this is the case where the
+    // change has already happened and the log is what fails.
+    expect(() =>
+      withAudit(
+        audit,
+        (): never => {
+          throw new Error('the summary could not be built');
+        },
+        () => {
+          change(h, 'doomed');
+        },
+      ),
+    ).toThrow('the summary could not be built');
+
+    expect(stored(h)).toBeUndefined();
+    expect(audit.all()).toHaveLength(0);
+  });
+
+  it('passes the work result to the entry, for ids that do not exist yet', () => {
+    const { audit, harness: h } = open();
+
+    const created = withAudit(
+      audit,
+      (id: string) => ({ ...ENTRY, entityId: id, summary: `created ${id}` }),
+      (): string => {
+        change(h, 'created');
+        return 'entity-42';
+      },
+    );
+
+    expect(created).toBe('entity-42');
+    expect(audit.all()[0]?.entityId).toBe('entity-42');
+    expect(audit.all()[0]?.summary).toBe('created entity-42');
+  });
+
+  it('survives a rollback: the next write chains off the last committed row', () => {
+    const { audit, harness: h } = open();
+
+    withAudit(audit, { ...ENTRY, entityId: 'kept' }, () => {
+      change(h, 'kept');
+    });
+    expect(() =>
+      withAudit(audit, { ...ENTRY, entityId: 'lost' }, () => {
+        throw new Error('nope');
+      }),
+    ).toThrow('nope');
+    withAudit(audit, { ...ENTRY, entityId: 'after' }, () => undefined);
+
+    const rows = audit.all();
+    expect(rows.map((row) => row.entityId)).toStrictEqual(['kept', 'after']);
+    expect(audit.verifyChain().ok).toBe(true);
+  });
+
+  it('recordAudit writes inside a transaction the caller already opened', () => {
+    const { audit, harness: h } = open();
+
+    h.db.raw.transaction(() => {
+      change(h, 'outer');
+      recordAudit(audit, { ...ENTRY, entityId: 'inner' });
+    })();
+
+    expect(stored(h)).toBe('outer');
+    expect(audit.all()[0]?.entityId).toBe('inner');
+    expect(audit.verifyChain().ok).toBe(true);
   });
 });

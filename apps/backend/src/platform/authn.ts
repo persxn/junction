@@ -1,7 +1,8 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 
 import { passwordChangeRequired } from '../modules/auth/errors.js';
-import type { ActiveSession, AuthService } from '../modules/auth/service.js';
+import type { AuthService } from '../modules/auth/service.js';
+import type { ActiveSession } from '../modules/auth/types.js';
 import { bearerToken } from '../modules/auth/tokens.js';
 import { unauthorized } from './errors.js';
 import { pathOf } from './request-log.js';
