@@ -19,7 +19,7 @@
   with SQL as `haversine_km` (R56). Policies are pure + settings-driven; the §19 criterion passes.
   **116 institutions**, 11 CAMPUS / 105 CITY, every coordinate from GeoNames. **2132 tests.**
   No new runtime dependency (the zip reader is 40 lines of `node:zlib`).
-- **Next: WP-09a.** Two questions for the architect first (handoff §6): the gazetteer is 68.5 MB of
+- **Next: WP-09b.** WP-08b's two questions are still open (handoff §6): the gazetteer is 68.5 MB of
   which 95% are zero-population hamlets that also *harm* matching — §4.17 says "towns/cities" where
   R53 says feature class P; and GeoNames has almost no Indian campuses, so the INSTITUTION rung is
   mostly unreachable. Q12 stays OPEN in ARCHITECTURE.md §2 and DECISIONS.md.
@@ -33,7 +33,7 @@
 - **New: WP-33** (`prompts/M4/WP-33.md`, milestone **M4.5**, just before M5) — appearance system
   (Catppuccin palettes, CALM/STANDARD/SHOWCASE effect tiers, motion & glow) + Insights. ADR-0019, R67–R69.
 - **Owner, 20 Sep 2026:** standalone app — one professor, one machine (§3.1). Security posture left unchanged; less security framing in prose from here on.
-- Spec: docs/ARCHITECTURE.md **v1.1.8 — ACCEPTED** (§21 R1–R57 + R67–R69; §19 = **48 WPs, 18 done, 30 remaining**).
+- Spec: docs/ARCHITECTURE.md **v1.1.9 — ACCEPTED** (§21 R1–R61 + R67–R69; §19 = **48 WPs, 18 done, 30 remaining**).
 - ADR-0001…0019 Accepted. Decisions register: docs/DECISIONS.md (D-01…D-33, Q1 RESOLVED, U1/U2 DONE).
 
 ## Environment facts
