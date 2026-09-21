@@ -20,7 +20,7 @@
   (spec v1.1.10). Contracts: `alternateClaims`, `eligibility.qualifiedOnly`, `DATE_DURATION_MISMATCH`. Migration
   **0007** fixes the attribution and adds `!ctftime.org/api/v1/events/{id}/{below}` (the path grammar is prefix-only).
   `registerBuiltInAdapters()` makes `scrape:ctftime` appear. `pnpm --filter @compintel/backend scrape:once` exists.
-- **Next: the WP-09b live smoke** (set `scraper.contactEmail` on the dev data dir, run `scrape:once -- --source
+- **Next: WP-11** (WP-10 in progress; R64–R66 recorded, spec v1.1.11; roadmap 20 done, 28 remaining). Still owed: **the WP-09b live smoke** (set `scraper.contactEmail` on the dev data dir, run `scrape:once -- --source
   ctftime` once), **then WP-10.** WP-08b's two questions are still open (handoff §6): the gazetteer is 68.5 MB of
   which 95% are zero-population hamlets that also *harm* matching — §4.17 says "towns/cities" where
   R53 says feature class P; and GeoNames has almost no Indian campuses, so the INSTITUTION rung is
@@ -35,7 +35,7 @@
 - **New: WP-33** (`prompts/M4/WP-33.md`, milestone **M4.5**, just before M5) — appearance system
   (Catppuccin palettes, CALM/STANDARD/SHOWCASE effect tiers, motion & glow) + Insights. ADR-0019, R67–R69.
 - **Owner, 20 Sep 2026:** standalone app — one professor, one machine (§3.1). Security posture left unchanged; less security framing in prose from here on.
-- Spec: docs/ARCHITECTURE.md **v1.1.10 — ACCEPTED** (§21 R1–R63 + R67–R69; §19 = **48 WPs, 19 done, 29 remaining**).
+- Spec: docs/ARCHITECTURE.md **v1.1.11 — ACCEPTED** (§21 R1–R66 + R67–R69; §19 = **48 WPs, 20 done, 28 remaining**).
 - ADR-0001…0019 Accepted. Decisions register: docs/DECISIONS.md (D-01…D-33, Q1 RESOLVED, U1/U2 DONE).
 
 ## Environment facts
