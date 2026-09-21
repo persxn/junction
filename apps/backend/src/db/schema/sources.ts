@@ -217,11 +217,18 @@ export const sourceRecords = sqliteTable(
     eventId: text('event_id').references(() => events.id),
     matchMethod: text('match_method').$type<MatchMethod>().notNull().default('NEW'),
     matchScore: real('match_score'),
+    /**
+     * The event this record was first linked to (WP-10, R66). A merge moves
+     * `event_id` and leaves this alone, which is how an unmerge knows which
+     * records to hand back. No FK, like the other provenance columns (R49).
+     */
+    originEventId: text('origin_event_id'),
   },
   (table) => [
     uniqueIndex('source_records_source_external_key_idx').on(table.sourceId, table.externalKey),
     index('source_records_presence_idx').on(table.sourceId, table.presence),
     index('source_records_event_id_idx').on(table.eventId),
+    index('source_records_origin_event_id_idx').on(table.originEventId),
     // WP-14's URL import asks "do we already hold this page?".
     index('source_records_url_idx').on(table.url),
     check('source_records_presence_check', sql.raw(`"presence" in (${quoted(PRESENCES)})`)),

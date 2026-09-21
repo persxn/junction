@@ -88,6 +88,10 @@ export const EVENT_ERROR_CODES = [
   'EVENT_NOT_MERGED',
   'EVENT_INVALID_DATES',
   'EVENT_OVERRIDE_INVALID',
+  /** WP-10: an event cannot be merged into itself. */
+  'EVENT_MERGE_SELF',
+  /** WP-10: a dedup candidate that has already been merged or rejected. */
+  'EVENT_CANDIDATE_DECIDED',
 ] as const;
 
 /**

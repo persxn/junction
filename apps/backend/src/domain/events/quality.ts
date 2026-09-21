@@ -31,38 +31,71 @@ const WEIGHTS = {
 
 const TOTAL = Object.values(WEIGHTS).reduce((sum, weight) => sum + weight, 0);
 
-export function qualityScore(candidate: EventCandidate): number {
-  let earned = 0;
+/** The facts the score looks at, as a resolved `events` row states them. */
+export interface QualityInput {
+  readonly startsAt: number | null;
+  readonly registrationDeadlineAt: number | null;
+  readonly mode: string;
+  readonly city: string | null;
+  readonly venueName: string | null;
+  readonly descriptionMd: string | null;
+  readonly officialUrl: string | null;
+  readonly teamMin: number | null;
+  readonly teamMax: number | null;
+  readonly feeKnown: boolean;
+  readonly organizerName: string | null;
+}
 
-  if (candidate.startsAt !== undefined) {
+export function qualityScoreOf(input: QualityInput): number {
+  let earned = 0;
+  const has = (value: unknown): boolean => value !== null && value !== undefined;
+
+  if (has(input.startsAt)) {
     earned += WEIGHTS.startsAt;
   }
-  if (candidate.registrationDeadlineAt !== undefined) {
+  if (has(input.registrationDeadlineAt)) {
     earned += WEIGHTS.registrationDeadlineAt;
   }
   // An UNKNOWN mode is a field we have, holding the information that we do not
   // know — which is not the same as having told the professor anything.
-  if (candidate.mode.value !== 'UNKNOWN') {
+  if (input.mode !== 'UNKNOWN') {
     earned += WEIGHTS.mode;
   }
-  if (candidate.place?.city !== undefined || candidate.place?.venueName !== undefined) {
+  if (has(input.city) || has(input.venueName)) {
     earned += WEIGHTS.place;
   }
-  if (candidate.descriptionMd !== undefined) {
+  if (has(input.descriptionMd)) {
     earned += WEIGHTS.descriptionMd;
   }
-  if (candidate.officialUrl !== undefined) {
+  if (has(input.officialUrl)) {
     earned += WEIGHTS.officialUrl;
   }
-  if (candidate.teamSize?.min !== undefined || candidate.teamSize?.max !== undefined) {
+  if (has(input.teamMin) || has(input.teamMax)) {
     earned += WEIGHTS.teamSize;
   }
-  if (candidate.fee?.known === true) {
+  if (input.feeKnown) {
     earned += WEIGHTS.fee;
   }
-  if (candidate.organizerName !== undefined) {
+  if (has(input.organizerName)) {
     earned += WEIGHTS.organizerName;
   }
 
   return Math.round((earned / TOTAL) * 100);
+}
+
+/** The same score for a candidate that has not been stored yet. */
+export function qualityScore(candidate: EventCandidate): number {
+  return qualityScoreOf({
+    startsAt: candidate.startsAt?.at ?? null,
+    registrationDeadlineAt: candidate.registrationDeadlineAt?.at ?? null,
+    mode: candidate.mode.value,
+    city: candidate.place?.city ?? null,
+    venueName: candidate.place?.venueName ?? null,
+    descriptionMd: candidate.descriptionMd ?? null,
+    officialUrl: candidate.officialUrl ?? null,
+    teamMin: candidate.teamSize?.min ?? null,
+    teamMax: candidate.teamSize?.max ?? null,
+    feeKnown: candidate.fee?.known === true,
+    organizerName: candidate.organizerName ?? null,
+  });
 }

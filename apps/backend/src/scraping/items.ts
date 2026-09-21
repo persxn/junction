@@ -1,7 +1,7 @@
 import { EventCandidate, type ParseWarning } from '@compintel/contracts';
 import type { Logger } from 'pino';
 
-import type { SourceRow } from '../db/schema/index.js';
+import type { SourceRecordRow, SourceRow } from '../db/schema/index.js';
 import {
   payloadHash,
   type SourceRecordsRepository,
@@ -30,6 +30,20 @@ import type { SnapshotStore } from './snapshots.js';
  * can see.
  */
 
+/**
+ * WP-10's linker, as the scrape sees it: turns a stored record into an event
+ * inside the same transaction as the upsert. Optional, so WP-09a's orchestrator
+ * tests run without an events module.
+ */
+export interface RecordLinker {
+  link(input: {
+    record: SourceRecordRow;
+    candidate: EventCandidate;
+    source: SourceRow;
+    at: number;
+  }): unknown;
+}
+
 export interface ProcessItemOptions {
   readonly source: SourceRow;
   readonly adapter: SourceAdapter;
@@ -46,6 +60,7 @@ export interface ProcessItemOptions {
    * looks for (§7.2: "the remainder continues next run").
    */
   readonly detailPending: (changed: boolean) => boolean;
+  readonly linker?: RecordLinker | undefined;
 }
 
 export interface ProcessedItem {
@@ -112,16 +127,37 @@ export function processItem(
       ? options.snapshots?.write(source.key, existing?.id ?? item.externalKey, raw)
       : undefined;
 
-  const result = options.records.upsert({
-    sourceId: source.id,
-    externalKey: item.externalKey,
-    url: item.url,
-    contentHash: hash,
-    payloadJson: JSON.stringify(parsed.data),
-    parseWarnings: warnings,
-    rawSnapshotRef: snapshotRef,
-    detailPending: options.detailPending(changed),
-    at: options.at,
-  });
+  const { linker } = options;
+  let result;
+  try {
+    result = options.records.transaction(() => {
+      const upserted = options.records.upsert({
+        sourceId: source.id,
+        externalKey: item.externalKey,
+        url: item.url,
+        contentHash: hash,
+        payloadJson: JSON.stringify(parsed.data),
+        parseWarnings: warnings,
+        rawSnapshotRef: snapshotRef,
+        detailPending: options.detailPending(changed),
+        at: options.at,
+      });
+      // An unchanged record that is already linked has nothing new to say.
+      if (
+        linker !== undefined &&
+        (upserted.outcome !== 'UNCHANGED' || upserted.record.eventId === null)
+      ) {
+        linker.link({ record: upserted.record, candidate: parsed.data, source, at: options.at });
+      }
+      return upserted;
+    });
+  } catch (error) {
+    // The upsert went back with the link, so the item leaves no half-state.
+    logger.warn(
+      { source: source.key, externalKey: item.externalKey, err: error },
+      'an item could not be linked to an event and was counted as invalid',
+    );
+    return { outcome: 'INVALID', recordId: undefined, changed: false };
+  }
   return { outcome: result.outcome, recordId: result.record.id, changed };
 }

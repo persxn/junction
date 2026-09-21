@@ -7,14 +7,13 @@ import { backoffDelayMs } from '../domain/scheduling.js';
 import { DEFAULT_BACKOFF_BASE_MS, DEFAULT_BACKOFF_MAX_MS } from '../jobs/types.js';
 import type { SourceRecordsRepository } from '../modules/sources/records.js';
 import type { SourcesRepository, RunTotals } from '../modules/sources/repository.js';
-import { APP_TIMEZONE, nowMs, type Clock } from '../platform/time.js';
+import { nowMs, type Clock } from '../platform/time.js';
 import type { SourceAdapter } from '../sources/types.js';
 import { AdapterFormatError, pausesSource, toRunFailure, type RunFailure } from './errors.js';
-import type { ScrapingHttp } from './http/index.js';
-import type { SourceRequestContext } from './http/index.js';
-import { processItem } from './items.js';
+import type { ScrapingHttp, SourceRequestContext } from './http/index.js';
+import { processItem, type RecordLinker } from './items.js';
 import type { SnapshotStore } from './snapshots.js';
-import { representativeUrl, sourceRequestContext, type ParsedSourceConfig } from './source-row.js';
+import { representativeUrl, sourceConfig, sourceRequestContext } from './source-row.js';
 
 /**
  * The scrape orchestrator (§7's pipeline, §7.6, §7.7).
@@ -40,7 +39,7 @@ import { representativeUrl, sourceRequestContext, type ParsedSourceConfig } from
 export const FAILED_BODY_RECORD = 'format-failure';
 
 /** How many detail fetches one run may make when the source does not say. */
-export const DEFAULT_DETAIL_CAP = 10;
+export { DEFAULT_DETAIL_CAP } from './source-row.js';
 
 export interface ScrapeRunDependencies {
   readonly sources: SourcesRepository;
@@ -50,6 +49,8 @@ export interface ScrapeRunDependencies {
   readonly clock: Clock;
   readonly logger: Logger;
   readonly setupComplete: () => boolean;
+  /** WP-10: turns each stored record into an event, in the item's transaction. */
+  readonly linker?: RecordLinker;
 }
 
 export interface ScrapeRunRequest {
@@ -127,6 +128,7 @@ export async function runScrape(
     snapshots: deps.snapshots,
     logger: deps.logger,
     at: startedAt,
+    linker: deps.linker,
   };
 
   let detailsLeft = adapter.detail === undefined ? 0 : config.detailCap;
@@ -221,24 +223,6 @@ function count(counters: Counters, outcome: 'NEW' | 'UPDATED' | 'UNCHANGED'): vo
   } else {
     counters.itemsUnchanged += 1;
   }
-}
-
-/** §6.2's `config_json`, with the two settings this file reads. */
-function sourceConfig(source: SourceRow): ParsedSourceConfig {
-  let raw: unknown;
-  try {
-    raw = JSON.parse(source.configJson);
-  } catch {
-    raw = {};
-  }
-  const record = (raw ?? {}) as { maxDetailsPerRun?: unknown; defaultTimeZone?: unknown };
-  const cap = record.maxDetailsPerRun;
-  const zone = record.defaultTimeZone;
-  return {
-    raw: raw ?? {},
-    detailCap: typeof cap === 'number' && cap >= 0 ? Math.trunc(cap) : DEFAULT_DETAIL_CAP,
-    defaultTimeZone: typeof zone === 'string' && zone.length > 0 ? zone : APP_TIMEZONE,
-  };
 }
 
 /**

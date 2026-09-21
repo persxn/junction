@@ -8,6 +8,9 @@ import { SourcesService } from '../modules/sources/service.js';
 import { UsersRepository } from '../modules/users/repository.js';
 import { UsersService } from '../modules/users/service.js';
 import { AdapterRegistry } from '../sources/registry.js';
+import { Geocoder } from '../modules/geo/geocoder.js';
+import { createEventsModule, type EventsModule } from '../modules/events/wiring.js';
+import { unavailableGazetteer } from '../platform/gazetteer.js';
 import { fakeTransport, silentLogger, testScrapingHttp } from './scraping.js';
 import { systemClock } from '../platform/time.js';
 import { AuditLog } from '../platform/audit.js';
@@ -32,6 +35,8 @@ export interface SetupTestServer {
   readonly users: UsersService;
   readonly auth: AuthService;
   readonly sources: SourcesService;
+  /** WP-10's linker, merges and review API, on the same database. */
+  readonly events: EventsModule;
   /** Empty in WP-09a; a test registers an adapter when it needs one. */
   readonly registry: AdapterRegistry;
   readonly settings: SettingsStore;
@@ -96,11 +101,20 @@ export async function startSetupTestServer(
     },
   });
 
+  const events = createEventsModule({
+    db: database.db,
+    geocoder: new Geocoder({ gazetteer: unavailableGazetteer('tests'), institutions: [] }),
+    settings,
+    audit,
+    logger: silentLogger,
+  });
+
   const server = await startTestServer({
     auth: () => auth,
     setup: () => setup,
     users: () => users,
     sources: () => sources,
+    review: () => events.review,
   });
 
   return {
@@ -110,6 +124,7 @@ export async function startSetupTestServer(
     users,
     auth,
     sources,
+    events,
     registry,
     settings,
     audit,

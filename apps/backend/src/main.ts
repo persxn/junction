@@ -30,6 +30,7 @@ import { Geocoder } from './modules/geo/geocoder.js';
 import { loadInstitutions, loadSeedFile, seedInstitutions } from './modules/geo/seed.js';
 import { EventsRepository } from './modules/events/repository.js';
 import { EventsService } from './modules/events/service.js';
+import { createEventsModule } from './modules/events/wiring.js';
 import { SourceRecordsRepository } from './modules/sources/records.js';
 import { SourcesRepository } from './modules/sources/repository.js';
 import { SourcesService } from './modules/sources/service.js';
@@ -156,9 +157,11 @@ async function main(): Promise<void> {
       settings,
       audit,
     });
-    // Nothing routes to it yet — WP-09b is the first caller (this WP wires no
-    // routes). Constructed here so a startup failure surfaces at startup.
+    // Only the §19 policy re-evaluation uses it; ingest goes through WP-10's
+    // linker below. Constructed here so a startup failure surfaces at startup.
     void eventsService;
+    // WP-10: records become events inline with ingest; merges and the review API.
+    const eventsModule = createEventsModule({ db, geocoder, settings, audit, logger });
 
     // Event ingestion (§7, rulings R58-R61). The transport is the only place a
     // socket is opened, and it is injected here and nowhere else: every test
@@ -182,6 +185,7 @@ async function main(): Promise<void> {
     const scrapeRuntime = {
       http: scrapingHttp,
       snapshots,
+      linker: eventsModule.linker,
       setupComplete: () => !setup.isRequired(),
     };
     const sourcesService = new SourcesService({
@@ -213,6 +217,7 @@ async function main(): Promise<void> {
         snapshots,
         clock: systemClock,
         logger,
+        linker: eventsModule.linker,
       },
       logger,
     });
@@ -227,6 +232,7 @@ async function main(): Promise<void> {
       setup: () => setup,
       users: () => users,
       sources: () => sourcesService,
+      review: () => eventsModule.review,
       onShutdownRequested: () => {
         lifecycle.start('api');
       },

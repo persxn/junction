@@ -171,6 +171,10 @@ export const events = sqliteTable(
     index('events_visibility_idx').on(table.visibility),
     index('events_series_id_idx').on(table.seriesId),
     index('events_normalized_title_idx').on(table.normalizedTitle),
+    // WP-10's candidate slice: the edition guard and §7.5's URL rule.
+    index('events_edition_year_idx').on(table.editionYear),
+    index('events_official_url_idx').on(table.officialUrl),
+    index('events_registration_url_idx').on(table.registrationUrl),
 
     check('events_event_type_check', sql.raw(`"event_type" in (${quoted(EVENT_TYPES)})`)),
     check(

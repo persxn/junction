@@ -1,5 +1,5 @@
 import type { PolicyReason, Uuid7, Visibility } from '@compintel/contracts';
-import { and, asc, count, eq, isNull } from 'drizzle-orm';
+import { and, asc, between, count, eq, inArray, isNull, ne, or, type SQL } from 'drizzle-orm';
 
 import { eventDeadlines, eventFieldClaims, events, type EventRow } from '../../db/schema/index.js';
 import type { DatabaseHandle } from '../../platform/db.js';
@@ -197,6 +197,73 @@ export class EventsRepository {
       .set({ visibility, policyReason: reason ?? null, updatedAt: at })
       .where(eq(events.id, id))
       .run();
+  }
+
+  getById(id: string): EventRow | undefined {
+    return this.#db.drizzle.select().from(events).where(eq(events.id, id)).get();
+  }
+
+  /**
+   * WP-10's candidate slice: live (not merged) events whose start or
+   * registration deadline falls in §7.5's windows, or whose official or
+   * registration URL is one of the given spellings. A prefilter over indexed
+   * columns only — the domain decides what is a candidate.
+   */
+  candidateSlice(slice: {
+    readonly startsAt?: number | undefined;
+    readonly registrationDeadlineAt?: number | undefined;
+    readonly startWindowMs: number;
+    readonly deadlineWindowMs: number;
+    readonly urls: readonly string[];
+  }): EventRow[] {
+    const clauses: SQL[] = [];
+    if (slice.startsAt !== undefined) {
+      clauses.push(
+        between(
+          events.startsAt,
+          slice.startsAt - slice.startWindowMs,
+          slice.startsAt + slice.startWindowMs,
+        ),
+      );
+    }
+    if (slice.registrationDeadlineAt !== undefined) {
+      clauses.push(
+        between(
+          events.registrationDeadlineAt,
+          slice.registrationDeadlineAt - slice.deadlineWindowMs,
+          slice.registrationDeadlineAt + slice.deadlineWindowMs,
+        ),
+      );
+    }
+    if (slice.urls.length > 0) {
+      clauses.push(inArray(events.officialUrl, [...slice.urls]));
+      clauses.push(inArray(events.registrationUrl, [...slice.urls]));
+    }
+    if (clauses.length === 0) {
+      return [];
+    }
+    return this.#db.drizzle
+      .select()
+      .from(events)
+      .where(and(ne(events.visibility, 'MERGED'), or(...clauses)))
+      .all();
+  }
+
+  /** Writes resolved columns; the caller has already decided they changed. */
+  update(id: string, patch: Partial<Omit<EventRow, 'id'>>): void {
+    this.#db.drizzle.update(events).set(patch).where(eq(events.id, id)).run();
+  }
+
+  /** Events merged directly into any of `ids`. */
+  mergedInto(ids: readonly string[]): EventRow[] {
+    if (ids.length === 0) {
+      return [];
+    }
+    return this.#db.drizzle
+      .select()
+      .from(events)
+      .where(inArray(events.mergedIntoEventId, [...ids]))
+      .all();
   }
 
   deadlinesOf(eventId: string): (typeof eventDeadlines.$inferSelect)[] {

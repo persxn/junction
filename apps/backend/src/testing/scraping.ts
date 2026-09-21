@@ -181,6 +181,7 @@ export interface SourceFixture {
   readonly cadenceMinutes?: number;
   readonly manualMinIntervalMinutes?: number;
   readonly configJson?: string;
+  readonly trustRank?: number;
 }
 
 /** Inserts a source plus its health row and returns the row. */
@@ -199,7 +200,7 @@ export function insertSource(db: DatabaseHandle, fixture: SourceFixture = {}): S
     maxRequestsPerRun: fixture.maxRequestsPerRun ?? 6,
     allowedPathsJson: JSON.stringify(fixture.allowedPaths ?? ['example.test/api/']),
     attributionText: null,
-    trustRank: 40,
+    trustRank: fixture.trustRank ?? 40,
     complianceStatus: fixture.complianceStatus ?? 'APPROVED_WITH_LIMITS',
     complianceNotes: 'inserted by a test',
     complianceReviewedAt: now,

@@ -106,16 +106,27 @@ export const eventFieldClaims = sqliteTable(
     observedAt: integer('observed_at').notNull(),
     /** True for the claim currently reflected on `events`. */
     isSelected: integer('is_selected', { mode: 'boolean' }).notNull().default(false),
+    /**
+     * R63: a second value the same source stated for this field and that lost
+     * to its structured field (CTFtime's description prize against `prizes`).
+     * Never selected; it exists so "Sources disagree" can show it (WP-10).
+     */
+    isAlternate: integer('is_alternate', { mode: 'boolean' }).notNull().default(false),
+    /** Why an alternate claim is one, in the adapter's words. */
+    note: text('note'),
   },
   (table) => [
     index('event_field_claims_event_id_idx').on(table.eventId),
     index('event_field_claims_source_record_id_idx').on(table.sourceRecordId),
-    // One claim per source per field: a re-scrape updates, never accumulates.
-    uniqueIndex('event_field_claims_event_field_source_uq').on(
+    // One claim per source per field — plus at most one alternate (R63). A
+    // re-scrape updates, never accumulates.
+    uniqueIndex('event_field_claims_event_field_source_alt_uq').on(
       table.eventId,
       table.field,
       table.sourceRecordId,
+      table.isAlternate,
     ),
+    check('event_field_claims_alternate_check', sql.raw(`"is_alternate" = 0 or "is_selected" = 0`)),
     check('event_field_claims_field_check', sql.raw(`"field" in (${quoted(OVERRIDE_FIELDS)})`)),
   ],
 );

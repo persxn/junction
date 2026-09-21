@@ -169,6 +169,10 @@ describe('module-owned definitions', () => {
       'backup.destinationDir',
       'backup.privateKeyEncrypted',
       'backup.publicKey',
+      // WP-10's, declared by modules/events (R65).
+      'dedup.autoMergeThreshold',
+      'dedup.candidateThreshold',
+      'dedup.weights',
       // WP-08b's, declared by modules/geo — the geography pair moved there from
       // modules/org without changing key or default, which is the point of the
       // handle-based registry.

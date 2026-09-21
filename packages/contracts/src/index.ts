@@ -1,6 +1,7 @@
 export * from './version.js';
 export * from './auth.js';
 export * from './enums.js';
+export * from './dedup.js';
 export * from './event-candidate.js';
 export * from './events.js';
 export * from './errors.js';

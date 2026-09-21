@@ -1,0 +1,10 @@
+{
+  "scenario": "ctftime prize conflict",
+  "note": "WP-10. Uses WP-02's recorded CTFtime listing unchanged (test/fixtures/ctftime/listing-events.json, R62): event 3435 states \"$500\" in its structured prizes field and \"₹50,000\" in its description. WP-09b's adapter carries the second as an R63 alternate claim.",
+  "ctftimeFixture": "listing-events.json",
+  "eventId": 3435,
+  "expect": {
+    "selectedPrizeTextStartsWith": "1st Place - $500",
+    "alternateContains": "₹50,000"
+  }
+}

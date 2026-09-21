@@ -13,5 +13,6 @@
 
 export * from './modules/auth/settings.js';
 export * from './modules/backup/settings.js';
+export * from './modules/events/settings.js';
 export * from './modules/geo/settings.js';
 export * from './modules/org/settings.js';

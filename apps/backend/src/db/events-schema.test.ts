@@ -202,9 +202,13 @@ describe('the events table matches §6.2 column for column', () => {
   });
 
   /** §6.2's Indexes row, in its order. */
-  it('carries the nine indexes §6.2 lists', () => {
+  it('carries the nine indexes §6.2 lists, plus the three WP-10 added for the candidate slice', () => {
     expect(indexesOf(open(), 'events')).toStrictEqual(
       [
+        // WP-10 (migration 0008): the edition guard and §7.5's URL rule.
+        'events_edition_year_idx',
+        'events_official_url_idx',
+        'events_registration_url_idx',
         'events_registration_deadline_at_idx',
         'events_starts_at_idx',
         'events_event_type_idx',
@@ -254,6 +258,9 @@ describe('the events table matches §6.2 column for column', () => {
         'source_record_id',
         'observed_at',
         'is_selected',
+        // WP-10 (migration 0008): R63 alternate claims.
+        'is_alternate',
+        'note',
       ].sort(),
     );
     expect(columnsOf(h, 'event_overrides')).toStrictEqual(

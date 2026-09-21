@@ -1,0 +1,37 @@
+{
+  "scenario": "internal round vs national round",
+  "note": "HAND-WRITTEN FIXTURE (WP-10). One organizer runs an internal round on campus and a national final online, same year, one registration deadline. Alike enough to ask a person, never alike enough to merge on the machine's word: a PENDING candidate, never AUTO_MERGE.",
+  "sources": [],
+  "records": [
+    {
+      "sourceKey": "devfolio",
+      "externalKey": "codestorm-internal",
+      "candidate": {
+        "title": "CodeStorm 2026 Internal Hackathon",
+        "eventType": "HACKATHON",
+        "organizerName": "CodeStorm Club",
+        "mode": "OFFLINE",
+        "city": "Kharagpur",
+        "countryCode": "IN",
+        "startsAt": "2026-09-26T04:30:00Z",
+        "endsAt": "2026-09-26T12:30:00Z",
+        "registrationDeadlineAt": "2026-09-20T18:29:00Z",
+        "editionYear": 2026
+      }
+    },
+    {
+      "sourceKey": "unstop",
+      "externalKey": "codestorm-national",
+      "candidate": {
+        "title": "CodeStorm 2026 National Finals",
+        "eventType": "HACKATHON",
+        "organizerName": "CodeStorm Club",
+        "mode": "ONLINE",
+        "startsAt": "2026-10-24T04:30:00Z",
+        "endsAt": "2026-10-25T04:30:00Z",
+        "registrationDeadlineAt": "2026-09-20T18:29:00Z",
+        "editionYear": 2026
+      }
+    }
+  ]
+}

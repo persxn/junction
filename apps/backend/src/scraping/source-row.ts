@@ -1,4 +1,5 @@
 import type { SourceRow } from '../db/schema/index.js';
+import { APP_TIMEZONE } from '../platform/time.js';
 import type { SourceRequestContext } from './http/index.js';
 
 /**
@@ -57,4 +58,25 @@ export function representativeUrl(source: SourceRow): string {
   }
   const withoutWildcard = entry.startsWith('*.') ? entry.slice(2) : entry;
   return `https://${withoutWildcard}`;
+}
+
+/** How many detail fetches one run may make when the source does not say. */
+export const DEFAULT_DETAIL_CAP = 10;
+
+/** §6.2's `config_json`, with the two settings this file reads. */
+export function sourceConfig(source: SourceRow): ParsedSourceConfig {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(source.configJson);
+  } catch {
+    raw = {};
+  }
+  const record = (raw ?? {}) as { maxDetailsPerRun?: unknown; defaultTimeZone?: unknown };
+  const cap = record.maxDetailsPerRun;
+  const zone = record.defaultTimeZone;
+  return {
+    raw: raw ?? {},
+    detailCap: typeof cap === 'number' && cap >= 0 ? Math.trunc(cap) : DEFAULT_DETAIL_CAP,
+    defaultTimeZone: typeof zone === 'string' && zone.length > 0 ? zone : APP_TIMEZONE,
+  };
 }

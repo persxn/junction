@@ -1,0 +1,37 @@
+{
+  "scenario": "yearly editions never merge",
+  "note": "HAND-WRITTEN FIXTURE (WP-10). Two editions of one hackathon: same organizer, same official URL (yearly editions reuse it), a year apart. R64: two events, no auto-merge, and no dedup_candidates row.",
+  "sources": [],
+  "records": [
+    {
+      "sourceKey": "devfolio",
+      "externalKey": "hackx-2025",
+      "candidate": {
+        "title": "HackX 2025",
+        "eventType": "HACKATHON",
+        "organizerName": "HackX Society",
+        "mode": "OFFLINE",
+        "startsAt": "2025-10-18T04:30:00Z",
+        "endsAt": "2025-10-19T04:30:00Z",
+        "registrationDeadlineAt": "2025-10-10T18:29:00Z",
+        "officialUrl": "https://hackx.example.org/",
+        "editionYear": 2025
+      }
+    },
+    {
+      "sourceKey": "devfolio",
+      "externalKey": "hackx-2026",
+      "candidate": {
+        "title": "HackX 2026",
+        "eventType": "HACKATHON",
+        "organizerName": "HackX Society",
+        "mode": "OFFLINE",
+        "startsAt": "2026-10-17T04:30:00Z",
+        "endsAt": "2026-10-18T04:30:00Z",
+        "registrationDeadlineAt": "2026-10-09T18:29:00Z",
+        "officialUrl": "https://hackx.example.org/",
+        "editionYear": 2026
+      }
+    }
+  ]
+}

@@ -6,7 +6,7 @@ import { APP_TIMEZONE, nowMs, type Clock } from '../platform/time.js';
 import type { AdapterContext, ListingItem, SourceAdapter } from '../sources/types.js';
 import { toRunFailure } from './errors.js';
 import type { ScrapingHttp } from './http/index.js';
-import { processItem } from './items.js';
+import { processItem, type RecordLinker } from './items.js';
 import type { SnapshotStore } from './snapshots.js';
 import { sourceRequestContext } from './source-row.js';
 
@@ -33,6 +33,8 @@ export interface DetailRefreshDependencies {
   readonly snapshots?: SnapshotStore;
   readonly clock: Clock;
   readonly logger: Logger;
+  /** WP-10's linker, so a detail fetch updates the event too. */
+  readonly linker?: RecordLinker;
 }
 
 export interface DetailRefreshResult {
@@ -101,6 +103,7 @@ export async function refreshDetails(
           snapshots: deps.snapshots,
           logger: deps.logger,
           at,
+          linker: deps.linker,
           detailPending: () => false,
         },
         detail.payload,

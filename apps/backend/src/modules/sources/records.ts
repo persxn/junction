@@ -63,6 +63,14 @@ export class SourceRecordsRepository {
     this.#db = db;
   }
 
+  /**
+   * Runs `work` in one transaction (a SAVEPOINT inside an open one). The scrape
+   * item uses it so the record upsert and WP-10's event link commit together.
+   */
+  transaction<T>(work: () => T): T {
+    return this.#db.raw.transaction(work).immediate();
+  }
+
   find(sourceId: string, externalKey: string): SourceRecordRow | undefined {
     return this.#db.drizzle
       .select()
@@ -111,6 +119,7 @@ export class SourceRecordsRepository {
             eventId: null,
             matchMethod: 'NEW',
             matchScore: null,
+            originEventId: null,
           };
           this.#db.drizzle.insert(sourceRecords).values(row).run();
           return { outcome: 'NEW', record: row };

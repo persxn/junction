@@ -1,0 +1,56 @@
+{
+  "scenario": "same event on three sources",
+  "note": "HAND-WRITTEN FIXTURE (WP-10). One hackathon described by the organizer's own site (trust 80), Devfolio (trust 60, seeded) and CTFtime (trust 40, seeded). Ingested lowest trust first, so the resolution cannot be an accident of order. The three agree on the official URL; they disagree on the title wording, the start (CTFtime is 3 h late), the team size and the mode.",
+  "sources": [{ "key": "hackiitx-site", "trustRank": 80, "adapter": "CONFIGURED_LISTING" }],
+  "records": [
+    {
+      "sourceKey": "ctftime",
+      "externalKey": "9001",
+      "candidate": {
+        "title": "HackIITX CTF 2026",
+        "eventType": "CTF",
+        "organizerName": "HackIITX Team",
+        "mode": "ONLINE",
+        "startsAt": "2026-11-14T07:30:00Z",
+        "endsAt": "2026-11-15T07:30:00Z",
+        "officialUrl": "https://hackiitx.example.edu/",
+        "editionYear": 2026
+      }
+    },
+    {
+      "sourceKey": "devfolio",
+      "externalKey": "hackiitx-2026",
+      "candidate": {
+        "title": "HackIITX 2026 Hackathon",
+        "eventType": "HACKATHON",
+        "organizerName": "HackIITX",
+        "mode": "HYBRID",
+        "startsAt": "2026-11-14T04:30:00Z",
+        "endsAt": "2026-11-15T04:30:00Z",
+        "registrationDeadlineAt": "2026-11-07T18:29:00Z",
+        "teamMin": 2,
+        "teamMax": 5,
+        "officialUrl": "https://www.hackiitx.example.edu",
+        "registrationUrl": "https://hackiitx-2026.devfolio.example/",
+        "editionYear": 2026
+      }
+    },
+    {
+      "sourceKey": "hackiitx-site",
+      "externalKey": "home",
+      "candidate": {
+        "title": "HackIITX 2026",
+        "eventType": "HACKATHON",
+        "organizerName": "HackIITX",
+        "mode": "OFFLINE",
+        "startsAt": "2026-11-14T04:30:00Z",
+        "endsAt": "2026-11-15T04:30:00Z",
+        "registrationDeadlineAt": "2026-11-07T18:29:00Z",
+        "teamMin": 2,
+        "teamMax": 4,
+        "officialUrl": "https://hackiitx.example.edu/",
+        "editionYear": 2026
+      }
+    }
+  ]
+}

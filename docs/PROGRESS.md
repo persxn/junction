@@ -13,15 +13,18 @@
 - **WP-09a DONE** (`docs/handoff/WP-09a.md`) — PoliteHttpClient, gate, seeds (0005/0006), scrape runs, jobs,
   snapshots. Host-qualified `allowed_paths_json` with `!` denials; no test opens an internet socket (grep-enforced).
   Deps: undici 8.10.2, robots-parser 3.0.1.
-- **WP-09b PARTIAL** (21 Sep 2026, `docs/handoff/WP-09b.md`) — CTFtime adapter. Everything built and
-  tested offline (**2445 tests**); **the one manual live smoke was not run**: the dev DB has no
-  `scraper.contactEmail` and the owner chose to skip it. `src/adapters/ctftime/` (pure `map.ts`, listing read whole
-  before any yield, only the two API URLs, built from numbers), goldens committed + read by eye, R62/R63 recorded
-  (spec v1.1.10). Contracts: `alternateClaims`, `eligibility.qualifiedOnly`, `DATE_DURATION_MISMATCH`. Migration
-  **0007** fixes the attribution and adds `!ctftime.org/api/v1/events/{id}/{below}` (the path grammar is prefix-only).
-  `registerBuiltInAdapters()` makes `scrape:ctftime` appear. `pnpm --filter @compintel/backend scrape:once` exists.
-- **Next: WP-11** (WP-10 in progress; R64–R66 recorded, spec v1.1.11; roadmap 20 done, 28 remaining). Still owed: **the WP-09b live smoke** (set `scraper.contactEmail` on the dev data dir, run `scrape:once -- --source
-  ctftime` once), **then WP-10.** WP-08b's two questions are still open (handoff §6): the gazetteer is 68.5 MB of
+- **WP-09b PARTIAL** (`docs/handoff/WP-09b.md`) — CTFtime adapter, goldens, R62/R63, migration 0007
+  (attribution + path denial), `scrape:once`. **Manual live smoke not run** (no `scraper.contactEmail` on the dev DB).
+- **WP-10 DONE** (21 Sep 2026, `docs/handoff/WP-10.md`) — dedup, merge/unmerge, field resolution, change
+  detection, admin review API. R64–R66 recorded (spec v1.1.11). Migration **0008**: `dedup_candidates`,
+  `event_field_claims.is_alternate/note` (R63 claims), `source_records.origin_event_id` (unmerge). Pure
+  `domain/dedup/` (§7.5 score + R64 guard first) and `domain/events/resolve.ts` (override > trust > recency,
+  **resolved by field group** so fee/prize/place/dates/team are never spliced). Linking runs inside
+  `processItem`'s transaction, so **scrapes now create events**. Thresholds/weights are settings (R65).
+  Four §19 scenarios pass by name; merge→unmerge restores every row count; property test over resolution.
+  **2505 tests.** No new deps.
+- **Next: WP-11.** Still owed: **the WP-09b live smoke** (set `scraper.contactEmail` on the dev data dir, run `scrape:once -- --source
+  ctftime` once). WP-08b's two questions are still open (handoff §6): the gazetteer is 68.5 MB of
   which 95% are zero-population hamlets that also *harm* matching — §4.17 says "towns/cities" where
   R53 says feature class P; and GeoNames has almost no Indian campuses, so the INSTITUTION rung is
   mostly unreachable. Q12 stays OPEN in ARCHITECTURE.md §2 and DECISIONS.md.
