@@ -1,4 +1,6 @@
 import {
+  SetSourceCredentialRequest,
+  SourceCredentialStatus,
   SourceListResponse,
   SourceRefreshResult,
   SourceResponse,
@@ -67,6 +69,27 @@ export const sourcesRoutes =
       (request) => ({
         source: service(options).update(contextOf(request), request.params.key, request.body),
       }),
+    );
+
+    // WP-11: a source's API credential. The body is never echoed; both answers
+    // are `{ isSet }` and nothing else.
+    app.get(
+      '/admin/sources/:key/credential',
+      { schema: { params: SourceParams, response: { 200: SourceCredentialStatus } } },
+      (request) => service(options).credentialStatus(contextOf(request), request.params.key),
+    );
+
+    app.put(
+      '/admin/sources/:key/credential',
+      {
+        schema: {
+          params: SourceParams,
+          body: SetSourceCredentialRequest,
+          response: { 200: SourceCredentialStatus },
+        },
+      },
+      (request) =>
+        service(options).setCredential(contextOf(request), request.params.key, request.body),
     );
 
     app.post(

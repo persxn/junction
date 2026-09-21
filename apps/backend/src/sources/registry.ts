@@ -1,3 +1,4 @@
+import { createClistAdapter } from '../adapters/clist/adapter.js';
 import { createCtftimeAdapter } from '../adapters/ctftime/adapter.js';
 import type { CtftimeGeo } from '../adapters/ctftime/map.js';
 import type { SourceAdapter } from './types.js';
@@ -66,10 +67,12 @@ export interface BuiltInAdapterDependencies {
  * `scrape:<source>` job appears from the registry and the `sources` rows alone.
  *
  * - `ctftime` — WP-09b.
+ * - `clist` — WP-11 (key-gated; with no key its runs record BLOCKED_BY_POLICY).
  */
 export function registerBuiltInAdapters(
   registry: AdapterRegistry,
   deps: BuiltInAdapterDependencies,
 ): void {
   registry.register(createCtftimeAdapter({ geo: deps.geo }));
+  registry.register(createClistAdapter());
 }

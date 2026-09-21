@@ -15,6 +15,8 @@ import { conflict } from '../../platform/errors.js';
 import { nowMs, systemClock, type Clock } from '../../platform/time.js';
 import { assertCan } from '../auth/policy.js';
 import type { Principal } from '../auth/types.js';
+import type { SettingsStore } from '../../platform/settings.js';
+import { authConfigOf, credentialIsSet, storeCredential } from './credentials.js';
 import { sourceNotFound, sourceRefreshTooSoon } from './errors.js';
 import { nextManualRefreshAt, toRunSummary, toStatus, toSummary } from './mappers.js';
 import type { SourceRecordsRepository } from './records.js';
@@ -44,6 +46,8 @@ export interface SourcesServiceDependencies {
   readonly audit: AuditLog;
   readonly logger: Logger;
   readonly clock?: Clock;
+  /** WP-11: where source credentials live (secret settings). */
+  readonly settings?: SettingsStore;
   /** Everything `runScrape` needs except the source and the adapter. */
   readonly runtime: Omit<ScrapeRunDependencies, 'sources' | 'records' | 'clock' | 'logger'>;
 }
@@ -117,6 +121,55 @@ export class SourcesService {
       );
     }
     return toSummary(updated);
+  }
+
+  /** Whether a source's credential is set — never what it is (WP-11). */
+  credentialStatus(context: SourcesServiceContext, key: string): { isSet: boolean } {
+    assertCan(context.actor, 'source.manage');
+    const source = this.#require(key);
+    return { isSet: credentialIsSet(source, this.#settings()) };
+  }
+
+  /**
+   * Stores a source's credential (WP-11, U4). Audited without the values: the
+   * audit row says who set it and when, and nothing else leaves this call.
+   */
+  setCredential(
+    context: SourcesServiceContext,
+    key: string,
+    value: { readonly username: string; readonly apiKey: string },
+  ): { isSet: boolean } {
+    assertCan(context.actor, 'source.manage');
+    const source = this.#require(key);
+    if (authConfigOf(source) === undefined) {
+      throw conflict(
+        `${source.name} does not use an API credential.`,
+        'Only sources whose configuration names a credential accept one.',
+      );
+    }
+    const settings = this.#settings();
+    withAudit(
+      this.#deps.audit,
+      {
+        actorKind: 'USER',
+        actorUserId: context.actor.id,
+        action: 'source.credential.set',
+        entityKind: 'source',
+        entityId: source.id,
+        summary: `Stored the ${source.name} API credential`,
+        diff: {},
+        requestId: context.requestId ?? null,
+      },
+      () => storeCredential(source, settings, value, context.actor.id),
+    );
+    return { isSet: credentialIsSet(source, settings) };
+  }
+
+  #settings(): SettingsStore {
+    if (this.#deps.settings === undefined) {
+      throw new Error('source credentials are not available on this backend');
+    }
+    return this.#deps.settings;
   }
 
   /**

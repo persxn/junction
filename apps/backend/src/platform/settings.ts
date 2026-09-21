@@ -34,6 +34,13 @@ export interface SettingSpec<T> {
   readonly default: T;
   /** One sentence: what this changes, for the admin screen and the registry dump. */
   readonly description: string;
+  /**
+   * A credential (§6.2 footnote: source API keys are "never logged or
+   * exported"). Its value is left out of {@link exportableSettings}, which every
+   * export and diagnostics dump must go through, and its key is added to the log
+   * redaction list.
+   */
+  readonly secret?: boolean;
 }
 
 /** A registered setting. Holding one of these is what lets you read or write it. */
@@ -75,6 +82,13 @@ export function define<T>(key: string, spec: SettingSpec<T>): SettingDefinition<
  */
 export function settingDefinitions(): readonly SettingDefinition<unknown>[] {
   return [...registry.values()].sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+}
+
+/** Keys whose values are credentials and never leave the database (§6.2). */
+export function secretSettingKeys(): readonly string[] {
+  return settingDefinitions()
+    .filter((definition) => definition.secret === true)
+    .map((definition) => definition.key);
 }
 
 /** Every registered key, sorted. */
@@ -173,6 +187,23 @@ export class SettingsStore {
       .values(row)
       .onConflictDoUpdate({ target: settings.key, set: row })
       .run();
+  }
+
+  /**
+   * Every setting's current value, **without the secret ones** — the only
+   * sanctioned source for an export, a backup manifest or a diagnostics dump
+   * (§6.2: source API keys are never exported). A secret is reported as whether
+   * it is set, never as what it is.
+   */
+  exportableSettings(): Record<string, unknown> {
+    const out: Record<string, unknown> = {};
+    for (const definition of settingDefinitions()) {
+      out[definition.key] =
+        definition.secret === true
+          ? { isSet: this.has(definition) && this.get(definition) !== definition.default }
+          : this.get(definition);
+    }
+    return out;
   }
 
   /** True when the key has a row of its own, whatever it says. */

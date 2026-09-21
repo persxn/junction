@@ -1,6 +1,6 @@
 import type { ComplianceStatus, ScrapeErrorKind, ScrapeMethod } from '@compintel/contracts';
 
-import type { GateRefusal } from '../../domain/scraping/gate.js';
+import type { GateRefusal, RobotsExemption } from '../../domain/scraping/gate.js';
 
 /**
  * The seam every request goes through (§7.1: the PoliteHttpClient is the only
@@ -127,6 +127,16 @@ export interface PoliteResponse {
   json(): unknown;
 }
 
+/**
+ * A documented API credential (§7.2 "use credentials other than a documented
+ * API key" is the only kind allowed). Sent on the source's own requests only —
+ * never on robots.txt — and never logged.
+ */
+export interface SourceCredential {
+  readonly header: string;
+  readonly value: string;
+}
+
 /** Everything the gate needs to know about the source making the request. */
 export interface SourceRequestContext {
   readonly key: string;
@@ -136,6 +146,10 @@ export interface SourceRequestContext {
   readonly allowedPaths: readonly string[];
   readonly minDelayMs: number;
   readonly maxRequestsPerRun: number;
+  /** Present when the source has one and it is set (WP-11). */
+  readonly credential?: SourceCredential | undefined;
+  /** A reviewed, seed-only robots exemption (WP-11, proposed ruling). */
+  readonly robotsExemption?: RobotsExemption | undefined;
 }
 
 export interface RequestOptions {

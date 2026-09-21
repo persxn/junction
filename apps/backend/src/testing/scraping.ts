@@ -149,13 +149,15 @@ export interface TestScrapingHttpOptions {
   readonly online?: boolean;
   readonly maxWaitMs?: number;
   readonly cache?: ValidatorStore;
+  /** Defaults to silent; pass one to capture what the HTTP layer logs. */
+  readonly logger?: Logger;
 }
 
 /** A `ScrapingHttp` wired entirely to doubles. */
 export function testScrapingHttp(options: TestScrapingHttpOptions): ScrapingHttp {
   return new ScrapingHttp({
     fetcher: options.transport.fetcher,
-    logger: silentLogger,
+    logger: options.logger ?? silentLogger,
     clock: options.clock,
     sleep: options.sleep ?? manualSleeper(),
     // Pinned jitter, so a retry delay is exactly the base times the step.

@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 
-import { TransportError, type TransportResponse } from './types.js';
+import { TransportError, type PoliteResponse, type TransportResponse } from './types.js';
 
 /**
  * Reading a response body without ever holding more than the cap (§4.8's 5 MB).
@@ -61,4 +61,18 @@ export async function readCapped(
 /** One source of truth for turning a body into text; UTF-8, always. */
 export function decode(body: Uint8Array): string {
   return new TextDecoder('utf-8').decode(body);
+}
+
+/** Header lookup by a name the linter would rather see in dot notation. */
+export function header(response: TransportResponse, name: string): string | undefined {
+  return response.headers[name];
+}
+
+/** Adds the two lazy accessors and freezes the result. */
+export function frozen(base: Omit<PoliteResponse, 'text' | 'json'>): PoliteResponse {
+  return Object.freeze({
+    ...base,
+    text: () => decode(base.body),
+    json: () => JSON.parse(decode(base.body)) as unknown,
+  });
 }

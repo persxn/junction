@@ -9,7 +9,7 @@ import type { ValidatorStore } from './cache.js';
 import { asTransportError, classifyStatus, parseRetryAfter } from './classify.js';
 import { hostKey } from './queue.js';
 import type { HostQueue } from './queue.js';
-import { decode, readCapped } from './read.js';
+import { frozen, header, readCapped } from './read.js';
 import type { RobotsCache } from './robots.js';
 import {
   CONNECT_TIMEOUT_MS,
@@ -77,6 +77,8 @@ export class PoliteHttpClient {
   readonly #source: SourceRequestContext;
   readonly #budget: RequestBudget;
   readonly #signal: AbortSignal;
+  /** The exemption line is logged once per run, not once per request. */
+  #exemptionLogged = false;
   /** Hosts whose robots.txt could not be read; skipped for the rest of the run. */
   readonly #unreadableHosts = new Set<string>();
   #requestsMade = 0;
@@ -197,7 +199,21 @@ export class PoliteHttpClient {
       setupComplete: this.#env.setupComplete(),
       requestsMade: this.#requestsMade,
       cap: this.#budget.maxRequests,
+      robotsExemption: this.#source.robotsExemption,
+      credentialPresent: this.#source.credential !== undefined,
     });
+    if (decision.allowed && decision.robotsExempted === true && !this.#exemptionLogged) {
+      // WP-11: said once per run, so an administrator can see the exemption is in use.
+      this.#exemptionLogged = true;
+      this.#env.logger.info(
+        {
+          source: this.#source.key,
+          reviewedBy: this.#source.robotsExemption?.reviewedBy,
+          reviewedAt: this.#source.robotsExemption?.reviewedAt,
+        },
+        'robots.txt disallows this API path; the reviewed exemption for authenticated API use was applied',
+      );
+    }
     if (!decision.allowed) {
       this.#env.logger.info(
         { source: this.#source.key, refusal: decision.refusal },
@@ -295,6 +311,10 @@ export class PoliteHttpClient {
       accept: options.accept ?? 'application/json, text/html;q=0.9, */*;q=0.5',
       'accept-encoding': 'gzip, deflate',
     };
+    // A documented API key, on the source's own requests only (not robots.txt); never logged.
+    if (this.#source.credential !== undefined) {
+      headers[this.#source.credential.header.toLowerCase()] = this.#source.credential.value;
+    }
     if (conditional?.etag != null) {
       headers['if-none-match'] = conditional.etag;
     }
@@ -377,18 +397,4 @@ export class PoliteHttpClient {
       ...(retryAfterMs === undefined ? {} : { retryAfterMs }),
     });
   }
-}
-
-/** Header lookup by a name the linter would rather see in dot notation. */
-function header(response: TransportResponse, name: string): string | undefined {
-  return response.headers[name];
-}
-
-/** Adds the two lazy accessors and freezes the result. */
-function frozen(base: Omit<PoliteResponse, 'text' | 'json'>): PoliteResponse {
-  return Object.freeze({
-    ...base,
-    text: () => decode(base.body),
-    json: () => JSON.parse(decode(base.body)) as unknown,
-  });
 }

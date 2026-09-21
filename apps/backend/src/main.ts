@@ -34,9 +34,12 @@ import { createEventsModule } from './modules/events/wiring.js';
 import { SourceRecordsRepository } from './modules/sources/records.js';
 import { SourcesRepository } from './modules/sources/repository.js';
 import { SourcesService } from './modules/sources/service.js';
+import { resolveCredential, seedDevCredentials } from './modules/sources/credentials.js';
+import type { SourceRow } from './db/schema/index.js';
 import {
   HttpCacheStore,
   ScrapingHttp,
+  type SourceCredential,
   closeTransport,
   undiciFetcher,
 } from './scraping/http/index.js';
@@ -182,10 +185,17 @@ async function main(): Promise<void> {
     registerBuiltInAdapters(adapterRegistry, { geo: geocoder });
     const sourcesRepository = new SourcesRepository(db);
     const sourceRecords = new SourceRecordsRepository(db);
+    // WP-11: in --dev only, env vars may seed the CLIST credential (never logged).
+    if (seedDevCredentials(settings, config.dev, process.env)) {
+      logger.info('a CLIST credential was seeded from the environment (--dev)');
+    }
+    const credentials = (source: SourceRow): SourceCredential | undefined =>
+      resolveCredential(source, settings);
     const scrapeRuntime = {
       http: scrapingHttp,
       snapshots,
       linker: eventsModule.linker,
+      credentials,
       setupComplete: () => !setup.isRequired(),
     };
     const sourcesService = new SourcesService({
@@ -194,6 +204,7 @@ async function main(): Promise<void> {
       registry: adapterRegistry,
       audit,
       logger,
+      settings,
       runtime: scrapeRuntime,
     });
 

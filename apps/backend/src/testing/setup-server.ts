@@ -95,6 +95,7 @@ export async function startSetupTestServer(
     registry,
     audit,
     logger: silentLogger,
+    settings,
     runtime: {
       http: testScrapingHttp({ transport: fakeTransport({}), clock: systemClock }),
       setupComplete: () => !setup.isRequired(),

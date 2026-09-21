@@ -1,0 +1,40 @@
+{
+  "_note": "SYNTHETIC (WP-11): hand-built from CLIST's documented v4 schema (clist.by/api/v4/doc/). CLIST has never been called (U4 open); this is not recorded traffic.",
+  "meta": {
+    "limit": 100,
+    "next": null,
+    "offset": 0,
+    "previous": null,
+    "total_count": 2
+  },
+  "objects": [
+    {
+      "id": 920001,
+      "resource": "icpc.global",
+      "resource_id": 1,
+      "host": "icpc.global",
+      "event": "ICPC Asia West Continent Regional Contest",
+      "start": "2026-11-14T03:30:00",
+      "end": "2026-11-14T08:30:00",
+      "duration": 18000,
+      "href": "https://icpc.global/regionals/finder/asia-west",
+      "n_problems": 12,
+      "n_statistics": 0,
+      "parsed_at": null
+    },
+    {
+      "id": 920002,
+      "resource": "devpost.com",
+      "resource_id": 1,
+      "host": "devpost.com",
+      "event": "CodeSprint 48-Hour Hackathon",
+      "start": "2026-10-09T12:00:00",
+      "end": "2026-10-11T12:00:00",
+      "duration": 172800,
+      "href": "https://codesprint-hackathon.example.org/",
+      "n_problems": null,
+      "n_statistics": 0,
+      "parsed_at": null
+    }
+  ]
+}

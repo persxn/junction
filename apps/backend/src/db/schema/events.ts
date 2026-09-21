@@ -26,6 +26,7 @@ import {
   real,
   sqliteTable,
   text,
+  uniqueIndex,
   type AnySQLiteColumn,
 } from 'drizzle-orm/sqlite-core';
 
@@ -57,6 +58,11 @@ export const eventSeries = sqliteTable(
   {
     id: text('id').primaryKey(),
     name: text('name').notNull(),
+    /**
+     * WP-11: the normalized series key ("codeforces round div") the series is
+     * upserted by. Unique among series that have one.
+     */
+    seriesKey: text('series_key'),
     organizerName: text('organizer_name'),
     recurrence: text('recurrence').$type<Recurrence>().notNull().default('NONE'),
     /** Codeforces/LeetCode-style rated rounds, which the feed hides (D-08). */
@@ -66,6 +72,7 @@ export const eventSeries = sqliteTable(
   },
   (table) => [
     index('event_series_name_idx').on(table.name),
+    uniqueIndex('event_series_series_key_uq').on(table.seriesKey),
     check('event_series_recurrence_check', sql.raw(`"recurrence" in (${quoted(RECURRENCES)})`)),
   ],
 );

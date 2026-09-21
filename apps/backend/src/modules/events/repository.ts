@@ -157,6 +157,31 @@ export class EventsRepository {
     );
   }
 
+  /**
+   * The main Discover feed (§16.2): visible events that are **not** recurring
+   * rounds (D-08, WP-11). This is the default WP-15a's
+   * `EventQuery.includeRecurring` must inherit — false excludes rounds.
+   */
+  listMainFeed(limit = 50, offset = 0): EventRow[] {
+    return this.#feed(false, limit, offset);
+  }
+
+  /** The Contest Calendar (§16.2): visible recurring rounds only. WP-16a renders it. */
+  listContestCalendar(limit = 50, offset = 0): EventRow[] {
+    return this.#feed(true, limit, offset);
+  }
+
+  #feed(rounds: boolean, limit: number, offset: number): EventRow[] {
+    return this.#db.drizzle
+      .select()
+      .from(events)
+      .where(and(EventsRepository.visibleCondition(), eq(events.isRecurringRound, rounds)))
+      .orderBy(asc(events.startsAt), asc(events.registrationDeadlineAt), asc(events.id))
+      .limit(limit)
+      .offset(offset)
+      .all();
+  }
+
   getVisibleEventById(id: string): EventRow | undefined {
     return this.#db.drizzle
       .select()

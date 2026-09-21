@@ -180,6 +180,9 @@ describe('module-owned definitions', () => {
       'geography.nearbyRadiusKm',
       'geography.policy',
       'scraper.contactEmail',
+      // WP-11's, declared by modules/sources — secret, never logged or exported.
+      'sources.clist.apiKey',
+      'sources.clist.apiUsername',
     ]);
 
     const { store } = open();

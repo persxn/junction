@@ -1,0 +1,10 @@
+{
+  "_note": "SYNTHETIC (WP-11): hand-built from CLIST's documented v4 schema (clist.by/api/v4/doc/). CLIST has never been called (U4 open); this is not recorded traffic.",
+  "status": 401,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "body": {
+    "detail": "Invalid username/api_key"
+  }
+}

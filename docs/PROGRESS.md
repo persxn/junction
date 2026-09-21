@@ -15,16 +15,17 @@
   Deps: undici 8.10.2, robots-parser 3.0.1.
 - **WP-09b PARTIAL** (`docs/handoff/WP-09b.md`) — CTFtime adapter, goldens, R62/R63, migration 0007
   (attribution + path denial), `scrape:once`. **Manual live smoke not run** (no `scraper.contactEmail` on the dev DB).
-- **WP-10 DONE** (21 Sep 2026, `docs/handoff/WP-10.md`) — dedup, merge/unmerge, field resolution, change
-  detection, admin review API. R64–R66 recorded (spec v1.1.11). Migration **0008**: `dedup_candidates`,
-  `event_field_claims.is_alternate/note` (R63 claims), `source_records.origin_event_id` (unmerge). Pure
-  `domain/dedup/` (§7.5 score + R64 guard first) and `domain/events/resolve.ts` (override > trust > recency,
-  **resolved by field group** so fee/prize/place/dates/team are never spliced). Linking runs inside
-  `processItem`'s transaction, so **scrapes now create events**. Thresholds/weights are settings (R65).
-  Four §19 scenarios pass by name; merge→unmerge restores every row count; property test over resolution.
-  **2505 tests.** No new deps.
-- **Next: WP-11.** Still owed: **the WP-09b live smoke** (set `scraper.contactEmail` on the dev data dir, run `scrape:once -- --source
-  ctftime` once). WP-08b's two questions are still open (handoff §6): the gazetteer is 68.5 MB of
+- **WP-10 DONE** (`docs/handoff/WP-10.md`) — dedup (§7.5, R64 first), merge/unmerge (R66, nothing deleted),
+  resolution by field group, change detection, admin review API; migration 0008; scrapes now create events.
+- **WP-11 DONE** (21 Sep 2026, `docs/handoff/WP-11.md`) — CLIST adapter (key-gated, fixture-first) + series /
+  recurring-round detection. Migration **0009**: `event_series.series_key`, CLIST row enabled (no key → BLOCKED_BY_POLICY,
+  zero requests, no backoff), two v4 paths, auth shape + **seed-only robots exemption** (proposed ruling, handoff §4).
+  Secret settings `sources.clist.api{Key,Username}`: redacted, excluded from `exportableSettings()`, admin PUT/GET
+  credential routes. Pure `domain/series/`; `listMainFeed()` hides rounds, `listContestCalendar()` shows them.
+  Fixed a Windows bug: a `:` in an external key hid snapshots in an NTFS stream. **2555 tests.** No new deps.
+  `clist:smoke` **skipped** (U4 open).
+- **Next: WP-12.** Still owed: the WP-09b live smoke (needs `scraper.contactEmail`) and U4 for CLIST.
+  WP-08b's two questions are still open (handoff §6): the gazetteer is 68.5 MB of
   which 95% are zero-population hamlets that also *harm* matching — §4.17 says "towns/cities" where
   R53 says feature class P; and GeoNames has almost no Indian campuses, so the INSTITUTION rung is
   mostly unreachable. Q12 stays OPEN in ARCHITECTURE.md §2 and DECISIONS.md.

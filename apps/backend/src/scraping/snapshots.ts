@@ -56,10 +56,26 @@ export function snapshotStamp(at: Date): string {
   return at.toISOString().replace(/[-:.]/g, '');
 }
 
+/**
+ * A record id as a file-name part. A new record is snapshotted under its
+ * external key, and keys like CLIST's `clist:123` carry a colon — which on
+ * Windows names an NTFS alternate data stream, so the bytes would vanish into a
+ * hidden stream behind an empty file (found in WP-11). Anything outside
+ * `[A-Za-z0-9._-]` becomes `_`. Hyphens stay: UUIDv7 ids are full of them, and
+ * the stamp has none, so the last hyphen still separates the two.
+ */
+export function safeRecordPart(recordId: string): string {
+  return recordId.replace(/[^A-Za-z0-9._-]/g, '_');
+}
+
 /** `<source>/<yyyy-MM>/<recordId>-<stamp>.json.gz`, relative to the root. */
 export function snapshotRef(sourceKey: string, recordId: string, at: Date): string {
   const month = at.toISOString().slice(0, 7);
-  return path.posix.join(sourceKey, month, `${recordId}-${snapshotStamp(at)}.json.gz`);
+  return path.posix.join(
+    sourceKey,
+    month,
+    `${safeRecordPart(recordId)}-${snapshotStamp(at)}.json.gz`,
+  );
 }
 
 export interface PruneResult {

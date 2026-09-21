@@ -115,7 +115,12 @@ describe('linking', () => {
     const before = h.audit.all().length;
     h.ingest('devfolio', toCandidate('devfolio', 'hackx', BASE));
     const rows = h.audit.all().slice(before);
-    expect(rows.map((row) => [row.action, row.actorKind])).toEqual([['event.created', 'SYSTEM']]);
+    // WP-11: a titled edition ("HackX 2026") also joins its YEARLY series, audited as SCHEDULER.
+    expect(rows.map((row) => [row.action, row.actorKind])).toEqual([
+      ['event.created', 'SYSTEM'],
+      ['event_series.created', 'SCHEDULER'],
+      ['event.series.assigned', 'SCHEDULER'],
+    ]);
     expect(h.audit.verifyChain().ok).toBe(true);
   });
 

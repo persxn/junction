@@ -2,7 +2,6 @@ import type { ScrapeOutcome, ScrapeTrigger } from '@compintel/contracts';
 import type { Logger } from 'pino';
 
 import type { ScrapeRunRow, SourceRow } from '../db/schema/index.js';
-import { assessRequest, refusalErrorKind } from '../domain/scraping/gate.js';
 import { backoffDelayMs } from '../domain/scheduling.js';
 import { DEFAULT_BACKOFF_BASE_MS, DEFAULT_BACKOFF_MAX_MS } from '../jobs/types.js';
 import type { SourceRecordsRepository } from '../modules/sources/records.js';
@@ -10,10 +9,11 @@ import type { SourcesRepository, RunTotals } from '../modules/sources/repository
 import { nowMs, type Clock } from '../platform/time.js';
 import type { SourceAdapter } from '../sources/types.js';
 import { AdapterFormatError, pausesSource, toRunFailure, type RunFailure } from './errors.js';
-import type { ScrapingHttp, SourceRequestContext } from './http/index.js';
+import type { ScrapingHttp, SourceCredential } from './http/index.js';
 import { processItem, type RecordLinker } from './items.js';
 import type { SnapshotStore } from './snapshots.js';
-import { representativeUrl, sourceConfig, sourceRequestContext } from './source-row.js';
+import { policyRefusal } from './policy.js';
+import { missingCredentialDetail, sourceConfig, sourceRequestContext } from './source-row.js';
 
 /**
  * The scrape orchestrator (§7's pipeline, §7.6, §7.7).
@@ -51,6 +51,8 @@ export interface ScrapeRunDependencies {
   readonly setupComplete: () => boolean;
   /** WP-10: turns each stored record into an event, in the item's transaction. */
   readonly linker?: RecordLinker;
+  /** WP-11: a source's API credential from the secret settings, when it has one set. */
+  readonly credentials?: (source: SourceRow) => SourceCredential | undefined;
 }
 
 export interface ScrapeRunRequest {
@@ -77,11 +79,32 @@ export async function runScrape(
   const startedAt = nowMs(deps.clock);
   const signal = request.signal ?? new AbortController().signal;
   const config = sourceConfig(source);
-  const context = sourceRequestContext(source);
+  const credential = deps.credentials?.(source);
+  const context = sourceRequestContext(source, credential);
 
-  const refusal = policyRefusal(deps, source, context);
+  const refusal = policyRefusal(deps.setupComplete(), source, context);
   if (refusal !== undefined) {
     return closeImmediately(deps, source, trigger, startedAt, 'BLOCKED_BY_POLICY', refusal);
+  }
+  // WP-11: a missing API key is a state of the source, not a failure — zero
+  // requests, no backoff, no streak, and the job stays on its cadence (U4).
+  const missing = credential === undefined ? missingCredentialDetail(source) : undefined;
+  if (missing !== undefined) {
+    const blocked = {
+      kind: 'BLOCKED' as const,
+      message: missing,
+      refusal: undefined,
+      pausesSource: false,
+    };
+    const row = closeImmediately(deps, source, trigger, startedAt, 'BLOCKED_BY_POLICY', blocked);
+    deps.sources.recordBlocked(
+      source.id,
+      startedAt,
+      startedAt + source.cadenceMinutes * 60_000,
+      'BLOCKED',
+      missing,
+    );
+    return row;
   }
 
   const client = deps.http.clientFor(context, signal);
@@ -223,42 +246,6 @@ function count(counters: Counters, outcome: 'NEW' | 'UPDATED' | 'UNCHANGED'): vo
   } else {
     counters.itemsUnchanged += 1;
   }
-}
-
-/**
- * The gate, asked once about the source as a whole before a run is opened.
- *
- * It is the same `assessRequest` the client calls per request (§7.2's "the
- * client and the orchestrator both call this one function"), given the source's
- * own home URL. A source that is not approved, not enabled, or running on an
- * installation whose wizard has not finished is refused here and makes no
- * request at all.
- */
-function policyRefusal(
-  deps: ScrapeRunDependencies,
-  source: SourceRow,
-  context: SourceRequestContext,
-): RunFailure | undefined {
-  const decision = assessRequest({
-    complianceStatus: context.complianceStatus,
-    isEnabled: context.isEnabled,
-    allowedPaths: context.allowedPaths,
-    robots: 'UNKNOWN',
-    url: representativeUrl(source),
-    method: 'GET',
-    setupComplete: deps.setupComplete(),
-    requestsMade: 0,
-    cap: context.maxRequestsPerRun,
-  });
-  if (decision.allowed) {
-    return undefined;
-  }
-  return {
-    kind: refusalErrorKind(decision.refusal),
-    message: decision.reason,
-    refusal: decision.refusal,
-    pausesSource: false,
-  };
 }
 
 /** A run that never started: no requests, no state change, but a row all the same. */

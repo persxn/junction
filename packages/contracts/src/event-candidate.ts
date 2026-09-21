@@ -8,6 +8,7 @@ import {
   GeoPrecision,
   OrganizerKind,
   OverrideField,
+  Recurrence,
 } from './events.js';
 
 /**
@@ -268,6 +269,29 @@ export const CandidateAlternateClaim = z
 export type CandidateAlternateClaim = z.infer<typeof CandidateAlternateClaim>;
 
 /**
+ * Which series an event belongs to (§7.3 "Recurring rounds", WP-11).
+ *
+ * Set by an adapter that can see the whole listing — cadence inference needs
+ * siblings — and otherwise computed at link time from the candidate alone. A
+ * yearly edition is a series (`YEARLY`) but never a round: §7.5 does not merge
+ * across editions, and the feed shows editions while hiding rounds.
+ */
+export const CandidateSeries = z
+  .object({
+    /** Normalized, lower-case, no digits — "codeforces round div". */
+    key: z.string().min(1),
+    /** Display name with the ordinal removed — "Codeforces Round (Div. 2)". */
+    name: z.string().min(1),
+    recurrence: Recurrence,
+    isRecurringRound: z.boolean(),
+    /** The ordinal that was stripped — "975". */
+    roundLabel: z.string().min(1).optional(),
+    confidence: z.number().min(0).max(1),
+  })
+  .strict();
+export type CandidateSeries = z.infer<typeof CandidateSeries>;
+
+/**
  * One event as one source described it, normalized (§7.1).
  *
  * `.strict()` at every level. That is the enforcement point for R50 and for a
@@ -333,6 +357,8 @@ export const EventCandidate = z
     isRecurringRound: z.boolean(),
     /** The series name with the round number stripped, e.g. "Codeforces Round". */
     seriesHint: z.string().min(1).optional(),
+    /** The series this event belongs to, when the adapter could tell (WP-11). */
+    series: CandidateSeries.optional(),
 
     // ---- Provenance --------------------------------------------------------
     /** The source's own labels, kept verbatim for WP-15b's category rules. */

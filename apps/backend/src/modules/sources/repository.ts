@@ -164,6 +164,27 @@ export class SourcesRepository {
     });
   }
 
+  /**
+   * A run refused by our own policy for a reason only a person can fix — an API
+   * key that is not set (WP-11). The attempt and the reason are recorded; the
+   * failure streak and the backoff are left exactly as they were, so the source
+   * stays on its cadence and starts working the moment the key is stored.
+   */
+  recordBlocked(
+    sourceId: string,
+    at: number,
+    nextDueAt: number,
+    errorKind: ScrapeErrorKind,
+    errorMessage: string,
+  ): void {
+    this.#setState(sourceId, {
+      lastRunAt: at,
+      nextDueAt,
+      lastErrorKind: errorKind,
+      lastErrorMessage: errorMessage,
+    });
+  }
+
   /** A failure: the streak grows and the source is left alone until `backoffUntil`. */
   recordFailure(
     sourceId: string,

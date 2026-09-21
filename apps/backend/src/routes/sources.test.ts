@@ -268,3 +268,61 @@ describe('POST /admin/sources/:key/refresh', () => {
     expect(answer.body.code).toBe('SOURCE_NOT_FOUND');
   });
 });
+
+describe('/admin/sources/:key/credential (WP-11)', () => {
+  const SECRET = 'a-clist-api-key-that-must-never-leak';
+
+  it('GET says whether it is set and nothing else', async () => {
+    const answer = await call('GET', '/api/v1/admin/sources/clist/credential', {
+      token: adminToken,
+    });
+    expect(answer.status).toBe(200);
+    expect(answer.body).toEqual({ isSet: false });
+  });
+
+  it('a professor may neither read nor set it', async () => {
+    expect(
+      (await call('GET', '/api/v1/admin/sources/clist/credential', { token: professor })).status,
+    ).toBe(403);
+    const put = await call('PUT', '/api/v1/admin/sources/clist/credential', {
+      token: professor,
+      body: { username: 'someone', apiKey: SECRET },
+    });
+    expect(put.status).toBe(403);
+  });
+
+  it('PUT stores it, is audited without the value, and never echoes the body', async () => {
+    const answer = await call('PUT', '/api/v1/admin/sources/clist/credential', {
+      token: adminToken,
+      body: { username: 'compintel-dept', apiKey: SECRET },
+    });
+    expect(answer.status).toBe(200);
+    expect(answer.body).toEqual({ isSet: true });
+    expect(JSON.stringify(answer.body)).not.toContain(SECRET);
+
+    const audit = harness.audit.all().filter((row) => row.action === 'source.credential.set');
+    expect(audit).toHaveLength(1);
+    expect(JSON.stringify(audit)).not.toContain(SECRET);
+    expect(JSON.stringify(audit)).not.toContain('compintel-dept');
+
+    const exported = JSON.stringify(harness.settings.exportableSettings());
+    expect(exported).not.toContain(SECRET);
+    expect(harness.settings.exportableSettings()['sources.clist.apiKey']).toEqual({ isSet: true });
+
+    const list = await call('GET', '/api/v1/sources', { token: adminToken });
+    expect(JSON.stringify(list.body)).not.toContain(SECRET);
+  });
+
+  it('refuses a blank key and a source that takes no credential', async () => {
+    const blank = await call('PUT', '/api/v1/admin/sources/clist/credential', {
+      token: adminToken,
+      body: { username: 'someone', apiKey: '   ' },
+    });
+    expect(blank.status).toBe(400);
+    const ctftime = await call('PUT', '/api/v1/admin/sources/ctftime/credential', {
+      token: adminToken,
+      body: { username: 'someone', apiKey: 'x' },
+    });
+    expect(ctftime.status).toBe(409);
+  });
+});

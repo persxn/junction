@@ -1,0 +1,191 @@
+[
+  {
+    "descriptionMd": "Problems listed by CLIST: 7.",
+    "editionYear": 2026,
+    "endsAt": {
+      "at": 1790267700000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-09-24T16:35:00"
+    },
+    "eventType": {
+      "confidence": 0.8,
+      "value": "CODING_CONTEST"
+    },
+    "externalKey": "clist:900001",
+    "fee": {
+      "confidence": 0,
+      "known": false
+    },
+    "isRecurringRound": true,
+    "mode": {
+      "confidence": 1,
+      "raw": "online",
+      "value": "ONLINE"
+    },
+    "officialUrl": "https://codeforces.com/contests/2020",
+    "organizerKind": {
+      "confidence": 0.8,
+      "raw": "codeforces.com",
+      "value": "PLATFORM"
+    },
+    "organizerName": "codeforces.com",
+    "registrationUrl": "https://codeforces.com/contests/2020",
+    "series": {
+      "confidence": 0.95,
+      "isRecurringRound": true,
+      "key": "codeforces round div",
+      "name": "Codeforces Round (Div. 1)",
+      "recurrence": "IRREGULAR",
+      "roundLabel": "976"
+    },
+    "seriesHint": "Codeforces Round (Div. 1)",
+    "sourceKey": "clist",
+    "sourceTags": [
+      "codeforces.com"
+    ],
+    "startsAt": {
+      "at": 1790260500000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-09-24T14:35:00"
+    },
+    "summary": "Problems listed by CLIST: 7.",
+    "title": "Codeforces Round 976 (Div. 1)",
+    "titleRaw": "Codeforces Round 976 (Div. 1)",
+    "url": "https://clist.by/contest/900001/",
+    "warnings": [
+      {
+        "code": "TIMEZONE_ASSUMED",
+        "field": "timezone",
+        "message": "CLIST states times in UTC and names no local zone for the event; the times are exact and shown in UTC."
+      }
+    ]
+  },
+  {
+    "descriptionMd": "Problems listed by CLIST: 6.",
+    "editionYear": 2026,
+    "endsAt": {
+      "at": 1790431200000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-09-26T14:00:00"
+    },
+    "eventType": {
+      "confidence": 0.8,
+      "value": "CODING_CONTEST"
+    },
+    "externalKey": "clist:900002",
+    "fee": {
+      "confidence": 0,
+      "known": false
+    },
+    "isRecurringRound": true,
+    "mode": {
+      "confidence": 1,
+      "raw": "online",
+      "value": "ONLINE"
+    },
+    "officialUrl": "https://atcoder.jp/contests/arc186",
+    "organizerKind": {
+      "confidence": 0.8,
+      "raw": "atcoder.jp",
+      "value": "PLATFORM"
+    },
+    "organizerName": "atcoder.jp",
+    "registrationUrl": "https://atcoder.jp/contests/arc186",
+    "series": {
+      "confidence": 0.95,
+      "isRecurringRound": true,
+      "key": "atcoder regular contest",
+      "name": "AtCoder Regular Contest",
+      "recurrence": "IRREGULAR",
+      "roundLabel": "186"
+    },
+    "seriesHint": "AtCoder Regular Contest",
+    "sourceKey": "clist",
+    "sourceTags": [
+      "atcoder.jp"
+    ],
+    "startsAt": {
+      "at": 1790424000000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-09-26T12:00:00"
+    },
+    "summary": "Problems listed by CLIST: 6.",
+    "title": "AtCoder Regular Contest 186",
+    "titleRaw": "AtCoder Regular Contest 186",
+    "url": "https://clist.by/contest/900002/",
+    "warnings": [
+      {
+        "code": "TIMEZONE_ASSUMED",
+        "field": "timezone",
+        "message": "CLIST states times in UTC and names no local zone for the event; the times are exact and shown in UTC."
+      }
+    ]
+  },
+  {
+    "descriptionMd": "Problems listed by CLIST: 8.",
+    "editionYear": 2026,
+    "endsAt": {
+      "at": 1790785800000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-09-30T16:30:00"
+    },
+    "eventType": {
+      "confidence": 0.8,
+      "value": "CODING_CONTEST"
+    },
+    "externalKey": "clist:900003",
+    "fee": {
+      "confidence": 0,
+      "known": false
+    },
+    "isRecurringRound": true,
+    "mode": {
+      "confidence": 1,
+      "raw": "online",
+      "value": "ONLINE"
+    },
+    "officialUrl": "https://www.codechef.com/START154",
+    "organizerKind": {
+      "confidence": 0.8,
+      "raw": "codechef.com",
+      "value": "PLATFORM"
+    },
+    "organizerName": "codechef.com",
+    "registrationUrl": "https://www.codechef.com/START154",
+    "series": {
+      "confidence": 0.95,
+      "isRecurringRound": true,
+      "key": "starters",
+      "name": "Starters",
+      "recurrence": "IRREGULAR",
+      "roundLabel": "154"
+    },
+    "seriesHint": "Starters",
+    "sourceKey": "clist",
+    "sourceTags": [
+      "codechef.com"
+    ],
+    "startsAt": {
+      "at": 1790778600000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-09-30T14:30:00"
+    },
+    "summary": "Problems listed by CLIST: 8.",
+    "title": "Starters 154",
+    "titleRaw": "Starters 154",
+    "url": "https://clist.by/contest/900003/",
+    "warnings": [
+      {
+        "code": "TIMEZONE_ASSUMED",
+        "field": "timezone",
+        "message": "CLIST states times in UTC and names no local zone for the event; the times are exact and shown in UTC."
+      }
+    ]
+  }
+]

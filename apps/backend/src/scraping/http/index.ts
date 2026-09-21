@@ -32,6 +32,7 @@ export {
   type PoliteResponse,
   type RequestOptions,
   type Sleeper,
+  type SourceCredential,
   type SourceRequestContext,
   type TransportRequest,
   type TransportResponse,

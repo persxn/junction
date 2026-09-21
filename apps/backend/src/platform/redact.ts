@@ -8,7 +8,7 @@ export const REDACTED = '[redacted]';
  * `clientSecret`, `X-CompIntel-Client` and `contactEmail` are all covered.
  */
 export const SENSITIVE_KEY_PATTERN =
-  /(pass(?:word|wd|phrase)|secret|token|api[-_]?key|authorization|e?mail|phone|mobile|x-compintel-client)/i;
+  /(pass(?:word|wd|phrase)|secret|token|api[-_]?key|api[-_]?username|credential|authorization|e?mail|phone|mobile|x-compintel-client)/i;
 
 const MAX_DEPTH = 8;
 

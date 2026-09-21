@@ -288,3 +288,19 @@ export function sourceStatusMessage(input: SourceMessageInput): string {
       return `Couldn't reach ${name}. ${lastUpdate(input.freshnessMinutes)}`;
   }
 }
+
+/**
+ * `PUT /admin/sources/:key/credential` (WP-11). Both halves required; the body is
+ * never echoed back, logged or exported — the answer is only whether it is set.
+ */
+export const SetSourceCredentialRequest = z
+  .object({
+    username: z.string().trim().min(1).max(200),
+    apiKey: z.string().trim().min(1).max(500),
+  })
+  .strict();
+export type SetSourceCredentialRequest = z.infer<typeof SetSourceCredentialRequest>;
+
+/** `GET /admin/sources/:key/credential`: whether it is set, and nothing else. */
+export const SourceCredentialStatus = z.object({ isSet: z.boolean() }).strict();
+export type SourceCredentialStatus = z.infer<typeof SourceCredentialStatus>;

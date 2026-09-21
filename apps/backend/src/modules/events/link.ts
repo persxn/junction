@@ -1,4 +1,9 @@
-import type { DedupConfig, EventCandidate, MatchMethod } from '@compintel/contracts';
+import type {
+  CandidateSeries,
+  DedupConfig,
+  EventCandidate,
+  MatchMethod,
+} from '@compintel/contracts';
 
 import type { SourceRecordRow, SourceRow } from '../../db/schema/index.js';
 import {
@@ -9,6 +14,7 @@ import {
   type DedupSubject,
 } from '../../domain/dedup/index.js';
 import { alternateClaimValues, claimValues } from '../../domain/events/claims.js';
+import { asCandidateSeries, detectSeries } from '../../domain/series/index.js';
 import { normalizeTitle } from '../../domain/normalize/text.js';
 import { withAudit, type AuditLog } from '../../platform/audit.js';
 import type { Geocoder } from '../geo/geocoder.js';
@@ -16,6 +22,7 @@ import type { DedupCandidatesRepository } from './dedup-repository.js';
 import type { ProvenanceRepository } from './provenance.js';
 import type { EventsRepository, NewDeadline } from './repository.js';
 import type { EventResolver } from './resolver.js';
+import type { SeriesRepository } from './series.js';
 
 /**
  * `source_records` → `events` (§7's pipeline after normalization; §7.5).
@@ -58,6 +65,34 @@ export interface EventLinkerDependencies {
   readonly audit: AuditLog;
   /** R65: read at call time, so a retuned setting applies to the next item. */
   readonly dedupConfig: () => DedupConfig;
+  /** WP-11: series upsert and `events.series_id`. */
+  readonly series: SeriesRepository;
+}
+
+/**
+ * The series a candidate belongs to: the adapter's verdict when it could see
+ * the whole listing, otherwise `domain/series` on the candidate alone — which
+ * still recognises yearly editions and titled rounds.
+ */
+function seriesOf(candidate: EventCandidate): CandidateSeries | undefined {
+  if (candidate.series !== undefined) {
+    return candidate.series;
+  }
+  let resource: string | undefined;
+  try {
+    resource =
+      candidate.officialUrl === undefined ? undefined : new URL(candidate.officialUrl).hostname;
+  } catch {
+    resource = undefined;
+  }
+  return asCandidateSeries(
+    detectSeries({
+      title: candidate.title,
+      eventType: candidate.eventType.value,
+      resource,
+      startsAt: candidate.startsAt?.at,
+    }),
+  );
 }
 
 function deadlinesOf(candidate: EventCandidate): NewDeadline[] {
@@ -89,7 +124,28 @@ export class EventLinker {
   }
 
   link(input: LinkInput): LinkResult {
-    const { record, candidate, at } = input;
+    const result = this.#link(input);
+    // WP-11: the series verdict also decides the round flag this record claims,
+    // so a title-pattern guess can never disagree with the series it is in.
+    const series = seriesOf(input.candidate);
+    if (series !== undefined) {
+      this.#deps.series.assign(
+        result.eventId,
+        series,
+        input.candidate.organizerName ?? null,
+        input.at,
+      );
+    }
+    return result;
+  }
+
+  #link(input: LinkInput): LinkResult {
+    const { record, at } = input;
+    const series = seriesOf(input.candidate);
+    const candidate: EventCandidate = {
+      ...input.candidate,
+      isRecurringRound: series?.isRecurringRound ?? false,
+    };
     const { events, provenance } = this.#deps;
     const place = this.#deps.geocoder.resolve(candidate.place);
     const values = claimValues(candidate, place);

@@ -52,7 +52,8 @@ describe('scrapeOnceRefusal', () => {
     expect(refusalFor(key)).toMatch(/MANUAL_IMPORT_ONLY; only APPROVED/);
   });
 
-  it('refuses an approved source that is disabled (CLIST until U4)', () => {
+  it('refuses an approved source that is disabled', () => {
+    database.db.raw.prepare("update sources set is_enabled = 0 where key = 'clist'").run();
     expect(refusalFor('clist')).toBe('clist is disabled.');
   });
 

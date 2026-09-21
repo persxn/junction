@@ -13,6 +13,7 @@ import { ProvenanceRepository } from './provenance.js';
 import { EventsRepository } from './repository.js';
 import { EventResolver } from './resolver.js';
 import { DedupReviewService } from './review.js';
+import { SeriesRepository } from './series.js';
 import { readDedupConfig } from './settings.js';
 
 /**
@@ -29,6 +30,7 @@ export interface EventsModule {
   readonly provenance: ProvenanceRepository;
   readonly candidates: DedupCandidatesRepository;
   readonly events: EventsRepository;
+  readonly series: SeriesRepository;
 }
 
 export interface EventsModuleDependencies {
@@ -52,7 +54,9 @@ export function createEventsModule(deps: EventsModuleDependencies): EventsModule
       geography: deps.settings.get(GEOGRAPHY_POLICY),
     }),
   });
+  const series = new SeriesRepository(deps.db, deps.audit);
   const linker = new EventLinker({
+    series,
     events,
     provenance,
     candidates,
@@ -73,5 +77,5 @@ export function createEventsModule(deps: EventsModuleDependencies): EventsModule
     ...(deps.clock === undefined ? {} : { clock: deps.clock }),
   });
   const review = new DedupReviewService({ events, provenance, candidates, resolver, merges });
-  return { linker, merges, review, resolver, provenance, candidates, events };
+  return { linker, merges, review, resolver, provenance, candidates, events, series };
 }

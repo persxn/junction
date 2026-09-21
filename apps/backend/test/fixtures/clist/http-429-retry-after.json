@@ -1,0 +1,11 @@
+{
+  "_note": "SYNTHETIC (WP-11): hand-built from CLIST's documented v4 schema (clist.by/api/v4/doc/). CLIST has never been called (U4 open); this is not recorded traffic.",
+  "status": 429,
+  "headers": {
+    "content-type": "application/json",
+    "retry-after": "30"
+  },
+  "body": {
+    "detail": "Request was throttled. Expected available in 30 seconds."
+  }
+}

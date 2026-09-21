@@ -1,0 +1,107 @@
+[
+  {
+    "descriptionMd": "Problems listed by CLIST: 12.",
+    "editionYear": 2026,
+    "endsAt": {
+      "at": 1794645000000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-11-14T08:30:00"
+    },
+    "eventType": {
+      "confidence": 0.8,
+      "value": "CODING_CONTEST"
+    },
+    "externalKey": "clist:920001",
+    "fee": {
+      "confidence": 0,
+      "known": false
+    },
+    "isRecurringRound": false,
+    "mode": {
+      "confidence": 1,
+      "value": "UNKNOWN"
+    },
+    "officialUrl": "https://icpc.global/regionals/finder/asia-west",
+    "organizerKind": {
+      "confidence": 0.8,
+      "raw": "icpc.global",
+      "value": "PLATFORM"
+    },
+    "organizerName": "icpc.global",
+    "registrationUrl": "https://icpc.global/regionals/finder/asia-west",
+    "sourceKey": "clist",
+    "sourceTags": [
+      "icpc.global"
+    ],
+    "startsAt": {
+      "at": 1794627000000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-11-14T03:30:00"
+    },
+    "summary": "Problems listed by CLIST: 12.",
+    "title": "ICPC Asia West Continent Regional Contest",
+    "titleRaw": "ICPC Asia West Continent Regional Contest",
+    "url": "https://clist.by/contest/920001/",
+    "warnings": [
+      {
+        "code": "TIMEZONE_ASSUMED",
+        "field": "timezone",
+        "message": "CLIST states times in UTC and names no local zone for the event; the times are exact and shown in UTC."
+      }
+    ]
+  },
+  {
+    "editionYear": 2026,
+    "endsAt": {
+      "at": 1791720000000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-10-11T12:00:00"
+    },
+    "eventType": {
+      "confidence": 0.8,
+      "value": "HACKATHON"
+    },
+    "externalKey": "clist:920002",
+    "fee": {
+      "confidence": 0,
+      "known": false
+    },
+    "isRecurringRound": false,
+    "mode": {
+      "confidence": 1,
+      "raw": "online",
+      "value": "ONLINE"
+    },
+    "officialUrl": "https://codesprint-hackathon.example.org/",
+    "organizerKind": {
+      "confidence": 0.8,
+      "raw": "devpost.com",
+      "value": "PLATFORM"
+    },
+    "organizerName": "devpost.com",
+    "registrationUrl": "https://codesprint-hackathon.example.org/",
+    "sourceKey": "clist",
+    "sourceTags": [
+      "devpost.com"
+    ],
+    "startsAt": {
+      "at": 1791547200000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-10-09T12:00:00"
+    },
+    "title": "CodeSprint 48-Hour Hackathon",
+    "titleRaw": "CodeSprint 48-Hour Hackathon",
+    "url": "https://clist.by/contest/920002/",
+    "warnings": [
+      {
+        "code": "TIMEZONE_ASSUMED",
+        "field": "timezone",
+        "message": "CLIST states times in UTC and names no local zone for the event; the times are exact and shown in UTC."
+      }
+    ]
+  }
+]

@@ -1,0 +1,63 @@
+[
+  {
+    "descriptionMd": "Problems listed by CLIST: 5.",
+    "editionYear": 2026,
+    "endsAt": {
+      "at": 1792240200000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-10-17T12:30:00"
+    },
+    "eventType": {
+      "confidence": 0.9,
+      "value": "CODING_CONTEST"
+    },
+    "externalKey": "clist:930001",
+    "fee": {
+      "confidence": 0,
+      "known": false
+    },
+    "isRecurringRound": false,
+    "mode": {
+      "confidence": 1,
+      "raw": "online",
+      "value": "ONLINE"
+    },
+    "officialUrl": "https://www.hackerearth.com/challenges/competitive/hackindia-code-challenge-2026/",
+    "organizerKind": {
+      "confidence": 0.8,
+      "raw": "hackerearth.com",
+      "value": "PLATFORM"
+    },
+    "organizerName": "hackerearth.com",
+    "registrationUrl": "https://www.hackerearth.com/challenges/competitive/hackindia-code-challenge-2026/",
+    "series": {
+      "confidence": 0.8,
+      "isRecurringRound": false,
+      "key": "hackindia code challenge",
+      "name": "HackIndia Code Challenge",
+      "recurrence": "YEARLY"
+    },
+    "sourceKey": "clist",
+    "sourceTags": [
+      "hackerearth.com"
+    ],
+    "startsAt": {
+      "at": 1792218600000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-10-17T06:30:00"
+    },
+    "summary": "Problems listed by CLIST: 5.",
+    "title": "HackIndia Code Challenge 2026",
+    "titleRaw": "HackIndia Code Challenge 2026",
+    "url": "https://clist.by/contest/930001/",
+    "warnings": [
+      {
+        "code": "TIMEZONE_ASSUMED",
+        "field": "timezone",
+        "message": "CLIST states times in UTC and names no local zone for the event; the times are exact and shown in UTC."
+      }
+    ]
+  }
+]

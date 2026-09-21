@@ -51,6 +51,42 @@ export type GateRefusal = (typeof GATE_REFUSALS)[number];
  */
 export type RobotsVerdict = 'ALLOWED' | 'DISALLOWED' | 'UNKNOWN';
 
+/**
+ * A robots.txt exemption decided by a person and written into a source's seed
+ * (WP-11, proposed ruling — CLIST's robots disallows `/api/` while its Terms
+ * invite authenticated API use). It is honoured only when **all** of these hold:
+ * the path is inside `allowed_paths_json` *and* inside `paths`, the request
+ * carries the source's credential, and the exemption names a reviewer and a
+ * review date. Anything else on the host stays ROBOTS_DISALLOWED.
+ */
+export interface RobotsExemption {
+  /** Entries in the `allowed_paths_json` grammar. */
+  readonly paths: readonly string[];
+  readonly reason: string;
+  readonly reviewedBy: string;
+  /** ISO date. */
+  readonly reviewedAt: string;
+}
+
+/** Whether a reviewed exemption covers this request (see {@link RobotsExemption}). */
+export function exemptionApplies(
+  url: URL,
+  input: Pick<GateInput, 'allowedPaths' | 'robotsExemption' | 'credentialPresent'>,
+): boolean {
+  const exemption = input.robotsExemption;
+  if (exemption === undefined || input.credentialPresent !== true) {
+    return false;
+  }
+  if (
+    exemption.reviewedBy.trim().length === 0 ||
+    exemption.reason.trim().length === 0 ||
+    Number.isNaN(Date.parse(exemption.reviewedAt))
+  ) {
+    return false;
+  }
+  return isPathAllowed(url, input.allowedPaths) && isPathAllowed(url, exemption.paths);
+}
+
 export interface GateInput {
   readonly complianceStatus: ComplianceStatus;
   readonly isEnabled: boolean;
@@ -62,10 +98,14 @@ export interface GateInput {
   readonly setupComplete: boolean;
   readonly requestsMade: number;
   readonly cap: number;
+  /** WP-11: the source's reviewed robots exemption, if it has one. */
+  readonly robotsExemption?: RobotsExemption | undefined;
+  /** WP-11: the request will carry the source's credential. */
+  readonly credentialPresent?: boolean | undefined;
 }
 
 export type GateDecision =
-  | { readonly allowed: true }
+  | { readonly allowed: true; readonly robotsExempted?: true }
   | { readonly allowed: false; readonly refusal: GateRefusal; readonly reason: string };
 
 const ALLOW: GateDecision = { allowed: true };
@@ -129,7 +169,8 @@ export function assessRequest(input: GateInput): GateDecision {
       `${url.host}${url.pathname} is outside this source's allowed paths.`,
     );
   }
-  if (input.robots === 'DISALLOWED') {
+  const exempted = input.robots === 'DISALLOWED' && exemptionApplies(url, input);
+  if (input.robots === 'DISALLOWED' && !exempted) {
     return refuse('ROBOTS_DISALLOWED', `robots.txt on ${url.host} disallows ${url.pathname}.`);
   }
   if (input.requestsMade >= input.cap) {
@@ -138,7 +179,7 @@ export function assessRequest(input: GateInput): GateDecision {
       `This run has already made its ${input.cap} requests; the rest continues next run.`,
     );
   }
-  return ALLOW;
+  return exempted ? { allowed: true, robotsExempted: true } : ALLOW;
 }
 
 /**

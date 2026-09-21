@@ -228,6 +228,8 @@ describe('the events table matches §6.2 column for column', () => {
       [
         'id',
         'name',
+        // WP-11 (migration 0009): the upsert key for series detection.
+        'series_key',
         'organizer_name',
         'recurrence',
         'is_rated_contest',

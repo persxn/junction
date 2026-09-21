@@ -1,0 +1,26 @@
+{
+  "_note": "SYNTHETIC (WP-11): hand-built from CLIST's documented v4 schema (clist.by/api/v4/doc/). CLIST has never been called (U4 open); this is not recorded traffic.",
+  "meta": {
+    "limit": 100,
+    "next": null,
+    "offset": 0,
+    "previous": null,
+    "total_count": 1
+  },
+  "objects": [
+    {
+      "id": 930001,
+      "resource": "hackerearth.com",
+      "resource_id": 1,
+      "host": "hackerearth.com",
+      "event": "HackIndia Code Challenge 2026",
+      "start": "2026-10-17T06:30:00",
+      "end": "2026-10-17T12:30:00",
+      "duration": 21600,
+      "href": "https://www.hackerearth.com/challenges/competitive/hackindia-code-challenge-2026/",
+      "n_problems": 5,
+      "n_statistics": 0,
+      "parsed_at": null
+    }
+  ]
+}

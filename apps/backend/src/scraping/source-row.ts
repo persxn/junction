@@ -1,6 +1,7 @@
 import type { SourceRow } from '../db/schema/index.js';
 import { APP_TIMEZONE } from '../platform/time.js';
-import type { SourceRequestContext } from './http/index.js';
+import type { RobotsExemption } from '../domain/scraping/gate.js';
+import type { SourceCredential, SourceRequestContext } from './http/index.js';
 
 /**
  * Turning a `sources` row into the two shapes the rest of the pipeline wants.
@@ -29,8 +30,58 @@ export function allowedPathsOf(source: SourceRow): readonly string[] {
   }
 }
 
+function configOf(source: SourceRow): Record<string, unknown> {
+  try {
+    const parsed: unknown = JSON.parse(source.configJson);
+    return parsed !== null && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : {};
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * `config_json.robotsExemption`, when it is well-formed (WP-11). Seed-only: the
+ * admin API has no field that writes `config_json`.
+ */
+export function robotsExemptionOf(source: SourceRow): RobotsExemption | undefined {
+  const raw = configOf(source).robotsExemption as Partial<RobotsExemption> | undefined;
+  if (
+    raw === undefined ||
+    !Array.isArray(raw.paths) ||
+    typeof raw.reason !== 'string' ||
+    typeof raw.reviewedBy !== 'string' ||
+    typeof raw.reviewedAt !== 'string'
+  ) {
+    return undefined;
+  }
+  return {
+    paths: raw.paths.filter((entry): entry is string => typeof entry === 'string'),
+    reason: raw.reason,
+    reviewedBy: raw.reviewedBy,
+    reviewedAt: raw.reviewedAt,
+  };
+}
+
+/**
+ * What to record when a source that needs a credential has none (WP-11): the
+ * `config_json.auth.missingDetail` sentence, or `undefined` for a source that
+ * needs no credential at all.
+ */
+export function missingCredentialDetail(source: SourceRow): string | undefined {
+  const auth = configOf(source).auth as { missingDetail?: unknown } | undefined;
+  if (auth === undefined || auth === null) {
+    return undefined;
+  }
+  return typeof auth.missingDetail === 'string' && auth.missingDetail.length > 0
+    ? auth.missingDetail
+    : `${source.name} API credential not set`;
+}
+
 /** Everything the compliance gate needs to know about a source. */
-export function sourceRequestContext(source: SourceRow): SourceRequestContext {
+export function sourceRequestContext(
+  source: SourceRow,
+  credential?: SourceCredential,
+): SourceRequestContext {
   return {
     key: source.key,
     name: source.name,
@@ -39,6 +90,8 @@ export function sourceRequestContext(source: SourceRow): SourceRequestContext {
     allowedPaths: allowedPathsOf(source),
     minDelayMs: source.minDelayMs,
     maxRequestsPerRun: source.maxRequestsPerRun,
+    credential,
+    robotsExemption: robotsExemptionOf(source),
   };
 }
 
