@@ -24,15 +24,23 @@ import { ScrapeRequestError, TransportError } from './http/index.js';
  */
 export class AdapterFormatError extends Error {
   readonly kind: Extract<ScrapeErrorKind, 'PARSE' | 'SCHEMA_CHANGED'>;
+  /**
+   * The body that did not parse. The orchestrator keeps it as a §7.8 snapshot,
+   * because the bytes that broke an adapter are what its fixture is regenerated
+   * from.
+   */
+  readonly raw: Uint8Array | undefined;
 
   constructor(
     kind: Extract<ScrapeErrorKind, 'PARSE' | 'SCHEMA_CHANGED'>,
     message: string,
     cause?: unknown,
+    raw?: Uint8Array,
   ) {
     super(message, cause === undefined ? undefined : { cause });
     this.name = 'AdapterFormatError';
     this.kind = kind;
+    this.raw = raw;
   }
 }
 

@@ -162,3 +162,43 @@ describe('ParseWarning', () => {
     }
   });
 });
+
+describe('alternateClaims (R63): a second claim, never a conversion', () => {
+  const claim = {
+    field: 'prizeText',
+    value: '1st: INR 50,000',
+    sourceText: '1st: INR 50,000',
+    note: 'The description disagrees with the structured prizes field.',
+  };
+
+  it('carries a second value for a known field, verbatim', () => {
+    expect(EventCandidate.safeParse({ ...MINIMAL, alternateClaims: [claim] }).success).toBe(true);
+  });
+
+  it('refuses a field that is not an override field', () => {
+    const bad = { ...claim, field: 'prize_text' };
+    expect(EventCandidate.safeParse({ ...MINIMAL, alternateClaims: [bad] }).success).toBe(false);
+  });
+
+  it('is strict: a claim cannot smuggle a person in', () => {
+    const bad = { ...claim, contactEmail: 'x@example.org' };
+    expect(EventCandidate.safeParse({ ...MINIMAL, alternateClaims: [bad] }).success).toBe(false);
+  });
+
+  it('needs the source text and a note', () => {
+    expect(
+      EventCandidate.safeParse({ ...MINIMAL, alternateClaims: [{ ...claim, note: '' }] }).success,
+    ).toBe(false);
+    const { sourceText: _sourceText, ...noText } = claim;
+    expect(EventCandidate.safeParse({ ...MINIMAL, alternateClaims: [noText] }).success).toBe(false);
+  });
+});
+
+describe('eligibility.qualifiedOnly', () => {
+  it('is an uncertain boolean like every other flag', () => {
+    const eligibility = { qualifiedOnly: { value: true, confidence: 1, raw: 'Prequalified' } };
+    expect(EventCandidate.safeParse({ ...MINIMAL, eligibility }).success).toBe(true);
+    const bad = { qualifiedOnly: { value: 'yes', confidence: 1 } };
+    expect(EventCandidate.safeParse({ ...MINIMAL, eligibility: bad }).success).toBe(false);
+  });
+});

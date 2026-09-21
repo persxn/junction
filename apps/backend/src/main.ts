@@ -42,7 +42,7 @@ import {
 import { registerScrapeJobs } from './scraping/jobs.js';
 import { SnapshotStore } from './scraping/snapshots.js';
 import { SCRAPER_CONTACT_EMAIL } from './modules/org/settings.js';
-import { adapterRegistry } from './sources/registry.js';
+import { adapterRegistry, registerBuiltInAdapters } from './sources/registry.js';
 import './settings.js';
 
 /**
@@ -176,6 +176,7 @@ async function main(): Promise<void> {
     });
     shutdown.register('resources', 'scraping-transport', closeTransport);
     const snapshots = new SnapshotStore({ config, logger });
+    registerBuiltInAdapters(adapterRegistry, { geo: geocoder });
     const sourcesRepository = new SourcesRepository(db);
     const sourceRecords = new SourceRecordsRepository(db);
     const scrapeRuntime = {

@@ -44,7 +44,7 @@ function read(file: string): string {
 }
 
 describe('no test opens an internet socket', () => {
-  it('references the real transport from exactly one file', () => {
+  it('references the real transport from main.ts and the dev-only scrape:once tool', () => {
     const referencing = sourceFiles().filter((file) => {
       const text = read(file);
       return (
@@ -54,7 +54,20 @@ describe('no test opens an internet socket', () => {
         !file.endsWith(path.join('scraping', 'offline-suite.test.ts'))
       );
     });
-    expect(referencing.map((file) => path.relative(SOURCE_ROOT, file))).toEqual(['main.ts']);
+    // `tools/scrape-once.ts` is WP-09b's manual live smoke: run by hand, bundled
+    // nowhere (the next test), imported by nothing, and never by a test.
+    expect(
+      referencing.map((file) => path.relative(SOURCE_ROOT, file).split(path.sep).join('/')).sort(),
+    ).toEqual(['main.ts', 'tools/scrape-once.ts']);
+  });
+
+  it('keeps scrape:once out of the bundle and out of every import graph', () => {
+    const bundle = read(path.join(SOURCE_ROOT, 'tools', 'bundle.ts'));
+    expect(bundle).not.toContain('scrape-once');
+    const importers = sourceFiles().filter((file) =>
+      /from '[^']*scrape-once\.js'/.test(read(file)),
+    );
+    expect(importers.map((file) => path.relative(SOURCE_ROOT, file))).toEqual([]);
   });
 
   it('never imports undici outside the one transport module', () => {

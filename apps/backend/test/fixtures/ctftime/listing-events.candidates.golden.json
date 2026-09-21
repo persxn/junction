@@ -1,0 +1,319 @@
+[
+  {
+    "alternateClaims": [
+      {
+        "field": "prizeText",
+        "note": "The description states prize figures (INR) that differ from the structured prizes field (USD); the structured field is used and nothing was converted.",
+        "sourceText": "1st — ₹50,000\n2nd — ₹30,000\n3rd — ₹20,000",
+        "value": "1st — ₹50,000\n2nd — ₹30,000\n3rd — ₹20,000"
+      }
+    ],
+    "descriptionMd": "LUN4R CTF 2026 is a National Level Capture The Flag competition organized by ROOT RIET, the cybersecurity community of Rajadhani Institute of Engineering and Technology (RIET), Thiruvananthapuram.\n\nTHE NIGHT HIDES THE FLAG.\n\nROUND 1 — ONLINE QUALIFIERS\n20 September 2026 | 10:00 AM – 10:00 PM IST\nA 12-hour online CTF featuring 24 challenges across Web, Crypto, Pwn, Forensics, Misc, Reverse Engineering, and OSINT.\n\nThe top 30 teams will qualify for the offline finals.\n\nROUND 2 — OFFLINE FINALS\n4 October 2026 | RIET, Thiruvananthapuram, Kerala\n\nPRIZES\n1st — ₹50,000\n2nd — ₹30,000\n3rd — ₹20,000\nPlus additional vouchers and rewards.\n\nLUN4R CTF 2026 is supported by our sponsors and partners, whose contributions help us build a stronger cybersecurity community and competitive platform.\nContact: [phone redacted] | [phone redacted]",
+    "editionYear": 2026,
+    "eligibilityText": "Open",
+    "endsAt": {
+      "at": 1789921800000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-09-20T16:30:00+00:00"
+    },
+    "eventType": {
+      "confidence": 1,
+      "raw": "CTFtime",
+      "value": "CTF"
+    },
+    "externalKey": "3435",
+    "fee": {
+      "confidence": 0,
+      "known": false
+    },
+    "isRecurringRound": false,
+    "mode": {
+      "confidence": 1,
+      "raw": "online",
+      "value": "ONLINE"
+    },
+    "officialUrl": "https://lunar.rootriet.in/",
+    "organizerKind": {
+      "confidence": 0.7,
+      "raw": "Root Riet",
+      "value": "COMMUNITY"
+    },
+    "organizerName": "Root Riet",
+    "prize": {
+      "text": "1st Place - $500\r\n2nd Place - $300\r\n3rd Place - $200\r\nAdditional vouchers and rewards"
+    },
+    "registrationUrl": "https://ctftime.org/event/3435/",
+    "sourceKey": "ctftime",
+    "sourceTags": [
+      "Jeopardy"
+    ],
+    "startsAt": {
+      "at": 1789878600000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-09-20T04:30:00+00:00"
+    },
+    "summary": "LUN4R CTF 2026 is a National Level Capture The Flag competition organized by ROOT RIET, the cybersecurity community of Rajadhani Institute of Engineering and Technology (RIET), Thiruvananthapuram. THE NIGHT HIDES THE FLAG. ROUND 1 — ONLINE QUALIFIERS 20 September 2026 | 10:00 AM – 10:00 PM IST A 12-hour online CTF featuring 24 challenges across Web, Crypto, Pwn, Forensics, Misc, Reverse Engineering, and OSINT. The top 30 teams will qualify for the offline finals. ROUND 2 — OFFLINE FINALS 4…",
+    "title": "LUN4R CTF Quals",
+    "titleRaw": "LUN4R CTF Quals",
+    "url": "https://ctftime.org/event/3435/",
+    "warnings": [
+      {
+        "code": "TIMEZONE_ASSUMED",
+        "field": "timezone",
+        "message": "CTFtime states no time zone and the venue gives none. The start and end carry their own UTC offset, so the times are exact; the event is shown in UTC."
+      }
+    ]
+  },
+  {
+    "descriptionMd": "A summer cybersecurity challenge inspiring high school students nationwide to explore computer science, develop technical skills, and rise to the challenge.\n\nSee: https://www.codermerlin.academy/narp/flight-path/#home\n\nSponsored by the Air & Space Forces Association Sam Johnson Chapter | Dallas Texas",
+    "editionYear": 2026,
+    "eligibility": {
+      "doctoral": {
+        "confidence": 0.9,
+        "raw": "High-school",
+        "value": false
+      },
+      "postgraduate": {
+        "confidence": 0.9,
+        "raw": "High-school",
+        "value": false
+      },
+      "undergraduate": {
+        "confidence": 0.9,
+        "raw": "High-school",
+        "value": false
+      }
+    },
+    "eligibilityText": "High-school. Location stated by the source: USA only",
+    "endsAt": {
+      "at": 1790542800000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-09-27T21:00:00+00:00"
+    },
+    "eventType": {
+      "confidence": 1,
+      "raw": "CTFtime",
+      "value": "CTF"
+    },
+    "externalKey": "3422",
+    "fee": {
+      "confidence": 0,
+      "known": false
+    },
+    "isRecurringRound": false,
+    "mode": {
+      "confidence": 1,
+      "raw": "online",
+      "value": "ONLINE"
+    },
+    "officialUrl": "http://setyourvector.org/",
+    "organizerKind": {
+      "confidence": 0.7,
+      "raw": "ĀYŌDÈ",
+      "value": "COMMUNITY"
+    },
+    "organizerName": "ĀYŌDÈ",
+    "registrationUrl": "https://ctftime.org/event/3422/",
+    "sourceKey": "ctftime",
+    "sourceTags": [
+      "Jeopardy"
+    ],
+    "startsAt": {
+      "at": 1790343000000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-09-25T13:30:00+00:00"
+    },
+    "summary": "A summer cybersecurity challenge inspiring high school students nationwide to explore computer science, develop technical skills, and rise to the challenge. See: https://www.codermerlin.academy/narp/flight-path/#home Sponsored by the Air & Space Forces Association Sam Johnson Chapter | Dallas Texas",
+    "title": "FlightPath2026",
+    "titleRaw": "FlightPath2026",
+    "url": "https://ctftime.org/event/3422/",
+    "warnings": [
+      {
+        "code": "TIMEZONE_ASSUMED",
+        "field": "timezone",
+        "message": "CTFtime states no time zone and the venue gives none. The start and end carry their own UTC offset, so the times are exact; the event is shown in UTC."
+      }
+    ]
+  },
+  {
+    "descriptionMd": "BCS CTF will be organized as an online cyber competition under BCS ICT Fest 2026. It is designed to encourage ethical hacking, cybersecurity learning, teamwork and practical problem-solving.\n\nEvent hosted by: Bangladesh Computer Society (BCS)\n\ndiscord: https://discord.gg/qhaYDaJE26",
+    "editionYear": 2026,
+    "eligibilityText": "Open",
+    "endsAt": {
+      "at": 1790517600000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-09-27T14:00:00+00:00"
+    },
+    "eventType": {
+      "confidence": 1,
+      "raw": "CTFtime",
+      "value": "CTF"
+    },
+    "externalKey": "3374",
+    "fee": {
+      "confidence": 0,
+      "known": false
+    },
+    "isRecurringRound": false,
+    "mode": {
+      "confidence": 1,
+      "raw": "online",
+      "value": "ONLINE"
+    },
+    "officialUrl": "https://ctf.bcsictfest.com/",
+    "organizerKind": {
+      "confidence": 0.7,
+      "raw": "bdhxgrp",
+      "value": "COMMUNITY"
+    },
+    "organizerName": "bdhxgrp",
+    "prize": {
+      "text": "Top 10 international teams will receive a complimentary ticket valued at USD 400 to attend BCS ICT Fest 2026 in Dhaka, Bangladesh.\r\n\r\nThe top 3 professional teams from Bangladesh will be selected for prizes.\r\n\r\nThe top 3 student teams from Bangladesh will be selected for prizes.\r\n\r\nPrize money will be announced later.\r\n\r\nTop 50 teams from Bangladesh will receive a complimentary ticket to attend BCS ICT Fest 2026 in Dhaka, Bangladesh.\r\n\r\nCertificates & Special Rewards:\r\n\r\nEvery participating team will receive a digital certificate.\r\n\r\nAdditional giveaways and first-blood prizes for participants will be announced later."
+    },
+    "registrationUrl": "https://ctftime.org/event/3374/",
+    "sourceKey": "ctftime",
+    "sourceTags": [
+      "Jeopardy"
+    ],
+    "startsAt": {
+      "at": 1790344800000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-09-25T14:00:00+00:00"
+    },
+    "summary": "BCS CTF will be organized as an online cyber competition under BCS ICT Fest 2026. It is designed to encourage ethical hacking, cybersecurity learning, teamwork and practical problem-solving. Event hosted by: Bangladesh Computer Society (BCS) discord: https://discord.gg/qhaYDaJE26",
+    "title": "BCS CTF 2026",
+    "titleRaw": "BCS CTF 2026",
+    "url": "https://ctftime.org/event/3374/",
+    "warnings": [
+      {
+        "code": "TIMEZONE_ASSUMED",
+        "field": "timezone",
+        "message": "CTFtime states no time zone and the venue gives none. The start and end carry their own UTC offset, so the times are exact; the event is shown in UTC."
+      }
+    ]
+  },
+  {
+    "descriptionMd": "H7CTF v3: A global cybersecurity competition open to all teams without restriction.\n\nA common qualification round will be held for both international and Indian participants. Top-performing teams will advance to the finals.\n\nFinals will be held at SRMIST and will feature an AD-CTF format.",
+    "editionYear": 2026,
+    "eligibilityText": "Open",
+    "endsAt": {
+      "at": 1790523000000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-09-27T15:30:00+00:00"
+    },
+    "eventType": {
+      "confidence": 1,
+      "raw": "CTFtime",
+      "value": "CTF"
+    },
+    "externalKey": "3093",
+    "fee": {
+      "confidence": 0,
+      "known": false
+    },
+    "isRecurringRound": false,
+    "mode": {
+      "confidence": 1,
+      "raw": "online",
+      "value": "ONLINE"
+    },
+    "officialUrl": "https://2026.h7tex.com/",
+    "organizerKind": {
+      "confidence": 0.7,
+      "raw": "H7Tex",
+      "value": "COMMUNITY"
+    },
+    "organizerName": "H7Tex",
+    "prize": {
+      "text": "TDB"
+    },
+    "registrationUrl": "https://ctftime.org/event/3093/",
+    "sourceKey": "ctftime",
+    "sourceTags": [
+      "Jeopardy"
+    ],
+    "startsAt": {
+      "at": 1790393400000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-09-26T03:30:00+00:00"
+    },
+    "summary": "H7CTF v3: A global cybersecurity competition open to all teams without restriction. A common qualification round will be held for both international and Indian participants. Top-performing teams will advance to the finals. Finals will be held at SRMIST and will feature an AD-CTF format.",
+    "title": "H7CTF 2026 Quals",
+    "titleRaw": "H7CTF 2026 Quals",
+    "url": "https://ctftime.org/event/3093/",
+    "warnings": [
+      {
+        "code": "TIMEZONE_ASSUMED",
+        "field": "timezone",
+        "message": "CTFtime states no time zone and the venue gives none. The start and end carry their own UTC offset, so the times are exact; the event is shown in UTC."
+      }
+    ]
+  },
+  {
+    "descriptionMd": "Classic online attack-defense CTF. Each team will be given a Vulnbox image to host itself and VPN access. You will run exploits against other teams, capture flags and submit them to our server.",
+    "editionYear": 2026,
+    "eligibilityText": "Open",
+    "endsAt": {
+      "at": 1790456400000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-09-26T21:00:00+00:00"
+    },
+    "eventType": {
+      "confidence": 1,
+      "raw": "CTFtime",
+      "value": "CTF"
+    },
+    "externalKey": "3312",
+    "fee": {
+      "confidence": 0,
+      "known": false
+    },
+    "isRecurringRound": false,
+    "mode": {
+      "confidence": 1,
+      "raw": "online",
+      "value": "ONLINE"
+    },
+    "officialUrl": "https://2026.faustctf.net/",
+    "organizerKind": {
+      "confidence": 0.7,
+      "raw": "FAUST",
+      "value": "COMMUNITY"
+    },
+    "organizerName": "FAUST",
+    "prize": {
+      "text": "TBD"
+    },
+    "registrationUrl": "https://ctftime.org/event/3312/",
+    "sourceKey": "ctftime",
+    "sourceTags": [
+      "Attack-Defense"
+    ],
+    "startsAt": {
+      "at": 1790424000000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-09-26T12:00:00+00:00"
+    },
+    "summary": "Classic online attack-defense CTF. Each team will be given a Vulnbox image to host itself and VPN access. You will run exploits against other teams, capture flags and submit them to our server.",
+    "title": "FAUST CTF 2026",
+    "titleRaw": "FAUST CTF 2026",
+    "url": "https://ctftime.org/event/3312/",
+    "warnings": [
+      {
+        "code": "TIMEZONE_ASSUMED",
+        "field": "timezone",
+        "message": "CTFtime states no time zone and the venue gives none. The start and end carry their own UTC offset, so the times are exact; the event is shown in UTC."
+      }
+    ]
+  }
+]

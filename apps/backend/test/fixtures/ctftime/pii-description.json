@@ -1,0 +1,34 @@
+[
+  {
+    "organizers": [
+      {
+        "id": 900101,
+        "name": "Byte Bandits Test Team"
+      }
+    ],
+    "ctftime_url": "https://ctftime.org/event/900101/",
+    "ctf_id": 900101,
+    "weight": 0.0,
+    "duration": {
+      "hours": 12,
+      "days": 0
+    },
+    "live_feed": "",
+    "logo": "",
+    "id": 900101,
+    "title": "Hand-written PII CTF 2026",
+    "start": "2026-10-10T04:30:00+00:00",
+    "participants": 0,
+    "location": "",
+    "finish": "2026-10-10T16:30:00+00:00",
+    "description": "HAND-WRITTEN FIXTURE (WP-09b). The recorded CTFtime payloads already say [phone redacted], so this one carries contact details on purpose to prove the redaction path.\r\n\r\nQueries: call Priya on +91 98765 43210 or 080-4123-5678, or write to priya.sharma@example-ctf.org.\r\nWhatsApp: 9876543210",
+    "format": "Jeopardy",
+    "is_votable_now": false,
+    "prizes": "Certificates for the top 10 teams. Contact organizers@example-ctf.org for sponsorship.",
+    "format_id": 1,
+    "onsite": false,
+    "restrictions": "Open",
+    "url": "https://example-ctf.org/",
+    "public_votable": true
+  }
+]

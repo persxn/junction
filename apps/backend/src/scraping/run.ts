@@ -9,7 +9,7 @@ import type { SourceRecordsRepository } from '../modules/sources/records.js';
 import type { SourcesRepository, RunTotals } from '../modules/sources/repository.js';
 import { APP_TIMEZONE, nowMs, type Clock } from '../platform/time.js';
 import type { SourceAdapter } from '../sources/types.js';
-import { pausesSource, toRunFailure, type RunFailure } from './errors.js';
+import { AdapterFormatError, pausesSource, toRunFailure, type RunFailure } from './errors.js';
 import type { ScrapingHttp } from './http/index.js';
 import type { SourceRequestContext } from './http/index.js';
 import { processItem } from './items.js';
@@ -31,6 +31,13 @@ import { representativeUrl, sourceRequestContext, type ParsedSourceConfig } from
  * do and is checked first, so a source that may not be scraped never reaches the
  * code that would ask whether the network is up.
  */
+
+/**
+ * The snapshot "record" a format failure is filed under. Not a record id — no
+ * record exists — but it gives §7.8's three-per-record limit something to count,
+ * so the newest three broken bodies are the ones kept.
+ */
+export const FAILED_BODY_RECORD = 'format-failure';
 
 /** How many detail fetches one run may make when the source does not say. */
 export const DEFAULT_DETAIL_CAP = 10;
@@ -169,6 +176,7 @@ export async function runScrape(
     }
   } catch (error) {
     failure = toRunFailure(error);
+    keepFailedBody(deps, source.key, error);
   }
 
   if (failure === undefined && listingNotModified) {
@@ -189,6 +197,19 @@ export async function runScrape(
     requestsMade: client.requestsMade,
     robotsFetches: deps.http.robotsFetches,
   });
+}
+
+/**
+ * The snapshot a format failure leaves behind (§7.8). Nothing else of the run
+ * was written, so these bytes are the only evidence of what the source now
+ * sends — and what the adapter's fixture is regenerated from.
+ */
+function keepFailedBody(deps: ScrapeRunDependencies, sourceKey: string, error: unknown): void {
+  if (!(error instanceof AdapterFormatError) || error.raw === undefined) {
+    return;
+  }
+  const ref = deps.snapshots?.write(sourceKey, FAILED_BODY_RECORD, error.raw);
+  deps.logger.warn({ source: sourceKey, snapshot: ref }, 'the body that failed to parse was kept');
 }
 
 /** Bumps the counter an upsert outcome belongs to. */

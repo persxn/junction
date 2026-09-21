@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { HAND_WRITTEN_CTFTIME_FIXTURES } from './ctftime.js';
 import { expectGolden, fixturesDir, goldenPath, stableJson } from './golden.js';
 
 /**
@@ -97,7 +98,15 @@ describe('the recorded source fixtures', () => {
    * together, but only the recorded ones have a counterpart in `docs/research/`
    * — a golden is ours, and there is nothing for it to drift from.
    */
-  const isRecordedResponse = (name: string): boolean => !name.endsWith('.golden.json');
+  const isRecordedResponse = (name: string): boolean =>
+    !name.endsWith('.golden.json') && !HAND_WRITTEN.has(name);
+
+  /**
+   * Cases written by hand for paths no recording reaches (WP-09b: a
+   * description with real-looking contact details, a finish before its start).
+   * They have no research copy, and each says so in its own text.
+   */
+  const HAND_WRITTEN = new Set<string>(HAND_WRITTEN_CTFTIME_FIXTURES);
 
   /**
    * WP-02 recorded these responses and `docs/research/` keeps them as evidence;

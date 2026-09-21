@@ -1,7 +1,14 @@
 import { z } from 'zod';
 
 import { DatePrecision, EventMode, EventType } from './enums.js';
-import { CountryCode, CurrencyCode, DeadlineKind, GeoPrecision, OrganizerKind } from './events.js';
+import {
+  CountryCode,
+  CurrencyCode,
+  DeadlineKind,
+  GeoPrecision,
+  OrganizerKind,
+  OverrideField,
+} from './events.js';
 
 /**
  * `EventCandidate` — the one internal shape every adapter produces (§7.1).
@@ -102,6 +109,11 @@ export const PARSE_WARNING_CODES = [
    * the location was left less precise rather than guessed (R55).
    */
   'GEO_AMBIGUOUS_PLACE',
+  /**
+   * The source stated a duration that disagrees with its own start and end by
+   * an hour or more; the timestamps were kept and the duration ignored.
+   */
+  'DATE_DURATION_MISMATCH',
 ] as const;
 export const ParseWarningCode = z.enum(PARSE_WARNING_CODES);
 export type ParseWarningCode = z.infer<typeof ParseWarningCode>;
@@ -159,6 +171,8 @@ export const CandidateEligibility = z
     institutionRestricted: uncertain(z.boolean()).optional(),
     /** Only certain academic years may enter. */
     yearRestricted: uncertain(z.boolean()).optional(),
+    /** Only teams that qualified in an earlier round may enter (CTFtime "Prequalified"). */
+    qualifiedOnly: uncertain(z.boolean()).optional(),
   })
   .strict();
 export type CandidateEligibility = z.infer<typeof CandidateEligibility>;
@@ -232,6 +246,28 @@ export const CandidatePrize = z
 export type CandidatePrize = z.infer<typeof CandidatePrize>;
 
 /**
+ * A second value the same source stated for a field, and lost to (R63).
+ *
+ * CTFtime's structured `prizes` can say "$500" while the description says
+ * "₹50,000". The structured field is the candidate's value; the other figure is
+ * carried here, verbatim, so WP-10 can store it as an unselected
+ * `event_field_claims` row and the UI can say "Sources disagree". Nothing is
+ * converted, combined or chosen between: a currency conversion is a guess about
+ * which of the two the organizer meant.
+ */
+export const CandidateAlternateClaim = z
+  .object({
+    field: OverrideField,
+    value: z.union([z.string().min(1), z.number(), z.boolean()]),
+    /** The source text the value was read from, already redacted. */
+    sourceText: z.string().min(1),
+    /** Why it is a second claim rather than the value, for the provenance drawer. */
+    note: z.string().min(1),
+  })
+  .strict();
+export type CandidateAlternateClaim = z.infer<typeof CandidateAlternateClaim>;
+
+/**
  * One event as one source described it, normalized (§7.1).
  *
  * `.strict()` at every level. That is the enforcement point for R50 and for a
@@ -301,6 +337,8 @@ export const EventCandidate = z
     // ---- Provenance --------------------------------------------------------
     /** The source's own labels, kept verbatim for WP-15b's category rules. */
     sourceTags: z.array(z.string().min(1)).optional(),
+    /** Values this source also stated and that lost to a structured field (R63). */
+    alternateClaims: z.array(CandidateAlternateClaim).optional(),
     warnings: z.array(ParseWarning),
   })
   .strict();

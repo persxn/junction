@@ -263,9 +263,22 @@ describe('the five seed rows (D-26, migration 0006)', () => {
 
   it('gives CTFtime only its two API paths, and nothing else on the host', () => {
     const paths = JSON.parse(seed('ctftime').allowedPathsJson) as string[];
-    expect(paths).toEqual(['ctftime.org/api/v1/events/', 'ctftime.org/api/v1/events/{id}/']);
+    // Migration 0007 added the denial: the grammar is prefix-only, so without
+    // it the listing entry also authorized every path below an event id.
+    expect(paths).toEqual([
+      'ctftime.org/api/v1/events/',
+      'ctftime.org/api/v1/events/{id}/',
+      '!ctftime.org/api/v1/events/{id}/{below}',
+    ]);
     expect(isPathAllowed(new URL('https://ctftime.org/api/v1/events/'), paths)).toBe(true);
+    expect(
+      isPathAllowed(
+        new URL('https://ctftime.org/api/v1/events/?limit=100&start=1&finish=2'),
+        paths,
+      ),
+    ).toBe(true);
     expect(isPathAllowed(new URL('https://ctftime.org/api/v1/events/1234/'), paths)).toBe(true);
+    expect(isPathAllowed(new URL('https://ctftime.org/api/v1/events/1234/x/'), paths)).toBe(false);
     expect(isPathAllowed(new URL('https://ctftime.org/event/1234/'), paths)).toBe(false);
     expect(isPathAllowed(new URL('https://ctftime.org/user/1/'), paths)).toBe(false);
     expect(seed('ctftime').maxRequestsPerRun).toBe(6);

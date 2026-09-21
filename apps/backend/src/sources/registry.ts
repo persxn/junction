@@ -1,7 +1,9 @@
+import { createCtftimeAdapter } from '../adapters/ctftime/adapter.js';
+import type { CtftimeGeo } from '../adapters/ctftime/map.js';
 import type { SourceAdapter } from './types.js';
 
 /**
- * The adapter registry — **deliberately empty in WP-09a**.
+ * The adapter registry — empty until {@link registerBuiltInAdapters} runs.
  *
  * This work package builds the machinery: the polite client, the compliance
  * gate, the orchestrator, the run and record tables, the jobs. It ships no
@@ -47,8 +49,27 @@ export class AdapterRegistry {
 }
 
 /**
- * The registry the backend uses. Adapter work packages call
- * `adapterRegistry.register(...)` from their own module; nothing else here
- * changes.
+ * The registry the backend uses. Adapter work packages add their adapter to
+ * {@link registerBuiltInAdapters}; nothing else here changes.
  */
 export const adapterRegistry = new AdapterRegistry();
+
+/** What the built-in adapters need from the running backend. */
+export interface BuiltInAdapterDependencies {
+  /** WP-08b's geocoder, for place names in listings. */
+  readonly geo: CtftimeGeo;
+}
+
+/**
+ * Registers every adapter this build ships. Called once from `main.ts`, after
+ * the geocoder exists and before the scrape jobs are registered, so each
+ * `scrape:<source>` job appears from the registry and the `sources` rows alone.
+ *
+ * - `ctftime` — WP-09b.
+ */
+export function registerBuiltInAdapters(
+  registry: AdapterRegistry,
+  deps: BuiltInAdapterDependencies,
+): void {
+  registry.register(createCtftimeAdapter({ geo: deps.geo }));
+}

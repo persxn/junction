@@ -6,28 +6,22 @@
   `define()`d by the owning module, `testing/golden.ts`, R12 error blocks, M0 debt cleared.
   **Open for the architect:** `jobs/schedule.ts` cannot move to `domain/` until
   `JobDefinition.nextDueAt` stops being typed against the Drizzle row (handoff §4).
-- **WP-08a DONE** (`docs/handoff/WP-08a.md`) — event schema, `EventCandidate`, normalization. Contracts
-  `events.ts` + `event-candidate.ts` (`.strict()` = R50 enforced by the schema); migration **0004**
-  creates all seven tables (R48), `source_record_id` carries no FK by design (R49); `domain/normalize/`
-  = 12 pure clock-injected modules (R52), **156 cases** + fast-check properties. Deps: chrono-node
-  2.10.1, sanitize-html 2.17.7, turndown 7.2.4, +3 dev (fast-check 4.10.2).
-- **WP-08b DONE** (`docs/handoff/WP-08b.md`) — gazetteer, institutions, geocoder, distance, visibility
-  policies. `pnpm gazetteer:build` → **588 362 places / 68.5 MB, not committed** (R53); the committed
-  53 KB `mini.db` + TSV samples mean **verify passes with no gazetteer and no network** (R54). The
-  geocoder walks R55's ladder and *drops a rung* rather than guessing. One haversine, shared with SQL
-  as `haversine_km` (R56). Policies are pure + settings-driven; the §19 criterion passes.
-  **116 institutions**, 11 CAMPUS / 105 CITY, every coordinate from GeoNames.
-- **WP-09a DONE** (21 Sep 2026, `docs/handoff/WP-09a.md`) — PoliteHttpClient, compliance gate, source
-  seeds, scrape runs, jobs, snapshots. Migration **0005** = `sources`/`source_state`/`scrape_runs`/
-  `source_records`/`http_cache` (R58); **0006** seeds the five D-26 rows with fixed UUIDs. The gate is
-  one pure function both the client and the orchestrator call; `allowed_paths_json` entries are
-  **host-qualified** with `!` denials, which keeps `*.devfolio.co` off `api.devfolio.co`. All eight §19
-  failure modes are proved on a fake transport — **no test opens an internet socket**, and a grep test
-  keeps `undiciFetcher` referenced only by `main.ts`. `detail-refresh` writes no `scrape_runs` row.
-  **The registry ships empty, so no `scrape:` job exists yet** (WP-09b adds the first). **2370 tests.**
-  Deps: undici 8.10.2, robots-parser 3.0.1. Also fixed `smoke:bundle`, broken since WP-08b (the
-  institutions seed path; it now resolves through `platform/resources.ts`).
-- **Next: WP-10** (WP-09b in progress; its rulings R62–R63 are recorded, spec v1.1.10). WP-08b's two questions are still open (handoff §6): the gazetteer is 68.5 MB of
+- **WP-08a DONE** (`docs/handoff/WP-08a.md`) — `EventCandidate` (`.strict()` = R50), migration 0004
+  (seven tables, R48/R49), `domain/normalize/` (12 pure modules, 156 cases). Deps: chrono-node, sanitize-html, turndown.
+- **WP-08b DONE** (`docs/handoff/WP-08b.md`) — gazetteer (68.5 MB, not committed, R53; committed `mini.db`, R54),
+  geocoder (R55 ladder, drops a rung rather than guess), `haversine_km` (R56), policies (R57), 116 institutions.
+- **WP-09a DONE** (`docs/handoff/WP-09a.md`) — PoliteHttpClient, gate, seeds (0005/0006), scrape runs, jobs,
+  snapshots. Host-qualified `allowed_paths_json` with `!` denials; no test opens an internet socket (grep-enforced).
+  Deps: undici 8.10.2, robots-parser 3.0.1.
+- **WP-09b PARTIAL** (21 Sep 2026, `docs/handoff/WP-09b.md`) — CTFtime adapter. Everything built and
+  tested offline (**2445 tests**); **the one manual live smoke was not run**: the dev DB has no
+  `scraper.contactEmail` and the owner chose to skip it. `src/adapters/ctftime/` (pure `map.ts`, listing read whole
+  before any yield, only the two API URLs, built from numbers), goldens committed + read by eye, R62/R63 recorded
+  (spec v1.1.10). Contracts: `alternateClaims`, `eligibility.qualifiedOnly`, `DATE_DURATION_MISMATCH`. Migration
+  **0007** fixes the attribution and adds `!ctftime.org/api/v1/events/{id}/{below}` (the path grammar is prefix-only).
+  `registerBuiltInAdapters()` makes `scrape:ctftime` appear. `pnpm --filter @compintel/backend scrape:once` exists.
+- **Next: the WP-09b live smoke** (set `scraper.contactEmail` on the dev data dir, run `scrape:once -- --source
+  ctftime` once), **then WP-10.** WP-08b's two questions are still open (handoff §6): the gazetteer is 68.5 MB of
   which 95% are zero-population hamlets that also *harm* matching — §4.17 says "towns/cities" where
   R53 says feature class P; and GeoNames has almost no Indian campuses, so the INSTITUTION rung is
   mostly unreachable. Q12 stays OPEN in ARCHITECTURE.md §2 and DECISIONS.md.

@@ -1,0 +1,69 @@
+{
+  "descriptionMd": "SCAN 2026 Finals brings together the Top 20 teams from the Online Qualifier for an in-person CTF in Seoul, Korea. Finalists will compete in digital asset tracing, blockchain investigation, and security challenges for a total prize pool of 2 BTC.",
+  "editionYear": 2026,
+  "eligibility": {
+    "qualifiedOnly": {
+      "confidence": 1,
+      "raw": "Prequalified",
+      "value": true
+    }
+  },
+  "eligibilityText": "Prequalified",
+  "endsAt": {
+    "at": 1790582400000,
+    "confidence": 1,
+    "precision": "DATETIME",
+    "raw": "2026-09-28T08:00:00+00:00"
+  },
+  "eventType": {
+    "confidence": 1,
+    "raw": "CTFtime",
+    "value": "CTF"
+  },
+  "externalKey": "3417",
+  "fee": {
+    "confidence": 0,
+    "known": false
+  },
+  "isRecurringRound": false,
+  "mode": {
+    "confidence": 1,
+    "raw": "offline",
+    "value": "OFFLINE"
+  },
+  "officialUrl": "https://scan.sx/",
+  "organizerKind": {
+    "confidence": 0.7,
+    "raw": "D Asset Inc.",
+    "value": "COMMUNITY"
+  },
+  "organizerName": "D Asset Inc.",
+  "place": {
+    "city": "Seoul",
+    "countryCode": "KR",
+    "geoPrecision": "CITY",
+    "lat": 37.566,
+    "lon": 126.9784,
+    "state": "Seoul"
+  },
+  "prize": {
+    "text": "Total Prize Pool: 2 BTC\r\nAll 20 finalist teams will receive prizes based on their final rankings.\r\n\r\nPlace\tPrize\r\n1st\t1.000 BTC\r\n2nd\t0.500 BTC\r\n3rd\t0.150 BTC\r\n4th\t0.039 BTC\r\n5th\t0.035 BTC\r\n6th\t0.032 BTC\r\n7th\t0.029 BTC\r\n8th\t0.026 BTC\r\n9th\t0.022 BTC\r\n10th\t0.021 BTC\r\n11th\t0.020 BTC\r\n12th\t0.018 BTC\r\n13th\t0.017 BTC\r\n14th\t0.016 BTC\r\n15th\t0.015 BTC\r\n16th\t0.014 BTC\r\n17th\t0.013 BTC\r\n18th\t0.012 BTC\r\n19th\t0.011 BTC\r\n20th\t0.010 BTC\r\n\r\n\r\nEvery team that reaches the SCAN 2026 Offline Finals will receive a share of the 2 BTC prize pool."
+  },
+  "registrationUrl": "https://ctftime.org/event/3417/",
+  "sourceKey": "ctftime",
+  "sourceTags": [
+    "Jeopardy"
+  ],
+  "startsAt": {
+    "at": 1790557200000,
+    "confidence": 1,
+    "precision": "DATETIME",
+    "raw": "2026-09-28T01:00:00+00:00"
+  },
+  "summary": "SCAN 2026 Finals brings together the Top 20 teams from the Online Qualifier for an in-person CTF in Seoul, Korea. Finalists will compete in digital asset tracing, blockchain investigation, and security challenges for a total prize pool of 2 BTC.",
+  "timezone": "Asia/Seoul",
+  "title": "SCAN 2026 Final",
+  "titleRaw": "SCAN 2026 Final",
+  "url": "https://ctftime.org/event/3417/",
+  "warnings": []
+}

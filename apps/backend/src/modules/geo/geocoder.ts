@@ -147,6 +147,15 @@ export class Geocoder {
     return { geoPrecision: 'UNKNOWN', warnings };
   }
 
+  /**
+   * The seeded institution a name refers to, by the same matcher and threshold
+   * as the venue rung. Adapters use it to tell a campus organizer from a
+   * community team (§7.3's `organizer_kind`); it resolves no place.
+   */
+  institutionNamed(name: string): InstitutionRecord | undefined {
+    return this.#matchInstitution(name)?.record;
+  }
+
   #matchInstitution(venueName: string | undefined): MatchableInstitution | undefined {
     if (venueName === undefined || this.#institutions.length === 0) {
       return undefined;

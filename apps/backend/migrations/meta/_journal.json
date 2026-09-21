@@ -50,6 +50,13 @@
       "when": 1789944053908,
       "tag": "0006_seed_sources",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1789957308644,
+      "tag": "0007_ctftime_attribution",
+      "breakpoints": true
     }
   ]
 }
