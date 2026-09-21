@@ -110,13 +110,13 @@ describe('A6 — unknown values, per field', () => {
 });
 
 describe('sort and campus', () => {
-  it('RELEVANCE orders by text score only when there is text', () => {
+  it('RELEVANCE orders by the §8.4 score, with or without text (WP-15b)', () => {
     expect(plan({ text: 'hackathon' }).sort).toEqual({
       requested: 'RELEVANCE',
-      basis: 'TEXT_SCORE',
-      direction: 'ASC',
+      basis: 'SCORE',
+      direction: 'DESC',
     });
-    expect(plan({}).sort.basis).toBe('DEADLINE');
+    expect(plan({}).sort.basis).toBe('SCORE');
     expect(plan({ text: '   ' }).text).toBeUndefined();
   });
 

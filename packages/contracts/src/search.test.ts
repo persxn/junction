@@ -188,8 +188,13 @@ describe('response shapes', () => {
   });
 
   it('SearchResponse: nextCursor and correction are optional', () => {
+    const ranked = {
+      ...item,
+      score: 15,
+      reasons: [{ code: 'NO_CONFLICTS', text: 'Sources agree on the details', weightApplied: 5 }],
+    };
     expect(
-      SearchResponse.safeParse({ items: [item], total: 1, totalIsApproximate: false }).success,
+      SearchResponse.safeParse({ items: [ranked], total: 1, totalIsApproximate: false }).success,
     ).toBe(true);
     const correction = {
       searchedTerm: 'hackthon',

@@ -1,0 +1,295 @@
+[
+  {
+    "categories": [
+      {
+        "categoryId": "social-impact",
+        "confidence": 1,
+        "origin": "RULE",
+        "ruleId": "social-impact#05"
+      }
+    ],
+    "title": "Smart India Hackathon 2026"
+  },
+  {
+    "categories": [
+      {
+        "categoryId": "blockchain",
+        "confidence": 1,
+        "origin": "SOURCE_TAG",
+        "ruleId": "blockchain#00"
+      }
+    ],
+    "title": "ETHIndia 2026"
+  },
+  {
+    "categories": [
+      {
+        "categoryId": "ai-ml",
+        "confidence": 0.8,
+        "origin": "SOURCE_TAG",
+        "ruleId": "ai-ml#00"
+      },
+      {
+        "categoryId": "blockchain",
+        "confidence": 1,
+        "origin": "SOURCE_TAG",
+        "ruleId": "blockchain#00"
+      }
+    ],
+    "title": "Unfold 2026"
+  },
+  {
+    "categories": [
+      {
+        "categoryId": "ai-ml",
+        "confidence": 0.7,
+        "origin": "RULE",
+        "ruleId": "ai-ml#05"
+      }
+    ],
+    "title": "Build for Bharat – GenAI Hackathon"
+  },
+  {
+    "categories": [
+      {
+        "categoryId": "ai-ml",
+        "confidence": 1,
+        "origin": "RULE",
+        "ruleId": "ai-ml#04"
+      }
+    ],
+    "title": "Amazon ML Challenge 2026"
+  },
+  {
+    "categories": [
+      {
+        "categoryId": "ai-ml",
+        "confidence": 0.7,
+        "origin": "RULE",
+        "ruleId": "ai-ml#03"
+      }
+    ],
+    "title": "AI for Good Hackathon"
+  },
+  {
+    "categories": [],
+    "title": "Chair Design Sprint"
+  },
+  {
+    "categories": [],
+    "title": "AIIMS MedTech Ideathon"
+  },
+  {
+    "categories": [
+      {
+        "categoryId": "cybersecurity-ctf",
+        "confidence": 1,
+        "origin": "SOURCE_TAG",
+        "ruleId": "cybersecurity-ctf#01"
+      }
+    ],
+    "title": "picoCTF 2026"
+  },
+  {
+    "categories": [
+      {
+        "categoryId": "cybersecurity-ctf",
+        "confidence": 1,
+        "origin": "SOURCE_TAG",
+        "ruleId": "cybersecurity-ctf#02"
+      }
+    ],
+    "title": "InCTF Nationals"
+  },
+  {
+    "categories": [
+      {
+        "categoryId": "cybersecurity-ctf",
+        "confidence": 1,
+        "origin": "RULE",
+        "ruleId": "cybersecurity-ctf#06"
+      }
+    ],
+    "title": "Cyber Security Awareness Challenge"
+  },
+  {
+    "categories": [
+      {
+        "categoryId": "competitive-programming",
+        "confidence": 1,
+        "origin": "SOURCE_TAG",
+        "ruleId": "competitive-programming#01"
+      }
+    ],
+    "title": "Codeforces Round 987 (Div. 2)"
+  },
+  {
+    "categories": [
+      {
+        "categoryId": "competitive-programming",
+        "confidence": 1,
+        "origin": "SOURCE_TAG",
+        "ruleId": "competitive-programming#02"
+      }
+    ],
+    "title": "CodeChef Starters 150"
+  },
+  {
+    "categories": [
+      {
+        "categoryId": "competitive-programming",
+        "confidence": 1,
+        "origin": "RULE",
+        "ruleId": "competitive-programming#00"
+      }
+    ],
+    "title": "ICPC Asia Kanpur Regional"
+  },
+  {
+    "categories": [
+      {
+        "categoryId": "open-source",
+        "confidence": 1,
+        "origin": "RULE",
+        "ruleId": "open-source#03"
+      }
+    ],
+    "title": "Hacktoberfest 2026"
+  },
+  {
+    "categories": [
+      {
+        "categoryId": "open-source",
+        "confidence": 0.8,
+        "origin": "RULE",
+        "ruleId": "open-source#04"
+      }
+    ],
+    "title": "Google Summer of Code 2026"
+  },
+  {
+    "categories": [
+      {
+        "categoryId": "robotics",
+        "confidence": 1,
+        "origin": "RULE",
+        "ruleId": "robotics#01"
+      }
+    ],
+    "title": "Flipkart GRiD 7.0 – Robotics Challenge"
+  },
+  {
+    "categories": [
+      {
+        "categoryId": "robotics",
+        "confidence": 0.5,
+        "origin": "RULE",
+        "ruleId": "robotics#05"
+      }
+    ],
+    "title": "IIT Bombay Techfest Robowars"
+  },
+  {
+    "categories": [
+      {
+        "categoryId": "robotics",
+        "confidence": 0.8,
+        "origin": "RULE",
+        "ruleId": "robotics#03"
+      }
+    ],
+    "title": "Robocon India 2026"
+  },
+  {
+    "categories": [
+      {
+        "categoryId": "iot-hardware",
+        "confidence": 1,
+        "origin": "RULE",
+        "ruleId": "iot-hardware#02"
+      }
+    ],
+    "title": "IoT Innovation Challenge by Intel"
+  },
+  {
+    "categories": [
+      {
+        "categoryId": "design",
+        "confidence": 1,
+        "origin": "SOURCE_TAG",
+        "ruleId": "design#00"
+      }
+    ],
+    "title": "UI/UX Design Challenge"
+  },
+  {
+    "categories": [
+      {
+        "categoryId": "design",
+        "confidence": 0.8,
+        "origin": "RULE",
+        "ruleId": "design#03"
+      }
+    ],
+    "title": "Designathon 2026"
+  },
+  {
+    "categories": [
+      {
+        "categoryId": "data-science",
+        "confidence": 1,
+        "origin": "RULE",
+        "ruleId": "data-science#04"
+      }
+    ],
+    "title": "Datathon 2026"
+  },
+  {
+    "categories": [
+      {
+        "categoryId": "data-science",
+        "confidence": 0.8,
+        "origin": "SOURCE_TAG",
+        "ruleId": "data-science#01"
+      }
+    ],
+    "title": "Kaggle Playground Series"
+  },
+  {
+    "categories": [],
+    "title": "HackCBS 8.0"
+  },
+  {
+    "categories": [
+      {
+        "categoryId": "mobile",
+        "confidence": 1,
+        "origin": "RULE",
+        "ruleId": "mobile#05"
+      }
+    ],
+    "title": "Flutter Forward Mobile App Jam"
+  },
+  {
+    "categories": [
+      {
+        "categoryId": "web",
+        "confidence": 1,
+        "origin": "SOURCE_TAG",
+        "ruleId": "web#00"
+      }
+    ],
+    "title": "Web Development Weekend"
+  },
+  {
+    "categories": [
+      {
+        "categoryId": "social-impact",
+        "confidence": 1,
+        "origin": "RULE",
+        "ruleId": "social-impact#05"
+      }
+    ],
+    "title": "Hack4Climate"
+  }
+]

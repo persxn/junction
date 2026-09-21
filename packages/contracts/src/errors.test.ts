@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   AUTH_ERROR_CODES,
+  CATEGORY_ERROR_CODES,
   COMMON_ERROR_CODES,
   DB_ERROR_CODES,
   ERROR_CODE_DOMAINS,
@@ -93,6 +94,9 @@ describe('ErrorCode', () => {
       'SEARCH_INVALID_CURSOR',
       'SEARCH_TEXT_TOO_LONG',
       'SEARCH_ALIAS_EXISTS',
+      'SEARCH_INVALID_RULE',
+      'SEARCH_RULE_PATTERN_UNSAFE',
+      'CATEGORY_IN_USE',
       'IMPORT_FILE_UNREADABLE',
       'IMPORT_FORMAT_UNSUPPORTED',
       'IMPORT_SOURCE_NOT_ALLOWED',
@@ -118,6 +122,7 @@ describe('ErrorCode', () => {
       ...EVENT_ERROR_CODES,
       ...GEO_ERROR_CODES,
       ...SEARCH_ERROR_CODES,
+      ...CATEGORY_ERROR_CODES,
       ...IMPORT_ERROR_CODES,
       ...DB_ERROR_CODES,
     ]);

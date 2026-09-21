@@ -9,8 +9,8 @@
   "limit": 25,
   "now": 1790058600000,
   "sort": {
-    "basis": "DEADLINE",
-    "direction": "ASC",
+    "basis": "SCORE",
+    "direction": "DESC",
     "requested": "RELEVANCE"
   },
   "watchlistedOnly": false

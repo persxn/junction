@@ -1,4 +1,9 @@
-import { EventQuery, SEARCH_TEXT_MAX, type ProblemFieldError } from '@compintel/contracts';
+import {
+  SearchRequest,
+  SEARCH_TEXT_MAX,
+  type EventQuery,
+  type ProblemFieldError,
+} from '@compintel/contracts';
 
 import { AppError } from '../../platform/errors.js';
 
@@ -47,11 +52,15 @@ export const aliasExists = (term: string): AppError =>
     retryable: false,
   });
 
-/** `EventQuery` from an untrusted body, or the problem the caller should see. */
-export function parseEventQuery(body: unknown): EventQuery {
-  const parsed = EventQuery.safeParse(body ?? {});
+/**
+ * The search body from an untrusted source, or the problem the caller should
+ * see: the `EventQuery` (which saved searches store) and whether facets are wanted.
+ */
+export function parseSearchRequest(body: unknown): { query: EventQuery; facets: boolean } {
+  const parsed = SearchRequest.safeParse(body ?? {});
   if (parsed.success) {
-    return parsed.data;
+    const { facets, ...query } = parsed.data;
+    return { query, facets: facets !== false };
   }
   const issues = parsed.error.issues;
   if (

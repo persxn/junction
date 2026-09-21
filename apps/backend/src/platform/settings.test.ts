@@ -180,6 +180,9 @@ describe('module-owned definitions', () => {
       'geography.nearbyRadiusKm',
       'geography.policy',
       'scraper.contactEmail',
+      // WP-15b's, declared by modules/search (§8.4).
+      'search.ranking.thresholds',
+      'search.ranking.weights',
       // WP-11's, declared by modules/sources — secret, never logged or exported.
       'sources.clist.apiKey',
       'sources.clist.apiUsername',

@@ -1,0 +1,206 @@
+{
+  "$comment": "WP-15b starter taxonomy (D-15). Data, not code: applied once per version at startup, never over an administrator's edits. Weights are 0-100; a category's confidence is its matching rules' summed weight / 100, capped at 1. KEYWORD = one whole word; PHRASE = words in order; SOURCE_TAG = a tag the source itself gave; EVENT_TYPE = the event's type.",
+  "version": 1,
+  "categories": [
+    {
+      "slug": "ai-ml",
+      "name": "AI/ML",
+      "colorToken": "category-1",
+      "icon": "brain",
+      "description": "Artificial intelligence, machine learning, LLMs and generative AI.",
+      "rules": [
+        { "kind": "SOURCE_TAG", "pattern": "ai", "weight": 80 },
+        { "kind": "SOURCE_TAG", "pattern": "machine learning", "weight": 80 },
+        { "kind": "SOURCE_TAG", "pattern": "ai/ml", "weight": 80 },
+        { "kind": "KEYWORD", "pattern": "ai", "fields": "TITLE", "weight": 70 },
+        { "kind": "KEYWORD", "pattern": "ml", "fields": "TITLE", "weight": 60 },
+        { "kind": "KEYWORD", "pattern": "genai", "fields": "ALL", "weight": 70 },
+        { "kind": "KEYWORD", "pattern": "llm", "fields": "ALL", "weight": 60 },
+        { "kind": "PHRASE", "pattern": "machine learning", "fields": "ALL", "weight": 60 },
+        { "kind": "PHRASE", "pattern": "artificial intelligence", "fields": "ALL", "weight": 60 },
+        { "kind": "PHRASE", "pattern": "generative ai", "fields": "ALL", "weight": 70 },
+        { "kind": "PHRASE", "pattern": "deep learning", "fields": "ALL", "weight": 50 },
+        { "kind": "KEYWORD", "pattern": "ai", "fields": "DESCRIPTION", "weight": 30 }
+      ]
+    },
+    {
+      "slug": "cybersecurity-ctf",
+      "name": "Cybersecurity/CTF",
+      "colorToken": "category-2",
+      "icon": "shield",
+      "description": "Capture the flag, security research and defence.",
+      "rules": [
+        { "kind": "EVENT_TYPE", "pattern": "CTF", "weight": 100 },
+        { "kind": "SOURCE_TAG", "pattern": "jeopardy", "weight": 80 },
+        { "kind": "SOURCE_TAG", "pattern": "attack-defense", "weight": 80 },
+        { "kind": "SOURCE_TAG", "pattern": "cybersecurity", "weight": 80 },
+        { "kind": "KEYWORD", "pattern": "ctf", "fields": "TITLE", "weight": 80 },
+        { "kind": "KEYWORD", "pattern": "cybersecurity", "fields": "ALL", "weight": 70 },
+        { "kind": "PHRASE", "pattern": "cyber security", "fields": "ALL", "weight": 70 },
+        { "kind": "PHRASE", "pattern": "capture the flag", "fields": "ALL", "weight": 80 },
+        { "kind": "KEYWORD", "pattern": "security", "fields": "TITLE", "weight": 40 }
+      ]
+    },
+    {
+      "slug": "web",
+      "name": "Web",
+      "colorToken": "category-3",
+      "icon": "globe",
+      "description": "Web applications, front end and back end.",
+      "rules": [
+        { "kind": "SOURCE_TAG", "pattern": "web", "weight": 70 },
+        { "kind": "SOURCE_TAG", "pattern": "web development", "weight": 80 },
+        { "kind": "PHRASE", "pattern": "web development", "fields": "ALL", "weight": 60 },
+        { "kind": "PHRASE", "pattern": "web app", "fields": "ALL", "weight": 50 },
+        { "kind": "KEYWORD", "pattern": "frontend", "fields": "ALL", "weight": 40 },
+        { "kind": "KEYWORD", "pattern": "fullstack", "fields": "ALL", "weight": 40 }
+      ]
+    },
+    {
+      "slug": "mobile",
+      "name": "Mobile",
+      "colorToken": "category-4",
+      "icon": "smartphone",
+      "description": "Android, iOS and cross-platform apps.",
+      "rules": [
+        { "kind": "SOURCE_TAG", "pattern": "mobile", "weight": 70 },
+        { "kind": "SOURCE_TAG", "pattern": "app development", "weight": 60 },
+        { "kind": "KEYWORD", "pattern": "android", "fields": "ALL", "weight": 50 },
+        { "kind": "KEYWORD", "pattern": "ios", "fields": "ALL", "weight": 50 },
+        { "kind": "KEYWORD", "pattern": "flutter", "fields": "ALL", "weight": 40 },
+        { "kind": "PHRASE", "pattern": "mobile app", "fields": "ALL", "weight": 60 }
+      ]
+    },
+    {
+      "slug": "blockchain",
+      "name": "Blockchain",
+      "colorToken": "category-5",
+      "icon": "link",
+      "description": "Blockchain, web3 and smart contracts.",
+      "rules": [
+        { "kind": "SOURCE_TAG", "pattern": "blockchain", "weight": 80 },
+        { "kind": "SOURCE_TAG", "pattern": "web3", "weight": 80 },
+        { "kind": "SOURCE_TAG", "pattern": "ethereum", "weight": 70 },
+        { "kind": "KEYWORD", "pattern": "blockchain", "fields": "ALL", "weight": 70 },
+        { "kind": "KEYWORD", "pattern": "web3", "fields": "ALL", "weight": 70 },
+        { "kind": "PHRASE", "pattern": "smart contract", "fields": "ALL", "weight": 60 },
+        { "kind": "KEYWORD", "pattern": "defi", "fields": "ALL", "weight": 50 }
+      ]
+    },
+    {
+      "slug": "data-science",
+      "name": "Data Science",
+      "colorToken": "category-6",
+      "icon": "bar-chart",
+      "description": "Data analysis, analytics and data competitions.",
+      "rules": [
+        { "kind": "SOURCE_TAG", "pattern": "data science", "weight": 80 },
+        { "kind": "SOURCE_TAG", "pattern": "kaggle.com", "weight": 80 },
+        { "kind": "PHRASE", "pattern": "data science", "fields": "ALL", "weight": 70 },
+        { "kind": "PHRASE", "pattern": "data analytics", "fields": "ALL", "weight": 60 },
+        { "kind": "KEYWORD", "pattern": "datathon", "fields": "ALL", "weight": 80 },
+        { "kind": "KEYWORD", "pattern": "analytics", "fields": "TITLE", "weight": 40 }
+      ]
+    },
+    {
+      "slug": "iot-hardware",
+      "name": "IoT/Hardware",
+      "colorToken": "category-7",
+      "icon": "cpu",
+      "description": "Embedded systems, IoT and hardware builds.",
+      "rules": [
+        { "kind": "SOURCE_TAG", "pattern": "hardware", "weight": 80 },
+        { "kind": "SOURCE_TAG", "pattern": "iot", "weight": 80 },
+        { "kind": "KEYWORD", "pattern": "iot", "fields": "ALL", "weight": 70 },
+        { "kind": "KEYWORD", "pattern": "hardware", "fields": "TITLE", "weight": 60 },
+        { "kind": "KEYWORD", "pattern": "embedded", "fields": "ALL", "weight": 50 },
+        { "kind": "PHRASE", "pattern": "internet of things", "fields": "ALL", "weight": 70 },
+        { "kind": "KEYWORD", "pattern": "arduino", "fields": "ALL", "weight": 40 }
+      ]
+    },
+    {
+      "slug": "robotics",
+      "name": "Robotics",
+      "colorToken": "category-8",
+      "icon": "bot",
+      "description": "Robots, drones and autonomous systems.",
+      "rules": [
+        { "kind": "SOURCE_TAG", "pattern": "robotics", "weight": 80 },
+        { "kind": "KEYWORD", "pattern": "robotics", "fields": "ALL", "weight": 70 },
+        { "kind": "KEYWORD", "pattern": "robot", "fields": "TITLE", "weight": 60 },
+        { "kind": "KEYWORD", "pattern": "robocon", "fields": "ALL", "weight": 80 },
+        { "kind": "KEYWORD", "pattern": "drone", "fields": "ALL", "weight": 50 },
+        {
+          "kind": "REGEX",
+          "pattern": "\\brobo(tics|wars?|race)\\b",
+          "fields": "TITLE",
+          "weight": 50
+        }
+      ]
+    },
+    {
+      "slug": "design",
+      "name": "Design",
+      "colorToken": "category-9",
+      "icon": "palette",
+      "description": "UI/UX and product design.",
+      "rules": [
+        { "kind": "SOURCE_TAG", "pattern": "design", "weight": 70 },
+        { "kind": "SOURCE_TAG", "pattern": "ui/ux", "weight": 80 },
+        { "kind": "PHRASE", "pattern": "ui ux", "fields": "ALL", "weight": 70 },
+        { "kind": "KEYWORD", "pattern": "designathon", "fields": "ALL", "weight": 80 },
+        { "kind": "PHRASE", "pattern": "product design", "fields": "ALL", "weight": 60 },
+        { "kind": "KEYWORD", "pattern": "figma", "fields": "ALL", "weight": 40 }
+      ]
+    },
+    {
+      "slug": "social-impact",
+      "name": "Social Impact",
+      "colorToken": "category-10",
+      "icon": "heart",
+      "description": "Health, climate, education and civic technology.",
+      "rules": [
+        { "kind": "SOURCE_TAG", "pattern": "social good", "weight": 80 },
+        { "kind": "SOURCE_TAG", "pattern": "healthcare", "weight": 60 },
+        { "kind": "SOURCE_TAG", "pattern": "sustainability", "weight": 60 },
+        { "kind": "PHRASE", "pattern": "social impact", "fields": "ALL", "weight": 70 },
+        { "kind": "PHRASE", "pattern": "social good", "fields": "ALL", "weight": 70 },
+        { "kind": "KEYWORD", "pattern": "sustainability", "fields": "ALL", "weight": 50 },
+        { "kind": "KEYWORD", "pattern": "climate", "fields": "ALL", "weight": 50 },
+        { "kind": "KEYWORD", "pattern": "healthcare", "fields": "ALL", "weight": 40 },
+        { "kind": "PHRASE", "pattern": "smart india hackathon", "fields": "TITLE", "weight": 40 }
+      ]
+    },
+    {
+      "slug": "open-source",
+      "name": "Open Source",
+      "colorToken": "category-11",
+      "icon": "git-branch",
+      "description": "Open-source contribution programmes and events.",
+      "rules": [
+        { "kind": "SOURCE_TAG", "pattern": "open source", "weight": 80 },
+        { "kind": "PHRASE", "pattern": "open source", "fields": "ALL", "weight": 70 },
+        { "kind": "KEYWORD", "pattern": "opensource", "fields": "ALL", "weight": 70 },
+        { "kind": "KEYWORD", "pattern": "hacktoberfest", "fields": "ALL", "weight": 90 },
+        { "kind": "PHRASE", "pattern": "summer of code", "fields": "TITLE", "weight": 80 }
+      ]
+    },
+    {
+      "slug": "competitive-programming",
+      "name": "Competitive Programming",
+      "colorToken": "category-12",
+      "icon": "code",
+      "description": "Algorithmic contests and coding rounds.",
+      "rules": [
+        { "kind": "EVENT_TYPE", "pattern": "CODING_CONTEST", "weight": 100 },
+        { "kind": "SOURCE_TAG", "pattern": "codeforces.com", "weight": 90 },
+        { "kind": "SOURCE_TAG", "pattern": "codechef.com", "weight": 90 },
+        { "kind": "SOURCE_TAG", "pattern": "atcoder.jp", "weight": 90 },
+        { "kind": "SOURCE_TAG", "pattern": "leetcode.com", "weight": 90 },
+        { "kind": "PHRASE", "pattern": "competitive programming", "fields": "ALL", "weight": 80 },
+        { "kind": "KEYWORD", "pattern": "icpc", "fields": "ALL", "weight": 90 },
+        { "kind": "PHRASE", "pattern": "coding contest", "fields": "ALL", "weight": 60 }
+      ]
+    }
+  ]
+}

@@ -1,35 +1,50 @@
 import type {
   EventCore,
-  EventListItem,
+  EventQuery,
+  Facets,
   SearchResponse,
   SpellingCorrection,
 } from '@compintel/contracts';
 
-import type { EventRow } from '../../db/schema/index.js';
-import { haversineKm } from '../../domain/geo/distance.js';
 import { nowMs, systemClock, APP_TIMEZONE, type Clock } from '../../platform/time.js';
 import { assertCan } from '../auth/policy.js';
 import type { Principal } from '../auth/types.js';
 import { eventNotFound } from '../events/errors.js';
 import type { EventsRepository } from '../events/repository.js';
 import type { AliasService } from './aliases.js';
-import { CursorCodec } from './cursor.js';
+import { CursorCodec, type CursorPosition } from './cursor.js';
+import { interestCategoryIds } from './domain/interests.js';
 import { planQuery, QueryPlanError, type QueryPlan } from './domain/normalize.js';
+import { DAY_MS, rank, type RankContext } from './domain/rank.js';
 import { aliasWords, expandAliases, ftsMatchExpression, quoteFts } from './domain/text.js';
 import { TRIGRAM_MIN_CHARS, trigramMatchExpression } from './domain/trigram.js';
 import { correctionMessage } from './domain/typo.js';
-import { invalidQuery, parseEventQuery } from './errors.js';
-import type { SearchExecution, SearchRepository, SearchRow, TextMatch } from './repo.js';
+import { invalidQuery, parseSearchRequest } from './errors.js';
+import type { FacetRepository } from './facets.js';
+import { distanceOf, toCore, toListItem, toRankRow, type RankLookups } from './mapping.js';
+import type {
+  InterestIds,
+  SearchExecution,
+  SearchRepository,
+  SearchRow,
+  TextMatch,
+} from './repo.js';
+import type { RankingThresholds, RankingWeights } from './settings.js';
 import type { VocabularyService } from './vocabulary.js';
 
 /**
  * `POST /search/events` and `GET /events/:id` (§8, §16.2).
  *
- * The order of operations is the design: parse (strict, `SEARCH_` codes) →
- * plan (pure: dates, unknowns, distance, sort) → resolve the text (aliases,
- * then typo correction for zero-hit words, reported) → execute (one SQL
- * statement) → map to cards. Visibility (R57, §7.4) is in the SQL's base
- * clause, so no path through here can return a hidden or merged event.
+ * parse (strict, `SEARCH_` codes) → plan (pure) → resolve the text (aliases,
+ * then typo correction, reported) → execute → rank (§8.4, pure) → cards with
+ * their reasons, plus facets unless the caller said `facets: false`.
+ * Visibility (R57, §7.4) is in every statement's base clause, so no path here
+ * returns — or counts — a hidden or merged event.
+ *
+ * RELEVANCE is ordered in `rank.ts`, not SQL: its text part is bm25 normalized
+ * against the best hit in the whole result set, so every matching row is read
+ * (narrow columns), scored, sorted and paged in memory. The other sorts page
+ * in SQL by keyset and are ranked only for the page, to give their reasons.
  */
 
 export interface SearchContext {
@@ -37,19 +52,29 @@ export interface SearchContext {
   readonly requestId?: string | undefined;
 }
 
+export interface RankingSettings {
+  readonly weights: RankingWeights;
+  readonly thresholds: RankingThresholds;
+  /** `geography.nearbyRadiusKm`: WITHIN_RADIUS's radius when the query sets none. */
+  readonly preferredRadiusKm: number;
+}
+
 export interface SearchServiceDependencies {
   readonly repo: SearchRepository;
+  readonly facets: FacetRepository;
   readonly events: EventsRepository;
   readonly aliases: AliasService;
   readonly vocabulary: VocabularyService;
+  /** Read per query, so a retuned weight applies to the next search. */
+  readonly ranking: () => RankingSettings;
   readonly cursors?: CursorCodec;
   readonly clock?: Clock;
   readonly timeZone?: string;
 }
 
-/** A ready text match, plus the correction to report if one was made. */
 interface ResolvedText {
   readonly match: TextMatch;
+  readonly usedText: string;
   readonly correction?: SpellingCorrection;
 }
 
@@ -66,43 +91,101 @@ export class SearchService {
 
   search(context: SearchContext, body: unknown): SearchResponse {
     assertCan(context.actor, 'event.view');
-    const query = parseEventQuery(body);
-    if (query.categories !== undefined || query.tags !== undefined) {
-      // Neither is stored yet: categories arrive with WP-15b, tags have no table.
-      // Answering as if the filter applied would show results it never filtered.
-      throw invalidQuery('Filtering by category or tag is not available yet.');
-    }
-    const plan = this.#plan(query);
+    const { query, facets: wantFacets } = parseSearchRequest(body);
+    const ranking = this.#deps.ranking();
+    const now = nowMs(this.#clock);
+    const plan = this.#plan(query, now, ranking);
     const fingerprint = CursorCodec.fingerprint(query);
     const after =
       query.cursor === undefined
         ? undefined
         : this.#cursors.decode(query.cursor, fingerprint, plan.sort.basis);
     const text = plan.text === undefined ? undefined : this.#resolveText(plan.text);
-
-    const execution = {
+    const interests = this.#interests(context.actor.id);
+    const sourceTrust = this.#deps.repo.sourceTrust();
+    const trustedMinRank = ranking.thresholds.trustedSourceMinRank;
+    const execution: SearchExecution = {
       plan,
       userId: context.actor.id,
       after,
+      interests: interests.ids,
+      trustedSourceIds: [...sourceTrust]
+        .filter(([, source]) => source.trustRank >= trustedMinRank)
+        .map(([id]) => id),
       ...(text === undefined ? {} : { text: text.match }),
     };
-    const rows = this.#deps.repo.search(execution);
-    const page = rows.slice(0, plan.limit);
-    const last = page[page.length - 1];
-    const total = rows[0]?.total ?? (after === undefined ? 0 : this.#countAll(execution));
-    const sources = this.#deps.repo.sourceKeys(page.map((row) => row.id));
+    const rankContext: RankContext = {
+      now,
+      timeZone: this.#timeZone,
+      weights: ranking.weights,
+      thresholds: ranking.thresholds,
+      sort: plan.sort.requested,
+      text: text?.usedText,
+      radiusKm:
+        query.maxDistanceKm ?? (plan.campus === undefined ? undefined : ranking.preferredRadiusKm),
+      teamSizeFits: query.teamSizeFits,
+    };
+    const lookups: RankLookups = {
+      sources: sourceTrust,
+      trustedMinRank,
+      categoryNames: interests.categoryNames,
+      tagNames: interests.tagNames,
+    };
+    const rankRow = (row: SearchRow, ctx: RankContext) => rank(toRankRow(row, lookups), ctx);
 
+    let page: { row: SearchRow; ranked: ReturnType<typeof rank> }[];
+    let next: CursorPosition | undefined;
+    let total: number;
+    if (plan.sort.basis === 'SCORE') {
+      // Ordered and paged in SQL by `score-sql.ts`; each page row is explained
+      // by `rank.ts` from the same inputs, so its reasons sum to the score it
+      // was ordered by (asserted in ranking.test.ts).
+      const score = {
+        now,
+        weights: ranking.weights,
+        thresholds: ranking.thresholds,
+        radiusKm: rankContext.radiusKm,
+        teamSizeFits: query.teamSizeFits,
+        hasText: execution.text !== undefined,
+      };
+      const run = (exec: SearchExecution) => this.#deps.repo.relevance(exec, score);
+      const rows = run(execution);
+      const sliced = rows.slice(0, plan.limit);
+      page = sliced.map((row) => ({
+        row,
+        ranked: rankRow(row, { ...rankContext, bestTextScore: Math.min(0, row.best ?? 0) }),
+      }));
+      total = rows[0]?.total ?? (after === undefined ? 0 : this.#countAll(execution, run));
+      const last = sliced[sliced.length - 1];
+      next =
+        rows.length > plan.limit && last !== undefined
+          ? { nullRank: 0, sortKey: last.sk ?? 0, tie: last.tie ?? null, id: last.id }
+          : undefined;
+    } else {
+      const rows = this.#deps.repo.search(execution);
+      const sliced = rows.slice(0, plan.limit);
+      page = sliced.map((row) => ({ row, ranked: rankRow(row, rankContext) }));
+      total =
+        rows[0]?.total ??
+        (after === undefined
+          ? 0
+          : this.#countAll(execution, (exec) => this.#deps.repo.search(exec)));
+      const last = sliced[sliced.length - 1];
+      next =
+        rows.length > plan.limit && last !== undefined
+          ? { nullRank: last.nr ?? 0, sortKey: last.sk ?? null, id: last.id }
+          : undefined;
+    }
+
+    const sources = this.#deps.repo.sourceKeys(page.map((entry) => entry.row.id));
     return {
-      items: page.map((row) => toListItem(row, sources.get(row.id) ?? [])),
-      ...(rows.length > plan.limit && last !== undefined
-        ? {
-            nextCursor: this.#cursors.encode(
-              { nullRank: last.nr, sortKey: last.sk, id: last.id },
-              fingerprint,
-              plan.sort.basis,
-            ),
-          }
-        : {}),
+      items: page.map((entry) =>
+        toListItem(entry.row, sources.get(entry.row.id) ?? [], entry.ranked),
+      ),
+      ...(wantFacets ? { facets: this.#facets(query, plan, execution, ranking, now) } : {}),
+      ...(next === undefined
+        ? {}
+        : { nextCursor: this.#cursors.encode(next, fingerprint, plan.sort.basis) }),
       total,
       totalIsApproximate: false,
       ...(text?.correction === undefined ? {} : { correction: text.correction }),
@@ -128,25 +211,73 @@ export class SearchService {
         origin: deadline.origin,
       })),
       sources: this.#deps.repo.sourcesOf(id),
+      categories: this.#deps.repo.categoriesOf(id),
     });
+  }
+
+  get #timeZone(): string {
+    return this.#deps.timeZone ?? APP_TIMEZONE;
+  }
+
+  #facets(
+    query: EventQuery,
+    plan: QueryPlan,
+    execution: SearchExecution,
+    ranking: RankingSettings,
+    now: number,
+  ): Facets {
+    return this.#deps.facets.facets({
+      plan,
+      userId: execution.userId,
+      ...(execution.text === undefined ? {} : { text: execution.text }),
+      categories: this.#deps.repo.activeCategories(),
+      closingSoonUntil: now + ranking.thresholds.closingSoonDays * DAY_MS,
+      options: {
+        includeUnknownDeadline: query.includeUnknown?.deadline === true,
+        includeOnline: query.modes?.includes('ONLINE') === true,
+        includeUnknownLocation: query.includeUnknown?.location === true,
+      },
+    });
+  }
+
+  /** The professor's interests as ids, and the names the reasons print. */
+  #interests(userId: string): {
+    ids: InterestIds;
+    categoryNames: Map<string, string>;
+    tagNames: Map<string, string>;
+  } {
+    const tags = this.#deps.repo.interestTags(userId);
+    if (tags.length === 0) {
+      return {
+        ids: { categoryIds: [], tagIds: [] },
+        categoryNames: new Map(),
+        tagNames: new Map(),
+      };
+    }
+    const categories = this.#deps.repo.activeCategories();
+    return {
+      ids: {
+        categoryIds: interestCategoryIds(tags, categories),
+        tagIds: tags.map((tag) => tag.id),
+      },
+      categoryNames: new Map(categories.map((category) => [category.id, category.name])),
+      tagNames: new Map(tags.map((tag) => [tag.id, tag.name])),
+    };
   }
 
   /** A page past the end carries no `total`; ask again from the top, one row long. */
-  #countAll(execution: SearchExecution): number {
-    const rows = this.#deps.repo.search({
-      ...execution,
-      after: undefined,
-      plan: { ...execution.plan, limit: 0 },
-    });
+  #countAll(execution: SearchExecution, run: (execution: SearchExecution) => SearchRow[]): number {
+    const rows = run({ ...execution, after: undefined, plan: { ...execution.plan, limit: 0 } });
     return rows[0]?.total ?? 0;
   }
 
-  #plan(query: Parameters<typeof planQuery>[0]): QueryPlan {
+  #plan(query: EventQuery, now: number, ranking: RankingSettings): QueryPlan {
     try {
       return planQuery(query, {
-        nowMs: nowMs(this.#clock),
-        timeZone: this.#deps.timeZone ?? APP_TIMEZONE,
+        nowMs: now,
+        timeZone: this.#timeZone,
         campus: this.#deps.repo.primaryCampus(),
+        closingSoonMs: ranking.thresholds.closingSoonDays * DAY_MS,
       });
     } catch (error) {
       if (error instanceof QueryPlanError) {
@@ -169,8 +300,9 @@ export class SearchService {
         this.#deps.repo.hasVisibleHit('event_fts_trigram', quoteFts(word)));
     const result = this.#deps.vocabulary.correct(text.words, protectedWords, hasHits);
     const words = result.corrected ? result.words : text.words;
-    const usedText = words.join(' ');
+    const usedText = result.corrected ? words.join(' ') : text.raw;
     return {
+      usedText,
       match: {
         fts: ftsMatchExpression(expandAliases(words, aliases)),
         trigram: result.corrected ? trigramMatchExpression(usedText) : (text.trigram ?? undefined),
@@ -186,102 +318,4 @@ export class SearchService {
         : {}),
     };
   }
-}
-
-function toListItem(row: SearchRow, sources: string[]): EventListItem {
-  return {
-    id: row.id,
-    title: row.title,
-    organizerName: row.organizer_name,
-    eventType: row.event_type,
-    mode: row.mode,
-    distanceKm: row.distance_km,
-    registrationDeadlineAt: row.registration_deadline_at,
-    registrationDeadlinePrecision: row.registration_deadline_precision,
-    startsAt: row.starts_at,
-    datePrecision: row.date_precision,
-    prize: {
-      text: row.prize_text,
-      totalMinor: row.prize_total_minor,
-      currency: row.prize_currency,
-    },
-    teamMin: row.team_min,
-    teamMax: row.team_max,
-    sources,
-    hasConflicts: row.has_conflicts === 1,
-  };
-}
-
-/** The same rule the list uses: no distance to an online event or a coarse coordinate. */
-function distanceOf(event: EventRow, campus: { lat: number; lon: number }): number | null {
-  const precise = ['EXACT', 'INSTITUTION', 'CITY'].includes(event.geoPrecision);
-  if (event.mode === 'ONLINE' || !precise || event.lat === null || event.lon === null) {
-    return null;
-  }
-  return haversineKm(campus, { lat: event.lat, lon: event.lon });
-}
-
-function toCore(
-  event: EventRow,
-  extra: Pick<EventCore, 'distanceKm' | 'deadlines' | 'sources'>,
-): EventCore {
-  return {
-    id: event.id,
-    title: event.title,
-    eventType: event.eventType,
-    mode: event.mode,
-    organizerName: event.organizerName,
-    organizerKind: event.organizerKind,
-    city: event.city,
-    countryCode: event.countryCode,
-    startsAt: event.startsAt,
-    endsAt: event.endsAt,
-    registrationDeadlineAt: event.registrationDeadlineAt,
-    registrationDeadlinePrecision: event.registrationDeadlinePrecision,
-    datePrecision: event.datePrecision,
-    feeKnown: event.feeKnown,
-    feeMinor: event.feeMinor,
-    feeCurrency: event.feeCurrency,
-    teamMin: event.teamMin,
-    teamMax: event.teamMax,
-    editionYear: event.editionYear,
-    isRecurringRound: event.isRecurringRound,
-    cancellation: event.cancellation,
-    visibility: event.visibility,
-    qualityScore: event.qualityScore,
-    hasConflicts: event.hasConflicts,
-    officialUrl: event.officialUrl,
-    normalizedTitle: event.normalizedTitle,
-    seriesId: event.seriesId,
-    hostInstitutionId: event.hostInstitutionId,
-    summary: event.summary,
-    descriptionMd: event.descriptionMd,
-    prizeText: event.prizeText,
-    prizeTotalMinor: event.prizeTotalMinor,
-    prizeCurrency: event.prizeCurrency,
-    eligibilityText: event.eligibilityText,
-    requirementsText: event.requirementsText,
-    submissionRequirementsText: event.submissionRequirementsText,
-    venueName: event.venueName,
-    state: event.state,
-    lat: event.lat,
-    lon: event.lon,
-    geoPrecision: event.geoPrecision,
-    timezone: event.timezone,
-    registrationOpensAt: event.registrationOpensAt,
-    submissionDeadlineAt: event.submissionDeadlineAt,
-    feeText: event.feeText,
-    registrationUrl: event.registrationUrl,
-    cancellationOrigin: event.cancellationOrigin,
-    mergedIntoEventId: event.mergedIntoEventId,
-    policyReason: event.policyReason,
-    lastVerifiedAt: event.lastVerifiedAt,
-    lastChangedAt: event.lastChangedAt,
-    firstSeenAt: event.firstSeenAt,
-    createdAt: event.createdAt,
-    updatedAt: event.updatedAt,
-    version: event.version,
-    categories: [],
-    ...extra,
-  };
 }

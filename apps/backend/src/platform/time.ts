@@ -127,16 +127,27 @@ const IANA_NAME_PATTERN = /^[A-Za-z][A-Za-z0-9_+-]*(\/[A-Za-z0-9_+-]+)+$/;
  * adapter to make explicitly, not something this layer guesses at.
  */
 export function isValidTimeZone(timeZone: string): boolean {
+  if (validZones.has(timeZone)) {
+    return true;
+  }
   if (timeZone !== 'UTC' && !IANA_NAME_PATTERN.test(timeZone)) {
     return false;
   }
   try {
     new Intl.DateTimeFormat('en-US', { timeZone });
+    validZones.add(timeZone);
     return true;
   } catch {
     return false;
   }
 }
+
+/**
+ * Zones already proven valid. Constructing a formatter to validate costs tens
+ * of microseconds, and `formatDay` validates on every call — WP-15b's reasons
+ * call it ~10 times per result card.
+ */
+const validZones = new Set<string>();
 
 /** The same check as a guard: returns the zone, or throws naming it. */
 export function assertTimeZone(timeZone: string): string {

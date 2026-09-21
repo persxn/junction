@@ -59,15 +59,23 @@ export class EventResolver {
   readonly #events: EventsRepository;
   readonly #provenance: ProvenanceRepository;
   readonly #policies: () => { eventType: EventTypePolicy; geography: GeographyPolicy };
+  readonly #onResolved: ((eventId: string, at: number) => void) | undefined;
 
   constructor(deps: {
     events: EventsRepository;
     provenance: ProvenanceRepository;
     policies: () => { eventType: EventTypePolicy; geography: GeographyPolicy };
+    /**
+     * WP-15b: runs after every resolution, in the caller's transaction — the
+     * category classifier, so every ingest path (scrape, import, manual entry,
+     * merge, unmerge) re-derives an event's categories from its latest state.
+     */
+    onResolved?: (eventId: string, at: number) => void;
   }) {
     this.#events = deps.events;
     this.#provenance = deps.provenance;
     this.#policies = deps.policies;
+    this.#onResolved = deps.onResolved;
   }
 
   /** The current resolution, read-only — what `/events/:id/conflicts` shows. */
@@ -181,6 +189,7 @@ export class EventResolver {
       this.#events.update(eventId, patch);
     }
     this.#provenance.setSelected(eventId, resolution.selectedClaimIds);
+    this.#onResolved?.(eventId, context.at);
     return { resolution, changedFields: context.creating === true ? [] : changedFields };
   }
 }

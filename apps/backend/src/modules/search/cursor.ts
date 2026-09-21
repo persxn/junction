@@ -26,6 +26,8 @@ export interface CursorPosition {
   /** 1 when the row's sort key is NULL (NULLs sort last). */
   readonly nullRank: 0 | 1;
   readonly sortKey: number | null;
+  /** RELEVANCE only: the registration deadline that breaks a score tie (null = unknown). */
+  readonly tie?: number | null;
   readonly id: string;
 }
 
@@ -36,6 +38,7 @@ interface Payload {
   readonly b: SortBasis;
   readonly n: 0 | 1;
   readonly k: number | null;
+  readonly t?: number | null;
   readonly i: string;
 }
 
@@ -69,6 +72,7 @@ export class CursorCodec {
       b: basis,
       n: position.nullRank,
       k: position.sortKey,
+      ...(position.tie === undefined ? {} : { t: position.tie }),
       i: position.id,
     };
     const body = base64url(Buffer.from(JSON.stringify(payload), 'utf8'));
@@ -92,19 +96,29 @@ export class CursorCodec {
     } catch {
       throw invalidCursor();
     }
-    const validKey =
-      payload.k === null || (typeof payload.k === 'number' && Number.isFinite(payload.k));
+    const finiteOrNull = (value: unknown): boolean =>
+      value === null || (typeof value === 'number' && Number.isFinite(value));
+    const validKey = finiteOrNull(payload.k);
+    // RELEVANCE orders by (score, deadline, id), so its cursor must carry the deadline.
+    const validTie =
+      basis === 'SCORE' ? 't' in payload && finiteOrNull(payload.t) : !('t' in payload);
     if (
       payload.v !== 1 ||
       payload.f !== fingerprint ||
       payload.b !== basis ||
       (payload.n !== 0 && payload.n !== 1) ||
       !validKey ||
+      !validTie ||
       typeof payload.i !== 'string' ||
       payload.i.length === 0
     ) {
       throw invalidCursor();
     }
-    return { nullRank: payload.n, sortKey: payload.k ?? null, id: payload.i };
+    return {
+      nullRank: payload.n,
+      sortKey: payload.k ?? null,
+      ...(basis === 'SCORE' ? { tie: payload.t ?? null } : {}),
+      id: payload.i,
+    };
   }
 }

@@ -211,9 +211,105 @@ export const SpellingCorrection = z
   .strict();
 export type SpellingCorrection = z.infer<typeof SpellingCorrection>;
 
+// ---- Ranking and relevance reasons (§8.4, D-18, WP-15b) ------------------------
+
+/**
+ * Why a result is where it is. The list is closed: the UI maps each code to an
+ * icon, and a code it does not know would be a reason it cannot show.
+ *
+ * `SORT_KEY` is the one addition to the ten the WP-15b prompt lists: the value
+ * a non-RELEVANCE sort ordered by ("Starts 3 Oct", "Prize ₹50,000") and, for
+ * RELEVANCE with no text and no boost, the deadline tie-break. Without it an
+ * event sorted by start date that fires no boost would have nothing to say.
+ */
+export const RELEVANCE_REASON_CODES = [
+  'TEXT_MATCH',
+  'REGISTRATION_OPEN',
+  'CLOSING_SOON',
+  'WITHIN_RADIUS',
+  'CATEGORY_MATCH',
+  'TAG_MATCH',
+  'TEAM_SIZE_FITS',
+  'TRUSTED_SOURCE',
+  'NO_CONFLICTS',
+  'RECENTLY_ADDED',
+  'SORT_KEY',
+] as const;
+export const RelevanceReasonCode = z.enum(RELEVANCE_REASON_CODES);
+export type RelevanceReasonCode = z.infer<typeof RelevanceReasonCode>;
+
+/** One "Why relevant?" line: the sentence, and what it added to the score. */
+export const RelevanceReason = z
+  .object({
+    code: RelevanceReasonCode,
+    /** The rendered sentence: "~120 km (straight line)", "Registration open until 27 Sep". */
+    text: z.string().min(1),
+    /** Points this reason added; 0 for a reason that explains the order without scoring. */
+    weightApplied: z.number().min(0),
+  })
+  .strict();
+export type RelevanceReason = z.infer<typeof RelevanceReason>;
+
+/**
+ * A card plus its score and reasons. `reasons` has at least one entry — D-18's
+ * acceptance criterion is a schema rule here, so an empty list cannot be
+ * serialized by the route, whatever the scorer does.
+ */
+export const RankedEventListItem = EventListItem.extend({
+  score: z.number().min(0),
+  reasons: z.array(RelevanceReason).min(1),
+}).strict();
+export type RankedEventListItem = z.infer<typeof RankedEventListItem>;
+
+/** One facet value: what to send back as the filter, what to show, how many. */
+export const FacetValue = z
+  .object({
+    value: z.string().min(1),
+    label: z.string().min(1),
+    count: z.int().min(0),
+  })
+  .strict();
+export type FacetValue = z.infer<typeof FacetValue>;
+
+/** The distance buckets (D-06): four radii and "Anywhere". */
+export const DISTANCE_BUCKET_VALUES = ['50', '100', '250', '500', 'ANYWHERE'] as const;
+
+/** Value `OTHER` in a capped family: every row that holds a value outside the top 20. */
+export const FACET_OTHER_VALUE = 'OTHER';
+export const FACET_VALUES_MAX = 20;
+
+/**
+ * Facet counts (§8.2). Counting rule: a value's count is the number of results
+ * the query would return if **that family's filter were exactly that value**
+ * and every other filter stayed as sent. Visibility, `excludeHidden` and
+ * `watchlistedOnly` apply before anything is counted. Distance buckets are
+ * therefore cumulative ("Within 100 km" includes "Within 50 km").
+ */
+export const Facets = z
+  .object({
+    eventType: z.array(FacetValue),
+    category: z.array(FacetValue),
+    mode: z.array(FacetValue),
+    registrationState: z.array(FacetValue),
+    distanceBucket: z.array(FacetValue),
+  })
+  .strict();
+export type Facets = z.infer<typeof Facets>;
+
+/**
+ * The search body: an `EventQuery` plus `facets`, which is how a cheap caller
+ * (the next page, a dashboard count) skips them. It is not part of the query —
+ * a saved search stores the `EventQuery` alone.
+ */
+export const SearchRequest = EventQuery.extend({
+  facets: z.boolean().optional(),
+}).strict();
+export type SearchRequestInput = z.input<typeof SearchRequest>;
+
 export const SearchResponse = z
   .object({
-    items: z.array(EventListItem),
+    items: z.array(RankedEventListItem),
+    facets: Facets.optional(),
     nextCursor: z.string().min(1).optional(),
     /** Every event matching the query, across all pages. */
     total: z.int().min(0),
@@ -271,7 +367,7 @@ export const EventSourceRef = z
   .strict();
 export type EventSourceRef = z.infer<typeof EventSourceRef>;
 
-/** A category the event carries. Empty until WP-15b creates categories. */
+/** A category the event carries (not suppressed, category active). */
 export const EventCategoryRef = z
   .object({
     id: z.string().min(1),

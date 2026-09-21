@@ -40,6 +40,8 @@ export interface EventsModuleDependencies {
   readonly audit: AuditLog;
   readonly logger: Logger;
   readonly clock?: Clock;
+  /** WP-15b: the category classifier, run after every resolution (see `EventResolver`). */
+  readonly onResolved?: (eventId: string, at: number) => void;
 }
 
 export function createEventsModule(deps: EventsModuleDependencies): EventsModule {
@@ -53,6 +55,7 @@ export function createEventsModule(deps: EventsModuleDependencies): EventsModule
       eventType: deps.settings.get(EVENT_TYPE_POLICY),
       geography: deps.settings.get(GEOGRAPHY_POLICY),
     }),
+    ...(deps.onResolved === undefined ? {} : { onResolved: deps.onResolved }),
   });
   const series = new SeriesRepository(deps.db, deps.audit);
   const linker = new EventLinker({

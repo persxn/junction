@@ -1,5 +1,7 @@
 export { buildApp, API_PREFIX, BODY_LIMIT_BYTES, type App, type BuildAppOptions } from './app.js';
 export * as schema from './db/schema/index.js';
+export { applyCategorySeed, loadCategorySeed } from './modules/categories/seed.js';
+export { createCategoriesModule, type CategoriesModule } from './modules/categories/wiring.js';
 export {
   ensureDataDirs,
   loadConfig,

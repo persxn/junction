@@ -1,5 +1,6 @@
 export * from './app-meta.js';
 export * from './audit.js';
+export * from './categories.js';
 export * from './dedup.js';
 export * from './event-provenance.js';
 export * from './events.js';

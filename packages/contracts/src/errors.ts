@@ -126,6 +126,20 @@ export const SEARCH_ERROR_CODES = [
   'SEARCH_TEXT_TOO_LONG',
   /** WP-15a: an alias for this term exists and `replace` was not set. */
   'SEARCH_ALIAS_EXISTS',
+  /** WP-15b: a category rule whose pattern cannot mean anything for its kind. */
+  'SEARCH_INVALID_RULE',
+  /** WP-15b: a REGEX rule that could backtrack without bound (nested unbounded quantifiers). */
+  'SEARCH_RULE_PATTERN_UNSAFE',
+] as const;
+
+/**
+ * The category list and its rules (§6.2 Taxonomy, D-15, WP-15b). The rule
+ * *pattern* codes sit with search, where the prompt fixes them; this block is
+ * the categories themselves.
+ */
+export const CATEGORY_ERROR_CODES = [
+  /** WP-15b: events carry the category; delete with `?reassign=` or deactivate it. */
+  'CATEGORY_IN_USE',
 ] as const;
 
 /**
@@ -168,6 +182,7 @@ export const ERROR_CODES = [
   ...EVENT_ERROR_CODES,
   ...GEO_ERROR_CODES,
   ...SEARCH_ERROR_CODES,
+  ...CATEGORY_ERROR_CODES,
   ...IMPORT_ERROR_CODES,
   ...DB_ERROR_CODES,
 ] as const;
@@ -184,6 +199,7 @@ export const ERROR_CODE_DOMAINS = [
   'EVENT',
   'GEO',
   'SEARCH',
+  'CATEGORY',
   'IMPORT',
   'DB',
 ] as const;

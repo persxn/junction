@@ -23,13 +23,14 @@
 - **WP-14 DONE** (22 Sep 2026, `docs/handoff/WP-14.md`) — manual entry + URL import (Devpost: zero requests, spy-proved)
   through WP-10's linker (migration 0012, overrides survive scrapes) + signed-in sessions (R74/D-34, own-host only,
   EXPIRED without backoff, Tauri sign-in window). UI `/events/new`, Admin → Sources sessions. 2739 tests, 61 Rust.
-- **WP-15a DONE** (22 Sep 2026, `docs/handoff/WP-15a.md`) — strict `EventQuery` + pure planner (A6/A7 golden-tested),
-  migrations **0013** (vocabulary, aliases, `event_user_state`/`watchlist_items` pulled forward from WP-16a) and **0014**
-  (FTS5 words + trigram via view `event_search_source`, 3 triggers, backfill, alias seed); typo = vocabulary + OSA
-  distance, separate from trigram; signed keyset cursors; `POST /search/events`, `GET /events/:id`, alias admin.
-  `pnpm perf:search` (20k events, outside verify): p95 filters 21.7 · text 34.7 · distance 31.0 · detail 0.9 ms.
-  `categories`/`tags` filters 400 until stored (Q: where do tags come from?). Journal `when` ordering now tested.
-  **2873 tests.** Next: **WP-15b**. Roadmap 25 done, 23 remaining.
+- **WP-15a DONE** (`docs/handoff/WP-15a.md`) — `EventQuery`, planner, migrations 0013/0014 (FTS5 + trigram), typo
+  vocabulary, aliases, signed keyset cursors, `pnpm perf:search`.
+- **WP-15b PARTIAL** (22 Sep 2026, `docs/handoff/WP-15b.md`) — rules engine (pure, guarded REGEX, 12-category seed
+  `resources/category-rules.seed.json`), migration **0015** (categories/rules/`event_categories` + §6.2 tags tables),
+  classify on every resolve + batched resumable re-classification job, manual always wins; ranking `rank.ts` with
+  reasons on every result (+ `SORT_KEY` code), mirrored in SQL (`score-sql.ts`) for paging; five facet families in one
+  statement; admin category/rule API + preview. **2974 tests.** Perf: filters+text p95 **52.4 ms vs 50** (only miss);
+  unfiltered first page + facets 117 ms (Q1: denormalize trust?). Roadmap 25 done (+15b partial), 23 remaining.
 - WP-08b's two questions are still open (handoff §6): the gazetteer is 68.5 MB of
   which 95% are zero-population hamlets that also *harm* matching — §4.17 says "towns/cities" where
   R53 says feature class P; and GeoNames has almost no Indian campuses, so the INSTITUTION rung is
@@ -67,7 +68,7 @@
 
 ## Standard commands
 - `pnpm install --frozen-lockfile` · **`pnpm verify`** = `format:check && lint && typecheck && test`
-  (~75 s here with 2371 tests; budget is < 2 min per §4.15).
+  (~107 s here with 2974 tests; budget is < 2 min per §4.15 — getting close).
   Individually: `pnpm format` / `format:check` (Prettier) · `pnpm lint` (ESLint) · `pnpm typecheck` (`tsc -b`) ·
   `pnpm test` (Vitest, single run) · `pnpm clean` (`tsc -b --clean`).
 - Git identity is repo-local: `Calamity <sohomaroy2005@gmail.com>`; `core.autocrlf=false`.

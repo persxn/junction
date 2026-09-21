@@ -10,6 +10,7 @@ import { UsersService } from '../modules/users/service.js';
 import { AdapterRegistry } from '../sources/registry.js';
 import { Geocoder } from '../modules/geo/geocoder.js';
 import { createSearchModule, type SearchModule } from '../modules/search/wiring.js';
+import { createCategoriesModule, type CategoriesModule } from '../modules/categories/wiring.js';
 import { createEventsModule, type EventsModule } from '../modules/events/wiring.js';
 import { EventImportService } from '../modules/events/import/service.js';
 import { unavailableGazetteer } from '../platform/gazetteer.js';
@@ -43,6 +44,8 @@ export interface SetupTestServer {
   readonly events: EventsModule;
   /** WP-15a's search, detail and aliases. */
   readonly search: SearchModule;
+  /** WP-15b's categories, classifying every event the linker resolves. */
+  readonly categories: CategoriesModule;
   /** Empty in WP-09a; a test registers an adapter when it needs one. */
   readonly registry: AdapterRegistry;
   readonly settings: SettingsStore;
@@ -108,12 +111,16 @@ export async function startSetupTestServer(
     },
   });
 
+  const categories = createCategoriesModule({ db: database.db, audit });
   const events = createEventsModule({
     db: database.db,
     geocoder: new Geocoder({ gazetteer: unavailableGazetteer('tests'), institutions: [] }),
     settings,
     audit,
     logger: silentLogger,
+    onResolved: (eventId, at) => {
+      categories.classifier.classifyEvent(eventId, at);
+    },
   });
 
   // WP-14: manual entry and URL import, on the same database and the same
@@ -133,10 +140,11 @@ export async function startSetupTestServer(
     logger: silentLogger,
   });
 
-  const search = createSearchModule({ db: database.db, audit, events: events.events });
+  const search = createSearchModule({ db: database.db, audit, events: events.events, settings });
 
   const server = await startTestServer({
     search: () => search,
+    categories: () => categories.admin,
     auth: () => auth,
     setup: () => setup,
     users: () => users,
@@ -155,6 +163,7 @@ export async function startSetupTestServer(
     imports,
     events,
     search,
+    categories,
     registry,
     settings,
     audit,

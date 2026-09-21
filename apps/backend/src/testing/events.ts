@@ -5,6 +5,8 @@ import { EventCandidate, type EventMode, type EventType } from '@compintel/contr
 
 import { users, type EventRow, type SourceRecordRow, type SourceRow } from '../db/schema/index.js';
 import type { Principal } from '../modules/auth/types.js';
+import { applyCategorySeed, loadCategorySeed } from '../modules/categories/seed.js';
+import { createCategoriesModule, type CategoriesModule } from '../modules/categories/wiring.js';
 import { uuid7 } from '../platform/ids.js';
 import { createEventsModule, type EventsModule } from '../modules/events/wiring.js';
 import { SourceRecordsRepository } from '../modules/sources/records.js';
@@ -18,6 +20,7 @@ import { openTestGeo, type TestGeo } from './ctftime.js';
 import { openMigratedDatabase, type MigratedDatabase } from './database.js';
 import { fixturesDir } from './golden.js';
 import { insertSource, silentLogger } from './scraping.js';
+import { CATEGORY_SEED_FILE } from './search.js';
 
 /**
  * A WP-10 harness: a migrated database with the seeded sources, the real
@@ -180,6 +183,8 @@ export interface EventsHarness {
   readonly sources: SourcesRepository;
   readonly records: SourceRecordsRepository;
   readonly clock: Clock & { set(iso: string): void };
+  /** WP-15b: present when the harness was opened with `{ categories: true }` (seeded, classifying on ingest). */
+  readonly categories: CategoriesModule | undefined;
   /** A stored user acting with the given role — `decided_by` and `changed_by` are real FKs. */
   user(role: 'ADMINISTRATOR' | 'PROFESSOR'): Principal;
   /** Adds a source unless the migrations seeded it. */
@@ -193,7 +198,10 @@ export interface EventsHarness {
   close(): void;
 }
 
-export function openEventsHarness(startIso = '2026-09-01T00:00:00.000Z'): EventsHarness {
+export function openEventsHarness(
+  startIso = '2026-09-01T00:00:00.000Z',
+  options: { readonly categories?: boolean } = {},
+): EventsHarness {
   const database = openMigratedDatabase(silentLogger, 'events');
   let now = Date.parse(startIso);
   const clock = {
@@ -205,6 +213,13 @@ export function openEventsHarness(startIso = '2026-09-01T00:00:00.000Z'): Events
   const settings = new SettingsStore(database.db, { clock });
   const audit = new AuditLog(database.db, { clock });
   const geo: TestGeo = openTestGeo();
+  const categories =
+    options.categories === true
+      ? createCategoriesModule({ db: database.db, audit, clock })
+      : undefined;
+  if (categories !== undefined) {
+    applyCategorySeed(database.db, loadCategorySeed(CATEGORY_SEED_FILE), now);
+  }
   const module = createEventsModule({
     db: database.db,
     geocoder: geo.geocoder,
@@ -212,6 +227,13 @@ export function openEventsHarness(startIso = '2026-09-01T00:00:00.000Z'): Events
     audit,
     logger: silentLogger,
     clock,
+    ...(categories === undefined
+      ? {}
+      : {
+          onResolved: (eventId: string, at: number) => {
+            categories.classifier.classifyEvent(eventId, at);
+          },
+        }),
   });
   const sources = new SourcesRepository(database.db);
   const records = new SourceRecordsRepository(database.db);
@@ -259,6 +281,7 @@ export function openEventsHarness(startIso = '2026-09-01T00:00:00.000Z'): Events
     sources,
     records,
     clock,
+    categories,
     user,
     source,
     ingest,

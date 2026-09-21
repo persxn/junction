@@ -298,8 +298,5 @@ describe('list items', () => {
     });
   });
 
-  it('categories and tags answer SEARCH_INVALID_QUERY until they are stored', () => {
-    expect(() => h.query({ categories: ['ai-ml'] })).toThrow(/category or tag/);
-    expect(() => h.query({ tags: ['python'] })).toThrow(/category or tag/);
-  });
+  // WP-15b stores both; `categories.test.ts` and `facets.test.ts` filter by them.
 });

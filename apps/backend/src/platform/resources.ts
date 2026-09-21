@@ -28,6 +28,8 @@ export interface ResourcePaths {
    * repository root in a checkout and one from the bundle.
    */
   readonly institutionsSeedFile: string | undefined;
+  /** WP-15b's starter taxonomy, located the same way as the institutions seed. */
+  readonly categoriesSeedFile: string | undefined;
 }
 
 /** Files the bundle carries its addons as (ruling R17). */
@@ -39,6 +41,9 @@ export const BUNDLED_GAZETTEER = path.join('resources', 'gazetteer', 'gazetteer.
 
 /** Where the packaged backend carries the institutions seed (WP-08b). */
 export const BUNDLED_INSTITUTIONS_SEED = path.join('resources', 'institutions', 'seed.json');
+
+/** Where the packaged backend carries the category seed (WP-15b). */
+export const BUNDLED_CATEGORIES_SEED = path.join('resources', 'category-rules.seed.json');
 
 function firstExisting(candidates: readonly (string | undefined)[]): string | undefined {
   return candidates.find((candidate) => candidate !== undefined && existsSync(candidate));
@@ -103,6 +108,11 @@ export function resolveResources(config: Config, entryUrl: string): ResourcePath
       path.join(baseDir, BUNDLED_INSTITUTIONS_SEED),
       path.join(baseDir, '..', '..', '..', BUNDLED_INSTITUTIONS_SEED),
       path.join(baseDir, '..', '..', '..', '..', BUNDLED_INSTITUTIONS_SEED),
+    ]),
+    categoriesSeedFile: firstExisting([
+      path.join(baseDir, BUNDLED_CATEGORIES_SEED),
+      path.join(baseDir, '..', '..', '..', BUNDLED_CATEGORIES_SEED),
+      path.join(baseDir, '..', '..', '..', '..', BUNDLED_CATEGORIES_SEED),
     ]),
   };
 }

@@ -25,11 +25,17 @@ import { SettingsStore } from './platform/settings.js';
 import { ShutdownRegistry } from './platform/shutdown.js';
 import { StartupError, toStartupFailure } from './platform/startup-error.js';
 import { openGazetteer, unavailableGazetteer } from './platform/gazetteer.js';
-import { systemClock } from './platform/time.js';
+import { nowMs, systemClock } from './platform/time.js';
 import { Geocoder } from './modules/geo/geocoder.js';
 import { loadInstitutions, loadSeedFile, seedInstitutions } from './modules/geo/seed.js';
 import { EventsRepository } from './modules/events/repository.js';
 import { EventsService } from './modules/events/service.js';
+import { applyCategorySeed, loadCategorySeed } from './modules/categories/seed.js';
+import {
+  createCategoriesModule,
+  RECLASSIFY_JOB_KEY,
+  registerReclassifyJob,
+} from './modules/categories/wiring.js';
 import { createEventsModule } from './modules/events/wiring.js';
 import { createSearchModule } from './modules/search/wiring.js';
 import { SourceRecordsRepository } from './modules/sources/records.js';
@@ -167,12 +173,52 @@ async function main(): Promise<void> {
     // Only the §19 policy re-evaluation uses it; ingest goes through WP-10's
     // linker below. Constructed here so a startup failure surfaces at startup.
     void eventsService;
+    // WP-15b: categories. Built before the events module, whose resolver
+    // classifies every event it resolves; the seed is data, applied once per
+    // version, and a rule edit's re-classification runs as a job (below).
+    const reclassify: { trigger: () => void } = { trigger: () => undefined };
+    const categoriesModule = createCategoriesModule({
+      db,
+      audit,
+      logger,
+      onRunRequested: () => {
+        reclassify.trigger();
+      },
+    });
+    if (resources.categoriesSeedFile === undefined) {
+      logger.warn('no category seed file was found; the category list starts empty');
+    } else {
+      const seeded = applyCategorySeed(
+        db,
+        loadCategorySeed(resources.categoriesSeedFile),
+        nowMs(systemClock),
+      );
+      logger.info(seeded, 'category seed');
+      if (seeded.categoriesAdded + seeded.rulesAdded > 0) {
+        categoriesModule.classifier.requestReclassification('category seed applied', null);
+      }
+    }
     // WP-10: records become events inline with ingest; merges and the review API.
-    const eventsModule = createEventsModule({ db, geocoder, settings, audit, logger });
+    const eventsModule = createEventsModule({
+      db,
+      geocoder,
+      settings,
+      audit,
+      logger,
+      onResolved: (eventId, at) => {
+        categoriesModule.classifier.classifyEvent(eventId, at);
+      },
+    });
     // WP-15a: search, event detail and aliases. The vocabulary is rebuilt at
     // start (cheap, and a restored database may carry a stale one) and after
     // every ingest.
-    const searchModule = createSearchModule({ db, audit, events: eventsModule.events, logger });
+    const searchModule = createSearchModule({
+      db,
+      audit,
+      events: eventsModule.events,
+      logger,
+      settings,
+    });
     searchModule.vocabulary.refresh();
     const refreshVocabulary = (): void => {
       try {
@@ -271,6 +317,10 @@ async function main(): Promise<void> {
       logger,
     });
     logger.info({ scrapeJobs, adapters: adapterRegistry.size }, 'scrape jobs registered');
+    registerReclassifyJob(scheduler, categoriesModule.classifier);
+    reclassify.trigger = () => {
+      scheduler.trigger(RECLASSIFY_JOB_KEY);
+    };
 
     // The shutdown route needs the trigger, which needs the built app; one
     // mutable hop breaks the cycle without leaking process concerns into app.ts.
@@ -284,6 +334,7 @@ async function main(): Promise<void> {
       imports: () => imports,
       review: () => eventsModule.review,
       search: () => searchModule,
+      categories: () => categoriesModule.admin,
       onShutdownRequested: () => {
         lifecycle.start('api');
       },

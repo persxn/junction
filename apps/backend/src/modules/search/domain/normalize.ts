@@ -35,12 +35,17 @@ import { wordTokens } from './text.js';
 /** §6.4: the deadline is seven days away or less. */
 export const CLOSING_SOON_MS = 7 * 24 * 60 * 60 * 1000;
 
-export type SortBasis = 'TEXT_SCORE' | 'DEADLINE' | 'START' | 'DISTANCE' | 'PRIZE' | 'NEWEST';
+/**
+ * What rows are ordered by. `SCORE` is RELEVANCE (WP-15b): the §8.4 score, then
+ * deadline, then id — computed by `rank.ts`, not by SQL, because the text part
+ * is normalized against the best match in the whole result set.
+ */
+export type SortBasis = 'SCORE' | 'DEADLINE' | 'START' | 'DISTANCE' | 'PRIZE' | 'NEWEST';
 
 export interface PlanSort {
   /** What the caller asked for (RELEVANCE when they did not say). */
   readonly requested: SearchSort;
-  /** What the rows are ordered by. RELEVANCE with no text has no score to use. */
+  /** What the rows are ordered by. */
   readonly basis: SortBasis;
   readonly direction: 'ASC' | 'DESC';
 }
@@ -97,6 +102,8 @@ export interface PlanContext {
   /** The display zone dates are read in (A7): `Asia/Kolkata`. */
   readonly timeZone: string;
   readonly campus?: Point | undefined;
+  /** §6.4/§12 "closing soon": `search.ranking.thresholds.closingSoonDays`; seven days by default. */
+  readonly closingSoonMs?: number;
 }
 
 export type PlanErrorCode = 'NO_CAMPUS';
@@ -122,7 +129,7 @@ function dayEnd(timeZone: string, day: string): number {
 }
 
 const SORT_DIRECTION: Readonly<Record<SortBasis, 'ASC' | 'DESC'>> = {
-  TEXT_SCORE: 'ASC', // bm25 is negative; lower is better
+  SCORE: 'DESC',
   DEADLINE: 'ASC',
   START: 'ASC',
   DISTANCE: 'ASC',
@@ -130,9 +137,8 @@ const SORT_DIRECTION: Readonly<Record<SortBasis, 'ASC' | 'DESC'>> = {
   NEWEST: 'DESC',
 };
 
-function planSort(requested: SearchSort, hasText: boolean): PlanSort {
-  const basis: SortBasis =
-    requested === 'RELEVANCE' ? (hasText ? 'TEXT_SCORE' : 'DEADLINE') : requested;
+function planSort(requested: SearchSort): PlanSort {
+  const basis: SortBasis = requested === 'RELEVANCE' ? 'SCORE' : requested;
   return { requested, basis, direction: SORT_DIRECTION[basis] };
 }
 
@@ -230,7 +236,7 @@ export function planQuery(query: EventQuery, context: PlanContext): QueryPlan {
               : { toMs: dayEnd(context.timeZone, registration.deadlineTo) }),
             ...(states === undefined ? {} : { states }),
             includeUnknown: unknown.deadline === true,
-            closingSoonUntil: context.nowMs + CLOSING_SOON_MS,
+            closingSoonUntil: context.nowMs + (context.closingSoonMs ?? CLOSING_SOON_MS),
           },
         }
       : {}),
@@ -249,7 +255,7 @@ export function planQuery(query: EventQuery, context: PlanContext): QueryPlan {
     excludeHidden: query.excludeHidden === true,
     watchlistedOnly: query.watchlistedOnly === true,
     ...(context.campus === undefined ? {} : { campus: context.campus }),
-    sort: planSort(requestedSort, hasText),
+    sort: planSort(requestedSort),
     limit: query.limit,
   };
 }

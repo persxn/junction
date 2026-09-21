@@ -22,8 +22,8 @@
     "toMs": 1792088999999
   },
   "sort": {
-    "basis": "DEADLINE",
-    "direction": "ASC",
+    "basis": "SCORE",
+    "direction": "DESC",
     "requested": "RELEVANCE"
   },
   "watchlistedOnly": true
