@@ -68,6 +68,16 @@ export class SourcesRepository {
     return this.#db.drizzle.select().from(sources).orderBy(sources.key).all();
   }
 
+  /**
+   * R73: sources whose compliance review date has passed — the query WP-30's
+   * system-health screen reads. A source with no date is never overdue.
+   */
+  overdueReviews(now: number): SourceRow[] {
+    return this.list().filter(
+      (source) => source.complianceReviewDueAt !== null && source.complianceReviewDueAt <= now,
+    );
+  }
+
   findByKey(key: string): SourceRow | undefined {
     return this.#db.drizzle.select().from(sources).where(eq(sources.key, key)).get();
   }

@@ -73,6 +73,8 @@ export const SOURCE_ERROR_CODES = [
   'SOURCE_SETUP_INCOMPLETE',
   /** WP-12: a host an adapter must never contact (`api.devfolio.co`); refused before the transport. */
   'SOURCE_HOST_FORBIDDEN',
+  /** WP-13: a path an adapter must never request (Unstop profiles, register pages, private `/api/*`). */
+  'SOURCE_PATH_FORBIDDEN',
 ] as const;
 
 /**

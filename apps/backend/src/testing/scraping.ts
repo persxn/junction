@@ -207,6 +207,7 @@ export function insertSource(db: DatabaseHandle, fixture: SourceFixture = {}): S
     complianceNotes: 'inserted by a test',
     complianceReviewedAt: now,
     complianceReviewedBy: 'test',
+    complianceReviewDueAt: null,
     createdAt: now,
     updatedAt: now,
     version: 1,

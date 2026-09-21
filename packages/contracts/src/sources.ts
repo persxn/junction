@@ -125,6 +125,8 @@ export const SourceSummary = z
     attributionText: z.string().nullable(),
     /** Higher is more trusted when sources disagree (§7.5). */
     trustRank: z.int(),
+    /** R73: when the compliance verdict must be reviewed again; null when no date was set. */
+    complianceReviewDueAt: z.int().nullable(),
     version: z.int().min(1),
   })
   .strict();

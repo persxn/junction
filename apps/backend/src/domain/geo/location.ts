@@ -1,6 +1,6 @@
 /**
- * CTFtime's `location` — free text such as "Seoul, Korea" — split into what
- * the geocoder can use (§7.3, R55). Pure.
+ * A free-text location — CTFtime's "Seoul, Korea", Devfolio's city and country,
+ * Unstop's address — split into what the geocoder can use (§7.3, R55). Pure.
  *
  * The gazetteer knows cities, states and ISO codes but not country *names*, so
  * the last comma-separated part is read against the short table below. A

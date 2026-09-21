@@ -11,7 +11,7 @@ import {
 import { normalizeCandidate, redact, type RawCandidate } from '../../domain/normalize/index.js';
 import type { GeocodeResult } from '../../modules/geo/geocoder.js';
 import type { Clock } from '../../platform/time.js';
-import { parseLocation, singleZoneOf } from '../shared/location.js';
+import { parseLocation, singleZoneOf } from '../../domain/geo/location.js';
 import { eventPageUrl } from './paths.js';
 import { prizeClaims, prizeFromText } from './prizes.js';
 import type { CtftimeEvent } from './schema.js';

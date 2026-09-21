@@ -1,0 +1,8 @@
+{
+  "_note": "SYNTHETIC (WP-13): reconstructed from what is publicly known about Unstop's /api/public/opportunity/search-result shape. NOT recorded traffic — the live capture (<= 4 requests) is owed until the first real professor installation signs in. Replace with the capture when it exists.",
+  "status": 403,
+  "headers": {
+    "content-type": "text/html"
+  },
+  "body": "<html><body>Access denied</body></html>"
+}

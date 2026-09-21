@@ -2,6 +2,7 @@ import { createClistAdapter } from '../adapters/clist/adapter.js';
 import { createCtftimeAdapter } from '../adapters/ctftime/adapter.js';
 import { createDevfolioAdapter } from '../adapters/devfolio/adapter.js';
 import type { DevfolioGeo } from '../adapters/devfolio/map.js';
+import { createUnstopAdapter } from '../adapters/unstop/adapter.js';
 import type { CtftimeGeo } from '../adapters/ctftime/map.js';
 import type { SourceAdapter } from './types.js';
 
@@ -71,6 +72,7 @@ export interface BuiltInAdapterDependencies {
  * - `ctftime` — WP-09b.
  * - `clist` — WP-11 (key-gated; with no key its runs record BLOCKED_BY_POLICY).
  * - `devfolio` — WP-12 (public pages only; never api.devfolio.co).
+ * - `unstop` — WP-13 (`/api/public/*` + HTML fallback; R70–R73).
  */
 export function registerBuiltInAdapters(
   registry: AdapterRegistry,
@@ -79,4 +81,5 @@ export function registerBuiltInAdapters(
   registry.register(createCtftimeAdapter({ geo: deps.geo }));
   registry.register(createClistAdapter());
   registry.register(createDevfolioAdapter({ geo: deps.geo }));
+  registry.register(createUnstopAdapter());
 }

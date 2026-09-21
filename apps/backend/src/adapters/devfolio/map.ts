@@ -10,7 +10,7 @@ import {
 import { normalizeCandidate, type RawCandidate } from '../../domain/normalize/index.js';
 import type { GeocodeResult } from '../../modules/geo/geocoder.js';
 import type { Clock } from '../../platform/time.js';
-import { parseLocation } from '../shared/location.js';
+import { parseLocation } from '../../domain/geo/location.js';
 import { hackathonUrl } from './fetch.js';
 import type { DevfolioDetailPage, DevfolioHackathon, DevfolioDetailHackathon } from './schema.js';
 

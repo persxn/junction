@@ -1,0 +1,100 @@
+{
+  "_note": "SYNTHETIC (WP-13): reconstructed from what is publicly known about Unstop's /api/public/opportunity/search-result shape. NOT recorded traffic — the live capture (<= 4 requests) is owed until the first real professor installation signs in. Replace with the capture when it exists.",
+  "data": {
+    "current_page": 1,
+    "last_page": 2,
+    "per_page": 30,
+    "total": 2,
+    "data": [
+      {
+        "id": 1100001,
+        "title": "CodeStorm Hackathon 2026",
+        "type": "hackathons",
+        "subtype": "hackathon",
+        "public_url": "hackathons/codestorm-hackathon-2026-1100001",
+        "organisation": {
+          "name": "Synthetic Tech Society",
+          "logoUrl2": "https://d8it4huxumps7.cloudfront.net/uploads/images/synthetic.png"
+        },
+        "start_date": "2026-10-17T10:00:00+05:30",
+        "end_date": "2026-10-18T18:00:00+05:30",
+        "regnRequirements": {
+          "start_regn_dt": "2026-09-20T00:00:00+05:30",
+          "end_regn_dt": "2026-10-12T23:59:00+05:30",
+          "min_team_size": 2,
+          "max_team_size": 4,
+          "reg_status": "STARTED",
+          "remain_days": "12 days left"
+        },
+        "region": "online",
+        "address_with_country_logo": null,
+        "isPaid": false,
+        "prizes": [
+          {
+            "rank": "1",
+            "cash": 50000,
+            "currency": "fa-rupee"
+          },
+          {
+            "rank": "2",
+            "cash": 30000,
+            "currency": "fa-rupee"
+          }
+        ],
+        "filters": [
+          {
+            "name": "Coding",
+            "type": "category"
+          }
+        ],
+        "registerCount": 412,
+        "viewsCount": 5021
+      },
+      {
+        "id": 1100002,
+        "title": "BuildFest Pune 2026",
+        "type": "hackathons",
+        "subtype": "hackathon",
+        "public_url": "hackathons/buildfest-pune-2026-1100002",
+        "organisation": {
+          "name": "Synthetic Tech Society",
+          "logoUrl2": "https://d8it4huxumps7.cloudfront.net/uploads/images/synthetic.png"
+        },
+        "start_date": "2026-11-07T09:00:00+05:30",
+        "end_date": "2026-11-08T17:00:00+05:30",
+        "regnRequirements": {
+          "start_regn_dt": "2026-09-25T00:00:00+05:30",
+          "end_regn_dt": "2026-10-30T23:59:00+05:30",
+          "min_team_size": 1,
+          "max_team_size": 5,
+          "reg_status": "STARTED",
+          "remain_days": "12 days left"
+        },
+        "region": "offline",
+        "address_with_country_logo": {
+          "city": "Pune",
+          "state": "Maharashtra",
+          "country": {
+            "name": "India"
+          }
+        },
+        "isPaid": true,
+        "prizes": [
+          {
+            "rank": "1",
+            "cash": 100000,
+            "currency": "fa-rupee"
+          }
+        ],
+        "filters": [
+          {
+            "name": "Coding",
+            "type": "category"
+          }
+        ],
+        "registerCount": 412,
+        "viewsCount": 5021
+      }
+    ]
+  }
+}

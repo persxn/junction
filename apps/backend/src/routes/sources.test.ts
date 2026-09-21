@@ -187,13 +187,13 @@ describe('PATCH /admin/sources/:key', () => {
   });
 
   it('refuses a professor with a 403 (§10.2)', async () => {
-    const before = await source('unstop');
-    const answer = await call('PATCH', '/api/v1/admin/sources/unstop', {
+    const before = await source('devpost');
+    const answer = await call('PATCH', '/api/v1/admin/sources/devpost', {
       token: professor,
       body: { isEnabled: true, version: before.version },
     });
     expect(answer.status).toBe(403);
-    expect((await source('unstop')).isEnabled).toBe(false);
+    expect((await source('devpost')).isEnabled).toBe(false);
   });
 
   it('rejects an attempt to set compliance_status, before a handler sees it', async () => {

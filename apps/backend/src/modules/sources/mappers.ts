@@ -36,6 +36,7 @@ export function toSummary(source: SourceRow): SourceSummary {
     allowedPaths: [...allowedPathsOf(source)],
     attributionText: source.attributionText,
     trustRank: source.trustRank,
+    complianceReviewDueAt: source.complianceReviewDueAt,
     version: source.version,
   };
 }

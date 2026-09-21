@@ -1,0 +1,481 @@
+[
+  {
+    "descriptionMd": "Build something that matters in 36 hours.\n\nQueries: write to [[contact details on the source page]](mailto:[contact details on the source page]) or call [contact details on the source page].",
+    "editionYear": 2026,
+    "endsAt": {
+      "at": 1792326600000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-10-18T18:00:00+05:30"
+    },
+    "eventType": {
+      "confidence": 1,
+      "raw": "hackathon",
+      "value": "HACKATHON"
+    },
+    "externalKey": "unstop:1100001",
+    "fee": {
+      "confidence": 0.9,
+      "currency": "INR",
+      "known": true,
+      "minor": 0,
+      "text": "Free (Unstop)"
+    },
+    "isRecurringRound": false,
+    "mode": {
+      "confidence": 1,
+      "raw": "online",
+      "value": "ONLINE"
+    },
+    "organizerName": "Synthetic Tech Society",
+    "prize": {
+      "text": "Rank 1: ₹50,000\nRank 2: ₹30,000"
+    },
+    "registrationDeadlineAt": {
+      "at": 1791829740000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-10-12T23:59:00+05:30"
+    },
+    "registrationOpensAt": {
+      "at": 1789842600000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-09-20T00:00:00+05:30"
+    },
+    "registrationUrl": "https://unstop.com/hackathons/codestorm-hackathon-2026-1100001",
+    "sourceKey": "unstop",
+    "sourceTags": [
+      "Coding"
+    ],
+    "startsAt": {
+      "at": 1792211400000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-10-17T10:00:00+05:30"
+    },
+    "summary": "Build something that matters in 36 hours. Queries: write to [contact details on the source page] or call [contact details on the source page].",
+    "teamSize": {
+      "confidence": 1,
+      "max": 4,
+      "min": 2,
+      "text": "2–4"
+    },
+    "timezone": "Asia/Kolkata",
+    "title": "CodeStorm Hackathon 2026",
+    "titleRaw": "CodeStorm Hackathon 2026",
+    "url": "https://unstop.com/hackathons/codestorm-hackathon-2026-1100001",
+    "warnings": [
+      {
+        "code": "HTML_SANITIZED",
+        "field": "descriptionMd",
+        "message": "Disallowed markup was removed from the description."
+      },
+      {
+        "code": "PII_REDACTED",
+        "field": "descriptionMd",
+        "message": "Contact details were replaced (D-29)."
+      },
+      {
+        "code": "PII_REDACTED",
+        "field": "summary",
+        "message": "Contact details were replaced (D-29)."
+      }
+    ]
+  },
+  {
+    "descriptionMd": "Build something that matters in 36 hours.\n\nQueries: write to [[contact details on the source page]](mailto:[contact details on the source page]) or call [contact details on the source page].",
+    "editionYear": 2026,
+    "endsAt": {
+      "at": 1794137400000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-11-08T17:00:00+05:30"
+    },
+    "eventType": {
+      "confidence": 1,
+      "raw": "hackathon",
+      "value": "HACKATHON"
+    },
+    "externalKey": "unstop:1100002",
+    "fee": {
+      "confidence": 0,
+      "known": false,
+      "text": "Paid — the amount is on the Unstop page"
+    },
+    "isRecurringRound": false,
+    "mode": {
+      "confidence": 1,
+      "raw": "offline",
+      "value": "OFFLINE"
+    },
+    "organizerName": "Synthetic Tech Society",
+    "place": {
+      "city": "Pune",
+      "countryCode": "IN",
+      "state": "Maharashtra"
+    },
+    "prize": {
+      "currency": "INR",
+      "text": "Rank 1: ₹1,00,000",
+      "totalMinor": 10000000
+    },
+    "registrationDeadlineAt": {
+      "at": 1793384940000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-10-30T23:59:00+05:30"
+    },
+    "registrationOpensAt": {
+      "at": 1790274600000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-09-25T00:00:00+05:30"
+    },
+    "registrationUrl": "https://unstop.com/hackathons/buildfest-pune-2026-1100002",
+    "sourceKey": "unstop",
+    "sourceTags": [
+      "Coding"
+    ],
+    "startsAt": {
+      "at": 1794022200000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-11-07T09:00:00+05:30"
+    },
+    "summary": "Build something that matters in 36 hours. Queries: write to [contact details on the source page] or call [contact details on the source page].",
+    "teamSize": {
+      "confidence": 1,
+      "max": 5,
+      "min": 1,
+      "text": "1–5"
+    },
+    "timezone": "Asia/Kolkata",
+    "title": "BuildFest Pune 2026",
+    "titleRaw": "BuildFest Pune 2026",
+    "url": "https://unstop.com/hackathons/buildfest-pune-2026-1100002",
+    "warnings": [
+      {
+        "code": "HTML_SANITIZED",
+        "field": "descriptionMd",
+        "message": "Disallowed markup was removed from the description."
+      },
+      {
+        "code": "PII_REDACTED",
+        "field": "descriptionMd",
+        "message": "Contact details were replaced (D-29)."
+      },
+      {
+        "code": "PII_REDACTED",
+        "field": "summary",
+        "message": "Contact details were replaced (D-29)."
+      }
+    ]
+  },
+  {
+    "descriptionMd": "Build something that matters in 36 hours.\n\nQueries: write to [[contact details on the source page]](mailto:[contact details on the source page]) or call [contact details on the source page].",
+    "editionYear": 2026,
+    "endsAt": {
+      "at": 1792841400000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-10-24T17:00:00+05:30"
+    },
+    "eventType": {
+      "confidence": 1,
+      "raw": "ideathon",
+      "value": "IDEATHON"
+    },
+    "externalKey": "unstop:1100003",
+    "fee": {
+      "confidence": 0,
+      "known": false
+    },
+    "isRecurringRound": false,
+    "mode": {
+      "confidence": 1,
+      "raw": "hybrid",
+      "value": "HYBRID"
+    },
+    "organizerName": "Synthetic Tech Society",
+    "place": {
+      "city": "Kolkata",
+      "countryCode": "IN",
+      "state": "West Bengal"
+    },
+    "registrationDeadlineAt": {
+      "at": 1792520940000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-10-20T23:59:00+05:30"
+    },
+    "registrationUrl": "https://unstop.com/hackathons/greenidea-sprint-2026-1100003",
+    "sourceKey": "unstop",
+    "sourceTags": [
+      "Sustainability"
+    ],
+    "startsAt": {
+      "at": 1792816200000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-10-24T10:00:00+05:30"
+    },
+    "summary": "Build something that matters in 36 hours. Queries: write to [contact details on the source page] or call [contact details on the source page].",
+    "teamSize": {
+      "confidence": 1,
+      "max": 3,
+      "text": "up to 3"
+    },
+    "timezone": "Asia/Kolkata",
+    "title": "GreenIdea Sprint 2026",
+    "titleRaw": "GreenIdea Sprint 2026",
+    "url": "https://unstop.com/hackathons/greenidea-sprint-2026-1100003",
+    "warnings": [
+      {
+        "code": "HTML_SANITIZED",
+        "field": "descriptionMd",
+        "message": "Disallowed markup was removed from the description."
+      },
+      {
+        "code": "PII_REDACTED",
+        "field": "descriptionMd",
+        "message": "Contact details were replaced (D-29)."
+      },
+      {
+        "code": "PII_REDACTED",
+        "field": "summary",
+        "message": "Contact details were replaced (D-29)."
+      }
+    ]
+  },
+  {
+    "descriptionMd": "Build something that matters in 36 hours.\n\nQueries: write to [[contact details on the source page]](mailto:[contact details on the source page]) or call [contact details on the source page].",
+    "editionYear": 2026,
+    "endsAt": {
+      "at": 1791738000000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-10-11T22:30:00+05:30"
+    },
+    "eventType": {
+      "confidence": 1,
+      "raw": "coding contest",
+      "value": "CODING_CONTEST"
+    },
+    "externalKey": "unstop:1200001",
+    "fee": {
+      "confidence": 0.9,
+      "currency": "INR",
+      "known": true,
+      "minor": 0,
+      "text": "Free (Unstop)"
+    },
+    "isRecurringRound": false,
+    "mode": {
+      "confidence": 1,
+      "raw": "online",
+      "value": "ONLINE"
+    },
+    "organizerName": "Synthetic Tech Society",
+    "prize": {
+      "currency": "INR",
+      "text": "Rank 1: ₹10,000 + Internship interview",
+      "totalMinor": 1000000
+    },
+    "registrationDeadlineAt": {
+      "at": 1791725400000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-10-11T19:00:00+05:30"
+    },
+    "registrationUrl": "https://unstop.com/competitions/algorush-coding-challenge-2026-1200001",
+    "sourceKey": "unstop",
+    "sourceTags": [
+      "Coding"
+    ],
+    "startsAt": {
+      "at": 1791729000000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-10-11T20:00:00+05:30"
+    },
+    "summary": "Build something that matters in 36 hours. Queries: write to [contact details on the source page] or call [contact details on the source page].",
+    "teamSize": {
+      "confidence": 1,
+      "max": 1,
+      "min": 1,
+      "text": "1"
+    },
+    "timezone": "Asia/Kolkata",
+    "title": "AlgoRush Coding Challenge 2026",
+    "titleRaw": "AlgoRush Coding Challenge 2026",
+    "url": "https://unstop.com/competitions/algorush-coding-challenge-2026-1200001",
+    "warnings": [
+      {
+        "code": "HTML_SANITIZED",
+        "field": "descriptionMd",
+        "message": "Disallowed markup was removed from the description."
+      },
+      {
+        "code": "PII_REDACTED",
+        "field": "descriptionMd",
+        "message": "Contact details were replaced (D-29)."
+      },
+      {
+        "code": "PII_REDACTED",
+        "field": "summary",
+        "message": "Contact details were replaced (D-29)."
+      }
+    ]
+  },
+  {
+    "descriptionMd": "Build something that matters in 36 hours.\n\nQueries: write to [[contact details on the source page]](mailto:[contact details on the source page]) or call [contact details on the source page].",
+    "editionYear": 2026,
+    "endsAt": {
+      "at": 1792071000000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-10-15T19:00:00+05:30"
+    },
+    "eventType": {
+      "confidence": 0.95,
+      "raw": "quiz",
+      "value": "OTHER"
+    },
+    "externalKey": "unstop:1200002",
+    "fee": {
+      "confidence": 0.9,
+      "currency": "INR",
+      "known": true,
+      "minor": 0,
+      "text": "Free (Unstop)"
+    },
+    "isRecurringRound": false,
+    "mode": {
+      "confidence": 1,
+      "raw": "online",
+      "value": "ONLINE"
+    },
+    "organizerName": "Synthetic Tech Society",
+    "registrationDeadlineAt": {
+      "at": 1792002540000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-10-14T23:59:00+05:30"
+    },
+    "registrationUrl": "https://unstop.com/competitions/brand-quiz-championship-2026-1200002",
+    "sourceKey": "unstop",
+    "sourceTags": [
+      "Quiz"
+    ],
+    "startsAt": {
+      "at": 1792067400000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-10-15T18:00:00+05:30"
+    },
+    "summary": "Build something that matters in 36 hours. Queries: write to [contact details on the source page] or call [contact details on the source page].",
+    "teamSize": {
+      "confidence": 1,
+      "max": 2,
+      "min": 1,
+      "text": "1–2"
+    },
+    "timezone": "Asia/Kolkata",
+    "title": "Brand Quiz Championship 2026",
+    "titleRaw": "Brand Quiz Championship 2026",
+    "url": "https://unstop.com/competitions/brand-quiz-championship-2026-1200002",
+    "warnings": [
+      {
+        "code": "HTML_SANITIZED",
+        "field": "descriptionMd",
+        "message": "Disallowed markup was removed from the description."
+      },
+      {
+        "code": "PII_REDACTED",
+        "field": "descriptionMd",
+        "message": "Contact details were replaced (D-29)."
+      },
+      {
+        "code": "PII_REDACTED",
+        "field": "summary",
+        "message": "Contact details were replaced (D-29)."
+      }
+    ]
+  },
+  {
+    "descriptionMd": "Build something that matters in 36 hours.\n\nQueries: write to [[contact details on the source page]](mailto:[contact details on the source page]) or call [contact details on the source page].",
+    "editionYear": 2026,
+    "endsAt": {
+      "at": 1793881800000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-11-05T18:00:00+05:30"
+    },
+    "eventType": {
+      "confidence": 0.95,
+      "raw": "case_study",
+      "value": "OTHER"
+    },
+    "externalKey": "unstop:1200003",
+    "fee": {
+      "confidence": 0.9,
+      "currency": "INR",
+      "known": true,
+      "minor": 0,
+      "text": "Free (Unstop)"
+    },
+    "isRecurringRound": false,
+    "mode": {
+      "confidence": 1,
+      "raw": "online",
+      "value": "ONLINE"
+    },
+    "organizerName": "Synthetic Tech Society",
+    "registrationDeadlineAt": {
+      "at": 1792348140000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-10-18T23:59:00+05:30"
+    },
+    "registrationUrl": "https://unstop.com/competitions/strategy-case-challenge-2026-1200003",
+    "sourceKey": "unstop",
+    "sourceTags": [
+      "Business"
+    ],
+    "startsAt": {
+      "at": 1792470600000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-10-20T10:00:00+05:30"
+    },
+    "summary": "Build something that matters in 36 hours. Queries: write to [contact details on the source page] or call [contact details on the source page].",
+    "teamSize": {
+      "confidence": 1,
+      "max": 3,
+      "min": 2,
+      "text": "2–3"
+    },
+    "timezone": "Asia/Kolkata",
+    "title": "Strategy Case Challenge 2026",
+    "titleRaw": "Strategy Case Challenge 2026",
+    "url": "https://unstop.com/competitions/strategy-case-challenge-2026-1200003",
+    "warnings": [
+      {
+        "code": "HTML_SANITIZED",
+        "field": "descriptionMd",
+        "message": "Disallowed markup was removed from the description."
+      },
+      {
+        "code": "PII_REDACTED",
+        "field": "descriptionMd",
+        "message": "Contact details were replaced (D-29)."
+      },
+      {
+        "code": "PII_REDACTED",
+        "field": "summary",
+        "message": "Contact details were replaced (D-29)."
+      }
+    ]
+  }
+]

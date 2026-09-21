@@ -13,7 +13,12 @@ describe('registerBuiltInAdapters', () => {
   it('registers ctftime as an API adapter with the D-27 cadence and no browser', () => {
     const registry = new AdapterRegistry();
     registerBuiltInAdapters(registry, { geo });
-    expect(registry.all().map((adapter) => adapter.key)).toEqual(['ctftime', 'clist', 'devfolio']);
+    expect(registry.all().map((adapter) => adapter.key)).toEqual([
+      'ctftime',
+      'clist',
+      'devfolio',
+      'unstop',
+    ]);
     expect(registry.get('clist')).toMatchObject({
       kind: 'CLIST_API',
       needsBrowser: false,

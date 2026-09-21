@@ -1,4 +1,4 @@
-import type { CheerioAPI } from 'cheerio';
+import { parseHtml } from '../shared/html.js';
 import type { z } from 'zod';
 
 import {
@@ -26,24 +26,9 @@ export class DevfolioFormatError extends Error {
   }
 }
 
-/**
- * cheerio is loaded on first use, not at startup: the backend imports every
- * adapter when it boots, and a parser only Devfolio needs should not slow the
- * READY line down (it measurably did — WP-12).
- */
-let loader: ((html: string) => CheerioAPI) | undefined;
-
-/** Loads cheerio once; everything after it is synchronous and pure. */
-export async function loadHtmlParser(): Promise<void> {
-  loader ??= (await import('cheerio')).load;
-}
-
 /** The `__NEXT_DATA__` JSON of a page. `loadHtmlParser()` must have run first. */
 export function nextData(html: string): unknown {
-  if (loader === undefined) {
-    throw new Error('Call loadHtmlParser() before parsing Devfolio pages.');
-  }
-  const $ = loader(html);
+  const $ = parseHtml(html);
   const script = $('script#__NEXT_DATA__').first();
   if (script.length === 0) {
     throw new DevfolioFormatError('The page has no __NEXT_DATA__ script.');
@@ -81,3 +66,5 @@ export function extractListing(html: string): ListingPage {
 export function extractDetail(html: string): DetailPage {
   return pageProps(html, DevfolioDetailPage, 'hackathon');
 }
+
+export { loadHtmlParser } from '../shared/html.js';

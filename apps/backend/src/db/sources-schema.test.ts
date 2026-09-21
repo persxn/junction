@@ -104,6 +104,8 @@ describe('the four tables §6.2 names', () => {
       'created_at',
       'updated_at',
       'version',
+      // WP-13 (migration 0011): R73 — ALTER TABLE appends, so it comes last.
+      'compliance_review_due_at',
     ]);
   });
 
@@ -234,18 +236,19 @@ describe('the five seed rows (D-26, migration 0006)', () => {
     expect(seed('ctftime').complianceStatus).toBe('APPROVED_WITH_LIMITS');
     expect(seed('clist').complianceStatus).toBe('APPROVED_WITH_LIMITS');
     expect(seed('devfolio').complianceStatus).toBe('APPROVED_WITH_LIMITS');
-    expect(seed('unstop').complianceStatus).toBe('MANUAL_IMPORT_ONLY');
+    // WP-13 (migration 0011): the owner read the Terms (R70).
+    expect(seed('unstop').complianceStatus).toBe('APPROVED_WITH_LIMITS');
     expect(seed('devpost').complianceStatus).toBe('MANUAL_IMPORT_ONLY');
   });
 
-  it('enables CTFtime, CLIST and Devfolio; Unstop and Devpost stay off', () => {
+  it('enables every approved source; Devpost stays off', () => {
     expect(seed('ctftime').isEnabled).toBe(true);
     // WP-11 (migration 0009): enabled, because with no key (U4) it records
     // BLOCKED_BY_POLICY and makes zero requests — a state, not a failure.
     expect(seed('clist').isEnabled).toBe(true);
     // WP-12 (migration 0010): its adapter exists.
     expect(seed('devfolio').isEnabled).toBe(true);
-    expect(seed('unstop').isEnabled).toBe(false);
+    expect(seed('unstop').isEnabled).toBe(true);
     expect(seed('devpost').isEnabled).toBe(false);
   });
 
@@ -294,10 +297,17 @@ describe('the five seed rows (D-26, migration 0006)', () => {
     expect(isPathAllowed(new URL('https://api.devfolio.co/hackathons'), paths)).toBe(false);
   });
 
-  it('gives the two manual-only sources an empty allowance', () => {
-    for (const key of ['unstop', 'devpost']) {
-      expect(JSON.parse(seed(key).allowedPathsJson)).toEqual([]);
-    }
+  it('gives the manual-only source an empty allowance, and Unstop only its three sections', () => {
+    expect(JSON.parse(seed('devpost').allowedPathsJson)).toEqual([]);
+    const unstop = JSON.parse(seed('unstop').allowedPathsJson) as string[];
+    expect(
+      isPathAllowed(new URL('https://unstop.com/api/public/opportunity/search-result'), unstop),
+    ).toBe(true);
+    expect(isPathAllowed(new URL('https://unstop.com/api/user/me'), unstop)).toBe(false);
+    expect(isPathAllowed(new URL('https://unstop.com/competitions/x-1/register'), unstop)).toBe(
+      false,
+    );
+    expect(isPathAllowed(new URL('https://unstop.com/u/someone'), unstop)).toBe(false);
   });
 
   it('ranks trust as §7.5 does: platform > aggregator', () => {
@@ -319,13 +329,16 @@ describe('the five seed rows (D-26, migration 0006)', () => {
     expect(seed('ctftime').complianceNotes).toContain('ai-train=no');
     expect(seed('clist').complianceNotes).toContain('U4');
     expect(seed('devfolio').complianceNotes).toContain('api.devfolio.co');
-    expect(seed('unstop').complianceNotes).toContain('U3');
+    expect(seed('unstop').complianceNotes).toContain('R70');
     expect(seed('devpost').complianceNotes).toContain('scrape');
   });
 
   it('records who reviewed each verdict and when', () => {
     for (const row of database.db.drizzle.select().from(sources).all()) {
-      expect(row.complianceReviewedBy).toContain('source-feasibility.md');
+      // Unstop's verdict was the owner's own reading of the Terms (R70).
+      expect(row.complianceReviewedBy).toMatch(
+        row.key === 'unstop' ? /^owner$/ : /source-feasibility\.md/,
+      );
       expect(row.complianceReviewedAt).not.toBeNull();
     }
   });

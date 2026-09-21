@@ -1,0 +1,68 @@
+{
+  "_note": "SYNTHETIC (WP-13): reconstructed from what is publicly known about Unstop's /api/public/opportunity/search-result shape. NOT recorded traffic — the live capture (<= 4 requests) is owed until the first real professor installation signs in. Replace with the capture when it exists. Carries OBVIOUSLY INVENTED people and contact data so the PII test has something to drop.",
+  "data": {
+    "competition": {
+      "id": 1200001,
+      "title": "AlgoRush Coding Challenge 2026",
+      "type": "competitions",
+      "subtype": "coding_challenge",
+      "public_url": "competitions/algorush-coding-challenge-2026-1200001",
+      "organisation": {
+        "name": "Synthetic Tech Society",
+        "logoUrl2": "https://d8it4huxumps7.cloudfront.net/uploads/images/synthetic.png"
+      },
+      "start_date": "2026-10-11T20:00:00+05:30",
+      "end_date": "2026-10-11T22:30:00+05:30",
+      "regnRequirements": {
+        "start_regn_dt": null,
+        "end_regn_dt": "2026-10-11T19:00:00+05:30",
+        "min_team_size": 1,
+        "max_team_size": 1,
+        "reg_status": "STARTED",
+        "remain_days": "12 days left"
+      },
+      "region": "online",
+      "address_with_country_logo": null,
+      "isPaid": false,
+      "prizes": [
+        {
+          "rank": "1",
+          "cash": 10000,
+          "currency": "fa-rupee",
+          "others": "Internship interview"
+        }
+      ],
+      "filters": [
+        {
+          "name": "Coding",
+          "type": "category"
+        }
+      ],
+      "registerCount": 412,
+      "viewsCount": 5021,
+      "details": "<p>Build something that matters in 36 hours.</p><p>Queries: write to <a href='mailto:organiser@example.com'>organiser@example.com</a> or call +91 98765 43210.</p>",
+      "organiser_contact": {
+        "name": "Ms. Invented Organiser",
+        "email": "organiser@example.com",
+        "phone": "+91 98765 43210"
+      },
+      "registered_users": [
+        {
+          "name": "Synthetic Student One",
+          "email": "student.one@example.com",
+          "college": "Example Institute"
+        },
+        {
+          "name": "Synthetic Student Two",
+          "mobile": "+91 90000 22222"
+        }
+      ],
+      "judges": [
+        {
+          "name": "Prof. Madeup Judge",
+          "email": "judge@example.com"
+        }
+      ]
+    }
+  }
+}

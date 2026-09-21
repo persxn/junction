@@ -13,12 +13,16 @@
 - **Owner ruling R74 / D-34 (21 Sep 2026, spec v1.1.12):** Devfolio and Unstop may be read with the professor's
   own session (pasted cookie or in-app login window), read-only, same gate; built in **WP-14** (prompt amended).
   §7.2 "Never", ADR-0007 and ADR-0016 amended. D-29 still drops other people's data. WP-13 lands as v1.1.13.
-- **WP-12 DONE, awaiting owner approval** (21 Sep 2026, `docs/handoff/WP-12.md`) — Devfolio adapter: one listing +
-  ≤ 10 `<slug>.devfolio.co` details per run from `__NEXT_DATA__` (cheerio, loaded lazily), per-subdomain robots
-  (disallowed → skipped, run PARTIAL), `api.devfolio.co` refused before the transport (`SOURCE_HOST_FORBIDDEN`),
-  PII dropped by allowlist, format change → SCHEMA_CHANGED with nothing written. Migration **0010** enables the row.
-  **2578 tests.** Dep: cheerio 1.2.0. **Live smoke owed** (no `scraper.contactEmail`). main.test startup wait raised.
-- **WP-13 in progress** (R70–R73 recorded, spec v1.1.13). **Next: WP-14** (roadmap 23 done, 25 remaining after WP-13). Still owed: the WP-09b live smoke (needs `scraper.contactEmail`) and U4 for CLIST.
+- **WP-12 DONE** (approved 21 Sep 2026, `docs/handoff/WP-12.md`) — Devfolio adapter, per-subdomain robots,
+  `api.devfolio.co` refused before the transport, PII allowlist; migration 0010; cheerio 1.2.0. Live smoke owed.
+- **WP-13 PARTIAL** (21 Sep 2026, `docs/handoff/WP-13.md`) — Unstop adapter: `/api/public/*` listing (hackathons +
+  competitions, paginated) + `/api/public/competition/{id}` details, Angular `ng-state` HTML fallback, deny list before
+  the transport (`SOURCE_PATH_FORBIDDEN`), quizzes/case studies stored POLICY_HIDDEN. R70–R73 (spec 1.1.13), U3 DONE,
+  migration **0011** (R73 `compliance_review_due_at`, Unstop row). **Fixtures synthetic; live capture + smoke owed**
+  (no professor identity on the dev machine). Fixed a WP-10 bug: policies ignored event-type confidence. **2604 tests.**
+- **Owner product flow (21 Sep 2026):** each professor installs the app; onboarding opens the packaged sign-in browser
+  for every approved source; the UA contact is that professor's own address (R74, WP-14 prompt).
+- **Next: WP-14** (manual entry, URL import, signed-in sessions + onboarding browser). Roadmap 23 done, 25 remaining.
   WP-08b's two questions are still open (handoff §6): the gazetteer is 68.5 MB of
   which 95% are zero-population hamlets that also *harm* matching — §4.17 says "towns/cities" where
   R53 says feature class P; and GeoNames has almost no Indian campuses, so the INSTITUTION rung is

@@ -78,6 +78,8 @@ export const sources = sqliteTable(
     complianceReviewedAt: integer('compliance_reviewed_at'),
     /** Free text, not a user id: the reviewer may be a research document. */
     complianceReviewedBy: text('compliance_reviewed_by'),
+    /** R73: the verdict expires; WP-30's health screen lists sources past this. */
+    complianceReviewDueAt: integer('compliance_review_due_at'),
     createdAt: integer('created_at').notNull(),
     updatedAt: integer('updated_at').notNull(),
     version: integer('version').notNull().default(1),

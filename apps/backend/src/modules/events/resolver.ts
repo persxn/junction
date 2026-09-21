@@ -127,11 +127,17 @@ export class EventResolver {
 
     // ---- Visibility: the policy judges resolved facts (R57) -------------------
     if (row.visibility === 'VISIBLE' || row.visibility === 'POLICY_HIDDEN') {
+      // The policy hides only a *confident* OTHER (WP-08b), so the confidence of
+      // the claim that won `eventType` goes with it — found missing in WP-13,
+      // where Unstop's quizzes stayed visible.
+      const typeFromClaim = resolution.fields.get('eventType')?.from === 'CLAIM';
+      const typeConfidence = typeFromClaim ? winnerPayload('eventType')?.eventType.confidence : 1;
       const verdict = applyPolicies(
         {
           mode: patch.mode as EventRow['mode'],
           countryCode: (patch.countryCode as string | null) ?? undefined,
           eventType: patch.eventType as EventRow['eventType'],
+          ...(typeConfidence === undefined ? {} : { confidence: typeConfidence }),
         },
         this.#policies(),
       );

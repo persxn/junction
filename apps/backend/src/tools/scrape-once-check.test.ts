@@ -48,7 +48,7 @@ describe('scrapeOnceRefusal', () => {
     expect(refusalFor('ctftime')).toBeUndefined();
   });
 
-  it.each(['devpost', 'unstop'])('refuses %s, which is MANUAL_IMPORT_ONLY', (key) => {
+  it.each(['devpost'])('refuses %s, which is MANUAL_IMPORT_ONLY', (key) => {
     expect(refusalFor(key)).toMatch(/MANUAL_IMPORT_ONLY; only APPROVED/);
   });
 
