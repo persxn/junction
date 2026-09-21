@@ -141,22 +141,54 @@ describe('GET /sources', () => {
 });
 
 describe('GET /sources/status', () => {
-  it('reports freshness, the next attempt and a §7.7 sentence for each source', async () => {
-    const answer = await call('GET', '/api/v1/sources/status', { token: adminToken });
+  interface StatusEntry {
+    key: string;
+    health: string;
+    lastSuccessAt: string | null;
+    freshnessMinutes: number | null;
+    consecutiveFailures: number;
+    message: string;
+    complianceStatus?: string;
+    complianceNotes?: string;
+  }
+
+  const status = async (
+    token: string,
+  ): Promise<{ sources: StatusEntry[]; updatedAt: string | null; offline: boolean }> => {
+    const answer = await call('GET', '/api/v1/sources/status', { token });
     expect(answer.status).toBe(200);
-    const list = answer.body.sources as {
-      source: { key: string };
-      lastSuccessAt: string | null;
-      freshnessMinutes: number | null;
-      consecutiveFailures: number;
-      message: string;
-    }[];
-    expect(list).toHaveLength(7);
-    const devpost = list.find((entry) => entry.source.key === 'devpost');
+    return answer.body as { sources: StatusEntry[]; updatedAt: string | null; offline: boolean };
+  };
+
+  it('reports freshness, the next attempt and a §7.7 sentence for each source', async () => {
+    const body = await status(adminToken);
+    expect(body.sources).toHaveLength(7);
+    const devpost = body.sources.find((entry) => entry.key === 'devpost');
     expect(devpost?.lastSuccessAt).toBeNull();
     expect(devpost?.freshnessMinutes).toBeNull();
     expect(devpost?.consecutiveFailures).toBe(0);
     expect(devpost?.message).toContain('disabled by policy');
+    expect(devpost?.health).toBe('PAUSED_BY_POLICY');
+    // Nothing has run on a fresh database, so there is no overall freshness yet.
+    expect(body.updatedAt).toBeNull();
+    expect(body.offline).toBe(false);
+  });
+
+  it('carries the compliance fields for an administrator', async () => {
+    const devpost = (await status(adminToken)).sources.find((entry) => entry.key === 'devpost');
+    expect(devpost?.complianceStatus).toBe('MANUAL_IMPORT_ONLY');
+    expect(typeof devpost?.complianceNotes).toBe('string');
+  });
+
+  it('omits them — rather than nulling them — for a professor (§10.2)', async () => {
+    const body = await status(professor);
+    const devpost = body.sources.find((entry) => entry.key === 'devpost');
+    expect(devpost).toBeDefined();
+    expect(devpost && 'complianceStatus' in devpost).toBe(false);
+    expect(devpost && 'complianceNotes' in devpost).toBe(false);
+    // Everything a professor needs to read the freshness pill is still there.
+    expect(devpost?.message).toContain('disabled by policy');
+    expect(devpost?.health).toBe('PAUSED_BY_POLICY');
   });
 });
 

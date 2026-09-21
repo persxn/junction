@@ -11,12 +11,10 @@ import {
   SCRAPE_TRIGGERS,
   SCRAPEABLE_COMPLIANCE_STATUSES,
   SourceSummary,
-  sourceStatusMessage,
   UpdateSourceRequest,
-  type ScrapeErrorKind,
 } from './sources.js';
 
-/** The source vocabulary, and §7.7's table as code. */
+/** The source vocabulary (§6.2, §7.1); §7.7's sentences are `source-status.test.ts`. */
 
 describe('the enums', () => {
   it('lists the eight adapters §6.2 names', () => {
@@ -93,86 +91,5 @@ describe('UpdateSourceRequest', () => {
 describe('SourceSummary', () => {
   it('has no configJson field at all', () => {
     expect(Object.keys(SourceSummary.shape)).not.toContain('configJson');
-  });
-});
-
-describe('sourceStatusMessage (§7.7)', () => {
-  const base: {
-    sourceName: string;
-    freshnessMinutes: number | null;
-    nextAttemptLabel: string | null;
-  } = {
-    sourceName: 'Devfolio',
-    freshnessMinutes: 14,
-    nextAttemptLabel: '3:45 PM',
-  };
-
-  function message(
-    outcome: (typeof SCRAPE_OUTCOMES)[number],
-    errorKind: ScrapeErrorKind | null = null,
-    overrides: Partial<typeof base> = {},
-  ): string {
-    return sourceStatusMessage({ ...base, ...overrides, outcome, errorKind });
-  }
-
-  it('calls offline an info line, not an error', () => {
-    const text = message('SKIPPED_OFFLINE');
-    expect(text).toContain("You're offline");
-    expect(text).toContain('14 min ago');
-  });
-
-  it('says "disabled by policy" for our own refusals', () => {
-    expect(message('BLOCKED_BY_POLICY')).toBe('Updates from Devfolio are disabled by policy.');
-    expect(message('FAILED', 'ROBOTS_DISALLOWED')).toContain('disabled by policy');
-  });
-
-  it('names the next attempt when the source asked us to slow down', () => {
-    const text = message('FAILED', 'RATE_LIMITED');
-    expect(text).toContain('asked us to slow down');
-    expect(text).toContain('3:45 PM');
-  });
-
-  it('leaves the time out rather than inventing one', () => {
-    expect(message('FAILED', 'RATE_LIMITED', { nextAttemptLabel: null })).not.toContain('Next');
-  });
-
-  it.each(['NETWORK', 'DNS', 'TIMEOUT'] as const)(
-    'says "couldn’t reach" with the last update for %s',
-    (kind) => {
-      const text = message('FAILED', kind);
-      expect(text).toContain("Couldn't reach Devfolio");
-      expect(text).toContain('14 min ago');
-    },
-  );
-
-  it('says the format changed and the source is paused', () => {
-    for (const kind of ['SCHEMA_CHANGED', 'PARSE'] as const) {
-      expect(message('FAILED', kind)).toContain('page format changed');
-      expect(message('FAILED', kind)).toContain('paused');
-    }
-  });
-
-  it('never suggests working around a certificate or a WAF', () => {
-    for (const kind of ['TLS', 'BLOCKED'] as const) {
-      const text = message('FAILED', kind);
-      expect(text).toContain('so it is skipped');
-      expect(text).not.toMatch(/retry with|ignore|bypass|disable/i);
-    }
-  });
-
-  it('reports hours once the last success is more than an hour old', () => {
-    expect(message('FAILED', 'NETWORK', { freshnessMinutes: 125 })).toContain('2 h ago');
-  });
-
-  it('says so plainly when there has never been a successful update', () => {
-    expect(message('FAILED', 'NETWORK', { freshnessMinutes: null })).toContain(
-      'no successful update yet',
-    );
-  });
-
-  it('gives every outcome a non-empty sentence', () => {
-    for (const outcome of SCRAPE_OUTCOMES) {
-      expect(message(outcome).length).toBeGreaterThan(10);
-    }
   });
 });

@@ -13,6 +13,7 @@ import {
   openDatabase,
   runMigrations,
 } from '@compintel/backend';
+import { seedScenario } from '@compintel/backend/testing';
 import { pino } from 'pino';
 
 import { CORPUS_EPOCH, generateCorpus, type CorpusEvent } from './corpus.js';
@@ -32,6 +33,8 @@ import { seed } from './seed.js';
  *   never lives in the repository), and must not already hold a database;
  * - **every source is switched off**, so a backend started on it registers no
  *   scrape job and contacts no event website — ever;
+ * - WP-16b's conflict fixture is loaded through the real linker, so the drawer
+ *   the E2E opens has a genuine "Sources disagree" panel in it;
  * - setup is *not* done here: the E2E completes the real wizard over HTTP, which
  *   creates the organization, the campus and the account it signs in with.
  */
@@ -92,6 +95,13 @@ async function main(): Promise<number> {
     const now = Date.now();
     const corpus = generateCorpus(count).map((event) => shifted(event, now - CORPUS_EPOCH));
     const visible = seed(db, corpus, undefined);
+
+    // WP-16b: one event three sources disagree about, through the real linker,
+    // so the drawer the E2E opens has a genuine "Sources disagree" panel.
+    const conflict = seedScenario(db, 'three-sources-disagree', { at: now });
+
+    // After the fixture, so the source it adds is switched off with the rest:
+    // a source left enabled would give the backend a scrape job to register.
     const switchedOff = db.raw.prepare('UPDATE sources SET is_enabled = 0').run().changes;
 
     const audit = new AuditLog(db);
@@ -111,6 +121,7 @@ async function main(): Promise<number> {
         visible: visible.length,
         classified: classified.events,
         sourcesSwitchedOff: switchedOff,
+        conflictEventId: conflict.eventId,
       }),
     );
     return 0;

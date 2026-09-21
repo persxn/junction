@@ -115,6 +115,7 @@ export async function startSetupTestServer(
   const categories = createCategoriesModule({ db: database.db, audit });
   const events = createEventsModule({
     db: database.db,
+    categories: categories.repo,
     geocoder: new Geocoder({ gazetteer: unavailableGazetteer('tests'), institutions: [] }),
     settings,
     audit,
@@ -154,6 +155,8 @@ export async function startSetupTestServer(
     sources: () => sources,
     review: () => events.review,
     imports: () => imports,
+    eventDetail: () => events.detail,
+    eventCategories: () => events.categoryOverrides,
   });
 
   return {

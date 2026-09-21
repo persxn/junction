@@ -9,7 +9,7 @@ import {
 
 import { UsersPage } from '../features/admin/users/UsersPage.js';
 import { DiscoverPage } from '../features/discover/DiscoverPage.js';
-import { EventDrawer } from '../features/discover/EventDrawer.js';
+import { EventDrawer } from '../features/discover/detail/EventDrawer.js';
 import { parseDiscoverSearch } from '../features/discover/search-state.js';
 import { CreateEventPage } from '../features/events/create/CreateEventPage.js';
 import { SourcesPage } from '../features/admin/sources/SourcesPage.js';

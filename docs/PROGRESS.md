@@ -1,37 +1,33 @@
 # Progress — newest first, keep < 150 lines
 
 ## Current
-- **pre-M1 · WP-08a · WP-08b · WP-09a DONE** (handoffs in `docs/handoff/`): one `Clock`, lint-enforced domain
-  boundaries, settings registry, goldens; `EventCandidate` + normalization; gazetteer/geocoder/policies (R53–R57);
-  PoliteHttpClient, compliance gate, source seeds, scrape runs (R58–R61). Open: `jobs/schedule.ts` → `domain/`.
-  **WP-09b PARTIAL** — CTFtime adapter; manual live smoke not run (no `scraper.contactEmail` on the dev DB).
-- **WP-10 DONE** (`docs/handoff/WP-10.md`) — dedup (§7.5, R64 first), merge/unmerge (R66, nothing deleted),
-  resolution by field group, change detection, admin review API; migration 0008; scrapes now create events.
-- **WP-11 DONE** (`docs/handoff/WP-11.md`) — CLIST adapter (key-gated; no key → BLOCKED_BY_POLICY, zero requests),
-  migration 0009, secret credential settings + routes, seed-only robots exemption (proposed ruling), `domain/series/`,
-  main feed vs Contest Calendar readers; `clist:smoke` skipped (U4 open).
-- **Owner ruling R74 / D-34 (21 Sep 2026, spec v1.1.12):** Devfolio and Unstop may be read with the professor's
-  own session (pasted cookie or in-app login window), read-only, same gate; built in **WP-14** (prompt amended).
-  §7.2 "Never", ADR-0007 and ADR-0016 amended. D-29 still drops other people's data. WP-13 lands as v1.1.13.
-- **WP-12 DONE** (approved 21 Sep 2026, `docs/handoff/WP-12.md`) — Devfolio adapter, per-subdomain robots,
-  `api.devfolio.co` refused before the transport, PII allowlist; migration 0010; cheerio 1.2.0. Live smoke owed.
-- **WP-13 PARTIAL** (21 Sep 2026, `docs/handoff/WP-13.md`) — Unstop adapter via `/api/public/*` + `ng-state` fallback,
-  deny list before the transport, R70–R73, migration 0011. `unstop:capture` (capture + smoke, gated) refuses while
-  `scraper.contactEmail` is unset, so **fixtures stay synthetic and the capture is owed**.
-- **Owner product flow (21 Sep 2026):** each professor installs the app; onboarding opens the packaged sign-in browser
-  for every approved source; the UA contact is that professor's own address (R74, WP-14 prompt).
-- **WP-14 DONE** (22 Sep 2026, `docs/handoff/WP-14.md`) — manual entry + URL import (Devpost: zero requests, spy-proved)
-  through WP-10's linker (migration 0012, overrides survive scrapes) + signed-in sessions (R74/D-34, own-host only,
-  EXPIRED without backoff, Tauri sign-in window). UI `/events/new`, Admin → Sources sessions. 2739 tests, 61 Rust.
+- **M1 ingestion (DONE, handoffs in `docs/handoff/`)** — pre-M1 · WP-08a/08b/09a: one `Clock`, lint-enforced
+  domain boundaries, settings registry, `EventCandidate` + normalization, gazetteer/geocoder/policies (R53–R57),
+  PoliteHttpClient + compliance gate + scrape runs (R58–R61). WP-10: dedup, merge/unmerge (R66), resolution by
+  field group, change detection, review API. WP-11/12/13: CLIST (key-gated), Devfolio (per-subdomain robots),
+  Unstop (`/api/public/*`, R70–R73); migrations 0008–0011. WP-14: manual entry + URL import + signed-in sessions
+  (R74/D-34, own-host only), migration 0012. Open: `jobs/schedule.ts` → `domain/`.
+  **Owed live runs:** WP-09b's CTFtime smoke, WP-12's Devfolio smoke, WP-13's `unstop:capture` — all three wait on
+  `scraper.contactEmail` on the dev DB; `clist:smoke` waits on U4. Fixtures stay synthetic until then.
+- **Owner rulings (21 Sep 2026):** R74/D-34 — Devfolio and Unstop may be read with the professor's **own** session
+  (pasted cookie or in-app login window), read-only, same gate; D-29 still drops other people's data. Product flow:
+  each professor installs the app, onboarding signs in to every approved source, the UA contact is their own address.
 - **WP-15a DONE** / **WP-15b PARTIAL** (`docs/handoff/WP-15a.md`, `WP-15b.md`) — query model, FTS5 + trigram, typo
   vocabulary; categories (rules engine, seed, migration 0015, manual wins), ranking with reasons on every result,
   facets, category admin API. 15b's only miss: perf filters+text p95 52.4 ms vs 50 (Q1 there: denormalize trust?).
-- **WP-16a DONE** (22 Sep 2026, `docs/handoff/WP-16a.md`) — Discover: tabs (Featured views, All events, Contest
-  Calendar), 9 filter chips ↔ `EventQuery` in `features/discover/query.ts`, dense cards with urgency (icon + words),
-  "Why relevant?", Save/Hide optimistic with Undo (+ `PUT/DELETE /events/:id/watchlist`, `POST …/hide|unhide`),
-  J/K/Enter/S/Esc, real top-bar search, live Ctrl+K event search, drawer route placeholder. **3030 tests.**
-  `pnpm e2e` (Playwright 1.63.0, installed Edge, no download; `pnpm seed:demo`, all sources off, scrape_runs = 0)
-  green. Qs: calendar "recurring only" filter; R27 proxy is GET-only. Next: **WP-16b**.
+- **WP-16a DONE** (22 Sep 2026, `docs/handoff/WP-16a.md`) — Discover: tabs, 9 filter chips ↔ `EventQuery`, dense
+  cards with urgency (icon + words), "Why relevant?", Save/Hide optimistic with Undo, J/K/Enter/S/Esc, real top-bar
+  search, live Ctrl+K search, drawer route placeholder; `pnpm e2e` (Playwright 1.63.0, installed Edge, no download).
+  Qs: calendar "recurring only" filter; R27 proxy is GET-only.
+- **WP-16b DONE — M1 CLOSES** (22 Sep 2026, `docs/handoff/WP-16b.md`) — the detail drawer: `GET /events/:id/detail`
+  in one round trip (claims by field, conflicts, deadlines, sources, categories, history), **"Sources disagree"**
+  with every claimed value, its source and the reason the selected one won (`selectionReasonOf`, §7.5); provenance
+  as a keyboard disclosure; `/sources/status` reworked (health enum, overall `updatedAt`, compliance omitted for a
+  professor) behind the §16.1 freshness pill, refetched every 60 s because **nothing publishes scrape events**;
+  audited category override with 409 (D-15, survives re-classification). Conflict fixture in `test/fixtures/conflicts/`,
+  loaded by `seed:demo`; new `@compintel/backend/testing` entry point. **3111 tests**, 126 s; `pnpm e2e` green.
+  No new dependencies, no `src-tauri` change (R29). Qs: is a prize disagreement material? §13 needs one Rust
+  `open_external`; should anything publish scrape events on the SSE hub?
 - WP-08b's two questions are still open (handoff §6): the gazetteer is 68.5 MB of
   which 95% are zero-population hamlets that also *harm* matching — §4.17 says "towns/cities" where
   R53 says feature class P; and GeoNames has almost no Indian campuses, so the INSTITUTION rung is
@@ -46,7 +42,8 @@
 - **New: WP-33** (`prompts/M4/WP-33.md`, milestone **M4.5**, just before M5) — appearance system
   (Catppuccin palettes, CALM/STANDARD/SHOWCASE effect tiers, motion & glow) + Insights. ADR-0019, R67–R69.
 - **Owner, 20 Sep 2026:** standalone app — one professor, one machine (§3.1). Security posture left unchanged; less security framing in prose from here on.
-- Spec: docs/ARCHITECTURE.md **v1.1.11 — ACCEPTED** (§21 R1–R66 + R67–R69; §19 = **48 WPs, 20 done, 28 remaining**).
+- Spec: docs/ARCHITECTURE.md **v1.1.11 — ACCEPTED** (§21 R1–R66 + R67–R69; §19 = **48 WPs, 22 done, 26 remaining**).
+- **M1 is closed** (WP-16b, 22 Sep 2026). Zip `docs/` and send it back to the architect; M2 (teams and work) is next.
 - ADR-0001…0019 Accepted. Decisions register: docs/DECISIONS.md (D-01…D-33, Q1 RESOLVED, U1/U2 DONE).
 
 ## Environment facts
@@ -69,7 +66,7 @@
 
 ## Standard commands
 - `pnpm install --frozen-lockfile` · **`pnpm verify`** = `format:check && lint && typecheck && test`
-  (~112 s here with 3030 tests; budget is < 2 min per §4.15 — close). `pnpm e2e` = Playwright on Edge, outside verify.
+  (~126 s here with 3111 tests; budget is < 2 min per §4.15 — **over**, see WP-16b §5). `pnpm e2e` = Playwright on Edge, outside verify.
   Individually: `pnpm format` / `format:check` (Prettier) · `pnpm lint` (ESLint) · `pnpm typecheck` (`tsc -b`) ·
   `pnpm test` (Vitest, single run) · `pnpm clean` (`tsc -b --clean`).
 - Git identity is repo-local: `Calamity <sohomaroy2005@gmail.com>`; `core.autocrlf=false`.

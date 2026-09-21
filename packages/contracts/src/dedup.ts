@@ -185,9 +185,13 @@ export const EventChangeDto = z
   .object({
     id: Uuid7,
     field: OverrideField,
+    /** The field in words ("Registration deadline"), so the UI renders no enum. */
+    fieldLabel: z.string().min(1),
     oldValue: z.json(),
     newValue: z.json(),
     cause: ChangeCause,
+    /** The cause in words ("Found by a scrape"); see `changeCauseLabel`. */
+    causeLabel: z.string().min(1),
     sourceRecordId: z.string().nullable(),
     changedBy: Uuid7.nullable(),
     detectedAt: Instant,

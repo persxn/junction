@@ -202,6 +202,7 @@ async function main(): Promise<void> {
     // WP-10: records become events inline with ingest; merges and the review API.
     const eventsModule = createEventsModule({
       db,
+      categories: categoriesModule.repo,
       geocoder,
       settings,
       audit,
@@ -339,6 +340,8 @@ async function main(): Promise<void> {
       search: () => searchModule,
       categories: () => categoriesModule.admin,
       userState: () => userState,
+      eventDetail: () => eventsModule.detail,
+      eventCategories: () => eventsModule.categoryOverrides,
       onShutdownRequested: () => {
         lifecycle.start('api');
       },

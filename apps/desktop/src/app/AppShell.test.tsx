@@ -121,12 +121,15 @@ describe('the keyboard (§16.3)', () => {
     expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveFocus();
   });
 
-  it('reaches the search box, the bell and the user menu from the rail', async () => {
+  it('reaches the palette, the freshness pill, the bell and the user menu in order', async () => {
     const user = userEvent.setup();
     await renderApp();
 
     const topBar = within(screen.getByRole('banner'));
     topBar.getByRole('button', { name: 'Open command palette' }).focus();
+    // WP-16b put a real freshness pill between the palette and the bell (§16.1).
+    await user.tab();
+    expect(topBar.getByTestId('freshness-pill')).toHaveFocus();
     await user.tab();
     expect(topBar.getByRole('link', { name: 'Notifications' })).toHaveFocus();
     await user.tab();

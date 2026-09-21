@@ -9,6 +9,8 @@ import { registerSetupGate } from './modules/setup/gate.js';
 import type { SetupService } from './modules/setup/service.js';
 import type { DedupReviewService } from './modules/events/review.js';
 import type { EventImportService } from './modules/events/import/service.js';
+import type { EventCategoriesService } from './modules/events/categories.js';
+import type { EventDetailService } from './modules/events/detail.js';
 import type { CategoryAdminService } from './modules/categories/admin.js';
 import type { EventUserStateService } from './modules/events/user-state.js';
 import type { SearchModule } from './modules/search/wiring.js';
@@ -28,6 +30,7 @@ import { meRoutes } from './routes/me.js';
 import { setupRoutes } from './routes/setup.js';
 import { dedupRoutes } from './routes/dedup.js';
 import { eventsRoutes } from './routes/events.js';
+import { eventDetailRoutes } from './routes/event-detail.js';
 import { userStateRoutes } from './routes/user-state.js';
 import { categoryRoutes } from './routes/categories.js';
 import { searchRoutes } from './routes/search.js';
@@ -79,6 +82,10 @@ export interface BuildAppOptions {
   readonly categories?: () => CategoryAdminService | undefined;
   /** WP-16a's per-user Save and Hide. */
   readonly userState?: () => EventUserStateService | undefined;
+  /** WP-16b's detail drawer: provenance, conflicts, deadlines, sources, history. */
+  readonly eventDetail?: () => EventDetailService | undefined;
+  /** WP-16b's per-event category override (D-15). */
+  readonly eventCategories?: () => EventCategoriesService | undefined;
   /** Shared so jobs and services can publish; one hub per process (R36). */
   readonly streamHub?: StreamHub;
   /** Injected in tests so a heartbeat does not take fifteen real seconds. */
@@ -169,6 +176,13 @@ export function buildApp(
   void server.register(searchRoutes({ search }), { prefix: API_PREFIX });
   void server.register(categoryRoutes({ categories }), { prefix: API_PREFIX });
   void server.register(userStateRoutes({ userState }), { prefix: API_PREFIX });
+  void server.register(
+    eventDetailRoutes({
+      detail: options.eventDetail ?? ((): EventDetailService | undefined => undefined),
+      categories: options.eventCategories ?? ((): EventCategoriesService | undefined => undefined),
+    }),
+    { prefix: API_PREFIX },
+  );
   void server.register(
     streamRoutes({
       hub: streamHub,

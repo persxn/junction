@@ -45,6 +45,10 @@ export interface FixtureCandidate {
   readonly officialUrl?: string;
   readonly registrationUrl?: string;
   readonly editionYear?: number;
+  /** WP-16b's conflict fixtures: sources that disagree about the money. */
+  readonly prizeText?: string;
+  readonly prizeTotalMinor?: number;
+  readonly prizeCurrency?: string;
 }
 
 export interface ScenarioRecord {
@@ -59,9 +63,10 @@ export interface Scenario {
   readonly records: readonly ScenarioRecord[];
 }
 
-export function loadScenario(name: string): Scenario {
+/** A scenario fixture; `folder` is `dedup` (WP-10) or `conflicts` (WP-16b). */
+export function loadScenario(name: string, folder = 'dedup'): Scenario {
   return JSON.parse(
-    readFileSync(path.join(fixturesDir(), 'dedup', `${name}.json`), 'utf8'),
+    readFileSync(path.join(fixturesDir(), folder, `${name}.json`), 'utf8'),
   ) as Scenario;
 }
 
@@ -94,6 +99,14 @@ export function toCandidate(
           ...(fixture.teamMax === undefined ? {} : { max: fixture.teamMax }),
           confidence: 1,
         };
+  const prize =
+    fixture.prizeText === undefined && fixture.prizeTotalMinor === undefined
+      ? undefined
+      : {
+          ...(fixture.prizeText === undefined ? {} : { text: fixture.prizeText }),
+          ...(fixture.prizeTotalMinor === undefined ? {} : { totalMinor: fixture.prizeTotalMinor }),
+          ...(fixture.prizeCurrency === undefined ? {} : { currency: fixture.prizeCurrency }),
+        };
   const optional = <V>(key: string, value: V | undefined): Record<string, V> =>
     value === undefined ? {} : { [key]: value };
   return EventCandidate.parse({
@@ -112,6 +125,7 @@ export function toCandidate(
     ...optional('endsAt', date(fixture.endsAt)),
     ...optional('registrationDeadlineAt', date(fixture.registrationDeadlineAt)),
     ...optional('teamSize', team),
+    ...optional('prize', prize),
     ...optional('officialUrl', fixture.officialUrl),
     ...optional('registrationUrl', fixture.registrationUrl),
     ...optional('editionYear', fixture.editionYear),
@@ -222,6 +236,7 @@ export function openEventsHarness(
   }
   const module = createEventsModule({
     db: database.db,
+    ...(categories === undefined ? {} : { categories: categories.repo }),
     geocoder: geo.geocoder,
     settings,
     audit,

@@ -1,5 +1,6 @@
 import type {
   ScrapeTrigger,
+  SourceStatusResponse,
   SetSourceSessionRequest,
   SourceRefreshResult,
   SourceSessionStatus,
@@ -15,12 +16,18 @@ import type { AdapterRegistry } from '../../sources/registry.js';
 import { withAudit, type AuditLog } from '../../platform/audit.js';
 import { conflict } from '../../platform/errors.js';
 import { nowMs, systemClock, type Clock } from '../../platform/time.js';
-import { assertCan } from '../auth/policy.js';
+import { assertCan, can } from '../auth/policy.js';
 import type { Principal } from '../auth/types.js';
 import type { SettingsStore } from '../../platform/settings.js';
 import { authConfigOf, credentialIsSet, storeCredential } from './credentials.js';
 import { sourceNotFound, sourceRefreshTooSoon } from './errors.js';
-import { nextManualRefreshAt, toRunSummary, toStatus, toSummary } from './mappers.js';
+import {
+  nextManualRefreshAt,
+  toRunSummary,
+  toStatus,
+  toStatusEntry,
+  toSummary,
+} from './mappers.js';
 import { clearSession, sessionConfigOf, sessionStatus, storeSession } from './session.js';
 import type { SourceRecordsRepository } from './records.js';
 import type { SourcesRepository } from './repository.js';
@@ -86,6 +93,37 @@ export class SourcesService {
         now,
       }),
     );
+  }
+
+  /**
+   * `GET /sources/status` (§16.1, §7.7). Visible to anyone signed in — "how
+   * fresh is this and where did it come from?" is not an administrator's
+   * question — with the compliance fields present only for an administrator.
+   *
+   * `updatedAt` is the newest successful run across every source: what the top
+   * bar's "Updated 4 min ago" counts from. `offline` is D-23's case, and only
+   * when *every* enabled source was skipped for it: one source failing is a row
+   * in the popover, not a banner over the app.
+   */
+  statusView(actor: Principal): SourceStatusResponse {
+    const now = nowMs(this.#clock);
+    const compliance = can(actor, 'source.manage');
+    const rows = this.#deps.sources.list().map((source) => ({
+      source,
+      state: this.#deps.sources.state(source.id, now),
+      latestRun: this.#deps.sources.latestRun(source.id),
+      now,
+    }));
+    const newest = rows
+      .map((row) => row.state.lastSuccessAt)
+      .filter((at): at is number => at !== null)
+      .sort((a, b) => b - a)[0];
+    const ran = rows.filter((row) => row.source.isEnabled && row.latestRun !== undefined);
+    return {
+      sources: rows.map((row) => toStatusEntry(row, compliance)),
+      updatedAt: newest === undefined ? null : new Date(newest).toISOString(),
+      offline: ran.length > 0 && ran.every((row) => row.latestRun?.outcome === 'SKIPPED_OFFLINE'),
+    };
   }
 
   statusOf(key: string): SourceStatus {

@@ -4,9 +4,13 @@ import type { AuditLog } from '../../platform/audit.js';
 import type { DatabaseHandle } from '../../platform/db.js';
 import type { SettingsStore } from '../../platform/settings.js';
 import type { Clock } from '../../platform/time.js';
+import type { CategoriesRepository } from '../categories/repo.js';
 import type { Geocoder } from '../geo/geocoder.js';
 import { EVENT_TYPE_POLICY, GEOGRAPHY_POLICY } from '../geo/settings.js';
+import { EventCategoriesService } from './categories.js';
 import { DedupCandidatesRepository } from './dedup-repository.js';
+import { EventDetailRepository } from './detail-repo.js';
+import { EventDetailService } from './detail.js';
 import { EventLinker } from './link.js';
 import { MergeService } from './merge.js';
 import { ProvenanceRepository } from './provenance.js';
@@ -24,6 +28,9 @@ import { readDedupConfig } from './settings.js';
 
 export interface EventsModule {
   readonly linker: EventLinker;
+  /** WP-16b: the detail drawer's one round trip, and the category override. */
+  readonly detail: EventDetailService;
+  readonly detailRepo: EventDetailRepository;
   readonly merges: MergeService;
   readonly review: DedupReviewService;
   readonly resolver: EventResolver;
@@ -31,10 +38,14 @@ export interface EventsModule {
   readonly candidates: DedupCandidatesRepository;
   readonly events: EventsRepository;
   readonly series: SeriesRepository;
+  /** Present only when a `CategoriesRepository` was supplied. */
+  readonly categoryOverrides: EventCategoriesService | undefined;
 }
 
 export interface EventsModuleDependencies {
   readonly db: DatabaseHandle;
+  /** WP-16b: needed only by the category override; without it there is none. */
+  readonly categories?: CategoriesRepository;
   readonly geocoder: Pick<Geocoder, 'resolve'>;
   readonly settings: SettingsStore;
   readonly audit: AuditLog;
@@ -80,5 +91,29 @@ export function createEventsModule(deps: EventsModuleDependencies): EventsModule
     ...(deps.clock === undefined ? {} : { clock: deps.clock }),
   });
   const review = new DedupReviewService({ events, provenance, candidates, resolver, merges });
-  return { linker, merges, review, resolver, provenance, candidates, events, series };
+  const detailRepo = new EventDetailRepository(deps.db);
+  const detail = new EventDetailService({ events, provenance, resolver, detail: detailRepo });
+  const categoryOverrides =
+    deps.categories === undefined
+      ? undefined
+      : new EventCategoriesService({
+          events,
+          categories: deps.categories,
+          detail: detailRepo,
+          audit: deps.audit,
+          ...(deps.clock === undefined ? {} : { clock: deps.clock }),
+        });
+  return {
+    linker,
+    merges,
+    review,
+    resolver,
+    provenance,
+    candidates,
+    events,
+    series,
+    detail,
+    detailRepo,
+    categoryOverrides,
+  };
 }

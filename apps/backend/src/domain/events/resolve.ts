@@ -1,4 +1,4 @@
-import type { OverrideField } from '@compintel/contracts';
+import type { OverrideField, SelectionReason } from '@compintel/contracts';
 
 /**
  * Field resolution over one event's claims (§7.5). Pure.
@@ -203,4 +203,41 @@ export function resolve(
     conflicts,
     hasConflicts: conflicts.some((conflict) => conflict.material),
   };
+}
+
+/**
+ * Why the selected value of a field is the one it is (§7.5, WP-16b).
+ *
+ * The answer is read off the same pool the selection was made from — the
+ * field's **group**, because `winningRecord` picks one source record for the
+ * whole group — so the drawer never explains a decision that was not the one
+ * taken. With one informative claim there is no contest (`ONLY_SOURCE`);
+ * otherwise the winner either out-ranked the rest (`HIGHEST_TRUST`) or tied on
+ * rank and was seen later (`MOST_RECENT`), which is exactly the ladder.
+ */
+export function selectionReasonOf(
+  field: OverrideField,
+  claims: readonly ResolvableClaim[],
+  resolved: ResolvedField | undefined,
+): SelectionReason {
+  if (resolved?.from === 'OVERRIDE') {
+    return 'OVERRIDE';
+  }
+  const group = groupOf(field);
+  const pool = claims.filter(
+    (claim) => !claim.isAlternate && group.includes(claim.field) && isInformative(claim.valueJson),
+  );
+  const records = new Set(pool.map((claim) => claim.sourceRecordId));
+  if (records.size <= 1) {
+    return 'ONLY_SOURCE';
+  }
+  const winner =
+    pool.find((claim) => claim.id === resolved?.claimId) ?? [...pool].sort(precedes)[0];
+  if (winner === undefined) {
+    return 'ONLY_SOURCE';
+  }
+  const rivals = pool.filter((claim) => claim.sourceRecordId !== winner.sourceRecordId);
+  return rivals.every((claim) => claim.trustRank < winner.trustRank)
+    ? 'HIGHEST_TRUST'
+    : 'MOST_RECENT';
 }

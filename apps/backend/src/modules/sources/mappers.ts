@@ -1,7 +1,9 @@
 import {
+  sourceHealthOf,
   sourceStatusMessage,
   type ScrapeRunSummary,
   type SourceStatus,
+  type SourceStatusEntry,
   type SourceSummary,
 } from '@compintel/contracts';
 
@@ -120,5 +122,46 @@ export function toStatus(input: StatusInput): SourceStatus {
       freshnessMinutes,
       nextAttemptLabel: nextAttemptAt === null ? null : clockLabel(nextAttemptAt),
     }),
+  };
+}
+
+/**
+ * One row of `GET /sources/status` (§16.1's freshness popover, WP-16b).
+ *
+ * `compliance` decides whether the two administrator-only fields are there at
+ * all. §10.2 gives source administration to admins, and a professor's response
+ * **omits** them rather than nulling them: a null would claim there is a
+ * verdict they may not see, where the truth is that the field is not part of
+ * their answer.
+ */
+export function toStatusEntry(input: StatusInput, compliance: boolean): SourceStatusEntry {
+  const status = toStatus(input);
+  const { source } = input;
+  return {
+    key: source.key,
+    name: source.name,
+    adapter: source.adapter,
+    isEnabled: source.isEnabled,
+    health: sourceHealthOf({
+      isEnabled: source.isEnabled,
+      complianceStatus: source.complianceStatus,
+      outcome: status.lastOutcome,
+      errorKind: status.lastErrorKind,
+    }),
+    lastRunAt: status.lastRunAt,
+    lastSuccessAt: status.lastSuccessAt,
+    freshnessMinutes: status.freshnessMinutes,
+    nextAttemptAt: status.nextAttemptAt,
+    consecutiveFailures: status.consecutiveFailures,
+    lastOutcome: status.lastOutcome,
+    lastErrorKind: status.lastErrorKind,
+    message: status.message,
+    attributionText: source.attributionText,
+    ...(compliance
+      ? {
+          complianceStatus: source.complianceStatus,
+          complianceNotes: source.complianceNotes,
+        }
+      : {}),
   };
 }

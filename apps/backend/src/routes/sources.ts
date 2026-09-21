@@ -55,9 +55,12 @@ export const sourcesRoutes =
       sources: [...service(options).list()],
     }));
 
-    app.get('/sources/status', { schema: { response: { 200: SourceStatusResponse } } }, () => ({
-      sources: [...service(options).status()],
-    }));
+    // WP-16b: the §16.1 freshness popover. The compliance fields are in the
+    // response only for an administrator (§10.2) — the service decides, from the
+    // session, so a professor cannot ask for them by any spelling of the URL.
+    app.get('/sources/status', { schema: { response: { 200: SourceStatusResponse } } }, (request) =>
+      service(options).statusView(requireSession(request).user),
+    );
 
     app.patch(
       '/admin/sources/:key',

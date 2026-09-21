@@ -1,21 +1,27 @@
 import {
   problemType,
   SearchRequest,
+  type EventCategoriesResult,
   type Facets,
   type RankedEventListItem,
   type SearchResponse,
+  type SourceStatusResponse,
 } from '@compintel/contracts';
 import { vi } from 'vitest';
 
+import { NOW } from './clock.js';
+import { detailFixture, OLDER_HISTORY } from './event-detail.js';
+
 /**
- * A stand-in for `/search/events` and the Save/Hide routes, for the Discover
- * tests. It answers in the contract's shapes (every response passes the zod
+ * A stand-in for `/search/events`, the Save/Hide routes and — since WP-16b —
+ * the drawer's `/events/:id/detail`, its change history, its category override
+ * and `/sources/status`, for the Discover tests. It answers in the contract's shapes (every response passes the zod
  * schema the client parses with), pages by an offset cursor, filters by the
  * handful of fields the tests use, and remembers saves and hides — so the
  * optimistic UI is checked against a server that really changed.
  */
 
-export const NOW = Date.parse('2026-09-22T06:30:00.000Z'); // noon in Asia/Kolkata
+export { NOW };
 const DAY = 86_400_000;
 
 export function makeItem(
@@ -47,6 +53,30 @@ export function makeItem(
   };
 }
 
+/** One source, up to date — enough for the pill to say "Updated 4 min ago". */
+const SOURCE_STATUS: SourceStatusResponse = {
+  sources: [
+    {
+      key: 'devfolio',
+      name: 'Devfolio',
+      adapter: 'DEVFOLIO',
+      isEnabled: true,
+      health: 'OK',
+      lastRunAt: new Date(NOW - 4 * 60_000).toISOString(),
+      lastSuccessAt: new Date(NOW - 4 * 60_000).toISOString(),
+      freshnessMinutes: 4,
+      nextAttemptAt: new Date(NOW + 11 * 60_000).toISOString(),
+      consecutiveFailures: 0,
+      lastOutcome: 'SUCCESS',
+      lastErrorKind: null,
+      message: 'Devfolio is up to date.',
+      attributionText: 'Listing data from Devfolio.',
+    },
+  ],
+  updatedAt: new Date(NOW - 4 * 60_000).toISOString(),
+  offline: false,
+};
+
 const EMPTY_FACETS: Facets = {
   eventType: [{ value: 'HACKATHON', label: 'Hackathon', count: 0 }],
   category: [{ value: 'ai-ml', label: 'AI/ML', count: 0 }],
@@ -63,6 +93,8 @@ export interface SearchCall {
 
 export interface FakeSearch {
   readonly calls: SearchCall[];
+  /** The category set the last `PUT /events/:id/categories` carried. */
+  readonly categorySets: string[][];
   readonly saved: Set<string>;
   readonly hidden: Set<string>;
   /** The next request to a path matching this answers 500 (not retryable), after `delayMs`. */
@@ -81,6 +113,8 @@ function respond(status: number, body: unknown): Response {
 
 export function installFakeSearch(items: readonly RankedEventListItem[]): FakeSearch {
   const calls: SearchCall[] = [];
+  const categorySets: string[][] = [];
+  let categories = detailFixture().categories;
   const saved = new Set(items.filter((item) => item.watchlisted).map((item) => item.id));
   const hidden = new Set<string>();
   const failures: { path: RegExp; delayMs: number }[] = [];
@@ -145,6 +179,51 @@ export function installFakeSearch(items: readonly RankedEventListItem[]): FakeSe
       );
     }
     if (path === '/api/v1/search/events') return Promise.resolve(respond(200, search(body ?? {})));
+
+    // WP-16b: the drawer, its "load older" page, its override, and the pill.
+    if (path === '/api/v1/sources/status') {
+      return Promise.resolve(respond(200, SOURCE_STATUS));
+    }
+    const detail = /^\/api\/v1\/events\/([^/]+)\/detail$/.exec(path);
+    if (detail !== null) {
+      const found = items.find((item) => item.id === detail[1]);
+      return Promise.resolve(
+        respond(
+          200,
+          detailFixture({
+            id: detail[1]!,
+            ...(found === undefined
+              ? {}
+              : {
+                  title: found.title,
+                  organizerName: found.organizerName,
+                  hasConflicts: found.hasConflicts,
+                  ...(found.hasConflicts ? {} : { conflicts: [] }),
+                }),
+            categories,
+          }),
+        ),
+      );
+    }
+    if (/^\/api\/v1\/events\/[^/]+\/changes$/.test(path)) {
+      return Promise.resolve(respond(200, { items: OLDER_HISTORY, nextCursor: null }));
+    }
+    const override = /^\/api\/v1\/events\/([^/]+)\/categories$/.exec(path);
+    if (override !== null && method === 'PUT') {
+      const wanted = (body?.categoryIds ?? []) as string[];
+      categorySets.push(wanted);
+      categories = categories.map((category) => ({
+        ...category,
+        origin: wanted.includes(category.id) ? ('MANUAL' as const) : category.origin,
+        isSuppressed: !wanted.includes(category.id),
+      }));
+      const result: EventCategoriesResult = {
+        categories,
+        version: Number(body?.version ?? 1) + 1,
+      };
+      return Promise.resolve(respond(200, result));
+    }
+
     const match = /^\/api\/v1\/events\/([^/]+)\/(watchlist|hide|unhide)$/.exec(path);
     if (match !== null) {
       const [, id = '', action] = match;
@@ -176,6 +255,7 @@ export function installFakeSearch(items: readonly RankedEventListItem[]): FakeSe
 
   return {
     calls,
+    categorySets,
     saved,
     hidden,
     failNext: (path, delayMs = 0) => {

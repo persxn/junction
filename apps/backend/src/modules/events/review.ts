@@ -1,3 +1,4 @@
+import { changeCauseLabel, overrideFieldLabel } from '@compintel/contracts';
 import type {
   ConflictDto,
   DedupCandidateDto,
@@ -149,9 +150,11 @@ export class DedupReviewService {
       items: page.map((row) => ({
         id: row.id,
         field: row.field,
+        fieldLabel: overrideFieldLabel(row.field),
         oldValue: parseJson(row.oldValueJson) as EventChangePage['items'][number]['oldValue'],
         newValue: parseJson(row.newValueJson) as EventChangePage['items'][number]['newValue'],
         cause: row.cause,
+        causeLabel: changeCauseLabel(row.cause),
         sourceRecordId: row.sourceRecordId,
         changedBy: row.changedBy,
         detectedAt: row.detectedAt,

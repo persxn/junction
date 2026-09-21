@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router';
-import { Bell, RefreshCw, Search } from 'lucide-react';
+import { Bell, Search } from 'lucide-react';
 
+import { FreshnessPill } from '../features/freshness/FreshnessPill.js';
 import { UserMenu } from './UserMenu.js';
 
 export interface TopBarProps {
@@ -19,8 +20,9 @@ export interface TopBarProps {
  * there was search to type into): `/` focuses it, Enter searches Discover, and
  * the Ctrl+K button beside it opens the palette, which searches events live.
  *
- * The freshness pill is a placeholder and says so — WP-16b owns it (ruling R29
- * keeps the same line out of the tray until WP-30).
+ * The freshness pill is real since WP-16b: "Updated 4 min ago", and a popover
+ * with each source's state. Ruling R29 keeps the same line out of the tray
+ * until WP-30, so this is the in-app surface and the only one.
  */
 export function TopBar({
   searchRef,
@@ -67,10 +69,7 @@ export function TopBar({
         </button>
       </form>
 
-      <p className="flex items-center gap-1.5 rounded-full bg-surface-sunken px-2.5 py-1 text-sm text-fg-muted">
-        <RefreshCw aria-hidden="true" className="size-3.5" />
-        Freshness: not tracked yet
-      </p>
+      <FreshnessPill />
 
       <Link
         to="/notifications"

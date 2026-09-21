@@ -256,7 +256,9 @@ describe('accessibility', () => {
       await screen.findByRole('heading', { name: /^(Event 1|Nothing yet)$/ });
       await expect(container).toBeAccessible();
     }
-  });
+    // Four axe passes over a 30-card list in jsdom: the slowest test in the
+    // suite, and the one that grew when WP-16b gave the top bar a real pill.
+  }, 45_000);
 });
 
 describe('the palette searches events (§16.3)', () => {

@@ -2,7 +2,13 @@ import type { OverrideField } from '@compintel/contracts';
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 
-import { FIELD_GROUPS, resolve, type ResolvableClaim, type ResolvableOverride } from './resolve.js';
+import {
+  FIELD_GROUPS,
+  resolve,
+  selectionReasonOf,
+  type ResolvableClaim,
+  type ResolvableOverride,
+} from './resolve.js';
 
 /** §7.5's field resolution: override > trust > recency, and nothing invented. */
 
@@ -223,5 +229,77 @@ describe('nothing is averaged or invented (property)', () => {
       ),
       { numRuns: 300 },
     );
+  });
+});
+
+/**
+ * WP-16b: the drawer does not only show the selected value, it says why it won.
+ * The answer has to be read off the same ladder the selection used, or the
+ * explanation is a second opinion rather than an explanation.
+ */
+describe('selectionReasonOf (§7.5, WP-16b)', () => {
+  const reason = (
+    claims: readonly ResolvableClaim[],
+    overrides: readonly ResolvableOverride[] = [],
+    field: OverrideField = 'title',
+  ): string => selectionReasonOf(field, claims, resolve(claims, overrides).fields.get(field));
+
+  it('says ONLY_SOURCE when nobody else stated the field', () => {
+    expect(reason([claim({ field: 'title', valueJson: '"Only one"', sourceKey: 'site' })])).toBe(
+      'ONLY_SOURCE',
+    );
+  });
+
+  it('says HIGHEST_TRUST when the winner out-ranked the rest', () => {
+    expect(
+      reason([
+        claim({ field: 'title', valueJson: '"Site"', sourceKey: 'site', trustRank: 80 }),
+        claim({ field: 'title', valueJson: '"Devfolio"', sourceKey: 'devfolio', trustRank: 60 }),
+      ]),
+    ).toBe('HIGHEST_TRUST');
+  });
+
+  it('says MOST_RECENT when the ranks tie and recency decided it', () => {
+    expect(
+      reason([
+        claim({
+          field: 'title',
+          valueJson: '"Older"',
+          sourceKey: 'a',
+          trustRank: 60,
+          observedAt: T0,
+        }),
+        claim({
+          field: 'title',
+          valueJson: '"Newer"',
+          sourceKey: 'b',
+          trustRank: 60,
+          observedAt: T0 + MINUTE,
+        }),
+      ]),
+    ).toBe('MOST_RECENT');
+  });
+
+  it('says OVERRIDE whatever the sources said', () => {
+    expect(
+      reason(
+        [
+          claim({ field: 'title', valueJson: '"Site"', sourceKey: 'site', trustRank: 80 }),
+          claim({ field: 'title', valueJson: '"Devfolio"', sourceKey: 'devfolio', trustRank: 60 }),
+        ],
+        [{ field: 'title', valueJson: '"Corrected by hand"', clearedAt: null }],
+      ),
+    ).toBe('OVERRIDE');
+  });
+
+  it('reads the whole field group, because the group is what one record won', () => {
+    // Only the site states a currency, but the fee group is won as a whole, so
+    // "only one source" would be the wrong answer for `feeCurrency`.
+    const claims = [
+      claim({ field: 'feeMinor', valueJson: '10000', sourceKey: 'site', trustRank: 80 }),
+      claim({ field: 'feeCurrency', valueJson: '"INR"', sourceKey: 'site', trustRank: 80 }),
+      claim({ field: 'feeMinor', valueJson: '15000', sourceKey: 'devfolio', trustRank: 60 }),
+    ];
+    expect(reason(claims, [], 'feeCurrency')).toBe('HIGHEST_TRUST');
   });
 });

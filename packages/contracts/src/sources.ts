@@ -191,9 +191,6 @@ export type SourceStatus = z.infer<typeof SourceStatus>;
 export const SourceListResponse = z.object({ sources: z.array(SourceSummary) }).strict();
 export type SourceListResponse = z.infer<typeof SourceListResponse>;
 
-export const SourceStatusResponse = z.object({ sources: z.array(SourceStatus) }).strict();
-export type SourceStatusResponse = z.infer<typeof SourceStatusResponse>;
-
 /**
  * What an admin may change about a source. `complianceStatus` is **not** here
  * and never will be: a verdict comes from reading a site's Terms (D-26), which
@@ -224,72 +221,6 @@ export const SourceRefreshResult = z
   })
   .strict();
 export type SourceRefreshResult = z.infer<typeof SourceRefreshResult>;
-
-/**
- * §7.7's table, as code.
- *
- * The spec gives one sentence per failure kind with a source name and a time in
- * it; this builds that sentence from the same three inputs the row has, so the
- * log line, the API and WP-16b's screen cannot drift. Wording is the spec's,
- * with the examples' Devfolio replaced by the actual source.
- */
-export interface SourceMessageInput {
-  readonly sourceName: string;
-  readonly outcome: ScrapeOutcome;
-  readonly errorKind: ScrapeErrorKind | null;
-  /** Minutes since the last success; null when there has never been one. */
-  readonly freshnessMinutes: number | null;
-  /** Local time of the next attempt, already formatted (e.g. "3:45 PM"). */
-  readonly nextAttemptLabel: string | null;
-}
-
-function lastUpdate(freshnessMinutes: number | null): string {
-  if (freshnessMinutes === null) {
-    return 'There has been no successful update yet.';
-  }
-  if (freshnessMinutes < 60) {
-    return `Last successful update ${freshnessMinutes} min ago.`;
-  }
-  const hours = Math.floor(freshnessMinutes / 60);
-  return `Last successful update ${hours} h ago.`;
-}
-
-/** The one place a scrape outcome becomes something a person reads (§7.7). */
-export function sourceStatusMessage(input: SourceMessageInput): string {
-  const { sourceName: name } = input;
-  if (input.outcome === 'SKIPPED_OFFLINE') {
-    return `You're offline. Showing events from the last update. ${lastUpdate(input.freshnessMinutes)}`;
-  }
-  if (input.outcome === 'BLOCKED_BY_POLICY') {
-    return `Updates from ${name} are disabled by policy.`;
-  }
-  if (input.outcome === 'SKIPPED_BACKOFF') {
-    const when = input.nextAttemptLabel;
-    return `${name} is being given a rest after repeated failures.${when === null ? '' : ` Next attempt at ${when}.`}`;
-  }
-  if (input.outcome === 'SUCCESS') {
-    return `${name} is up to date.`;
-  }
-  if (input.outcome === 'PARTIAL') {
-    return `${name} updated, but part of its listing could not be read.`;
-  }
-  switch (input.errorKind) {
-    case 'RATE_LIMITED':
-      return `${name} asked us to slow down.${
-        input.nextAttemptLabel === null ? '' : ` Next attempt at ${input.nextAttemptLabel}.`
-      }`;
-    case 'ROBOTS_DISALLOWED':
-      return `Updates from ${name} are disabled by policy.`;
-    case 'BLOCKED':
-    case 'TLS':
-      return `${name}'s website has an invalid security certificate (or refuses automated readers), so it is skipped.`;
-    case 'SCHEMA_CHANGED':
-    case 'PARSE':
-      return `${name}'s page format changed, so its updates are paused. Administrators have been notified.`;
-    default:
-      return `Couldn't reach ${name}. ${lastUpdate(input.freshnessMinutes)}`;
-  }
-}
 
 /**
  * `PUT /admin/sources/:key/credential` (WP-11). Both halves required; the body is

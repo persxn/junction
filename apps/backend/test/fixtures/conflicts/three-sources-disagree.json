@@ -1,0 +1,68 @@
+{
+  "scenario": "three sources disagree",
+  "note": "HAND-WRITTEN FIXTURE (WP-16b). One hackathon described by the organizer's own site (trust 80), Devfolio (trust 60, seeded) and CTFtime (trust 40, seeded). The three agree on the official URL, the title, the event type, the mode and the start, so the only things they disagree about are the three §19 asks: the registration deadline (24 h and 5 h apart — far past §7.5's one hour), the prize and the team size. Ingested lowest trust first, so the resolution cannot be an accident of order. The drawer built on this fixture is the WP's acceptance criterion.",
+  "sources": [{ "key": "hackxyz-site", "trustRank": 80, "adapter": "CONFIGURED_LISTING" }],
+  "records": [
+    {
+      "sourceKey": "ctftime",
+      "externalKey": "9100",
+      "candidate": {
+        "title": "HackXYZ 2026 AI Hackathon",
+        "eventType": "HACKATHON",
+        "organizerName": "HackXYZ",
+        "mode": "OFFLINE",
+        "city": "Pune",
+        "countryCode": "IN",
+        "startsAt": "2026-11-21T04:30:00Z",
+        "endsAt": "2026-11-22T04:30:00Z",
+        "registrationDeadlineAt": "2026-11-13T23:29:00Z",
+        "teamMin": 3,
+        "teamMax": 6,
+        "prizeText": "$2,000",
+        "officialUrl": "https://hackxyz.example.edu/",
+        "editionYear": 2026
+      }
+    },
+    {
+      "sourceKey": "devfolio",
+      "externalKey": "hackxyz-2026",
+      "candidate": {
+        "title": "HackXYZ 2026 AI Hackathon",
+        "eventType": "HACKATHON",
+        "organizerName": "HackXYZ",
+        "mode": "OFFLINE",
+        "city": "Pune",
+        "countryCode": "IN",
+        "startsAt": "2026-11-21T04:30:00Z",
+        "endsAt": "2026-11-22T04:30:00Z",
+        "registrationDeadlineAt": "2026-11-14T18:29:00Z",
+        "teamMin": 2,
+        "teamMax": 5,
+        "prizeText": "₹1,50,000 and goodies",
+        "officialUrl": "https://www.hackxyz.example.edu",
+        "registrationUrl": "https://hackxyz-2026.devfolio.example/",
+        "editionYear": 2026
+      }
+    },
+    {
+      "sourceKey": "hackxyz-site",
+      "externalKey": "home",
+      "candidate": {
+        "title": "HackXYZ 2026 AI Hackathon",
+        "eventType": "HACKATHON",
+        "organizerName": "HackXYZ",
+        "mode": "OFFLINE",
+        "city": "Pune",
+        "countryCode": "IN",
+        "startsAt": "2026-11-21T04:30:00Z",
+        "endsAt": "2026-11-22T04:30:00Z",
+        "registrationDeadlineAt": "2026-11-13T18:29:00Z",
+        "teamMin": 2,
+        "teamMax": 4,
+        "prizeText": "₹2,00,000 prize pool",
+        "officialUrl": "https://hackxyz.example.edu/",
+        "editionYear": 2026
+      }
+    }
+  ]
+}

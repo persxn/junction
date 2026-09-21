@@ -3,8 +3,10 @@ import { expect, test, type Page } from '@playwright/test';
 import { readEnvironment } from './environment.js';
 
 /**
- * The Discover smoke (WP-16a step 10): sign in → Discover → two filters →
- * J/K/Enter → Save → Undo, on the web build against a real, seeded backend.
+ * The Discover smoke (WP-16a step 10, extended by WP-16b): sign in → Discover →
+ * two filters → J/K/Enter → Save → Undo, then the seeded conflict fixture's
+ * drawer with its real "Sources disagree" panel — on the web build against a
+ * real, seeded backend.
  *
  * The web build has no Tauri shell, so the page gets the shell's answers from a
  * stub of `window.__TAURI_INTERNALS__` — exactly the IPC surface the shell
@@ -114,4 +116,77 @@ test('sign in → Discover → two filters → J/K/Enter → Save → Undo', asy
     'aria-pressed',
     'false',
   );
+});
+
+/**
+ * WP-16b's acceptance criterion, in a real browser against a real backend: the
+ * seeded conflict fixture opens a drawer whose "Sources disagree" panel names
+ * every source and marks the value the app selected — and Esc puts the list
+ * back exactly where it was.
+ */
+test('the conflict fixture opens a drawer that says "Sources disagree"', async ({ page }) => {
+  const env = readEnvironment();
+  await stubShell(page);
+  await page.goto('/');
+
+  await page.getByLabel('Email').fill(env.email);
+  await page.getByLabel('Password').fill(env.password);
+  await page.getByRole('button', { name: 'Sign in' }).click();
+
+  // Find the seeded fixture by name rather than by id: the search box is the
+  // path a professor actually takes.
+  await page
+    .getByRole('navigation', { name: 'Main' })
+    .getByRole('link', { name: 'Discover' })
+    .click();
+  await page.getByRole('searchbox', { name: 'Search events' }).fill('HackXYZ');
+  await page.getByRole('searchbox', { name: 'Search events' }).press('Enter');
+
+  const card = page.getByRole('article').filter({ hasText: 'HackXYZ 2026' }).first();
+  await expect(card).toBeVisible();
+  await expect(card.getByTestId('conflict-marker')).toBeVisible();
+
+  const main = page.locator('#main');
+  await main.evaluate((element) => {
+    element.scrollTop = 120;
+  });
+  const before = await main.evaluate((element) => element.scrollTop);
+
+  await card.click();
+  await card.press('Enter');
+
+  const drawer = page.getByTestId('event-drawer');
+  await expect(drawer).toBeVisible();
+
+  const panel = page.getByTestId('sources-disagree');
+  await expect(panel).toBeVisible();
+  await expect(panel).toContainText('Sources disagree');
+  await expect(panel).toContainText('never merges values that disagree');
+  await expect(page.getByTestId('conflict-registrationDeadlineAt')).toContainText('hackxyz-site');
+  await expect(page.getByTestId('conflict-registrationDeadlineAt')).toContainText('devfolio');
+  await expect(page.getByTestId('conflict-registrationDeadlineAt')).toContainText('ctftime');
+
+  // Real provenance, real sources with D-32 attribution.
+  await expect(page.getByTestId('sources-list')).toContainText('CTFtime');
+  await expect(page.getByTestId('deadline-timeline')).toBeVisible();
+
+  const shot = process.env.E2E_DRAWER_SCREENSHOT;
+  if (shot !== undefined && shot !== '') {
+    await page.screenshot({ path: shot });
+    // The drawer scrolls: the second shot is the half a screenshot of the top
+    // never shows — the facts with their provenance, the deadlines, the
+    // sources with their attribution and the change history.
+    await drawer.evaluate((element) => {
+      element.scrollTop = element.scrollHeight;
+    });
+    await page.screenshot({ path: shot.replace(/\.png$/, '-lower.png') });
+    await drawer.evaluate((element) => {
+      element.scrollTop = 0;
+    });
+  }
+
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('event-drawer')).toHaveCount(0);
+  expect(await main.evaluate((element) => element.scrollTop)).toBe(before);
+  await expect(card).toBeFocused();
 });
