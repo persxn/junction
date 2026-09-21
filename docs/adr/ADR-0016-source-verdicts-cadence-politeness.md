@@ -42,3 +42,6 @@ publish schema.org Event JSON-LD.
 - Scraping Devpost despite its Terms: rejected (violates D-10 and the product principles).
 - Headless-browser rendering of Unstop before its Terms are read: rejected.
 - A strict 15-minute cadence for every source: unnecessary load on slow or human-moderated sources.
+
+## Amendments (v1.1.12, owner ruling R74 / D-34, 21 Sep 2026)
+- Devfolio and Unstop may additionally be read with the professor's own signed-in session (R74), read-only, when the professor provides one; without it they use their public pages exactly as above. `api.devfolio.co` stays forbidden either way. The owner also reconfirmed that Unstop's Terms contain no policy against automated reading (WP-13 records the verdict).

@@ -1,6 +1,6 @@
 # Competition Intel — Architecture Specification
 
-**Version:** 1.1.11 · **Date:** 21 Sep 2026 · **Status:** ACCEPTED — implementation baseline (amended after WP-00…WP-02b)
+**Version:** 1.1.12 · **Date:** 21 Sep 2026 · **Status:** ACCEPTED — implementation baseline (amended after WP-00…WP-02b)
 **Author:** Architect (Claude, Cowork session) · **Implementer:** Claude Code (worker session)
 
 > **How to use this document.** This is the implementation source of truth. The worker must not
@@ -27,6 +27,7 @@
 | 1.1.9 | 20 Sep 2026 | Rulings R58–R61: polite client, compliance gate, source backoff, snapshots (see §21). |
 | 1.1.10 | 20 Sep 2026 | Rulings R62–R63: pinned fixtures, second claims instead of conversions (see §21). |
 | 1.1.11 | 20 Sep 2026 | Rulings R64–R66: edition guard, dedup settings, reversible merges (see §21). |
+| 1.1.12 | 21 Sep 2026 | Owner ruling R74: signed-in reading with the professor's own session for approved sources; §7.2 "Never" amended; built in WP-14 (see §21, D-34). R70–R73 stay reserved for WP-13, which lands as 1.1.13. |
 
 ---
 
@@ -846,8 +847,8 @@ interface AdapterContext {
   (15 → 30 → 60 min … max 12 h).
 - Identifies itself: `User-Agent: CompIntel/<version> (+mailto:<scraper.contactEmail>)`. The setting
   `scraper.contactEmail` is required by the setup wizard; **no scraping runs before setup is complete.**
-- **Never:** log in, solve or bypass CAPTCHAs or anti-bot systems, rotate IPs or user agents, disable
-  TLS validation, use credentials other than a documented API key, call undocumented private APIs, or
+- **Never:** log in (except with the professor's **own** session on an approved source whose Terms allow it — R74), solve or bypass CAPTCHAs or anti-bot systems, rotate IPs or user agents, disable
+  TLS validation, use credentials other than a documented API key or the professor's own session (R74), call undocumented private APIs, or
   ignore a ToS prohibition.
 - Conditional GETs + detail fetches only when a listing item's hash changed; detail fetches per run are
   capped (the remainder continues next run).
@@ -1633,6 +1634,7 @@ ative\ (better-sqlite3 `nativeBinding`); the bundle must run from a folder with 
 | R64 The edition guard beats the URL rule | Two candidates whose non-null `edition_year` differ are NEW — never auto-merged and never even written as a `dedup_candidates` row — **even when the normalized official or registration URL is identical**, because yearly editions reuse one URL ("HackX 2025" / "HackX 2026"). A null year on either side leaves the ordinary score to decide. | §7.5 |
 | R65 Thresholds and weights are settings | `dedup.autoMergeThreshold` (0.90), `dedup.candidateThreshold` (0.70) and the four §7.5 weights (title 0.45, organizer 0.20, date proximity 0.20, location/mode 0.15) live in the typed settings registry, with a schema check that the weights sum to 1.0 and that candidate < autoMerge. Scoring reads them at call time so fixtures can retune them with no code change. | §7.5 |
 | R66 A merge deletes nothing | The survivor is the event with the earlier `first_seen_at` (tie: more source records); the other keeps its row with `visibility = MERGED` and `merged_into_event_id`, and its source records are re-pointed. Unmerge re-points them back to a restored event. Source records, overrides, watchlist entries and per-user state are never deleted, and both directions write `event_changes`. | §7.5, §6.2 |
+| R74 Signed-in reading with the professor's own session (owner ruling, 21 Sep 2026) | For an APPROVED or APPROVED_WITH_LIMITS source whose Terms do not prohibit it (Devfolio, Unstop), the app may read pages with the professor's **own** session: a cookie pasted from their browser, or one captured from a login window packaged with the app. This amends §7.2's "never log in" for that case only: the app never creates accounts, never uses anyone else's session, never solves or bypasses a CAPTCHA, and uses the session **read-only** — GET requests to that source's allowed hosts, nothing submitted, registered or changed. robots.txt, `allowed_paths_json` (including `!api.devfolio.co`), the effective delay, request caps and backoff apply unchanged. The session is stored like an API key (secret setting, never logged or exported, sent only to its own host), and an expired or missing session is a source state, never a crash; the source then falls back to its public pages. **D-29 is unchanged:** the professor's own registrations and teams may be stored; other people's participant, judge, mentor and contact data is still dropped at the adapter boundary. The owner accepts the account risk. Built in WP-14. | §7.2, D-26, D-29, D-34, ADR-0007, ADR-0016, WP-14 |
 | R67 Palette layer | The `--ci-*` semantic tokens from WP-06 are a contract and are never renamed; flavours are a palette layer beneath them (Catppuccin Latte default light, Mocha default dark, Frappé/Macchiato optional, Classic = the WP-06 neutrals). The measured contrast test decides: accent hues take non-text roles (borders, glows, chart marks, fills) and text uses the `text`/`subtext` ramp until every pair passes in every flavour. A failing pair is remapped, never exempted. | §16.3, WP-33, ADR-0019 |
 | R68 Effect tiers | One `appearance.effects` setting: CALM · STANDARD (default) · SHOWCASE. `prefers-reduced-motion: reduce` forces CALM regardless of the stored value. No effect carries meaning alone — "never colour alone" (§16.3) extends to "never glow alone", and CALM must lose no information. Decorative animation uses compositor-only properties (`transform`/`opacity`/`filter`) and **stops when the document is hidden or the window is in the tray**, so WP-32's 72-hour soak passes with SHOWCASE on. RGB hue-cycle presets apply to borders, glows and accent fills only — never to text or to a status colour. | §16.3, WP-33, WP-32 |
 | R69 Insights are computed, never invented | Every number on the Insights surface comes from a deterministic SQL read model over rows the app already holds — no AI commentary (§9 is read-only), no estimates, no extrapolation, and no new data collection or telemetry. A fresh install gets an empty state that says what will appear, not a page of zeros. Milestone celebrations are permitted at STANDARD+ as one-shot, dismissible acknowledgements of recorded outcomes; streak-loss warnings, artificial urgency and counters that exist only to be incremented are not. | §16.2, WP-33, D-11, ADR-0019 |

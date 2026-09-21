@@ -41,6 +41,7 @@ When the architect resolves an open question, update its row (status → RESOLVE
 | D-31 | RESOLVED (v1.1) | Case/quiz/marketing/cultural competitions out of MVP scope (event-type policy). | §7.4. |
 | D-32 | RESOLVED (v1.1) | Attribution on every event; no republishing; no model training on source data. | §7.2. |
 | D-33 | RESOLVED (v1.1) | Real student data only on disk-encrypted machines; build machine uses synthetic data. | ADR-0018. |
+| D-34 | RESOLVED (owner, 21 Sep 2026) | Approved sources whose Terms allow it (Devfolio, Unstop) may be read with the professor's **own** session — a pasted browser cookie or an in-app login window — read-only, under the same gate, robots, delays and caps. Account risk accepted by the owner. D-29 still applies to other people's data. | R74, WP-14, ADR-0007, ADR-0016. |
 
 ## Open questions
 

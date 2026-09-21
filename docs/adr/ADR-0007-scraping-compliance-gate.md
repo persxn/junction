@@ -34,3 +34,6 @@ configurable college sites. ToS and robots.txt must be checked before any scrape
 - Source verdicts, cadence, delay rule, PII stripping, URL-import restrictions and attribution are recorded in **ADR-0016**.
 - Schema.org JSON-LD is a URL-import fallback, not a primary strategy (0 of 117 Indian campus sites publish it); RSS/Atom feeds and per-site selectors are used for campus sites.
 - TLS validation is never disabled; 403/WAF → BLOCKED, never retried with another User-Agent.
+
+## Amendments (v1.1.12, owner ruling R74 / D-34, 21 Sep 2026)
+- The "Never: log in … use credentials" rule is narrowed: an approved source whose Terms allow it may be read with the professor's **own** session (pasted cookie or in-app login window). Read-only GETs only, same gate, robots, delays and caps; the session is a secret, sent only to its own host; an expired session is a source state. No account creation, no one else's session, no CAPTCHA solving. D-29 still drops other people's personal data. Built in WP-14.

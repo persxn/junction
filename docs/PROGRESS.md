@@ -24,6 +24,9 @@
   credential routes. Pure `domain/series/`; `listMainFeed()` hides rounds, `listContestCalendar()` shows them.
   Fixed a Windows bug: a `:` in an external key hid snapshots in an NTFS stream. **2555 tests.** No new deps.
   `clist:smoke` **skipped** (U4 open).
+- **Owner ruling R74 / D-34 (21 Sep 2026, spec v1.1.12):** Devfolio and Unstop may be read with the professor's
+  own session (pasted cookie or in-app login window), read-only, same gate; built in **WP-14** (prompt amended).
+  §7.2 "Never", ADR-0007 and ADR-0016 amended. D-29 still drops other people's data. WP-13 lands as v1.1.13.
 - **Next: WP-12.** Still owed: the WP-09b live smoke (needs `scraper.contactEmail`) and U4 for CLIST.
   WP-08b's two questions are still open (handoff §6): the gazetteer is 68.5 MB of
   which 95% are zero-population hamlets that also *harm* matching — §4.17 says "towns/cities" where
