@@ -110,12 +110,22 @@ export const GEO_ERROR_CODES = [
   'GEO_POLICY_INVALID',
 ] as const;
 
-/** Search and the `EventQuery` DSL (§8). */
+/**
+ * Search and the `EventQuery` DSL (§8). WP-15a renamed the placeholder
+ * `SEARCH_QUERY_INVALID` to `SEARCH_INVALID_QUERY`, the name its prompt fixes;
+ * nothing had raised the old one.
+ */
 export const SEARCH_ERROR_CODES = [
-  'SEARCH_QUERY_INVALID',
+  'SEARCH_INVALID_QUERY',
   'SEARCH_INDEX_UNAVAILABLE',
   'SEARCH_TOO_BROAD',
   'SEARCH_SAVED_NOT_FOUND',
+  /** WP-15a: a cursor this backend did not issue, was altered, or belongs to another query. */
+  'SEARCH_INVALID_CURSOR',
+  /** WP-15a: `text` over its 200 characters (§8.1). */
+  'SEARCH_TEXT_TOO_LONG',
+  /** WP-15a: an alias for this term exists and `replace` was not set. */
+  'SEARCH_ALIAS_EXISTS',
 ] as const;
 
 /**

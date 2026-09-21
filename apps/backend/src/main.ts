@@ -31,6 +31,7 @@ import { loadInstitutions, loadSeedFile, seedInstitutions } from './modules/geo/
 import { EventsRepository } from './modules/events/repository.js';
 import { EventsService } from './modules/events/service.js';
 import { createEventsModule } from './modules/events/wiring.js';
+import { createSearchModule } from './modules/search/wiring.js';
 import { SourceRecordsRepository } from './modules/sources/records.js';
 import { SourcesRepository } from './modules/sources/repository.js';
 import { SourcesService } from './modules/sources/service.js';
@@ -168,6 +169,19 @@ async function main(): Promise<void> {
     void eventsService;
     // WP-10: records become events inline with ingest; merges and the review API.
     const eventsModule = createEventsModule({ db, geocoder, settings, audit, logger });
+    // WP-15a: search, event detail and aliases. The vocabulary is rebuilt at
+    // start (cheap, and a restored database may carry a stale one) and after
+    // every ingest.
+    const searchModule = createSearchModule({ db, audit, events: eventsModule.events, logger });
+    searchModule.vocabulary.refresh();
+    const refreshVocabulary = (): void => {
+      try {
+        searchModule.vocabulary.refresh();
+      } catch (error) {
+        // The write already committed; a stale vocabulary only weakens typo hints.
+        logger.error({ err: error }, 'refreshing the search vocabulary failed');
+      }
+    };
 
     // Event ingestion (§7, rulings R58-R61). The transport is the only place a
     // socket is opened, and it is injected here and nowhere else: every test
@@ -219,6 +233,7 @@ async function main(): Promise<void> {
       logger,
       snapshots,
       credentials,
+      onIngested: refreshVocabulary,
     });
     const sourcesService = new SourcesService({
       sources: sourcesRepository,
@@ -228,6 +243,7 @@ async function main(): Promise<void> {
       logger,
       settings,
       runtime: scrapeRuntime,
+      onIngested: refreshVocabulary,
     });
 
     // Constructed before the HTTP layer so its `resources` hook is registered
@@ -267,6 +283,7 @@ async function main(): Promise<void> {
       sources: () => sourcesService,
       imports: () => imports,
       review: () => eventsModule.review,
+      search: () => searchModule,
       onShutdownRequested: () => {
         lifecycle.start('api');
       },

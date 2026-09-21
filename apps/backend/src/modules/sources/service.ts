@@ -53,6 +53,8 @@ export interface SourcesServiceDependencies {
   readonly settings?: SettingsStore;
   /** Everything `runScrape` needs except the source and the adapter. */
   readonly runtime: Omit<ScrapeRunDependencies, 'sources' | 'records' | 'clock' | 'logger'>;
+  /** WP-15a: called after every run that stored items, so the typo vocabulary is current. */
+  readonly onIngested?: () => void;
 }
 
 export interface SourcesServiceContext {
@@ -300,7 +302,21 @@ export class SourcesService {
         logger: this.#deps.logger,
       },
       { source, adapter, trigger, ...(signal === undefined ? {} : { signal }) },
-    );
+    ).then((run) => {
+      if (run.itemsNew + run.itemsUpdated > 0) {
+        this.#afterIngest();
+      }
+      return run;
+    });
+  }
+
+  /** A failed vocabulary refresh must never turn a good scrape into a failed one. */
+  #afterIngest(): void {
+    try {
+      this.#deps.onIngested?.();
+    } catch (error) {
+      this.#deps.logger.error({ err: error }, 'refreshing the search vocabulary failed');
+    }
   }
 
   /** Sources with an adapter, approved and switched on — the ones that get a job (R22). */

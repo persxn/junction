@@ -24,7 +24,7 @@ export default defineConfig({
           // DOM would let a test pass on something that cannot exist in the
           // backend process.
           environment: 'node',
-          include: ['{apps,packages,tools}/*/src/**/*.test.ts'],
+          include: ['{apps,packages,tools}/*/src/**/*.test.ts', 'tools/perf/*/src/**/*.test.ts'],
           exclude: ['apps/desktop/**'],
           clearMocks: true,
           // The backend process tests spawn a real Node child and wait for its

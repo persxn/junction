@@ -69,6 +69,8 @@ export interface ImportServiceDependencies {
   /** WP-11/R74: an API key or the professor's own session, per source. */
   readonly credentials?: (source: SourceRow) => SourceCredential | undefined;
   readonly previewsPerMinute?: number;
+  /** WP-15a: called after every successful write, so the typo vocabulary sees the event. */
+  readonly onIngested?: () => void;
 }
 
 export interface ImportServiceContext {
@@ -186,7 +188,7 @@ export class EventImportService {
       input.raw === undefined
         ? undefined
         : this.#deps.snapshots?.write(input.source.key, input.candidate.externalKey, input.raw);
-    return writeImportedEvent(
+    const result = writeImportedEvent(
       {
         records: this.#deps.records,
         linker: this.#deps.linker,
@@ -209,6 +211,8 @@ export class EventImportService {
         at,
       },
     );
+    this.#deps.onIngested?.();
+    return result;
   }
 
   /** The professor's values, normalized exactly as a source's would be. */

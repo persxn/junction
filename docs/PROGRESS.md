@@ -15,27 +15,22 @@
   §7.2 "Never", ADR-0007 and ADR-0016 amended. D-29 still drops other people's data. WP-13 lands as v1.1.13.
 - **WP-12 DONE** (approved 21 Sep 2026, `docs/handoff/WP-12.md`) — Devfolio adapter, per-subdomain robots,
   `api.devfolio.co` refused before the transport, PII allowlist; migration 0010; cheerio 1.2.0. Live smoke owed.
-- **WP-13 PARTIAL** (21 Sep 2026, `docs/handoff/WP-13.md`) — Unstop adapter: `/api/public/*` listing (hackathons +
-  competitions, paginated) + `/api/public/competition/{id}` details, Angular `ng-state` HTML fallback, deny list before
-  the transport (`SOURCE_PATH_FORBIDDEN`), quizzes/case studies stored POLICY_HIDDEN. R70–R73 (spec 1.1.13), U3 DONE,
-  migration **0011** (R73 `compliance_review_due_at`, Unstop row). Fixed a WP-10 bug: policies ignored type confidence.
-- **WP-13 follow-up (21 Sep 2026)** — `unstop:capture` is the owed capture *and* smoke in one gated command (≤ 4
-  requests, people-shaped keys nulled, fixtures + `.meta.json`, request log, R71 judged). It refuses while
-  `scraper.contactEmail` is unset, so **fixtures stay synthetic and the capture is owed** — no request has reached
-  unstop.com. Fixed: no `src/tools/` tool could start in a checkout (`resolveResources`), so `scrape:once` and
-  `clist:smoke` were broken too.
+- **WP-13 PARTIAL** (21 Sep 2026, `docs/handoff/WP-13.md`) — Unstop adapter via `/api/public/*` + `ng-state` fallback,
+  deny list before the transport, R70–R73, migration 0011. `unstop:capture` (capture + smoke, gated) refuses while
+  `scraper.contactEmail` is unset, so **fixtures stay synthetic and the capture is owed**.
 - **Owner product flow (21 Sep 2026):** each professor installs the app; onboarding opens the packaged sign-in browser
   for every approved source; the UA contact is that professor's own address (R74, WP-14 prompt).
-- **WP-14 DONE** (22 Sep 2026, `docs/handoff/WP-14.md`) — manual entry + URL import + signed-in sessions (R74/D-34).
-  Dispatch is pure over the live `sources` rows: **Devpost makes zero requests, proved by a transport spy**; an approved
-  domain goes to its adapter's `detail()` (new `itemFromUrl`), anything else to one robots-checked page (JSON-LD → OG →
-  heuristics). Both writes go through WP-10's linker under the seeded `manual` / `url-import` rows (migration **0012**),
-  and every field a professor states becomes an `event_overrides` row that survives the next scrape. Sessions: cookie in
-  secret settings, sent only to the source's own hosts (a `SourceCredential.hosts` check in the client), 401/403/login
-  redirect → EXPIRED with **no backoff**, packaged Tauri sign-in window with its own profile + a domain filter (6 Rust
-  tests). UI: `/events/new` form with per-field provenance chips, Admin → Sources sessions panel. **2739 tests, 61 Rust.**
-- **Next: WP-15a** (search and `EventQuery`). Roadmap 24 done, 24 remaining.
-  WP-08b's two questions are still open (handoff §6): the gazetteer is 68.5 MB of
+- **WP-14 DONE** (22 Sep 2026, `docs/handoff/WP-14.md`) — manual entry + URL import (Devpost: zero requests, spy-proved)
+  through WP-10's linker (migration 0012, overrides survive scrapes) + signed-in sessions (R74/D-34, own-host only,
+  EXPIRED without backoff, Tauri sign-in window). UI `/events/new`, Admin → Sources sessions. 2739 tests, 61 Rust.
+- **WP-15a DONE** (22 Sep 2026, `docs/handoff/WP-15a.md`) — strict `EventQuery` + pure planner (A6/A7 golden-tested),
+  migrations **0013** (vocabulary, aliases, `event_user_state`/`watchlist_items` pulled forward from WP-16a) and **0014**
+  (FTS5 words + trigram via view `event_search_source`, 3 triggers, backfill, alias seed); typo = vocabulary + OSA
+  distance, separate from trigram; signed keyset cursors; `POST /search/events`, `GET /events/:id`, alias admin.
+  `pnpm perf:search` (20k events, outside verify): p95 filters 21.7 · text 34.7 · distance 31.0 · detail 0.9 ms.
+  `categories`/`tags` filters 400 until stored (Q: where do tags come from?). Journal `when` ordering now tested.
+  **2873 tests.** Next: **WP-15b**. Roadmap 25 done, 23 remaining.
+- WP-08b's two questions are still open (handoff §6): the gazetteer is 68.5 MB of
   which 95% are zero-population hamlets that also *harm* matching — §4.17 says "towns/cities" where
   R53 says feature class P; and GeoNames has almost no Indian campuses, so the INSTITUTION rung is
   mostly unreachable. Q12 stays OPEN in ARCHITECTURE.md §2 and DECISIONS.md.

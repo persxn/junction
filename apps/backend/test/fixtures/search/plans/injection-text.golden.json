@@ -1,0 +1,27 @@
+{
+  "campus": {
+    "lat": 10.7594,
+    "lon": 78.8149
+  },
+  "excludeHidden": false,
+  "includeEnded": false,
+  "includeRecurring": false,
+  "limit": 25,
+  "now": 1790058600000,
+  "sort": {
+    "basis": "TEXT_SCORE",
+    "direction": "ASC",
+    "requested": "RELEVANCE"
+  },
+  "text": {
+    "raw": "NEAR(hack* OR \"x\"",
+    "trigram": null,
+    "words": [
+      "near",
+      "hack",
+      "or",
+      "x"
+    ]
+  },
+  "watchlistedOnly": false
+}

@@ -1,0 +1,40 @@
+{
+  "campus": {
+    "lat": 10.7594,
+    "lon": 78.8149
+  },
+  "distance": {
+    "center": {
+      "lat": 10.7594,
+      "lon": 78.8149
+    },
+    "includeOnline": true,
+    "includeUnknown": true,
+    "maxKm": 300,
+    "ranges": {
+      "lon": [
+        {
+          "max": 81.53978771814644,
+          "min": 76.09001228185355
+        }
+      ],
+      "maxLat": 13.457361092173613,
+      "minLat": 8.061438907826386
+    }
+  },
+  "excludeHidden": false,
+  "includeEnded": false,
+  "includeRecurring": false,
+  "limit": 50,
+  "modes": [
+    "OFFLINE",
+    "ONLINE"
+  ],
+  "now": 1790058600000,
+  "sort": {
+    "basis": "DISTANCE",
+    "direction": "ASC",
+    "requested": "DISTANCE"
+  },
+  "watchlistedOnly": false
+}

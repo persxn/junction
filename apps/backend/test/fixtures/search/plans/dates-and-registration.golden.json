@@ -1,0 +1,30 @@
+{
+  "campus": {
+    "lat": 10.7594,
+    "lon": 78.8149
+  },
+  "eventDate": {
+    "fromMs": 1798655400000,
+    "toMs": 1798828199999
+  },
+  "excludeHidden": true,
+  "includeEnded": true,
+  "includeRecurring": true,
+  "limit": 25,
+  "now": 1790058600000,
+  "registration": {
+    "closingSoonUntil": 1790663400000,
+    "includeUnknown": false,
+    "states": [
+      "OPEN",
+      "CLOSING_SOON"
+    ],
+    "toMs": 1792088999999
+  },
+  "sort": {
+    "basis": "DEADLINE",
+    "direction": "ASC",
+    "requested": "RELEVANCE"
+  },
+  "watchlistedOnly": true
+}

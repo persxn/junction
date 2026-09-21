@@ -1,0 +1,44 @@
+{
+  "campus": {
+    "lat": 10.7594,
+    "lon": 78.8149
+  },
+  "eventTypes": [
+    "HACKATHON"
+  ],
+  "excludeHidden": false,
+  "fee": {
+    "freeOnly": false,
+    "includeUnknown": true,
+    "max": {
+      "currency": "INR",
+      "minor": 50000
+    }
+  },
+  "includeEnded": false,
+  "includeRecurring": false,
+  "limit": 25,
+  "modes": [
+    "OFFLINE",
+    "HYBRID"
+  ],
+  "now": 1790058600000,
+  "sort": {
+    "basis": "TEXT_SCORE",
+    "direction": "ASC",
+    "requested": "RELEVANCE"
+  },
+  "teamSize": {
+    "fits": 3,
+    "includeUnknown": false
+  },
+  "text": {
+    "raw": "ML hackathon",
+    "trigram": null,
+    "words": [
+      "ml",
+      "hackathon"
+    ]
+  },
+  "watchlistedOnly": false
+}

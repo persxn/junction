@@ -10,6 +10,7 @@ export * from './ids.js';
 export * from './jobs.js';
 export * from './permissions.js';
 export * from './policy.js';
+export * from './search.js';
 export * from './setup.js';
 export * from './shell.js';
 export * from './sources.js';

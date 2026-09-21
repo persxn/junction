@@ -2,6 +2,7 @@ packages:
   - 'apps/*'
   - 'packages/*'
   - 'tools/*'
+  - 'tools/perf/*'
 
 # Only these packages may run install scripts (ARCHITECTURE.md §15).
 # Every entry must be justified in the WP report that adds it.

@@ -66,7 +66,9 @@ export default tseslint.config(
   // mechanical and shallow still catches the mistake people actually make, which
   // is reaching for `drizzle-orm` because the query was easier to write inline.
   {
-    files: ['apps/backend/src/domain/**/*.ts'],
+    // WP-15a: a module's own `domain/` folder (modules/search/domain) is held to
+    // the same rule as src/domain.
+    files: ['apps/backend/src/domain/**/*.ts', 'apps/backend/src/modules/*/domain/**/*.ts'],
     rules: {
       'no-restricted-imports': [
         'error',

@@ -292,11 +292,25 @@ export function openEventsHarness(startIso = '2026-09-01T00:00:00.000Z'): Events
   };
 }
 
-/** Row counts of every table, for R66's "nothing deleted" comparisons. */
+/**
+ * Row counts of every table, for R66's "nothing deleted" comparisons.
+ *
+ * FTS5 virtual tables and their shadow tables (`event_fts_data`, `_idx`, …) are
+ * left out: their row counts are index segments, which change whenever a title
+ * is reindexed, and say nothing about whether data was deleted.
+ */
 export function tableCounts(database: MigratedDatabase): Record<string, number> {
-  const tables = database.db.raw
-    .prepare("select name from sqlite_master where type = 'table' and name not like 'sqlite_%'")
-    .all() as { name: string }[];
+  const all = database.db.raw
+    .prepare(
+      "select name, sql from sqlite_master where type = 'table' and name not like 'sqlite_%'",
+    )
+    .all() as { name: string; sql: string | null }[];
+  const virtual = all
+    .filter((table) => /^create virtual table/i.test(table.sql ?? ''))
+    .map((table) => table.name);
+  const tables = all.filter(
+    (table) => !virtual.some((name) => table.name === name || table.name.startsWith(`${name}_`)),
+  );
   const counts: Record<string, number> = {};
   for (const { name } of tables) {
     counts[name] = (

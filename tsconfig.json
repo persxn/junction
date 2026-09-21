@@ -13,6 +13,9 @@
     },
     {
       "path": "./tools/gazetteer"
+    },
+    {
+      "path": "./tools/perf/search"
     }
   ]
 }

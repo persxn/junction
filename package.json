@@ -14,6 +14,7 @@
     "typecheck": "tsc -b",
     "test": "vitest run",
     "audit:deps": "pnpm audit --audit-level=moderate",
+    "perf:search": "tsc -b tools/perf/search && pnpm --filter @compintel/perf-search perf",
     "gazetteer:build": "pnpm --filter @compintel/gazetteer-tools exec tsx src/build.ts",
     "verify": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
     "clean": "tsc -b --clean"

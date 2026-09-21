@@ -7,4 +7,5 @@ export * from './identity.js';
 export * from './institutions.js';
 export * from './job-state.js';
 export * from './organization.js';
+export * from './search.js';
 export * from './sources.js';

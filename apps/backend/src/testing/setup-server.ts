@@ -9,6 +9,7 @@ import { UsersRepository } from '../modules/users/repository.js';
 import { UsersService } from '../modules/users/service.js';
 import { AdapterRegistry } from '../sources/registry.js';
 import { Geocoder } from '../modules/geo/geocoder.js';
+import { createSearchModule, type SearchModule } from '../modules/search/wiring.js';
 import { createEventsModule, type EventsModule } from '../modules/events/wiring.js';
 import { EventImportService } from '../modules/events/import/service.js';
 import { unavailableGazetteer } from '../platform/gazetteer.js';
@@ -40,6 +41,8 @@ export interface SetupTestServer {
   readonly imports: EventImportService;
   /** WP-10's linker, merges and review API, on the same database. */
   readonly events: EventsModule;
+  /** WP-15a's search, detail and aliases. */
+  readonly search: SearchModule;
   /** Empty in WP-09a; a test registers an adapter when it needs one. */
   readonly registry: AdapterRegistry;
   readonly settings: SettingsStore;
@@ -130,7 +133,10 @@ export async function startSetupTestServer(
     logger: silentLogger,
   });
 
+  const search = createSearchModule({ db: database.db, audit, events: events.events });
+
   const server = await startTestServer({
+    search: () => search,
     auth: () => auth,
     setup: () => setup,
     users: () => users,
@@ -148,6 +154,7 @@ export async function startSetupTestServer(
     sources,
     imports,
     events,
+    search,
     registry,
     settings,
     audit,

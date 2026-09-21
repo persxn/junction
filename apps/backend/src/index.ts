@@ -128,3 +128,7 @@ export {
 } from './platform/shutdown.js';
 export { StartupError, toStartupFailure } from './platform/startup-error.js';
 export { APP_VERSION } from './platform/version.js';
+export { AuditLog } from './platform/audit.js';
+export { fixedClock, type Clock } from './platform/time.js';
+export { EventsRepository } from './modules/events/repository.js';
+export { createSearchModule, type SearchModule } from './modules/search/wiring.js';

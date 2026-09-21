@@ -86,10 +86,13 @@ describe('ErrorCode', () => {
       'GEO_PLACE_UNKNOWN',
       'GEO_COORDINATES_INVALID',
       'GEO_POLICY_INVALID',
-      'SEARCH_QUERY_INVALID',
+      'SEARCH_INVALID_QUERY',
       'SEARCH_INDEX_UNAVAILABLE',
       'SEARCH_TOO_BROAD',
       'SEARCH_SAVED_NOT_FOUND',
+      'SEARCH_INVALID_CURSOR',
+      'SEARCH_TEXT_TOO_LONG',
+      'SEARCH_ALIAS_EXISTS',
       'IMPORT_FILE_UNREADABLE',
       'IMPORT_FORMAT_UNSUPPORTED',
       'IMPORT_SOURCE_NOT_ALLOWED',
@@ -298,7 +301,7 @@ describe('the error-code domains (ruling R12)', () => {
   it('carries the blocks M1 needs', () => {
     expect(ERROR_CODES).toContain('EVENT_VERSION_CONFLICT');
     expect(ERROR_CODES).toContain('GEO_PLACE_UNKNOWN');
-    expect(ERROR_CODES).toContain('SEARCH_QUERY_INVALID');
+    expect(ERROR_CODES).toContain('SEARCH_INVALID_QUERY');
     expect(ERROR_CODES).toContain('IMPORT_SOURCE_NOT_ALLOWED');
     expect(ERROR_CODES).toContain('SOURCE_ROBOTS_DISALLOWED');
   });
