@@ -44,7 +44,7 @@ function read(file: string): string {
 }
 
 describe('no test opens an internet socket', () => {
-  it('references the real transport from main.ts and the two dev-only tools', () => {
+  it('references the real transport from main.ts and the dev-only tools', () => {
     const referencing = sourceFiles().filter((file) => {
       const text = read(file);
       return (
@@ -54,20 +54,26 @@ describe('no test opens an internet socket', () => {
         !file.endsWith(path.join('scraping', 'offline-suite.test.ts'))
       );
     });
-    // `tools/scrape-once.ts` (WP-09b) and `tools/clist-smoke.ts` (WP-11) are
-    // manual live smokes: run by hand, bundled nowhere (the next test),
-    // imported by nothing, and never by a test.
+    // `tools/scrape-once.ts` (WP-09b), `tools/clist-smoke.ts` (WP-11) and
+    // `tools/unstop-capture.ts` (WP-13) are manual live tools: run by hand,
+    // bundled nowhere (the next test), imported by nothing, never by a test.
     expect(
       referencing.map((file) => path.relative(SOURCE_ROOT, file).split(path.sep).join('/')).sort(),
-    ).toEqual(['main.ts', 'tools/clist-smoke.ts', 'tools/scrape-once.ts']);
+    ).toEqual([
+      'main.ts',
+      'tools/clist-smoke.ts',
+      'tools/scrape-once.ts',
+      'tools/unstop-capture.ts',
+    ]);
   });
 
   it('keeps the dev tools out of the bundle and out of every import graph', () => {
     const bundle = read(path.join(SOURCE_ROOT, 'tools', 'bundle.ts'));
     expect(bundle).not.toContain('scrape-once');
     expect(bundle).not.toContain('clist-smoke');
+    expect(bundle).not.toContain('unstop-capture');
     const importers = sourceFiles().filter((file) =>
-      /from '[^']*(?:scrape-once|clist-smoke)\.js'/.test(read(file)),
+      /from '[^']*(?:scrape-once|clist-smoke|unstop-capture)\.js'/.test(read(file)),
     );
     expect(importers.map((file) => path.relative(SOURCE_ROOT, file))).toEqual([]);
   });

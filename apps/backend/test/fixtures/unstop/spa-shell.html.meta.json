@@ -1,0 +1,8 @@
+{
+  "synthetic": true,
+  "captured": false,
+  "url": null,
+  "timestamp": null,
+  "status": null,
+  "note": "Not a capture: a client-rendered Angular shell with no embedded state, written by hand for the HTML fallback tests (WP-13 step 6). Not a capture. WP-13 step 4 is owed until this installation has a professor identity; `pnpm --filter @compintel/backend unstop:capture --replace` writes the real one over it."
+}

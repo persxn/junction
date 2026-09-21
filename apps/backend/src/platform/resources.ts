@@ -70,6 +70,10 @@ export function resolveResources(config: Config, entryUrl: string): ResourcePath
     config.migrationsDir,
     path.join(baseDir, 'migrations'),
     path.join(baseDir, '..', 'migrations'),
+    // A developer's tool is one directory deeper than `src/main.ts`: without
+    // this, `scrape:once`, `clist:smoke` and `unstop:capture` cannot start in a
+    // checkout at all.
+    path.join(baseDir, '..', '..', 'migrations'),
   ]);
   if (migrationsDir === undefined) {
     throw new StartupError(

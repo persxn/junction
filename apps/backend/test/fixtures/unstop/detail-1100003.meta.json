@@ -4,5 +4,5 @@
   "url": null,
   "timestamp": null,
   "status": null,
-  "note": "Not a capture. WP-13's live capture is owed (no professor identity on the dev machine yet)."
+  "note": "Not a capture. WP-13 step 4 is owed until this installation has a professor identity; `pnpm --filter @compintel/backend unstop:capture --replace` writes the real one over it."
 }

@@ -61,6 +61,16 @@ describe('resolveResources', () => {
     expect(resolved.migrationsDir).toBe(path.join(root, 'src', '..', 'migrations'));
   });
 
+  it('looks two levels up, where a tool under src/tools/ starts (WP-13)', () => {
+    const root = tempDir('checkout');
+    mkdirSync(path.join(root, 'migrations', 'meta'), { recursive: true });
+    writeFileSync(path.join(root, 'migrations', 'meta', '_journal.json'), '{"entries":[]}');
+    mkdirSync(path.join(root, 'src', 'tools'), { recursive: true });
+
+    const resolved = resolveResources(testConfig(), entryIn(path.join(root, 'src', 'tools')));
+    expect(resolved.migrationsDir).toBe(path.join(root, 'src', 'tools', '..', '..', 'migrations'));
+  });
+
   it('lets the config override both paths', () => {
     const bundle = fakeBundle();
     const override = fakeBundle();

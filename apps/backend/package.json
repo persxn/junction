@@ -21,7 +21,8 @@
     "bundle": "tsx src/tools/bundle.ts",
     "smoke:bundle": "pnpm bundle && tsx src/tools/smoke-bundle.ts",
     "scrape:once": "tsx src/tools/scrape-once.ts",
-    "clist:smoke": "tsx src/tools/clist-smoke.ts"
+    "clist:smoke": "tsx src/tools/clist-smoke.ts",
+    "unstop:capture": "tsx src/tools/unstop-capture.ts"
   },
   "dependencies": {
     "@compintel/contracts": "workspace:*",

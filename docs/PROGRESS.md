@@ -9,7 +9,7 @@
   resolution by field group, change detection, admin review API; migration 0008; scrapes now create events.
 - **WP-11 DONE** (`docs/handoff/WP-11.md`) — CLIST adapter (key-gated; no key → BLOCKED_BY_POLICY, zero requests),
   migration 0009, secret credential settings + routes, seed-only robots exemption (proposed ruling), `domain/series/`,
-  main feed vs Contest Calendar readers. `clist:smoke` skipped (U4 open).
+  main feed vs Contest Calendar readers; `clist:smoke` skipped (U4 open).
 - **Owner ruling R74 / D-34 (21 Sep 2026, spec v1.1.12):** Devfolio and Unstop may be read with the professor's
   own session (pasted cookie or in-app login window), read-only, same gate; built in **WP-14** (prompt amended).
   §7.2 "Never", ADR-0007 and ADR-0016 amended. D-29 still drops other people's data. WP-13 lands as v1.1.13.
@@ -18,8 +18,13 @@
 - **WP-13 PARTIAL** (21 Sep 2026, `docs/handoff/WP-13.md`) — Unstop adapter: `/api/public/*` listing (hackathons +
   competitions, paginated) + `/api/public/competition/{id}` details, Angular `ng-state` HTML fallback, deny list before
   the transport (`SOURCE_PATH_FORBIDDEN`), quizzes/case studies stored POLICY_HIDDEN. R70–R73 (spec 1.1.13), U3 DONE,
-  migration **0011** (R73 `compliance_review_due_at`, Unstop row). **Fixtures synthetic; live capture + smoke owed**
-  (no professor identity on the dev machine). Fixed a WP-10 bug: policies ignored event-type confidence. **2604 tests.**
+  migration **0011** (R73 `compliance_review_due_at`, Unstop row). Fixed a WP-10 bug: policies ignored type confidence.
+- **WP-13 follow-up (21 Sep 2026)** — `pnpm --filter @compintel/backend unstop:capture` is the owed capture *and* smoke
+  in one command: ≤ 4 requests through the polite client, people-shaped keys nulled, fixtures + `.meta.json` written,
+  request log printed, R71 judged. It refuses while `scraper.contactEmail` is unset, so **fixtures stay synthetic and
+  the capture stays owed to WP-14** (owner's call, 21 Sep — no request has reached unstop.com). Fixed: no `src/tools/`
+  tool could start in a checkout (`resolveResources` never looked two levels up), so `scrape:once` and `clist:smoke`
+  were broken too. **2620 tests.**
 - **Owner product flow (21 Sep 2026):** each professor installs the app; onboarding opens the packaged sign-in browser
   for every approved source; the UA contact is that professor's own address (R74, WP-14 prompt).
 - **Next: WP-14** (manual entry, URL import, signed-in sessions + onboarding browser). Roadmap 23 done, 25 remaining.
@@ -92,17 +97,15 @@
 - **PATH caveat:** rustup added `%USERPROFILE%\.cargo\bin` to the *user* PATH; already-open terminals must be restarted, otherwise `cargo`/`rustc` are not found. **NodeNext:** relative imports need a `.js` extension even in `.ts` sources.
 
 ## Completed
-- **WP-07b — first-run wizard + user administration** (closes M0). R39 gate = 409 `SETUP_REQUIRED`
-  before the session hook (exempt `/health`, `/setup/*`, `/system/client-log`, `/system/shutdown`);
-  `modules/setup/` writes the whole organization in **one transaction** (R40); `modules/backup/keys.ts`
-  = `age-encryption` 0.3.1 X25519 wrapped to a scrypt passphrase (wf 18) + the recovery file (R42),
-  recovery code hashed into `auth.recoveryCodeHash` (R41); `modules/users/` = admin CRUD (R43).
-- **WP-07a — auth core.** Contracts `permissions.ts` (R32) + `auth.ts`; migrations 0002/0003
-  (organization + identity + `audit_log`, append-only triggers, roles); `modules/auth/` — Argon2id
-  **m=128 MiB t=6 p=1, 322-409 ms here** (R17 addon path), opaque SHA-256 sessions (R33), the R34
-  ladder, `policy.assertCan`; audit hash chain + `verifyChain` (R35), session preHandler (R38), SSE hub
-  (R36); routes `/auth/*`, `/me`, `/stream`; UI login/lock/forced-change, **token in memory only**.
-  **`/stream` must write its head through Fastify or the WebView loses the CORS headers.**
+- **WP-07b — first-run wizard + user administration** (closes M0). R39 gate = 409 `SETUP_REQUIRED` before the session
+  hook (exempt `/health`, `/setup/*`, `/system/client-log`, `/system/shutdown`); `modules/setup/` writes the whole
+  organization in **one transaction** (R40); `modules/backup/keys.ts` = `age-encryption` 0.3.1 X25519 wrapped to a
+  scrypt passphrase (wf 18) + recovery file and code (R41/R42); `modules/users/` = admin CRUD (R43).
+- **WP-07a — auth core.** `permissions.ts` (R32) + `auth.ts`; migrations 0002/0003 (organization, identity,
+  append-only `audit_log`, roles); Argon2id **m=128 MiB t=6 p=1, 322-409 ms here** (R17 addon path), opaque SHA-256
+  sessions (R33), the R34 ladder, `policy.assertCan`, hash chain + `verifyChain` (R35), session preHandler (R38), SSE
+  hub (R36), routes `/auth/*` `/me` `/stream`, UI token in memory only. **`/stream` must write its head through
+  Fastify or the WebView loses the CORS headers.**
 - **WP-06 — UI foundation.** Tailwind v4 + `src/styles/tokens.css`: one `--ci-*` token set, both themes,
   every text/surface pair **measured** at >= 4.5:1; light/dark/**system**. `src/shell/backend.ts` is IPC
   only, the API client is `src/api/` (R27's 2 s timeout); TanStack Query + Router, cmdk palette, axe clean.
