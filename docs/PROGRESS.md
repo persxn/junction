@@ -27,7 +27,7 @@
   **The registry ships empty, so no `scrape:` job exists yet** (WP-09b adds the first). **2370 tests.**
   Deps: undici 8.10.2, robots-parser 3.0.1. Also fixed `smoke:bundle`, broken since WP-08b (the
   institutions seed path; it now resolves through `platform/resources.ts`).
-- **Next: WP-09b.** WP-08b's two questions are still open (handoff §6): the gazetteer is 68.5 MB of
+- **Next: WP-10** (WP-09b in progress; its rulings R62–R63 are recorded, spec v1.1.10). WP-08b's two questions are still open (handoff §6): the gazetteer is 68.5 MB of
   which 95% are zero-population hamlets that also *harm* matching — §4.17 says "towns/cities" where
   R53 says feature class P; and GeoNames has almost no Indian campuses, so the INSTITUTION rung is
   mostly unreachable. Q12 stays OPEN in ARCHITECTURE.md §2 and DECISIONS.md.
@@ -41,7 +41,7 @@
 - **New: WP-33** (`prompts/M4/WP-33.md`, milestone **M4.5**, just before M5) — appearance system
   (Catppuccin palettes, CALM/STANDARD/SHOWCASE effect tiers, motion & glow) + Insights. ADR-0019, R67–R69.
 - **Owner, 20 Sep 2026:** standalone app — one professor, one machine (§3.1). Security posture left unchanged; less security framing in prose from here on.
-- Spec: docs/ARCHITECTURE.md **v1.1.9 — ACCEPTED** (§21 R1–R61 + R67–R69; §19 = **48 WPs, 19 done, 29 remaining**).
+- Spec: docs/ARCHITECTURE.md **v1.1.10 — ACCEPTED** (§21 R1–R63 + R67–R69; §19 = **48 WPs, 19 done, 29 remaining**).
 - ADR-0001…0019 Accepted. Decisions register: docs/DECISIONS.md (D-01…D-33, Q1 RESOLVED, U1/U2 DONE).
 
 ## Environment facts
