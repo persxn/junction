@@ -1,0 +1,15 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    // The Playwright side runs in Node (setup, teardown, the runner); only the
+    // strings passed to `page.addInitScript` run in the page, hence "DOM" too.
+    "rootDir": "..",
+    "outDir": "../dist-types/e2e",
+    "tsBuildInfoFile": "../dist-types/e2e/.tsbuildinfo",
+    "lib": ["ES2023", "DOM"],
+    "types": ["node"],
+    "noEmit": false,
+    "emitDeclarationOnly": true
+  },
+  "include": ["./**/*.ts", "../playwright.config.ts"]
+}

@@ -36,6 +36,7 @@ import {
   RECLASSIFY_JOB_KEY,
   registerReclassifyJob,
 } from './modules/categories/wiring.js';
+import { EventUserStateService } from './modules/events/user-state.js';
 import { createEventsModule } from './modules/events/wiring.js';
 import { createSearchModule } from './modules/search/wiring.js';
 import { SourceRecordsRepository } from './modules/sources/records.js';
@@ -220,6 +221,8 @@ async function main(): Promise<void> {
       settings,
     });
     searchModule.vocabulary.refresh();
+    // WP-16a: a professor's own Save and Hide.
+    const userState = new EventUserStateService({ db, events: eventsModule.events });
     const refreshVocabulary = (): void => {
       try {
         searchModule.vocabulary.refresh();
@@ -335,6 +338,7 @@ async function main(): Promise<void> {
       review: () => eventsModule.review,
       search: () => searchModule,
       categories: () => categoriesModule.admin,
+      userState: () => userState,
       onShutdownRequested: () => {
         lifecycle.start('api');
       },

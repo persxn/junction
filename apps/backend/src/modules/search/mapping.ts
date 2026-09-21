@@ -7,7 +7,12 @@ import type { SearchRow } from './repo.js';
 
 /** Rows to API shapes: the ranked card and the core event (WP-15a, WP-15b). */
 
-export function toListItem(row: SearchRow, sources: string[], ranked: Ranked): RankedEventListItem {
+export function toListItem(
+  row: SearchRow,
+  sources: string[],
+  ranked: Ranked,
+  watchlisted: boolean,
+): RankedEventListItem {
   return {
     id: row.id,
     title: row.title,
@@ -28,6 +33,7 @@ export function toListItem(row: SearchRow, sources: string[], ranked: Ranked): R
     teamMax: row.team_max,
     sources,
     hasConflicts: row.has_conflicts === 1,
+    watchlisted,
     score: ranked.score,
     reasons: ranked.reasons,
   };

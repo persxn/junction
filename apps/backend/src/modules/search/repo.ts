@@ -180,6 +180,17 @@ export class SearchRepository {
     return row !== undefined;
   }
 
+  /** Which of `eventIds` the user has saved — one query per page. */
+  watchlisted(userId: string, eventIds: readonly string[]): Set<string> {
+    if (eventIds.length === 0) return new Set();
+    const rows = this.#db.raw
+      .prepare(
+        `SELECT event_id AS id FROM watchlist_items WHERE user_id = ? AND event_id IN (${placeholders(eventIds)})`,
+      )
+      .all(userId, ...eventIds) as { id: string }[];
+    return new Set(rows.map((row) => row.id));
+  }
+
   /** Source keys per event, for the cards' source icons. */
   sourceKeys(eventIds: readonly string[]): Map<string, string[]> {
     const out = new Map<string, string[]>();

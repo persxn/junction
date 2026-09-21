@@ -190,6 +190,7 @@ describe('response shapes', () => {
   it('SearchResponse: nextCursor and correction are optional', () => {
     const ranked = {
       ...item,
+      watchlisted: false,
       score: 15,
       reasons: [{ code: 'NO_CONFLICTS', text: 'Sources agree on the details', weightApplied: 5 }],
     };

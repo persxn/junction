@@ -32,10 +32,10 @@ describe('the Ctrl+K palette (§16.3)', () => {
     });
   });
 
-  it('also opens from the search box', async () => {
+  it('also opens from the Ctrl+K button beside the search box', async () => {
     const user = userEvent.setup();
     await renderApp();
-    await user.click(screen.getByRole('button', { name: /Search or ask/ }));
+    await user.click(screen.getByRole('button', { name: 'Open command palette' }));
     expect(palette()).toBeInTheDocument();
   });
 
@@ -44,7 +44,7 @@ describe('the Ctrl+K palette (§16.3)', () => {
     await renderApp();
 
     await user.keyboard('/');
-    expect(screen.getByRole('button', { name: /Search or ask/ })).toHaveFocus();
+    expect(screen.getByRole('searchbox', { name: 'Search events' })).toHaveFocus();
     expect(palette()).toBeNull();
   });
 
@@ -53,25 +53,28 @@ describe('the Ctrl+K palette (§16.3)', () => {
     await renderApp();
     await user.keyboard('{Control>}k{/Control}');
 
-    const input = screen.getByPlaceholderText('Type a command…');
+    const input = screen.getByPlaceholderText('Search events or type a command…');
     await waitFor(() => {
       expect(input).toHaveFocus();
     });
 
     await user.keyboard('discov');
-    const options = screen.getAllByRole('option');
-    expect(options).toHaveLength(1);
-    expect(options[0]).toHaveTextContent('Discover');
+    // One matching command, plus the way into a full event search (WP-16a).
+    expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual([
+      'See all results in Discover',
+      'Discover',
+    ]);
   });
 
-  it('says so when nothing matches', async () => {
+  it('offers only the event search when no command matches', async () => {
     const user = userEvent.setup();
     await renderApp();
     await user.keyboard('{Control>}k{/Control}');
     await user.keyboard('zzzzz');
 
-    expect(screen.getByText('No matching command.')).toBeInTheDocument();
-    expect(screen.queryAllByRole('option')).toHaveLength(0);
+    expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual([
+      'See all results in Discover',
+    ]);
   });
 
   it('moves with the arrow keys and runs the selection with Enter', async () => {

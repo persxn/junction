@@ -4,42 +4,68 @@ import { Bell, RefreshCw, Search } from 'lucide-react';
 import { UserMenu } from './UserMenu.js';
 
 export interface TopBarProps {
-  /** The `/` shortcut focuses this; Ctrl+K and Enter on it open the palette. */
-  readonly searchRef: React.RefObject<HTMLButtonElement | null>;
+  /** The `/` shortcut focuses this field. */
+  readonly searchRef: React.RefObject<HTMLInputElement | null>;
   readonly onOpenPalette: () => void;
+  /** Enter in the field: search Discover for this text ('' clears it). */
+  readonly onSearch: (text: string) => void;
   readonly onExit: () => void;
 }
 
 /**
  * The top bar (§16.1): search box, freshness pill, notifications bell, user menu.
  *
- * The search box is a button, not a text field. Until WP-15a there is nothing to
- * type into — a field that swallows text and does nothing is worse than a control
- * that plainly opens what does work. It carries the shortcut in its name, so
- * `aria-keyshortcuts` and the visible hint say the same thing.
+ * The search box is a real field since WP-16a (WP-06 left it a button until
+ * there was search to type into): `/` focuses it, Enter searches Discover, and
+ * the Ctrl+K button beside it opens the palette, which searches events live.
  *
- * The freshness pill is a placeholder and says so: the per-source status popover
- * needs scrape runs, which arrive with WP-09a (ruling R29 keeps the same line out
- * of the tray until WP-30).
+ * The freshness pill is a placeholder and says so — WP-16b owns it (ruling R29
+ * keeps the same line out of the tray until WP-30).
  */
-export function TopBar({ searchRef, onOpenPalette, onExit }: TopBarProps): React.JSX.Element {
+export function TopBar({
+  searchRef,
+  onOpenPalette,
+  onSearch,
+  onExit,
+}: TopBarProps): React.JSX.Element {
   return (
     <header
       aria-label="Top bar"
       className="ci-chrome flex shrink-0 items-center gap-3 border-b border-line px-3"
       style={{ height: 'var(--ci-topbar-height)' }}
     >
-      <button
-        ref={searchRef}
-        type="button"
-        onClick={onOpenPalette}
-        aria-keyshortcuts="Control+K"
-        className="flex min-w-0 flex-1 items-center gap-2 rounded-md border border-line bg-surface px-3 py-1.5 text-left text-fg-subtle hover:bg-surface-hover"
+      <form
+        role="search"
+        aria-label="Search events"
+        onSubmit={(event) => {
+          event.preventDefault();
+          onSearch(searchRef.current?.value.trim() ?? '');
+        }}
+        className="flex min-w-0 flex-1 items-center gap-2 rounded-md border border-line bg-surface px-3 py-1 text-fg-subtle focus-within:border-accent"
       >
         <Search aria-hidden="true" className="size-4 shrink-0" />
-        <span className="truncate">Search or ask</span>
-        <kbd className="ml-auto rounded-sm border border-line px-1 text-xs">Ctrl+K</kbd>
-      </button>
+        <input
+          ref={searchRef}
+          type="search"
+          name="q"
+          aria-label="Search events"
+          aria-keyshortcuts="/"
+          placeholder="Search events"
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') event.currentTarget.blur();
+          }}
+          className="min-w-0 flex-1 bg-transparent py-0.5 text-fg outline-none placeholder:text-fg-subtle"
+        />
+        <button
+          type="button"
+          onClick={onOpenPalette}
+          aria-label="Open command palette"
+          aria-keyshortcuts="Control+K"
+          className="rounded-sm border border-line px-1 text-xs hover:bg-surface-hover"
+        >
+          Ctrl+K
+        </button>
+      </form>
 
       <p className="flex items-center gap-1.5 rounded-full bg-surface-sunken px-2.5 py-1 text-sm text-fg-muted">
         <RefreshCw aria-hidden="true" className="size-3.5" />

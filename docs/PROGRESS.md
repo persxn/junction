@@ -23,14 +23,15 @@
 - **WP-14 DONE** (22 Sep 2026, `docs/handoff/WP-14.md`) — manual entry + URL import (Devpost: zero requests, spy-proved)
   through WP-10's linker (migration 0012, overrides survive scrapes) + signed-in sessions (R74/D-34, own-host only,
   EXPIRED without backoff, Tauri sign-in window). UI `/events/new`, Admin → Sources sessions. 2739 tests, 61 Rust.
-- **WP-15a DONE** (`docs/handoff/WP-15a.md`) — `EventQuery`, planner, migrations 0013/0014 (FTS5 + trigram), typo
-  vocabulary, aliases, signed keyset cursors, `pnpm perf:search`.
-- **WP-15b PARTIAL** (22 Sep 2026, `docs/handoff/WP-15b.md`) — rules engine (pure, guarded REGEX, 12-category seed
-  `resources/category-rules.seed.json`), migration **0015** (categories/rules/`event_categories` + §6.2 tags tables),
-  classify on every resolve + batched resumable re-classification job, manual always wins; ranking `rank.ts` with
-  reasons on every result (+ `SORT_KEY` code), mirrored in SQL (`score-sql.ts`) for paging; five facet families in one
-  statement; admin category/rule API + preview. **2974 tests.** Perf: filters+text p95 **52.4 ms vs 50** (only miss);
-  unfiltered first page + facets 117 ms (Q1: denormalize trust?). Roadmap 25 done (+15b partial), 23 remaining.
+- **WP-15a DONE** / **WP-15b PARTIAL** (`docs/handoff/WP-15a.md`, `WP-15b.md`) — query model, FTS5 + trigram, typo
+  vocabulary; categories (rules engine, seed, migration 0015, manual wins), ranking with reasons on every result,
+  facets, category admin API. 15b's only miss: perf filters+text p95 52.4 ms vs 50 (Q1 there: denormalize trust?).
+- **WP-16a DONE** (22 Sep 2026, `docs/handoff/WP-16a.md`) — Discover: tabs (Featured views, All events, Contest
+  Calendar), 9 filter chips ↔ `EventQuery` in `features/discover/query.ts`, dense cards with urgency (icon + words),
+  "Why relevant?", Save/Hide optimistic with Undo (+ `PUT/DELETE /events/:id/watchlist`, `POST …/hide|unhide`),
+  J/K/Enter/S/Esc, real top-bar search, live Ctrl+K event search, drawer route placeholder. **3030 tests.**
+  `pnpm e2e` (Playwright 1.63.0, installed Edge, no download; `pnpm seed:demo`, all sources off, scrape_runs = 0)
+  green. Qs: calendar "recurring only" filter; R27 proxy is GET-only. Next: **WP-16b**.
 - WP-08b's two questions are still open (handoff §6): the gazetteer is 68.5 MB of
   which 95% are zero-population hamlets that also *harm* matching — §4.17 says "towns/cities" where
   R53 says feature class P; and GeoNames has almost no Indian campuses, so the INSTITUTION rung is
@@ -68,7 +69,7 @@
 
 ## Standard commands
 - `pnpm install --frozen-lockfile` · **`pnpm verify`** = `format:check && lint && typecheck && test`
-  (~107 s here with 2974 tests; budget is < 2 min per §4.15 — getting close).
+  (~112 s here with 3030 tests; budget is < 2 min per §4.15 — close). `pnpm e2e` = Playwright on Edge, outside verify.
   Individually: `pnpm format` / `format:check` (Prettier) · `pnpm lint` (ESLint) · `pnpm typecheck` (`tsc -b`) ·
   `pnpm test` (Vitest, single run) · `pnpm clean` (`tsc -b --clean`).
 - Git identity is repo-local: `Calamity <sohomaroy2005@gmail.com>`; `core.autocrlf=false`.

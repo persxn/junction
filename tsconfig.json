@@ -12,6 +12,9 @@
       "path": "./apps/desktop"
     },
     {
+      "path": "./apps/desktop/e2e"
+    },
+    {
       "path": "./tools/gazetteer"
     },
     {

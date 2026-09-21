@@ -84,3 +84,7 @@ dist-types/
 /resources/gazetteer/gazetteer.db
 **/gazetteer.db
 !apps/backend/test/fixtures/gazetteer/mini.db
+
+# Playwright run output (WP-16a); traces are kept only on failure
+test-results/
+playwright-report/

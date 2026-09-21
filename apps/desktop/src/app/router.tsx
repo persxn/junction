@@ -8,6 +8,9 @@ import {
 } from '@tanstack/react-router';
 
 import { UsersPage } from '../features/admin/users/UsersPage.js';
+import { DiscoverPage } from '../features/discover/DiscoverPage.js';
+import { EventDrawer } from '../features/discover/EventDrawer.js';
+import { parseDiscoverSearch } from '../features/discover/search-state.js';
 import { CreateEventPage } from '../features/events/create/CreateEventPage.js';
 import { SourcesPage } from '../features/admin/sources/SourcesPage.js';
 import { AppShell } from './AppShell.js';
@@ -65,10 +68,20 @@ const dashboardRoute = createRoute({
   component: () => <PlaceholderPage item={navItem('dashboard')} />,
 });
 
-const discoverRoute = createRoute({
+// WP-16a: the filters live in the search state, so a screen can be restored
+// verbatim; the event drawer is a child route, so the list never unmounts and
+// keeps its scroll position while an event is open.
+export const discoverRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/discover',
-  component: () => <PlaceholderPage item={navItem('discover')} />,
+  validateSearch: parseDiscoverSearch,
+  component: DiscoverPage,
+});
+
+export const discoverEventRoute = createRoute({
+  getParentRoute: () => discoverRoute,
+  path: 'event/$eventId',
+  component: EventDrawer,
 });
 
 // WP-14: reachable from the palette and from a link, with no rail item of its
@@ -167,7 +180,7 @@ const adminHealthRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   dashboardRoute,
-  discoverRoute,
+  discoverRoute.addChildren([discoverEventRoute]),
   createEventRoute,
   competitionsRoute,
   teamsRoute,

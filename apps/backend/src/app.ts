@@ -10,6 +10,7 @@ import type { SetupService } from './modules/setup/service.js';
 import type { DedupReviewService } from './modules/events/review.js';
 import type { EventImportService } from './modules/events/import/service.js';
 import type { CategoryAdminService } from './modules/categories/admin.js';
+import type { EventUserStateService } from './modules/events/user-state.js';
 import type { SearchModule } from './modules/search/wiring.js';
 import type { SourcesService } from './modules/sources/service.js';
 import type { UsersService } from './modules/users/service.js';
@@ -27,6 +28,7 @@ import { meRoutes } from './routes/me.js';
 import { setupRoutes } from './routes/setup.js';
 import { dedupRoutes } from './routes/dedup.js';
 import { eventsRoutes } from './routes/events.js';
+import { userStateRoutes } from './routes/user-state.js';
 import { categoryRoutes } from './routes/categories.js';
 import { searchRoutes } from './routes/search.js';
 import { sourcesRoutes } from './routes/sources.js';
@@ -75,6 +77,8 @@ export interface BuildAppOptions {
   readonly search?: () => SearchModule | undefined;
   /** WP-15b's category and rule admin. */
   readonly categories?: () => CategoryAdminService | undefined;
+  /** WP-16a's per-user Save and Hide. */
+  readonly userState?: () => EventUserStateService | undefined;
   /** Shared so jobs and services can publish; one hub per process (R36). */
   readonly streamHub?: StreamHub;
   /** Injected in tests so a heartbeat does not take fifteen real seconds. */
@@ -130,6 +134,7 @@ export function buildApp(
   const imports = options.imports ?? ((): EventImportService | undefined => undefined);
   const search = options.search ?? ((): SearchModule | undefined => undefined);
   const categories = options.categories ?? ((): CategoryAdminService | undefined => undefined);
+  const userState = options.userState ?? ((): EventUserStateService | undefined => undefined);
 
   // Order is hook order, and this order is the point: a request on a fresh
   // install is refused for being unconfigured (R39) before it is refused for
@@ -163,6 +168,7 @@ export function buildApp(
   void server.register(eventsRoutes({ imports }), { prefix: API_PREFIX });
   void server.register(searchRoutes({ search }), { prefix: API_PREFIX });
   void server.register(categoryRoutes({ categories }), { prefix: API_PREFIX });
+  void server.register(userStateRoutes({ userState }), { prefix: API_PREFIX });
   void server.register(
     streamRoutes({
       hub: streamHub,

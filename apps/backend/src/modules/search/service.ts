@@ -177,10 +177,17 @@ export class SearchService {
           : undefined;
     }
 
-    const sources = this.#deps.repo.sourceKeys(page.map((entry) => entry.row.id));
+    const ids = page.map((entry) => entry.row.id);
+    const sources = this.#deps.repo.sourceKeys(ids);
+    const saved = this.#deps.repo.watchlisted(context.actor.id, ids);
     return {
       items: page.map((entry) =>
-        toListItem(entry.row, sources.get(entry.row.id) ?? [], entry.ranked),
+        toListItem(
+          entry.row,
+          sources.get(entry.row.id) ?? [],
+          entry.ranked,
+          saved.has(entry.row.id),
+        ),
       ),
       ...(wantFacets ? { facets: this.#facets(query, plan, execution, ranking, now) } : {}),
       ...(next === undefined

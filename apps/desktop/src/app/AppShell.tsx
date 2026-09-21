@@ -1,7 +1,8 @@
 import { Outlet, useNavigate } from '@tanstack/react-router';
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { ErrorBoundary } from '../components/ErrorBoundary.js';
+import { discoverSearch } from '../features/discover/search-state.js';
 import { useGlobalHotkeys, type Hotkey } from '../lib/hotkeys.js';
 import { exitCompletely, hideToTray, openLogsFolder } from '../shell/backend.js';
 import { useTheme } from '../theme/theme-context.js';
@@ -24,7 +25,16 @@ export function AppShell(): React.JSX.Element {
   const { setChoice } = useTheme();
   const navigate = useNavigate();
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const searchRef = useRef<HTMLButtonElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  // WP-16a: text from the top bar or the palette lands in Discover's own search
+  // state, so the screen shows it as the query it is, with its chips kept.
+  const searchDiscover = useCallback(
+    (text: string): void => {
+      void navigate({ to: '/discover', search: (previous) => discoverSearch(previous, text) });
+    },
+    [navigate],
+  );
 
   const commands = useMemo(
     () =>
@@ -84,6 +94,7 @@ export function AppShell(): React.JSX.Element {
           onOpenPalette={() => {
             setPaletteOpen(true);
           }}
+          onSearch={searchDiscover}
           onExit={() => {
             void exitCompletely();
           }}
@@ -95,7 +106,19 @@ export function AppShell(): React.JSX.Element {
         </main>
       </div>
 
-      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} commands={commands} />
+      <CommandPalette
+        open={paletteOpen}
+        onOpenChange={setPaletteOpen}
+        commands={commands}
+        onOpenEvent={(eventId) => {
+          void navigate({
+            to: '/discover/event/$eventId',
+            params: { eventId },
+            search: (previous) => discoverSearch(previous, undefined),
+          });
+        }}
+        onSeeAll={searchDiscover}
+      />
     </div>
   );
 }

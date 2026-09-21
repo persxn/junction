@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "tsc -b",
-    "perf": "tsx src/run.ts"
+    "perf": "tsx src/run.ts",
+    "seed:demo": "tsx src/seed-demo.ts"
   },
   "dependencies": {
     "@compintel/backend": "workspace:*",

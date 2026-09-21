@@ -26,6 +26,7 @@ const card = {
   teamMax: 4,
   sources: ['devfolio'],
   hasConflicts: false,
+  watchlisted: false,
 };
 
 const reason = { code: 'WITHIN_RADIUS', text: '~121 km (straight line)', weightApplied: 10 };

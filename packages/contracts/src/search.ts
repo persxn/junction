@@ -256,6 +256,8 @@ export type RelevanceReason = z.infer<typeof RelevanceReason>;
  * serialized by the route, whatever the scorer does.
  */
 export const RankedEventListItem = EventListItem.extend({
+  /** Whether the calling professor has saved it (§6.2 `watchlist_items`). */
+  watchlisted: z.boolean(),
   score: z.number().min(0),
   reasons: z.array(RelevanceReason).min(1),
 }).strict();

@@ -126,16 +126,20 @@ describe('the keyboard (§16.3)', () => {
     await renderApp();
 
     const topBar = within(screen.getByRole('banner'));
-    topBar.getByRole('button', { name: /Search or ask/ }).focus();
+    topBar.getByRole('button', { name: 'Open command palette' }).focus();
     await user.tab();
     expect(topBar.getByRole('link', { name: 'Notifications' })).toHaveFocus();
     await user.tab();
     expect(topBar.getByRole('button', { name: TEST_USER.displayName })).toHaveFocus();
   });
 
-  it('marks the search box with its shortcut', async () => {
+  it('marks the search box and the palette button with their shortcuts', async () => {
     await renderApp();
-    expect(screen.getByRole('button', { name: /Search or ask/ })).toHaveAttribute(
+    expect(screen.getByRole('searchbox', { name: 'Search events' })).toHaveAttribute(
+      'aria-keyshortcuts',
+      '/',
+    );
+    expect(screen.getByRole('button', { name: 'Open command palette' })).toHaveAttribute(
       'aria-keyshortcuts',
       'Control+K',
     );

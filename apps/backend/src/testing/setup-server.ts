@@ -11,6 +11,7 @@ import { AdapterRegistry } from '../sources/registry.js';
 import { Geocoder } from '../modules/geo/geocoder.js';
 import { createSearchModule, type SearchModule } from '../modules/search/wiring.js';
 import { createCategoriesModule, type CategoriesModule } from '../modules/categories/wiring.js';
+import { EventUserStateService } from '../modules/events/user-state.js';
 import { createEventsModule, type EventsModule } from '../modules/events/wiring.js';
 import { EventImportService } from '../modules/events/import/service.js';
 import { unavailableGazetteer } from '../platform/gazetteer.js';
@@ -140,11 +141,13 @@ export async function startSetupTestServer(
     logger: silentLogger,
   });
 
+  const userState = new EventUserStateService({ db: database.db, events: events.events });
   const search = createSearchModule({ db: database.db, audit, events: events.events, settings });
 
   const server = await startTestServer({
     search: () => search,
     categories: () => categories.admin,
+    userState: () => userState,
     auth: () => auth,
     setup: () => setup,
     users: () => users,
