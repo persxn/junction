@@ -18,7 +18,7 @@
   (disallowed → skipped, run PARTIAL), `api.devfolio.co` refused before the transport (`SOURCE_HOST_FORBIDDEN`),
   PII dropped by allowlist, format change → SCHEMA_CHANGED with nothing written. Migration **0010** enables the row.
   **2578 tests.** Dep: cheerio 1.2.0. **Live smoke owed** (no `scraper.contactEmail`). main.test startup wait raised.
-- **Next: WP-13 — on owner approval of WP-12.** Still owed: the WP-09b live smoke (needs `scraper.contactEmail`) and U4 for CLIST.
+- **WP-13 in progress** (R70–R73 recorded, spec v1.1.13). **Next: WP-14** (roadmap 23 done, 25 remaining after WP-13). Still owed: the WP-09b live smoke (needs `scraper.contactEmail`) and U4 for CLIST.
   WP-08b's two questions are still open (handoff §6): the gazetteer is 68.5 MB of
   which 95% are zero-population hamlets that also *harm* matching — §4.17 says "towns/cities" where
   R53 says feature class P; and GeoNames has almost no Indian campuses, so the INSTITUTION rung is
@@ -130,7 +130,7 @@
   fixtures + 13 robots.txt under `docs/research/` — WP-09a's seeds are asserted against them.
 ## Open issues
 All WP-01/WP-02 findings are ruled on in ARCHITECTURE.md §21. Still open:
-1. **U3** — Unstop Terms unread (blocks WP-13). **U4** — CLIST API key (blocks live WP-11 runs).
+1. **U4** — CLIST API key (blocks live WP-11 runs). U3 done 21 Sep 2026 (R70).
 2. **Pilot host unknown** (Q2/Q10): check its SAC/WDAC state and disk encryption before WP-31.
 3. **No 8 GB test machine**: needed for WP-31/32 (real laptop or VirtualBox VM).
 4. **Disk headroom: 35 GB free.** `target/` reached 11.2 GB before pre-M1 cleaned it and is 3.7 GB now;

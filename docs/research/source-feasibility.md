@@ -175,11 +175,14 @@ No logins, no CAPTCHA/anti-bot bypassing, no undocumented endpoint was called.
 
 1. **API.** robots.txt explicitly allows `/api/public/*`, which implies a public-ish JSON API used by the site
    itself, but there is **no published documentation and no published terms for it**. Not called.
-2. **Terms.** `https://unstop.com/legal/terms-of-use` returned **200 with a 349-character Angular shell** — the text
-   is rendered client-side and is not in the HTML. Rendering it would need a headless browser (dozens of requests,
-   over the 5-request cap) and the WP requires reading the Terms *before* anything else, so:
-   **the Terms are UNREAD, and no further Unstop request was made (1 request total).**
-   A search-engine lookup restricted to unstop.com surfaced no scraping/automation clause either way — **inconclusive**.
+2. **Terms — read by the owner on 21 Sep 2026 (U3 DONE, R70).** The page is an Angular SPA, so the text was
+   read in a browser, not fetched. Finding: **no clause** on scraping, crawling, robots, spiders, automated access,
+   data mining, extraction, harvesting, bots or reproduction, and **no restriction on commercial use of content**.
+   The one access clause is a bullet in the account/password section forbidding parts of the Site being cached in
+   proxy servers and reached by people who have not registered — about circumventing registration (R70). The
+   verbatim wording is the owner's to paste here; WP-13 had no way to fetch it. The Terms carry **no "last
+   updated" date**; the verdict is pinned to the footer version string `9.18.2026.17.53`. Reviewer: owner.
+   Review-by date: **21 Mar 2027** (R73). IP clause weighed in R72.
 3. **robots.txt** (`docs/research/robots/unstop.com.txt`) — the most detailed of any source:
    - `User-agent: *`: **Allow** `/competitions/`, `/hackathons/`, `/internship/`, `/job/`, `/practice/`, `/courses/`,
      `/quiz/`, `/blog/`, `/_next/`, `/static/`, **and `/api/public/*`**.
@@ -194,7 +197,7 @@ No logins, no CAPTCHA/anti-bot bypassing, no undocumented endpoint was called.
    headless browser (§4.8 Playwright/Edge path).
 5. **Fields → EventCandidate:** not assessed.
 6. **schema.org Event JSON-LD:** not checked.
-7. **Recommendation: MANUAL_IMPORT_ONLY until a human reads the Terms. ⚠**
+7. **Recommendation: APPROVED_WITH_LIMITS (owner, 21 Sep 2026; R70–R73).** The original recommendation follows for the record:
    Unstop is the **highest-value Indian source** (competitions, hackathons, quizzes with eligibility and fees), so
    this should be the first compliance item closed: a human opens `https://unstop.com/legal/terms-of-use` in a
    browser, checks for scraping/automated-access/data-reuse clauses, and records the result here. If the Terms are

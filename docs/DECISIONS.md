@@ -67,7 +67,7 @@ When the architect resolves an open question, update its row (status → RESOLVE
 |---|---|---|---|
 | U1 | **DONE (WP-03a)** | Turn Smart App Control off on the build machine. | WP-03a and all builds |
 | U2 | **DONE (WP-03a)** | Approve toolchain installs (VS Build Tools C++, rustup, pnpm) and enable Windows long paths (admin + restart). | WP-03a |
-| U3 | OPEN | Read Unstop's Terms in a browser and send the relevant clauses to the architect. | WP-13 |
+| U3 | **DONE (21 Sep 2026)** | Unstop's Terms read by the owner: silent on automated access → APPROVED_WITH_LIMITS (R70–R73). | WP-13 |
 | U4 | OPEN | Create a CLIST account + API key. | Live CLIST runs (WP-11) |
 | U5 | OPEN (optional) | Send permission e-mails (Devfolio courtesy, Devpost request). | — |
 | U6 | OPEN (optional) | Defender exclusions for build folders. | — |
