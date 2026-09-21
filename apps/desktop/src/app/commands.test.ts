@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildCommands, groupCommands, type CommandActions } from './commands.js';
-import { MAIN_NAV } from './nav.js';
+import { CREATE_EVENT_PATH, MAIN_NAV } from './nav.js';
 
 /** Records what each command did, in the order it did it. */
 function actions(): CommandActions & { readonly calls: string[] } {
@@ -27,16 +27,24 @@ function actions(): CommandActions & { readonly calls: string[] } {
 }
 
 describe('the palette command list', () => {
-  it('offers one "go to" command per rail item and nothing more', () => {
+  it('offers one "go to" command per rail item, plus WP-14 two actions', () => {
     const commands = buildCommands(actions());
     const goTo = commands.filter((command) => command.group === 'Go to');
-    expect(goTo.map((command) => command.label)).toStrictEqual(MAIN_NAV.map((item) => item.label));
+    expect(goTo.map((command) => command.label)).toStrictEqual([
+      ...MAIN_NAV.map((item) => item.label),
+      // Adding an event has no rail item — it is something you do, not a place
+      // you go — so the palette is where it lives until Discover exists.
+      'Add an event',
+      'Import an event from a link',
+    ]);
   });
 
   it('lists only what works today — no search, no admin', () => {
     const labels = buildCommands(actions()).map((command) => command.label);
     expect(labels).toStrictEqual([
       ...MAIN_NAV.map((item) => item.label),
+      'Add an event',
+      'Import an event from a link',
       'Theme: light',
       'Theme: dark',
       'Theme: follow Windows',
@@ -58,6 +66,8 @@ describe('the palette command list', () => {
     }
     expect(deps.calls).toStrictEqual([
       ...MAIN_NAV.map((item) => `navigate:${item.path}`),
+      `navigate:${CREATE_EVENT_PATH}`,
+      `navigate:${CREATE_EVENT_PATH}`,
       'theme:light',
       'theme:dark',
       'theme:system',

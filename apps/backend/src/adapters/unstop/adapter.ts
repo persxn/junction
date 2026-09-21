@@ -233,6 +233,35 @@ export function createUnstopAdapter(): SourceAdapter {
         return { complete: walked.complete };
       })(),
 
+    /**
+     * WP-14: `unstop.com/hackathons/<slug>-1123456` or `/competitions/<id>`.
+     *
+     * The id is the trailing number of the public path, which is the same id
+     * `/api/public/competition/{id}` takes. A profile or a register page has no
+     * such path and is refused here, before the deny list is even consulted.
+     */
+    itemFromUrl(url: string): ListingItem | undefined {
+      let parsed: URL;
+      try {
+        parsed = new URL(url);
+      } catch {
+        return undefined;
+      }
+      if (parsed.hostname.toLowerCase().replace(/^www\./, '') !== 'unstop.com') {
+        return undefined;
+      }
+      const path = /^\/(hackathons|competitions)\/([a-z0-9-]+)\/?$/i.exec(parsed.pathname);
+      const id = /(\d{3,12})$/.exec(path?.[2] ?? '')?.[1];
+      if (path === undefined || path === null || id === undefined) {
+        return undefined;
+      }
+      return {
+        externalKey: unstopExternalKey(Number(id)),
+        url: `${UNSTOP_ORIGIN}/${path[1]}/${path[2]}`,
+        payload: undefined,
+      };
+    },
+
     async detail(context: AdapterContext, item: ListingItem): Promise<RawDetail> {
       const config = configOf(context.config);
       const id = /^unstop:(\d{1,12})$/.exec(item.externalKey)?.[1];

@@ -68,7 +68,15 @@ describe('seedDevCredentials', () => {
 
 describe('never logged, never exported (§6.2)', () => {
   it('both settings are secret and left out of the export snapshot', () => {
-    expect(secretSettingKeys()).toEqual(['sources.clist.apiKey', 'sources.clist.apiUsername']);
+    expect(secretSettingKeys()).toEqual([
+      'sources.clist.apiKey',
+      'sources.clist.apiUsername',
+      // WP-14/R74: the professor's own session is a credential too.
+      'sources.devfolio.sessionCapturedAt',
+      'sources.devfolio.sessionCookie',
+      'sources.unstop.sessionCapturedAt',
+      'sources.unstop.sessionCookie',
+    ]);
     settings.set(CLIST_API_KEY, 'k3y-value');
     settings.set(CLIST_API_USERNAME, 'dept-value');
     const exported = settings.exportableSettings();

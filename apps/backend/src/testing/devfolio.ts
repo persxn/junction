@@ -126,6 +126,8 @@ export function detailFromListing(hackathon: Record<string, unknown>): string {
 export interface DevfolioHarness {
   readonly database: MigratedDatabase;
   readonly source: SourceRow;
+  /** WP-14: where a stored session lives, so a test can sign the app in. */
+  readonly settings: SettingsStore;
   readonly adapter: SourceAdapter;
   readonly events: EventsModule;
   readonly records: SourceRecordsRepository;
@@ -135,7 +137,11 @@ export interface DevfolioHarness {
   readonly sleep: ReturnType<typeof manualSleeper>;
   /** One HTTP layer per transport, so the robots cache lives across runs as it does in production. */
   http(transport: FakeTransport | { fetcher: Fetcher }): ScrapingHttp;
-  deps(transport: FakeTransport, http?: ScrapingHttp): ScrapeRunDependencies;
+  deps(
+    transport: FakeTransport,
+    http?: ScrapingHttp,
+    extra?: Partial<ScrapeRunDependencies>,
+  ): ScrapeRunDependencies;
   close(): void;
 }
 
@@ -166,6 +172,7 @@ export function openDevfolioHarness(): DevfolioHarness {
   return {
     database,
     source,
+    settings,
     adapter: createDevfolioAdapter({ geo: geo.geocoder }),
     events,
     records,
@@ -174,7 +181,7 @@ export function openDevfolioHarness(): DevfolioHarness {
     clock,
     sleep,
     http,
-    deps: (transport, shared) => ({
+    deps: (transport, shared, extra = {}) => ({
       sources,
       records,
       http: shared ?? http(transport),
@@ -183,6 +190,7 @@ export function openDevfolioHarness(): DevfolioHarness {
       logger: silentLogger,
       setupComplete: () => true,
       linker: events.linker,
+      ...extra,
     }),
     close: () => {
       geo.close();

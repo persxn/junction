@@ -94,7 +94,7 @@ afterEach(() => {
 describe('reads', () => {
   it('lists the seeded sources without their configuration', () => {
     const list = service.list();
-    expect(list).toHaveLength(5);
+    expect(list).toHaveLength(7);
     expect(JSON.stringify(list)).not.toContain('apiKeySetting');
   });
 

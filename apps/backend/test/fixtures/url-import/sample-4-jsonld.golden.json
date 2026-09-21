@@ -1,0 +1,159 @@
+{
+  "candidate": {
+    "descriptionMd": "A 36-hour hackathon for undergraduate students. Teams of 2 to 4. Registration fee ₹500 per team. For queries write to [contact details on the source page] or call [contact details on the source page].",
+    "editionYear": 2026,
+    "endsAt": {
+      "at": 1794756600000,
+      "confidence": 0.75,
+      "precision": "DATETIME",
+      "raw": "2026-11-15T21:00:00+05:30"
+    },
+    "eventType": {
+      "confidence": 0.8,
+      "value": "HACKATHON"
+    },
+    "externalKey": "https://cse.example.edu/innovate-2026",
+    "fee": {
+      "confidence": 0.85,
+      "currency": "INR",
+      "known": true,
+      "minor": 50000,
+      "text": "INR 500"
+    },
+    "isRecurringRound": false,
+    "mode": {
+      "confidence": 1,
+      "raw": "OFFLINE",
+      "value": "OFFLINE"
+    },
+    "officialUrl": "https://cse.example.edu/innovate-2026",
+    "organizerName": "Department of Computer Engineering",
+    "place": {
+      "city": "Pune",
+      "countryCode": "IN",
+      "state": "Maharashtra",
+      "venueName": "Example Institute of Technology"
+    },
+    "registrationDeadlineAt": {
+      "at": 1793903399999,
+      "confidence": 0.7,
+      "precision": "DATE",
+      "raw": "on 5 November 2026"
+    },
+    "registrationUrl": "https://cse.example.edu/innovate-2026/register",
+    "sourceKey": "url-import",
+    "startsAt": {
+      "at": 1794627000000,
+      "confidence": 0.75,
+      "precision": "DATETIME",
+      "raw": "2026-11-14T09:00:00+05:30"
+    },
+    "summary": "A 36-hour hackathon for undergraduate students. Teams of 2 to 4. Registration fee ₹500 per team. For queries write to [contact details on the source page] or call [contact details on the source page].",
+    "timezone": "Asia/Kolkata",
+    "title": "Innovate 2026 — National Level Hackathon",
+    "titleRaw": "Innovate 2026 — National Level Hackathon",
+    "url": "https://cse.example.edu/innovate-2026",
+    "warnings": [
+      {
+        "code": "PII_REDACTED",
+        "field": "descriptionMd",
+        "message": "Contact details were replaced (D-29)."
+      },
+      {
+        "code": "PII_REDACTED",
+        "field": "summary",
+        "message": "Contact details were replaced (D-29)."
+      }
+    ]
+  },
+  "fields": {
+    "fieldsFound": [
+      {
+        "confidence": 1,
+        "field": "title",
+        "label": "Title",
+        "origin": "JSON_LD",
+        "value": "Innovate 2026 — National Level Hackathon"
+      },
+      {
+        "confidence": 1,
+        "field": "description",
+        "label": "Description",
+        "origin": "JSON_LD",
+        "raw": "A 36-hour hackathon for undergraduate students. Teams of 2 to 4. Registration fee ₹500 per team. For queries write to [contact details on the source page] or call [contact details on the source page].",
+        "value": "A 36-hour hackathon for undergraduate students. Teams of 2 to 4. Registration fee ₹500 per team. For queries write to [contact details on the source page] or call [contact details on the source page]."
+      },
+      {
+        "confidence": 1,
+        "field": "organizerName",
+        "label": "Organizer",
+        "origin": "JSON_LD",
+        "value": "Department of Computer Engineering"
+      },
+      {
+        "confidence": 1,
+        "field": "startsAt",
+        "label": "Starts",
+        "origin": "JSON_LD",
+        "raw": "2026-11-14T09:00:00+05:30",
+        "value": "2026-11-14T09:00:00+05:30"
+      },
+      {
+        "confidence": 1,
+        "field": "endsAt",
+        "label": "Ends",
+        "origin": "JSON_LD",
+        "raw": "2026-11-15T21:00:00+05:30",
+        "value": "2026-11-15T21:00:00+05:30"
+      },
+      {
+        "confidence": 0.5,
+        "field": "registrationDeadlineAt",
+        "label": "Registration closes",
+        "origin": "HEURISTIC",
+        "raw": "on 5 November 2026",
+        "value": "on 5 November 2026"
+      },
+      {
+        "confidence": 1,
+        "field": "mode",
+        "label": "Mode",
+        "origin": "JSON_LD",
+        "value": "OFFLINE"
+      },
+      {
+        "confidence": 1,
+        "field": "place",
+        "label": "Place",
+        "origin": "JSON_LD",
+        "value": "Example Institute of Technology, Pune, Maharashtra, IN"
+      },
+      {
+        "confidence": 1,
+        "field": "feeText",
+        "label": "Entry fee",
+        "origin": "JSON_LD",
+        "raw": "INR 500",
+        "value": "INR 500"
+      },
+      {
+        "confidence": 1,
+        "field": "officialUrl",
+        "label": "Official link",
+        "origin": "JSON_LD",
+        "value": "https://cse.example.edu/innovate-2026"
+      },
+      {
+        "confidence": 1,
+        "field": "registrationUrl",
+        "label": "Registration link",
+        "origin": "JSON_LD",
+        "value": "https://cse.example.edu/innovate-2026/register"
+      }
+    ],
+    "fieldsMissing": [
+      "Prize",
+      "Team size"
+    ]
+  }
+}

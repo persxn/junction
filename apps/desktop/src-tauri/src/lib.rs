@@ -14,6 +14,7 @@ pub mod paths;
 pub mod ready;
 pub mod secret;
 pub mod settings;
+pub mod signin;
 pub mod supervisor;
 pub mod tray;
 
@@ -78,6 +79,9 @@ pub fn run() {
             commands::backend_get,
             commands::pick_folder,
             commands::save_text_file,
+            commands::open_source_signin,
+            commands::capture_source_session,
+            commands::close_source_signin,
         ])
         .setup(|app| {
             let resource_dir = app.path().resource_dir().ok();

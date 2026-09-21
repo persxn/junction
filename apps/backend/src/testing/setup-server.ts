@@ -10,6 +10,7 @@ import { UsersService } from '../modules/users/service.js';
 import { AdapterRegistry } from '../sources/registry.js';
 import { Geocoder } from '../modules/geo/geocoder.js';
 import { createEventsModule, type EventsModule } from '../modules/events/wiring.js';
+import { EventImportService } from '../modules/events/import/service.js';
 import { unavailableGazetteer } from '../platform/gazetteer.js';
 import { fakeTransport, silentLogger, testScrapingHttp } from './scraping.js';
 import { systemClock } from '../platform/time.js';
@@ -35,6 +36,8 @@ export interface SetupTestServer {
   readonly users: UsersService;
   readonly auth: AuthService;
   readonly sources: SourcesService;
+  /** WP-14's manual entry and URL import. */
+  readonly imports: EventImportService;
   /** WP-10's linker, merges and review API, on the same database. */
   readonly events: EventsModule;
   /** Empty in WP-09a; a test registers an adapter when it needs one. */
@@ -110,12 +113,30 @@ export async function startSetupTestServer(
     logger: silentLogger,
   });
 
+  // WP-14: manual entry and URL import, on the same database and the same
+  // silent transport — the route tests are about permissions and problem
+  // details, and a request that reached the network would mean the dispatch
+  // had already failed.
+  const imports = new EventImportService({
+    sources: new SourcesRepository(database.db),
+    records: new SourceRecordsRepository(database.db),
+    linker: events.linker,
+    provenance: events.provenance,
+    resolver: events.resolver,
+    geocoder: new Geocoder({ gazetteer: unavailableGazetteer('tests'), institutions: [] }),
+    registry,
+    http: testScrapingHttp({ transport: fakeTransport({}), clock: systemClock }),
+    audit,
+    logger: silentLogger,
+  });
+
   const server = await startTestServer({
     auth: () => auth,
     setup: () => setup,
     users: () => users,
     sources: () => sources,
     review: () => events.review,
+    imports: () => imports,
   });
 
   return {
@@ -125,6 +146,7 @@ export async function startSetupTestServer(
     users,
     auth,
     sources,
+    imports,
     events,
     registry,
     settings,

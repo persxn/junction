@@ -6,10 +6,10 @@ import type { RobotsVerdict } from '../../domain/scraping/gate.js';
 import { applyJitter } from '../../domain/scheduling.js';
 import type { Clock } from '../../platform/time.js';
 import type { ValidatorStore } from './cache.js';
-import { asTransportError, classifyStatus, parseRetryAfter } from './classify.js';
+import { asTransportError, classifyStatus, isLoginRedirect, parseRetryAfter } from './classify.js';
 import { hostKey } from './queue.js';
 import type { HostQueue } from './queue.js';
-import { frozen, header, readCapped } from './read.js';
+import { frozen, header, readCapped, requestHeaders } from './read.js';
 import type { RobotsCache } from './robots.js';
 import {
   CONNECT_TIMEOUT_MS,
@@ -167,10 +167,11 @@ export class PoliteHttpClient {
     const preDelay = effectiveDelayMs(this.#source.minDelayMs, undefined);
 
     if (this.#unreadableHosts.has(key)) {
-      throw this.#refused(
-        'ROBOTS_DISALLOWED',
-        `robots.txt on ${url.host} could not be read earlier in this run.`,
-      );
+      throw new ScrapeRequestError({
+        kind: 'ROBOTS_DISALLOWED',
+        refusal: 'ROBOTS_DISALLOWED',
+        message: `robots.txt on ${url.host} could not be read earlier in this run.`,
+      });
     }
     const robots = await this.#env.robots.lookup(url, preDelay, options.signal ?? this.#signal);
     if (robots.unreachable) {
@@ -225,10 +226,6 @@ export class PoliteHttpClient {
         refusal: decision.refusal,
       });
     }
-  }
-
-  #refused(refusal: 'ROBOTS_DISALLOWED', message: string): ScrapeRequestError {
-    return new ScrapeRequestError({ kind: 'ROBOTS_DISALLOWED', message, refusal });
   }
 
   /** The attempt loop. At most `MAX_RETRIES` extra tries, and only for §7.2's kinds. */
@@ -306,21 +303,13 @@ export class PoliteHttpClient {
   async #once(url: URL, method: ScrapeMethod, options: RequestOptions): Promise<PoliteResponse> {
     const target = url.toString();
     const conditional = options.conditional === true ? this.#env.cache?.get(target) : undefined;
-    const headers: Record<string, string> = {
-      'user-agent': this.#env.userAgent(),
-      accept: options.accept ?? 'application/json, text/html;q=0.9, */*;q=0.5',
-      'accept-encoding': 'gzip, deflate',
-    };
-    // A documented API key, on the source's own requests only (not robots.txt); never logged.
-    if (this.#source.credential !== undefined) {
-      headers[this.#source.credential.header.toLowerCase()] = this.#source.credential.value;
-    }
-    if (conditional?.etag != null) {
-      headers['if-none-match'] = conditional.etag;
-    }
-    if (conditional?.lastModified != null) {
-      headers['if-modified-since'] = conditional.lastModified;
-    }
+    const { headers, sentCredentialHosts: sentSession } = requestHeaders({
+      host: url.hostname,
+      userAgent: this.#env.userAgent(),
+      accept: options.accept,
+      credential: this.#source.credential,
+      conditional,
+    });
 
     let response: TransportResponse;
     try {
@@ -355,6 +344,17 @@ export class PoliteHttpClient {
     }
     if (response.status >= 400) {
       throw this.#statusError(response, target, method);
+    }
+    if (sentSession && isLoginRedirect(target, response.url)) {
+      // R74: the site answered a signed-in read by sending us to its sign-in
+      // page, which is a 200 and would otherwise be parsed as an empty listing.
+      // It means the same thing a 401 does, so it is reported the same way and
+      // the run marks the session expired.
+      throw new ScrapeRequestError({
+        kind: 'BLOCKED',
+        status: response.status,
+        message: `${method} ${target} was redirected to a sign-in page, so the stored session is no longer valid.`,
+      });
     }
 
     const { body, contentHash } = await readCapped(response, MAX_RESPONSE_BYTES).catch(

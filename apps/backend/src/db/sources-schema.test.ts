@@ -18,7 +18,7 @@ import { sources, sourceState, type SourceRow } from './schema/index.js';
 
 /**
  * Migration 0005 (the four tables plus `http_cache`) and migration 0006 (the
- * five seed rows of D-26).
+ * seed rows of D-26, plus WP-14's two).
  *
  * The seed assertions are the important half. `docs/research/source-feasibility.md`
  * is the file whose verdicts bind, and a row that disagrees with it is a source
@@ -207,8 +207,8 @@ describe('the CHECK constraints come from the contracts enums', () => {
   });
 });
 
-describe('the five seed rows (D-26, migration 0006)', () => {
-  it('seeds exactly the five sources ADR-0016 names', () => {
+describe('the seeded source rows (D-26, migrations 0006 and 0012)', () => {
+  it('seeds the five sources ADR-0016 names, plus WP-14 two that never scrape', () => {
     expect(
       database.db.drizzle
         .select()
@@ -216,7 +216,16 @@ describe('the five seed rows (D-26, migration 0006)', () => {
         .all()
         .map((row) => row.key)
         .sort(),
-    ).toEqual(['clist', 'ctftime', 'devfolio', 'devpost', 'unstop']);
+    ).toEqual([
+      'clist',
+      'ctftime',
+      'devfolio',
+      'devpost',
+      // WP-14: a typed-in event and a pasted link need a source to belong to.
+      'manual',
+      'unstop',
+      'url-import',
+    ]);
   });
 
   it('gives every seed a fixed, valid UUIDv7 and a health row', () => {
@@ -334,11 +343,16 @@ describe('the five seed rows (D-26, migration 0006)', () => {
   });
 
   it('records who reviewed each verdict and when', () => {
+    // Unstop's verdict was the owner's own reading of the Terms (R70); the two
+    // WP-14 rows are not sites at all, so their "reviewer" is the work package
+    // that created them.
+    const reviewer: Readonly<Record<string, RegExp>> = {
+      unstop: /^owner$/,
+      manual: /^WP-14$/,
+      'url-import': /^WP-14$/,
+    };
     for (const row of database.db.drizzle.select().from(sources).all()) {
-      // Unstop's verdict was the owner's own reading of the Terms (R70).
-      expect(row.complianceReviewedBy).toMatch(
-        row.key === 'unstop' ? /^owner$/ : /source-feasibility\.md/,
-      );
+      expect(row.complianceReviewedBy).toMatch(reviewer[row.key] ?? /source-feasibility\.md/);
       expect(row.complianceReviewedAt).not.toBeNull();
     }
   });

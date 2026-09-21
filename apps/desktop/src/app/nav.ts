@@ -92,6 +92,17 @@ export const MAIN_NAV = [
 export type NavPath = (typeof MAIN_NAV)[number]['path'];
 
 /**
+ * A screen with no rail item of its own (WP-14): adding an event is something
+ * you do *from* somewhere — Discover, the palette, a keyboard shortcut — rather
+ * than a place you go and stand in. It is still a route, so a link to it is
+ * type-checked like any other.
+ */
+export const CREATE_EVENT_PATH = '/events/new';
+
+/** Every path the router knows, rail item or not. */
+export type AppPath = NavPath | typeof CREATE_EVENT_PATH;
+
+/**
  * The admin section of §16.1.
  *
  * Each item names the §10.2 capability it needs. The rail shows an item only

@@ -183,6 +183,17 @@ describe('module-owned definitions', () => {
       // WP-11's, declared by modules/sources — secret, never logged or exported.
       'sources.clist.apiKey',
       'sources.clist.apiUsername',
+      // WP-14/R74's, one set per source that may hold the professor's own
+      // session. The cookie and its capture time are secret; the state and the
+      // last-verified time are what Source status shows.
+      'sources.devfolio.sessionCapturedAt',
+      'sources.devfolio.sessionCookie',
+      'sources.devfolio.sessionState',
+      'sources.devfolio.sessionVerifiedAt',
+      'sources.unstop.sessionCapturedAt',
+      'sources.unstop.sessionCookie',
+      'sources.unstop.sessionState',
+      'sources.unstop.sessionVerifiedAt',
     ]);
 
     const { store } = open();

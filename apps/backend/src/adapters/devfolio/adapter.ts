@@ -124,6 +124,20 @@ export function createDevfolioAdapter(deps: { readonly geo: DevfolioGeo }): Sour
         return { complete: true };
       })(),
 
+    /**
+     * WP-14: any `<slug>.devfolio.co` page stands for that hackathon.
+     *
+     * The external key is provisional — Devfolio's identity is the uuid inside
+     * the page, not the slug — so it is marked as such and the import replaces
+     * it with the normalized candidate's own key once the page has been read.
+     */
+    itemFromUrl(url: string): ListingItem | undefined {
+      const slug = slugOf(url);
+      return slug === undefined
+        ? undefined
+        : { externalKey: `devfolio:slug:${slug}`, url: hackathonUrl(slug), payload: undefined };
+    },
+
     async detail(context: AdapterContext, item: ListingItem): Promise<RawDetail> {
       const config = configOf(context.config);
       const slug = slugOf(item.url);

@@ -1,0 +1,145 @@
+{
+  "candidate": {
+    "descriptionMd": "The annual coding contest of Example College of Engineering, open to all undergraduate students across India.",
+    "editionYear": 2026,
+    "eventType": {
+      "confidence": 0.8,
+      "value": "CODING_CONTEST"
+    },
+    "externalKey": "https://fest.example.ac.in/techfest-2026",
+    "fee": {
+      "confidence": 0.9,
+      "currency": "INR",
+      "known": true,
+      "minor": 0,
+      "text": "Free"
+    },
+    "isRecurringRound": false,
+    "mode": {
+      "confidence": 1,
+      "value": "UNKNOWN"
+    },
+    "officialUrl": "https://fest.example.ac.in/techfest-2026",
+    "organizerName": "Example College of Engineering",
+    "prize": {
+      "currency": "INR",
+      "text": "₹50,000",
+      "totalMinor": 5000000
+    },
+    "registrationDeadlineAt": {
+      "at": 1796063399999,
+      "confidence": 0.7,
+      "precision": "DATE",
+      "raw": "30 November 2026"
+    },
+    "registrationUrl": "https://forms.example.ac.in/techfest-2026",
+    "sourceKey": "url-import",
+    "startsAt": {
+      "at": 1797013800000,
+      "confidence": 0.7,
+      "precision": "DATE",
+      "raw": "12 December 2026"
+    },
+    "summary": "The annual coding contest of Example College of Engineering, open to all undergraduate students across India.",
+    "teamSize": {
+      "confidence": 0.85,
+      "max": 2,
+      "min": 2,
+      "text": "teams of 2"
+    },
+    "timezone": "Asia/Kolkata",
+    "title": "TechFest 2026 — Coding Contest",
+    "titleRaw": "TechFest 2026 — Coding Contest",
+    "url": "https://fest.example.ac.in/techfest-2026",
+    "warnings": []
+  },
+  "fields": {
+    "fieldsFound": [
+      {
+        "confidence": 0.8,
+        "field": "title",
+        "label": "Title",
+        "origin": "OPEN_GRAPH",
+        "raw": "TechFest 2026 — Coding Contest",
+        "value": "TechFest 2026 — Coding Contest"
+      },
+      {
+        "confidence": 0.8,
+        "field": "description",
+        "label": "Description",
+        "origin": "OPEN_GRAPH",
+        "raw": "The annual coding contest of Example College of Engineering, open to all undergraduate students across India.",
+        "value": "The annual coding contest of Example College of Engineering, open to all undergraduate students across India."
+      },
+      {
+        "confidence": 0.8,
+        "field": "organizerName",
+        "label": "Organizer",
+        "origin": "OPEN_GRAPH",
+        "raw": "Example College of Engineering",
+        "value": "Example College of Engineering"
+      },
+      {
+        "confidence": 0.5,
+        "field": "startsAt",
+        "label": "Starts",
+        "origin": "HEURISTIC",
+        "raw": "12 December 2026",
+        "value": "12 December 2026"
+      },
+      {
+        "confidence": 0.5,
+        "field": "registrationDeadlineAt",
+        "label": "Registration closes",
+        "origin": "HEURISTIC",
+        "raw": "30 November 2026",
+        "value": "30 November 2026"
+      },
+      {
+        "confidence": 0.5,
+        "field": "feeText",
+        "label": "Entry fee",
+        "origin": "HEURISTIC",
+        "raw": "Free",
+        "value": "Free"
+      },
+      {
+        "confidence": 0.5,
+        "field": "prizeText",
+        "label": "Prize",
+        "origin": "HEURISTIC",
+        "raw": "₹50,000",
+        "value": "₹50,000"
+      },
+      {
+        "confidence": 0.5,
+        "field": "teamSizeText",
+        "label": "Team size",
+        "origin": "HEURISTIC",
+        "raw": "teams of 2",
+        "value": "teams of 2"
+      },
+      {
+        "confidence": 0.8,
+        "field": "officialUrl",
+        "label": "Official link",
+        "origin": "OPEN_GRAPH",
+        "raw": "https://fest.example.ac.in/techfest-2026",
+        "value": "https://fest.example.ac.in/techfest-2026"
+      },
+      {
+        "confidence": 0.5,
+        "field": "registrationUrl",
+        "label": "Registration link",
+        "origin": "HEURISTIC",
+        "raw": "https://forms.example.ac.in/techfest-2026",
+        "value": "https://forms.example.ac.in/techfest-2026"
+      }
+    ],
+    "fieldsMissing": [
+      "Ends",
+      "Mode",
+      "Place"
+    ]
+  }
+}

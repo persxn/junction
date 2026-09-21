@@ -107,7 +107,7 @@ afterAll(async () => {
 });
 
 describe('GET /sources', () => {
-  it('lists the five seeded sources with their verdicts', async () => {
+  it('lists the seeded sources with their verdicts', async () => {
     const answer = await call('GET', '/api/v1/sources', { token: adminToken });
     expect(answer.status).toBe(200);
     const list = answer.body.sources as { key: string; complianceStatus: string }[];
@@ -116,7 +116,9 @@ describe('GET /sources', () => {
       'ctftime',
       'devfolio',
       'devpost',
+      'manual',
       'unstop',
+      'url-import',
     ]);
     expect(list.find((entry) => entry.key === 'devpost')?.complianceStatus).toBe(
       'MANUAL_IMPORT_ONLY',
@@ -149,7 +151,7 @@ describe('GET /sources/status', () => {
       consecutiveFailures: number;
       message: string;
     }[];
-    expect(list).toHaveLength(5);
+    expect(list).toHaveLength(7);
     const devpost = list.find((entry) => entry.source.key === 'devpost');
     expect(devpost?.lastSuccessAt).toBeNull();
     expect(devpost?.freshnessMinutes).toBeNull();
@@ -324,5 +326,94 @@ describe('/admin/sources/:key/credential (WP-11)', () => {
       body: { username: 'someone', apiKey: 'x' },
     });
     expect(ctftime.status).toBe(409);
+  });
+});
+
+/**
+ * The professor's own session (R74/D-34, WP-14). Admin-only like every other
+ * write here, and the cookie never comes back out of any of the three.
+ */
+describe('/admin/sources/:key/session', () => {
+  const COOKIE = 'df_session=only-the-professor-has-this; other=1';
+
+  it('refuses a professor on all three verbs (§10.2 source.manage)', async () => {
+    expect(
+      (await call('GET', '/api/v1/admin/sources/devfolio/session', { token: professor })).status,
+    ).toBe(403);
+    expect(
+      (
+        await call('PUT', '/api/v1/admin/sources/devfolio/session', {
+          token: professor,
+          body: { cookie: COOKIE },
+        })
+      ).status,
+    ).toBe(403);
+    expect(
+      (await call('DELETE', '/api/v1/admin/sources/devfolio/session', { token: professor })).status,
+    ).toBe(403);
+  });
+
+  it('answers state and nothing else before anybody has signed in', async () => {
+    const answer = await call('GET', '/api/v1/admin/sources/devfolio/session', {
+      token: adminToken,
+    });
+    expect(answer.status).toBe(200);
+    expect(answer.body).toMatchObject({
+      supported: true,
+      isSet: false,
+      state: 'NONE',
+      capturedAt: null,
+      lastVerifiedAt: null,
+      loginUrl: 'https://devfolio.co/login',
+      hosts: ['devfolio.co', '*.devfolio.co'],
+    });
+  });
+
+  it('stores one, audits the act without the value, and never echoes it', async () => {
+    const put = await call('PUT', '/api/v1/admin/sources/devfolio/session', {
+      token: adminToken,
+      body: { cookie: COOKIE, capturedVia: 'LOGIN_WINDOW' },
+    });
+    expect(put.status).toBe(200);
+    expect(put.body).toMatchObject({ isSet: true, state: 'ACTIVE' });
+    expect(JSON.stringify(put.body)).not.toContain('only-the-professor-has-this');
+
+    const audit = harness.audit.all().filter((row) => row.action === 'source.session.set');
+    expect(audit).toHaveLength(1);
+    expect(JSON.stringify(audit)).not.toContain('only-the-professor-has-this');
+    expect(JSON.stringify(audit)).toContain('LOGIN_WINDOW');
+
+    const exported = JSON.stringify(harness.settings.exportableSettings());
+    expect(exported).not.toContain('only-the-professor-has-this');
+  });
+
+  it('signs the app out again, and audits that too', async () => {
+    await call('PUT', '/api/v1/admin/sources/devfolio/session', {
+      token: adminToken,
+      body: { cookie: COOKIE },
+    });
+    const gone = await call('DELETE', '/api/v1/admin/sources/devfolio/session', {
+      token: adminToken,
+    });
+    expect(gone.status).toBe(200);
+    expect(gone.body).toMatchObject({ isSet: false, state: 'NONE' });
+    expect(harness.audit.all().some((row) => row.action === 'source.session.cleared')).toBe(true);
+  });
+
+  it('refuses a source whose verdict does not allow signing in', async () => {
+    const answer = await call('PUT', '/api/v1/admin/sources/ctftime/session', {
+      token: adminToken,
+      body: { cookie: COOKIE },
+    });
+    expect(answer.status).toBe(409);
+    expect(answer.body.code).toBe('CONFLICT');
+  });
+
+  it('refuses an empty cookie before the service sees it', async () => {
+    const answer = await call('PUT', '/api/v1/admin/sources/devfolio/session', {
+      token: adminToken,
+      body: { cookie: '   ' },
+    });
+    expect(answer.status).toBe(400);
   });
 });

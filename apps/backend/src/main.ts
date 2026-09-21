@@ -35,6 +35,9 @@ import { SourceRecordsRepository } from './modules/sources/records.js';
 import { SourcesRepository } from './modules/sources/repository.js';
 import { SourcesService } from './modules/sources/service.js';
 import { resolveCredential, seedDevCredentials } from './modules/sources/credentials.js';
+import { resolveSessionCredential } from './modules/sources/session.js';
+import { createSessionHooks } from './scraping/sessions.js';
+import { EventImportService } from './modules/events/import/service.js';
 import type { SourceRow } from './db/schema/index.js';
 import {
   HttpCacheStore,
@@ -189,15 +192,34 @@ async function main(): Promise<void> {
     if (seedDevCredentials(settings, config.dev, process.env)) {
       logger.info('a CLIST credential was seeded from the environment (--dev)');
     }
+    // WP-11's documented API key, or — for the two sources R74 allows it —
+    // the professor's own session. A source has at most one of the two, and a
+    // session that the site has already rejected is not sent at all.
     const credentials = (source: SourceRow): SourceCredential | undefined =>
-      resolveCredential(source, settings);
+      resolveCredential(source, settings) ?? resolveSessionCredential(source, settings);
+    const sessions = createSessionHooks(settings);
     const scrapeRuntime = {
       http: scrapingHttp,
       snapshots,
       linker: eventsModule.linker,
       credentials,
+      sessions,
       setupComplete: () => !setup.isRequired(),
     };
+    const imports = new EventImportService({
+      sources: sourcesRepository,
+      records: sourceRecords,
+      linker: eventsModule.linker,
+      provenance: eventsModule.provenance,
+      resolver: eventsModule.resolver,
+      geocoder,
+      registry: adapterRegistry,
+      http: scrapingHttp,
+      audit,
+      logger,
+      snapshots,
+      credentials,
+    });
     const sourcesService = new SourcesService({
       sources: sourcesRepository,
       records: sourceRecords,
@@ -243,6 +265,7 @@ async function main(): Promise<void> {
       setup: () => setup,
       users: () => users,
       sources: () => sourcesService,
+      imports: () => imports,
       review: () => eventsModule.review,
       onShutdownRequested: () => {
         lifecycle.start('api');

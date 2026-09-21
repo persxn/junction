@@ -135,6 +135,18 @@ export interface PoliteResponse {
 export interface SourceCredential {
   readonly header: string;
   readonly value: string;
+  /**
+   * WP-14/R74: the only hosts this header may be sent to, as
+   * `domain/scraping/paths.ts` host patterns. Absent means "any host this
+   * source may request at all", which is the WP-11 API-key case: a documented
+   * key belongs to the API it was issued for and the path allowlist already
+   * names it.
+   *
+   * A session cookie says so explicitly, because it identifies a *person*: it
+   * goes to that source's own hosts and nowhere else, whatever else the source
+   * is allowed to fetch.
+   */
+  readonly hosts?: readonly string[];
 }
 
 /** Everything the gate needs to know about the source making the request. */

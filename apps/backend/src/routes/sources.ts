@@ -1,9 +1,11 @@
 import {
   SetSourceCredentialRequest,
+  SetSourceSessionRequest,
   SourceCredentialStatus,
   SourceListResponse,
   SourceRefreshResult,
   SourceResponse,
+  SourceSessionStatus,
   SourceStatusResponse,
   UpdateSourceRequest,
 } from '@compintel/contracts';
@@ -90,6 +92,34 @@ export const sourcesRoutes =
       },
       (request) =>
         service(options).setCredential(contextOf(request), request.params.key, request.body),
+    );
+
+    // WP-14/R74: the professor's own session. `GET` answers state, never the
+    // cookie; `PUT` takes one; `DELETE` signs the app out. Admin-only, like
+    // every other write here (§10.2 `source.manage`).
+    app.get(
+      '/admin/sources/:key/session',
+      { schema: { params: SourceParams, response: { 200: SourceSessionStatus } } },
+      (request) => service(options).sessionStatus(contextOf(request), request.params.key),
+    );
+
+    app.put(
+      '/admin/sources/:key/session',
+      {
+        schema: {
+          params: SourceParams,
+          body: SetSourceSessionRequest,
+          response: { 200: SourceSessionStatus },
+        },
+      },
+      (request) =>
+        service(options).setSession(contextOf(request), request.params.key, request.body),
+    );
+
+    app.delete(
+      '/admin/sources/:key/session',
+      { schema: { params: SourceParams, response: { 200: SourceSessionStatus } } },
+      (request) => service(options).clearSession(contextOf(request), request.params.key),
     );
 
     app.post(

@@ -110,3 +110,27 @@ export function isPathAllowed(url: URL, entries: readonly string[]): boolean {
   }
   return parsed.some((entry) => !entry.deny && matches(entry, host, path));
 }
+
+/**
+ * Whether a host is covered by one of a list of host patterns — `example.com`
+ * for that host exactly, `*.example.com` for the domain and its sub-domains.
+ *
+ * Used by two rules that are deliberately separate from {@link isPathAllowed}:
+ * where a credential may be sent (R74: the professor's session goes to its own
+ * source's hosts and nowhere else, not even robots.txt) and which source a
+ * pasted link belongs to (WP-14). Both are host questions with no path in them.
+ */
+export function hostAllowed(host: string, patterns: readonly string[]): boolean {
+  const target = host.toLowerCase();
+  return patterns.some((pattern) => {
+    const wanted = pattern.trim().toLowerCase();
+    if (wanted.startsWith('!') || wanted.length === 0) {
+      return false;
+    }
+    if (wanted.startsWith('*.')) {
+      const base = wanted.slice(2);
+      return target === base || target.endsWith(`.${base}`);
+    }
+    return target === wanted;
+  });
+}

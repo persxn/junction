@@ -8,6 +8,8 @@ import {
 } from '@tanstack/react-router';
 
 import { UsersPage } from '../features/admin/users/UsersPage.js';
+import { CreateEventPage } from '../features/events/create/CreateEventPage.js';
+import { SourcesPage } from '../features/admin/sources/SourcesPage.js';
 import { AppShell } from './AppShell.js';
 import { ADMIN_NAV, MAIN_NAV, type NavItem } from './nav.js';
 import { NotFoundPage } from './routes/NotFoundPage.js';
@@ -69,6 +71,14 @@ const discoverRoute = createRoute({
   component: () => <PlaceholderPage item={navItem('discover')} />,
 });
 
+// WP-14: reachable from the palette and from a link, with no rail item of its
+// own — §16.1's rail is places, and this is an action.
+const createEventRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/events/new',
+  component: CreateEventPage,
+});
+
 const competitionsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/competitions',
@@ -110,7 +120,7 @@ const adminSourcesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/admin/sources',
   beforeLoad: adminGuard('source.manage'),
-  component: () => <PlaceholderPage item={navItem('admin-sources')} />,
+  component: SourcesPage,
 });
 
 const adminCategoriesRoute = createRoute({
@@ -158,6 +168,7 @@ const adminHealthRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   dashboardRoute,
   discoverRoute,
+  createEventRoute,
   competitionsRoute,
   teamsRoute,
   studentsRoute,

@@ -306,3 +306,49 @@ export type SetSourceCredentialRequest = z.infer<typeof SetSourceCredentialReque
 /** `GET /admin/sources/:key/credential`: whether it is set, and nothing else. */
 export const SourceCredentialStatus = z.object({ isSet: z.boolean() }).strict();
 export type SourceCredentialStatus = z.infer<typeof SourceCredentialStatus>;
+
+/**
+ * Whether the app currently holds the professor's own session for a source
+ * (R74/D-34, WP-14).
+ *
+ * `EXPIRED` is a state of the source, not a failure: the site answered 401, 403
+ * or a login redirect while a session was set, so the runs fall back to the
+ * public pages and Source status says so until a new session is given. Nothing
+ * here is the cookie, and no route ever echoes one back.
+ */
+export const SOURCE_SESSION_STATES = ['NONE', 'ACTIVE', 'EXPIRED'] as const;
+export const SourceSessionState = z.enum(SOURCE_SESSION_STATES);
+export type SourceSessionState = z.infer<typeof SourceSessionState>;
+
+export const SourceSessionStatus = z
+  .object({
+    /** Whether this source may hold a session at all (R74: Devfolio, Unstop). */
+    supported: z.boolean(),
+    isSet: z.boolean(),
+    state: SourceSessionState,
+    /** When the professor gave it to us. */
+    capturedAt: z.int().nullable(),
+    /** The last run that used it and was not refused. */
+    lastVerifiedAt: z.int().nullable(),
+    /** The source's own login page, for the packaged sign-in window. */
+    loginUrl: z.url().optional(),
+    /** Hosts the cookie may be sent to, and the only ones the window may load. */
+    hosts: z.array(z.string().min(1)),
+  })
+  .strict();
+export type SourceSessionStatus = z.infer<typeof SourceSessionStatus>;
+
+/**
+ * `PUT /admin/sources/:key/session` — the cookie header the professor copied
+ * from their own browser, or that the packaged sign-in window captured for that
+ * source's domain alone.
+ */
+export const SetSourceSessionRequest = z
+  .object({
+    /** A `Cookie:` header value: `name=value; name2=value2`. */
+    cookie: z.string().trim().min(1).max(8192),
+    /** Where it came from, for the audit row. The value is never audited. */
+    capturedVia: z.enum(['PASTE', 'LOGIN_WINDOW']).default('PASTE'),
+  })
+  .strict();
+export type SetSourceSessionRequest = z.infer<typeof SetSourceSessionRequest>;

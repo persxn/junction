@@ -3,8 +3,8 @@
 ## Current
 - **pre-M1 · WP-08a · WP-08b · WP-09a DONE** (handoffs in `docs/handoff/`): one `Clock`, lint-enforced domain
   boundaries, settings registry, goldens; `EventCandidate` + normalization; gazetteer/geocoder/policies (R53–R57);
-  PoliteHttpClient, compliance gate, source seeds, scrape runs (R58–R61). Open: `jobs/schedule.ts` → `domain/` (pre-M1 §4).
-- **WP-09b PARTIAL** — CTFtime adapter; manual live smoke not run (no `scraper.contactEmail` on the dev DB).
+  PoliteHttpClient, compliance gate, source seeds, scrape runs (R58–R61). Open: `jobs/schedule.ts` → `domain/`.
+  **WP-09b PARTIAL** — CTFtime adapter; manual live smoke not run (no `scraper.contactEmail` on the dev DB).
 - **WP-10 DONE** (`docs/handoff/WP-10.md`) — dedup (§7.5, R64 first), merge/unmerge (R66, nothing deleted),
   resolution by field group, change detection, admin review API; migration 0008; scrapes now create events.
 - **WP-11 DONE** (`docs/handoff/WP-11.md`) — CLIST adapter (key-gated; no key → BLOCKED_BY_POLICY, zero requests),
@@ -19,15 +19,22 @@
   competitions, paginated) + `/api/public/competition/{id}` details, Angular `ng-state` HTML fallback, deny list before
   the transport (`SOURCE_PATH_FORBIDDEN`), quizzes/case studies stored POLICY_HIDDEN. R70–R73 (spec 1.1.13), U3 DONE,
   migration **0011** (R73 `compliance_review_due_at`, Unstop row). Fixed a WP-10 bug: policies ignored type confidence.
-- **WP-13 follow-up (21 Sep 2026)** — `pnpm --filter @compintel/backend unstop:capture` is the owed capture *and* smoke
-  in one command: ≤ 4 requests through the polite client, people-shaped keys nulled, fixtures + `.meta.json` written,
-  request log printed, R71 judged. It refuses while `scraper.contactEmail` is unset, so **fixtures stay synthetic and
-  the capture stays owed to WP-14** (owner's call, 21 Sep — no request has reached unstop.com). Fixed: no `src/tools/`
-  tool could start in a checkout (`resolveResources` never looked two levels up), so `scrape:once` and `clist:smoke`
-  were broken too. **2620 tests.**
+- **WP-13 follow-up (21 Sep 2026)** — `unstop:capture` is the owed capture *and* smoke in one gated command (≤ 4
+  requests, people-shaped keys nulled, fixtures + `.meta.json`, request log, R71 judged). It refuses while
+  `scraper.contactEmail` is unset, so **fixtures stay synthetic and the capture is owed** — no request has reached
+  unstop.com. Fixed: no `src/tools/` tool could start in a checkout (`resolveResources`), so `scrape:once` and
+  `clist:smoke` were broken too.
 - **Owner product flow (21 Sep 2026):** each professor installs the app; onboarding opens the packaged sign-in browser
   for every approved source; the UA contact is that professor's own address (R74, WP-14 prompt).
-- **Next: WP-14** (manual entry, URL import, signed-in sessions + onboarding browser). Roadmap 23 done, 25 remaining.
+- **WP-14 DONE** (22 Sep 2026, `docs/handoff/WP-14.md`) — manual entry + URL import + signed-in sessions (R74/D-34).
+  Dispatch is pure over the live `sources` rows: **Devpost makes zero requests, proved by a transport spy**; an approved
+  domain goes to its adapter's `detail()` (new `itemFromUrl`), anything else to one robots-checked page (JSON-LD → OG →
+  heuristics). Both writes go through WP-10's linker under the seeded `manual` / `url-import` rows (migration **0012**),
+  and every field a professor states becomes an `event_overrides` row that survives the next scrape. Sessions: cookie in
+  secret settings, sent only to the source's own hosts (a `SourceCredential.hosts` check in the client), 401/403/login
+  redirect → EXPIRED with **no backoff**, packaged Tauri sign-in window with its own profile + a domain filter (6 Rust
+  tests). UI: `/events/new` form with per-field provenance chips, Admin → Sources sessions panel. **2739 tests, 61 Rust.**
+- **Next: WP-15a** (search and `EventQuery`). Roadmap 24 done, 24 remaining.
   WP-08b's two questions are still open (handoff §6): the gazetteer is 68.5 MB of
   which 95% are zero-population hamlets that also *harm* matching — §4.17 says "towns/cities" where
   R53 says feature class P; and GeoNames has almost no Indian campuses, so the INSTITUTION rung is
@@ -98,17 +105,14 @@
 
 ## Completed
 - **WP-07b — first-run wizard + user administration** (closes M0). R39 gate = 409 `SETUP_REQUIRED` before the session
-  hook (exempt `/health`, `/setup/*`, `/system/client-log`, `/system/shutdown`); `modules/setup/` writes the whole
-  organization in **one transaction** (R40); `modules/backup/keys.ts` = `age-encryption` 0.3.1 X25519 wrapped to a
-  scrypt passphrase (wf 18) + recovery file and code (R41/R42); `modules/users/` = admin CRUD (R43).
-- **WP-07a — auth core.** `permissions.ts` (R32) + `auth.ts`; migrations 0002/0003 (organization, identity,
-  append-only `audit_log`, roles); Argon2id **m=128 MiB t=6 p=1, 322-409 ms here** (R17 addon path), opaque SHA-256
-  sessions (R33), the R34 ladder, `policy.assertCan`, hash chain + `verifyChain` (R35), session preHandler (R38), SSE
-  hub (R36), routes `/auth/*` `/me` `/stream`, UI token in memory only. **`/stream` must write its head through
-  Fastify or the WebView loses the CORS headers.**
-- **WP-06 — UI foundation.** Tailwind v4 + `src/styles/tokens.css`: one `--ci-*` token set, both themes,
-  every text/surface pair **measured** at >= 4.5:1; light/dark/**system**. `src/shell/backend.ts` is IPC
-  only, the API client is `src/api/` (R27's 2 s timeout); TanStack Query + Router, cmdk palette, axe clean.
+  hook; `modules/setup/` writes the whole organization in **one transaction** (R40); backup keys = `age-encryption`
+  0.3.1 wrapped to a scrypt passphrase + recovery file and code (R41/R42); `modules/users/` = admin CRUD (R43).
+- **WP-07a — auth core.** `permissions.ts` (R32) + `auth.ts`; migrations 0002/0003; Argon2id **m=128 MiB t=6 p=1,
+  322-409 ms here** (R17), SHA-256 sessions (R33), R34 ladder, `policy.assertCan`, hash chain (R35), SSE hub (R36),
+  UI token in memory only. **`/stream` must write its head through Fastify or the WebView loses the CORS headers.**
+- **WP-06 — UI foundation.** Tailwind v4 + `src/styles/tokens.css`: one `--ci-*` token set, both themes, every
+  text/surface pair **measured** at >= 4.5:1. `src/shell/backend.ts` is IPC only, the API client is `src/api/`
+  (R27's 2 s timeout); TanStack Query + Router, cmdk palette, axe clean.
 - **WP-05b — tray, close-to-tray, single instance, autostart, LNA check.** `tray-icon` +
   `tauri-plugin-single-instance` 2.4.5 and `tauri-plugin-autostart` 2.5.1; preferences in
   `<dataDir>\shell-settings.json` (R28), close-to-tray on by default (D-14). `loopback.rs` serves the
@@ -117,17 +121,15 @@
 - **WP-05a — Tauri shell + backend supervision.** `apps/desktop` (React 19 + Vite 8, own tsconfig, R6),
   `src-tauri` inside, toolchain pinned 1.98.1 (R1); Rust `backoff`/`ready`/`secret`/`paths`/`job`/
   `supervisor`/`commands` (R7, A2, A20, F7/A17); `contracts/src/shell.ts` types the IPC (R24).
-- **WP-04c — DB-backed job runner.** Migration 0001 = `job_state`; `contracts/src/jobs.ts`. `src/jobs/`:
-  `outcome`, `store` (conditional-UPDATE claim = single-flight), `run`, `scheduler` (30 s tick,
-  catch-up, 2 scrape / 1 LLM / 4 general, stale lease → CRASHED, SKIPPED_OFFLINE, manual `trigger()`);
-  the arithmetic is `domain/scheduling.ts` since pre-M1. **WP-09a registered the first jobs.**
+- **WP-04c — DB-backed job runner.** Migration 0001 = `job_state`; `contracts/src/jobs.ts`. `src/jobs/`: `outcome`,
+  `store` (conditional-UPDATE claim = single-flight), `run`, `scheduler` (30 s tick, catch-up, 2 scrape / 1 LLM /
+  4 general, stale lease → CRASHED, SKIPPED_OFFLINE, manual `trigger()`). **WP-09a registered the first jobs.**
 - **WP-04b — SQLite + Drizzle + migrations + data-dir lock + UUIDv7.** better-sqlite3 13.0.3,
   drizzle-orm 0.45.2. `ids.ts` UUIDv7 (RFC 9562, monotonic); `lock.ts` (R15); `db.ts` R16 PRAGMAs +
   `quick_check`; `migrate.ts` + `VACUUM INTO` pre-migration copies (keep 5); 0000 = `app_meta`.
-- **WP-04a — backend app factory**. zod config (flags > env > defaults), pino `multistream` →
-  daily-rotating file (keep 14) + deep redaction, `AppError` → RFC 9457 `problem+json` (R5) with
-  `X-Request-Id`, Host + `X-CompIntel-Client` (`timingSafeEqual`) + CORS (R9), `/health`,
-  `/system/shutdown`, `buildApp()` + `main.ts` (READY line, stdin EOF, 10 s hard timeout).
+- **WP-04a — backend app factory**. zod config (flags > env > defaults), pino `multistream` → daily-rotating file
+  (keep 14) + deep redaction, `AppError` → RFC 9457 `problem+json` (R5) with `X-Request-Id`, Host +
+  `X-CompIntel-Client` + CORS (R9), `/health`, `buildApp()` + `main.ts` (READY line, stdin EOF, 10 s timeout).
 - **WP-03a/03b — toolchain + monorepo scaffold.** VS Build Tools 2022, rustup stable-msvc, pnpm
   workspace, engines `>=24.19 <25`, save-exact. **TypeScript 6.0.3**, not 7.x (typescript-eslint caps
   at `<6.1.0`). Probe A: SQLite 3.53.4 WAL + FTS5, `VACUUM INTO` 2.9 ms, argon2 prebuilds only.

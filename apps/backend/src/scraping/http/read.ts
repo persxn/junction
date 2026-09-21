@@ -1,6 +1,12 @@
 import { createHash } from 'node:crypto';
 
-import { TransportError, type PoliteResponse, type TransportResponse } from './types.js';
+import { hostAllowed } from '../../domain/scraping/paths.js';
+import {
+  TransportError,
+  type PoliteResponse,
+  type SourceCredential,
+  type TransportResponse,
+} from './types.js';
 
 /**
  * Reading a response body without ever holding more than the cap (§4.8's 5 MB).
@@ -75,4 +81,49 @@ export function frozen(base: Omit<PoliteResponse, 'text' | 'json'>): PoliteRespo
     text: () => decode(base.body),
     json: () => JSON.parse(decode(base.body)) as unknown,
   });
+}
+
+export interface RequestHeaderInput {
+  readonly host: string;
+  readonly userAgent: string;
+  readonly accept?: string | undefined;
+  readonly credential?: SourceCredential | undefined;
+  readonly conditional?: { etag?: string | null; lastModified?: string | null } | undefined;
+}
+
+export interface RequestHeaders {
+  readonly headers: Record<string, string>;
+  /** True when a host-restricted credential — a session (R74) — was attached. */
+  readonly sentCredentialHosts: boolean;
+}
+
+/**
+ * The headers one request carries. Pure, so "was the cookie sent to this host?"
+ * is answerable without a transport.
+ *
+ * A credential goes on the source's own requests only — never on robots.txt,
+ * which the robots cache fetches with no source context — and is never logged.
+ * A credential that names its hosts (the professor's session, R74) is sent to
+ * those and to nothing else, even where the path allowlist would have permitted
+ * the request without one.
+ */
+export function requestHeaders(input: RequestHeaderInput): RequestHeaders {
+  const headers: Record<string, string> = {
+    'user-agent': input.userAgent,
+    accept: input.accept ?? 'application/json, text/html;q=0.9, */*;q=0.5',
+    'accept-encoding': 'gzip, deflate',
+  };
+  const credential = input.credential;
+  const hostRestricted =
+    credential?.hosts !== undefined && hostAllowed(input.host, credential.hosts);
+  if (credential !== undefined && (credential.hosts === undefined || hostRestricted)) {
+    headers[credential.header.toLowerCase()] = credential.value;
+  }
+  if (input.conditional?.etag != null) {
+    headers['if-none-match'] = input.conditional.etag;
+  }
+  if (input.conditional?.lastModified != null) {
+    headers['if-modified-since'] = input.conditional.lastModified;
+  }
+  return { headers, sentCredentialHosts: hostRestricted };
 }

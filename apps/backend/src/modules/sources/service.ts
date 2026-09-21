@@ -1,6 +1,8 @@
 import type {
   ScrapeTrigger,
+  SetSourceSessionRequest,
   SourceRefreshResult,
+  SourceSessionStatus,
   SourceStatus,
   SourceSummary,
   UpdateSourceRequest,
@@ -19,6 +21,7 @@ import type { SettingsStore } from '../../platform/settings.js';
 import { authConfigOf, credentialIsSet, storeCredential } from './credentials.js';
 import { sourceNotFound, sourceRefreshTooSoon } from './errors.js';
 import { nextManualRefreshAt, toRunSummary, toStatus, toSummary } from './mappers.js';
+import { clearSession, sessionConfigOf, sessionStatus, storeSession } from './session.js';
 import type { SourceRecordsRepository } from './records.js';
 import type { SourcesRepository } from './repository.js';
 
@@ -163,6 +166,74 @@ export class SourcesService {
       () => storeCredential(source, settings, value, context.actor.id),
     );
     return { isSet: credentialIsSet(source, settings) };
+  }
+
+  /** Whether the app holds the professor's own session for a source (R74). */
+  sessionStatus(context: SourcesServiceContext, key: string): SourceSessionStatus {
+    assertCan(context.actor, 'source.manage');
+    return sessionStatus(this.#require(key), this.#settings());
+  }
+
+  /**
+   * Stores the professor's own session (R74/D-34), pasted or captured by the
+   * packaged sign-in window.
+   *
+   * Audited without the value — who signed in to what, and when — because an
+   * administrator can export the audit log, and a cookie in it would be a
+   * credential in a file somebody e-mails.
+   */
+  setSession(
+    context: SourcesServiceContext,
+    key: string,
+    request: SetSourceSessionRequest,
+  ): SourceSessionStatus {
+    assertCan(context.actor, 'source.manage');
+    const source = this.#require(key);
+    if (sessionConfigOf(source) === undefined) {
+      throw conflict(
+        `${source.name} is not a source you can sign in to.`,
+        'Only sources whose verdict allows signed-in reading accept a session (R74).',
+      );
+    }
+    const settings = this.#settings();
+    const at = nowMs(this.#clock);
+    withAudit(
+      this.#deps.audit,
+      {
+        actorKind: 'USER',
+        actorUserId: context.actor.id,
+        action: 'source.session.set',
+        entityKind: 'source',
+        entityId: source.id,
+        summary: `Stored a ${source.name} session for ${context.actor.displayName}`,
+        diff: { capturedVia: request.capturedVia },
+        requestId: context.requestId ?? null,
+      },
+      () => storeSession(source, settings, request.cookie, context.actor.id, at),
+    );
+    return sessionStatus(source, settings);
+  }
+
+  /** Signs the app out of a source; the next run reads its public pages. */
+  clearSession(context: SourcesServiceContext, key: string): SourceSessionStatus {
+    assertCan(context.actor, 'source.manage');
+    const source = this.#require(key);
+    const settings = this.#settings();
+    withAudit(
+      this.#deps.audit,
+      {
+        actorKind: 'USER',
+        actorUserId: context.actor.id,
+        action: 'source.session.cleared',
+        entityKind: 'source',
+        entityId: source.id,
+        summary: `Removed the stored ${source.name} session`,
+        diff: {},
+        requestId: context.requestId ?? null,
+      },
+      () => clearSession(source, settings, context.actor.id),
+    );
+    return sessionStatus(source, settings);
   }
 
   #settings(): SettingsStore {

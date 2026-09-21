@@ -122,3 +122,45 @@ export async function onBackendStatus(handler: (status: Status) => void): Promis
     handler(BackendStatus.parse(event.payload));
   });
 }
+
+/**
+ * The packaged sign-in window (R74/D-34, WP-14).
+ *
+ * The shell opens a window on the source's own login page, with its own profile
+ * and no way to navigate anywhere else, and hands back the cookies for that
+ * source's domains when the professor says they are signed in. The page never
+ * sees another site's cookies, and the shell keeps no copy of these.
+ */
+export interface SignInRequest {
+  readonly sourceKey: string;
+  readonly loginUrl: string;
+  readonly hosts: readonly string[];
+}
+
+export interface SignInResult {
+  readonly sourceKey: string;
+  /** A `Cookie:` header value; empty when nothing was found. */
+  readonly cookie: string;
+  readonly count: number;
+}
+
+export async function openSourceSignIn(request: SignInRequest): Promise<void> {
+  await invoke('open_source_signin', { request: { ...request, hosts: [...request.hosts] } });
+}
+
+export async function captureSourceSession(request: SignInRequest): Promise<SignInResult> {
+  const answer = await invoke<unknown>('capture_source_session', {
+    request: { ...request, hosts: [...request.hosts] },
+  });
+  // Validated rather than trusted, like everything else the shell hands over —
+  // and without ever putting the cookie itself through a logger or a store.
+  const result = answer as Partial<SignInResult>;
+  if (typeof result.cookie !== 'string' || typeof result.count !== 'number') {
+    throw new Error('The sign-in window did not answer with a session.');
+  }
+  return { sourceKey: request.sourceKey, cookie: result.cookie, count: result.count };
+}
+
+export async function closeSourceSignIn(): Promise<void> {
+  await invoke('close_source_signin');
+}

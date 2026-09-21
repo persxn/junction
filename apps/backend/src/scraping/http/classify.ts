@@ -136,3 +136,24 @@ export function parseRetryAfter(value: string | undefined, now: Date): number | 
   }
   return Math.max(0, at - now.getTime());
 }
+
+/** Paths a site sends a signed-out reader to (R74's "redirect to the login page"). */
+const LOGIN_PATH = /\/(log[-_]?in|sign[-_]?in|signin|login|auth\/login)(\/|$|\?)/i;
+
+/**
+ * Whether a request for one page ended up on a sign-in page. Only asked when a
+ * session was actually sent, so a site whose public page *is* `/login` (nobody's
+ * is) cannot be mistaken for an expired session.
+ */
+export function isLoginRedirect(requested: string, finalUrl: string): boolean {
+  if (finalUrl === requested) {
+    return false;
+  }
+  try {
+    return (
+      LOGIN_PATH.test(new URL(finalUrl).pathname) && !LOGIN_PATH.test(new URL(requested).pathname)
+    );
+  } catch {
+    return false;
+  }
+}

@@ -1,5 +1,5 @@
 import type { ThemeChoice } from '../theme/theme.js';
-import { MAIN_NAV, type NavPath } from './nav.js';
+import { CREATE_EVENT_PATH, MAIN_NAV, type AppPath } from './nav.js';
 
 /**
  * Everything the Ctrl+K palette can do today (§16.3).
@@ -23,7 +23,7 @@ export interface AppCommand {
 }
 
 export interface CommandActions {
-  readonly navigate: (path: NavPath) => void;
+  readonly navigate: (path: AppPath) => void;
   readonly setTheme: (choice: ThemeChoice) => void;
   readonly openLogs: () => void;
   readonly hideToTray: () => void;
@@ -46,6 +46,29 @@ export function buildCommands(actions: CommandActions): readonly AppCommand[] {
       actions.navigate(item.path);
     },
   }));
+
+  // WP-14's two entry points. Both land on the same screen, because typing an
+  // event in and reviewing one read off a page end in the same form.
+  navigation.push(
+    {
+      id: 'add-event',
+      label: 'Add an event',
+      group: 'Go to',
+      keywords: 'new manual create event by hand',
+      run: () => {
+        actions.navigate(CREATE_EVENT_PATH);
+      },
+    },
+    {
+      id: 'import-event',
+      label: 'Import an event from a link',
+      group: 'Go to',
+      keywords: 'url paste link devpost devfolio unstop import',
+      run: () => {
+        actions.navigate(CREATE_EVENT_PATH);
+      },
+    },
+  );
 
   const appearance: AppCommand[] = (['light', 'dark', 'system'] as const).map((choice) => ({
     id: `theme-${choice}`,

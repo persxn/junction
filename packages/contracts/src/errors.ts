@@ -129,6 +129,18 @@ export const IMPORT_ERROR_CODES = [
   'IMPORT_SOURCE_NOT_ALLOWED',
   'IMPORT_ROW_INVALID',
   'IMPORT_TOO_LARGE',
+  /** WP-14: not a URL we will follow — not https, an IP literal, `file:`/`data:`. */
+  'IMPORT_URL_INVALID',
+  /** WP-14/D-30: the domain is MANUAL_IMPORT_ONLY or BLOCKED, so nothing was requested. */
+  'IMPORT_DOMAIN_MANUAL_ONLY',
+  /** WP-14: the host's robots.txt disallows the page; it was not fetched. */
+  'IMPORT_ROBOTS_DISALLOWED',
+  /** WP-14: the page was read and held nothing an event could be built from. */
+  'IMPORT_EXTRACTION_FAILED',
+  /** WP-14: the URL answered with something that is not HTML (a PDF, an image). */
+  'IMPORT_UNSUPPORTED_CONTENT',
+  /** WP-14: the per-user preview limit; the import is user-initiated, so it has one. */
+  'IMPORT_RATE_LIMITED',
 ] as const;
 
 /** Database failures the API may surface at request time (WP-04b). */

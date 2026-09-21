@@ -103,6 +103,17 @@ export interface SourceAdapter {
   readonly defaultCadenceMinutes: number;
   listing(context: AdapterContext): ListingWalk;
   detail?(context: AdapterContext, item: ListingItem): Promise<RawDetail>;
+  /**
+   * WP-14: the listing item one pasted URL stands for, or `undefined` when the
+   * URL is on this source's domain but is not one of its event pages.
+   *
+   * Pure, and it never touches the network: URL import asks this *before*
+   * deciding to fetch anything, so a link to a profile page or a search result
+   * opens the manual form instead of being requested. An adapter that has no
+   * single-page read does not implement it, and its domain is then never
+   * fetched one page at a time.
+   */
+  itemFromUrl?(url: string): ListingItem | undefined;
   /** Pure (§7.1): same input, same candidate, no clock of its own beyond `ctx`. */
   normalize(input: ListingItem | RawDetail, context: NormalizeContext): EventCandidate;
 }

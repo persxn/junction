@@ -207,6 +207,23 @@ export function createCtftimeAdapter(deps: CtftimeAdapterDependencies): SourceAd
         return { complete };
       })(),
 
+    /** WP-14: `https://ctftime.org/event/1234/` — the id is the whole identity. */
+    itemFromUrl(url: string): ListingItem | undefined {
+      let parsed: URL;
+      try {
+        parsed = new URL(url);
+      } catch {
+        return undefined;
+      }
+      if (parsed.hostname.toLowerCase().replace(/^www\./, '') !== 'ctftime.org') {
+        return undefined;
+      }
+      const id = parseEventId(/^\/event\/(\d+)\/?$/.exec(parsed.pathname)?.[1]);
+      return id === undefined
+        ? undefined
+        : { externalKey: id, url: `https://ctftime.org/event/${id}/`, payload: undefined };
+    },
+
     async detail(context: AdapterContext, item: ListingItem): Promise<RawDetail> {
       const config = readConfig(context.config);
       const id = parseEventId(item.externalKey);

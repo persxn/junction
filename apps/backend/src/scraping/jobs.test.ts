@@ -78,9 +78,9 @@ function deps(sources = service()): Parameters<typeof scrapeJobs>[0] {
 
 describe('registration (R22)', () => {
   it('registers no scrape job while the adapter registry is empty', () => {
-    // The five seeded sources are all there, and CTFtime is even enabled and
+    // The seven seeded rows are all there, and CTFtime is even enabled and
     // approved — but nothing can run it, so nothing is scheduled.
-    expect(new SourcesRepository(database.db).list()).toHaveLength(5);
+    expect(new SourcesRepository(database.db).list()).toHaveLength(7);
     expect(scrapeJobs(deps())).toEqual([]);
   });
 

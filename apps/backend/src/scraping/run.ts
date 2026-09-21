@@ -13,6 +13,7 @@ import type { ScrapingHttp, SourceCredential } from './http/index.js';
 import { processItem, type RecordLinker } from './items.js';
 import type { SnapshotStore } from './snapshots.js';
 import { policyRefusal } from './policy.js';
+import { recordSessionExpiry, type SessionHooks } from './sessions.js';
 import { missingCredentialDetail, sourceConfig, sourceRequestContext } from './source-row.js';
 
 /**
@@ -53,6 +54,8 @@ export interface ScrapeRunDependencies {
   readonly linker?: RecordLinker;
   /** WP-11: a source's API credential from the secret settings, when it has one set. */
   readonly credentials?: (source: SourceRow) => SourceCredential | undefined;
+  /** WP-14/R74: the professor's own session, and what a refusal does to it. */
+  readonly sessions?: SessionHooks;
 }
 
 export interface ScrapeRunRequest {
@@ -332,7 +335,17 @@ function finish(deps: ScrapeRunDependencies, input: FinishInput): ScrapeRunRow {
     ...counters,
   });
 
-  if (outcome === 'FAILED' || outcome === 'BLOCKED_BY_POLICY') {
+  // R74: the site refused a signed-in read, so the session — not the source —
+  // is what stopped working. It is marked expired, the run says so in §7.7's
+  // words, and the failure streak and backoff are left exactly as they were.
+  const sessions = deps.sessions;
+  if (failure?.kind === 'BLOCKED' && sessions?.isActive(source) === true) {
+    recordSessionExpiry(
+      { sources: deps.sources, sessions, logger: deps.logger },
+      source,
+      finishedAt,
+    );
+  } else if (outcome === 'FAILED' || outcome === 'BLOCKED_BY_POLICY') {
     const failures = deps.sources.state(source.id, input.startedAt).consecutiveFailures + 1;
     const backoffUntil =
       finishedAt + backoffDelayMs(failures, DEFAULT_BACKOFF_BASE_MS, DEFAULT_BACKOFF_MAX_MS);
@@ -345,6 +358,9 @@ function finish(deps: ScrapeRunDependencies, input: FinishInput): ScrapeRunRow {
       failures,
     );
   } else {
+    if (deps.sessions?.isActive(source) === true) {
+      deps.sessions.verify(source, finishedAt);
+    }
     const nextDueAt = finishedAt + source.cadenceMinutes * 60_000;
     // §7.6 again: PARTIAL updates `last_run_at` but is not proof the source is
     // healthy, so it does not stamp `last_success_at`.

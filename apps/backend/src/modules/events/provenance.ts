@@ -1,5 +1,5 @@
 import type { ChangeCause, MatchMethod, OverrideField, Uuid7 } from '@compintel/contracts';
-import { and, desc, eq, inArray, lt } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull, lt } from 'drizzle-orm';
 
 import type { AlternateClaimValue } from '../../domain/events/claims.js';
 import type { ResolvableClaim, ResolvableOverride } from '../../domain/events/resolve.js';
@@ -64,6 +64,48 @@ export class ProvenanceRepository {
       .innerJoin(sources, eq(sources.id, sourceRecords.sourceId))
       .where(eq(eventFieldClaims.eventId, eventId))
       .all();
+  }
+
+  /**
+   * A value a person stated themselves (§6.2 `event_overrides`, WP-14).
+   *
+   * One live override per field: the existing one is cleared rather than
+   * replaced, so the history of what somebody said and when survives — the
+   * unique index only covers rows whose `cleared_at` is null. The value is the
+   * same JSON a claim carries, which is what lets the resolver compare the two
+   * without knowing where either came from.
+   */
+  setOverride(input: {
+    eventId: string;
+    field: OverrideField;
+    valueJson: string | null;
+    reason: string;
+    setBy: string;
+    at: number;
+  }): void {
+    this.#db.drizzle
+      .update(eventOverrides)
+      .set({ clearedAt: input.at })
+      .where(
+        and(
+          eq(eventOverrides.eventId, input.eventId),
+          eq(eventOverrides.field, input.field),
+          isNull(eventOverrides.clearedAt),
+        ),
+      )
+      .run();
+    this.#db.drizzle
+      .insert(eventOverrides)
+      .values({
+        id: this.#newId(),
+        eventId: input.eventId,
+        field: input.field,
+        valueJson: input.valueJson,
+        reason: input.reason,
+        setBy: input.setBy,
+        setAt: input.at,
+      })
+      .run();
   }
 
   overridesOf(eventId: string): ResolvableOverride[] {

@@ -14,6 +14,7 @@ use crate::actions;
 use crate::files::{self, WriteRefusal};
 use crate::loopback::{self, LoopbackResponse};
 use crate::settings::{SettingsStore, ShellSettings};
+use crate::signin::{self, SignInRequest, SignInResult};
 use crate::supervisor::{BackendConnection, BackendStatus, Supervisor};
 use crate::tray::TrayHandles;
 
@@ -207,4 +208,37 @@ pub fn save_text_file(
     std::fs::write(&target, contents)
         .map_err(|cause| format!("could not write the file: {cause}"))?;
     Ok(target.to_string_lossy().into_owned())
+}
+
+/// Opens the packaged sign-in window for one source (R74/D-34, WP-14).
+///
+/// The professor signs in there with their own account, in a window with its
+/// own profile that can load nothing but that source's own pages. Nothing is
+/// typed for them and nothing is read until they say they are done.
+#[tauri::command]
+pub fn open_source_signin(
+    app: AppHandle,
+    state: State<'_, ShellState>,
+    request: SignInRequest,
+) -> Result<(), String> {
+    let data_dir = PathBuf::from(state.supervisor.status().data_dir);
+    signin::open(&app, &data_dir, &request)
+}
+
+/// Takes that source's cookies out of the sign-in window and closes it.
+///
+/// The value goes straight to `PUT /admin/sources/:key/session`; the shell keeps
+/// no copy, writes it to no file and logs nothing about it.
+#[tauri::command]
+pub fn capture_source_session(
+    app: AppHandle,
+    request: SignInRequest,
+) -> Result<SignInResult, String> {
+    signin::capture(&app, &request)
+}
+
+/// Closes the sign-in window without reading anything.
+#[tauri::command]
+pub fn close_source_signin(app: AppHandle) {
+    signin::close(&app);
 }

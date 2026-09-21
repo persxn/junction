@@ -1,0 +1,55 @@
+<!doctype html>
+<!--
+  SYNTHETIC (WP-14, sample import 4): a campus page that carries schema.org
+  Event JSON-LD. Written by hand — WP-02 found no Event JSON-LD on any of the
+  117 Indian campus sites it surveyed, so this is the best case the generic
+  extractor is built for and not one recorded anywhere.
+
+  It also carries an organiser e-mail and a phone number in its description, so
+  the redactor (D-29) has something to remove.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Innovate 2026 — Department of Computer Engineering | Example Institute of Technology</title>
+    <meta property="og:title" content="Innovate 2026" />
+    <meta property="og:site_name" content="Example Institute of Technology" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Event",
+        "name": "Innovate 2026 — National Level Hackathon",
+        "description": "A 36-hour hackathon for undergraduate students. Teams of 2 to 4. Registration fee ₹500 per team. For queries write to convenor@example.edu or call 98765 43210.",
+        "startDate": "2026-11-14T09:00:00+05:30",
+        "endDate": "2026-11-15T21:00:00+05:30",
+        "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+        "url": "https://cse.example.edu/innovate-2026",
+        "organizer": { "@type": "CollegeOrDepartment", "name": "Department of Computer Engineering" },
+        "location": {
+          "@type": "Place",
+          "name": "Example Institute of Technology",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Pune",
+            "addressRegion": "Maharashtra",
+            "addressCountry": "IN"
+          }
+        },
+        "offers": {
+          "@type": "Offer",
+          "price": "500",
+          "priceCurrency": "INR",
+          "url": "https://cse.example.edu/innovate-2026/register"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <h1>Innovate 2026</h1>
+    <p>
+      The Department of Computer Engineering invites teams from across the country to a 36-hour
+      hackathon on campus. Registration closes on 5 November 2026.
+    </p>
+    <p><a href="/innovate-2026/register">Register here</a></p>
+  </body>
+</html>
