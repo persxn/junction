@@ -23,7 +23,9 @@ export interface BackendProcess {
   waitForExit(timeoutMs?: number): Promise<number | null>;
 }
 
-const DEFAULT_READY_TIMEOUT_MS = 20_000;
+// A cold tsx compile plus every migration; under the full parallel suite the
+// first spawn has taken 22 s (WP-12), so the wait matches main.test's 60 s.
+const DEFAULT_READY_TIMEOUT_MS = 55_000;
 
 /**
  * Starts a backend process and waits for its first stdout line. Used by both the

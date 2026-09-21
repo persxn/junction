@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { SourcesRepository } from '../modules/sources/repository.js';
 import { openMigratedDatabase, type MigratedDatabase } from '../testing/database.js';
-import { silentLogger } from '../testing/scraping.js';
+import { insertSource, silentLogger } from '../testing/scraping.js';
 import { AdapterRegistry, registerBuiltInAdapters } from '../sources/registry.js';
 import { parseSourceArg, scrapeOnceRefusal } from './scrape-once-check.js';
 
@@ -58,10 +58,9 @@ describe('scrapeOnceRefusal', () => {
   });
 
   it('refuses an approved source with no adapter in this build', () => {
-    // Seeded disabled until WP-12 ships its adapter; switched on here so the
-    // adapter check is the one that answers.
-    database.db.raw.prepare("update sources set is_enabled = 1 where key = 'devfolio'").run();
-    expect(refusalFor('devfolio')).toBe('devfolio has no adapter in this build.');
+    // Every seeded approved source has an adapter now (WP-12), so one is made up.
+    insertSource(database.db, { key: 'campus-demo', adapter: 'CONFIGURED_LISTING' });
+    expect(refusalFor('campus-demo')).toBe('campus-demo has no adapter in this build.');
   });
 
   it('refuses an unknown key', () => {

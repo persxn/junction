@@ -49,6 +49,9 @@ function* strings(value: unknown, trail = ''): Generator<{ path: string; text: s
 function fixtureFiles(): { source: string; name: string; file: string }[] {
   return SOURCES.flatMap((source) =>
     readdirSync(path.join(fixturesDir(), source))
+      // Recorded responses only; WP-12's .html wrappers and synthetic pages are
+      // swept by the Devfolio adapter's own PII test through the real adapter.
+      .filter((name) => name.endsWith('.json'))
       .sort()
       .map((name) => ({ source, name, file: path.join(fixturesDir(), source, name) })),
   );

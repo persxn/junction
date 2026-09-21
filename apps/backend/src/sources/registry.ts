@@ -1,5 +1,7 @@
 import { createClistAdapter } from '../adapters/clist/adapter.js';
 import { createCtftimeAdapter } from '../adapters/ctftime/adapter.js';
+import { createDevfolioAdapter } from '../adapters/devfolio/adapter.js';
+import type { DevfolioGeo } from '../adapters/devfolio/map.js';
 import type { CtftimeGeo } from '../adapters/ctftime/map.js';
 import type { SourceAdapter } from './types.js';
 
@@ -58,7 +60,7 @@ export const adapterRegistry = new AdapterRegistry();
 /** What the built-in adapters need from the running backend. */
 export interface BuiltInAdapterDependencies {
   /** WP-08b's geocoder, for place names in listings. */
-  readonly geo: CtftimeGeo;
+  readonly geo: CtftimeGeo & DevfolioGeo;
 }
 
 /**
@@ -68,6 +70,7 @@ export interface BuiltInAdapterDependencies {
  *
  * - `ctftime` — WP-09b.
  * - `clist` — WP-11 (key-gated; with no key its runs record BLOCKED_BY_POLICY).
+ * - `devfolio` — WP-12 (public pages only; never api.devfolio.co).
  */
 export function registerBuiltInAdapters(
   registry: AdapterRegistry,
@@ -75,4 +78,5 @@ export function registerBuiltInAdapters(
 ): void {
   registry.register(createCtftimeAdapter({ geo: deps.geo }));
   registry.register(createClistAdapter());
+  registry.register(createDevfolioAdapter({ geo: deps.geo }));
 }

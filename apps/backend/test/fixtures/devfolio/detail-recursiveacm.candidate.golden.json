@@ -1,0 +1,67 @@
+{
+  "descriptionMd": "Maybe the best ideas start when you simply sit down.\n\n****RECURSIVE — Shift-8 Hackathon 2026**** | The First ACM-Sponsored Hackathon at **GNIT**\n\nRECURSIVE is the first **ACM-sponsored hackathon** at **Guru Nanak Institute of Technology (GNIT)**, organized by the **Department of Information Technology, GNIT**, in association with ACM and the **GNIT Kolkata ACM Student Chapter**.\n\nRECURSIVE brings together **students, developers, designers, and problem-solvers** for an **intense 8-hour in-person hackathon** at GNIT, Kolkata. Working in **teams of 2–4**, participants will take on original real-world challenges and transform their ideas into functional solutions through technology, creativity, and collaboration.\n\n**From ideation and development** to UI/UX and practical implementation, RECURSIVE is designed to give participants the freedom to experiment, build, iterate, and bring meaningful ideas to life within a single, high-energy sprint.\n\n📍 **Event Details**\n\n**Event:** RECURSIVE — Shift-8 Hackathon\n**Venue:** Guru Nanak Institute of Technology, Kolkata\n**Duration:** 8 Hours of Building & Innovation\n**Date:** **8th October 2026**\n**Team Size:** 2–4 Members\n\n**Why join RECURSIVE?**\n\nBuild functional solutions to original real-world challenges\nExplore technology and innovation across different domains\nCollaborate with like-minded developers, designers, and problem-solvers\nLearn, experiment, and iterate through an intense **8-hour building experience**\nShowcase your ideas to mentors and judges\nWin **exciting prizes, certificates, and goodies**\n\nAt RECURSIVE, we believe that great ideas are not created in a single moment. They evolve through iterations — **thinking, building, testing, learning, and trying** again.\n\nWhether you are stepping into your first hackathon or are already an experienced builder, RECURSIVE — Shift-8 Hackathon gives you the space, time, and community to sit down, start building, and **turn an idea into something real.**\n\n**Maybe the best ideas start when you simply sit down.** 🪑\n\n**Follow us on:**\n[RECURSIVE — Shift-8 Hackathon 2026](https://www.recursiveacm.in)\n\n[GNIT Kolkata ACM Student Chapter](https://gnitkolkata.acm.org)\n\n## FAQ\n\n**What is Recursive and who is organizing it?**\n\nRecursive is the inaugural flagship **8-hour in-person hackathon** hosted by the **GNIT ACM Student Chapter** in collaboration with the **Department of Information Technology at Guru Nanak Institute of Technology (GNIT), Kolkata**. It brings together developers, designers, and builders for eight hours of rapid **prototyping, honest software craft, and collaborative problem-solving.**\n\n**Who is eligible to participate?**\n\n**Any undergraduate, postgraduate, or diploma student** is eligible to participate. You will need to carry a **valid college ID card, or a government ID proof (Aadhaar, PAN, voter ID, passport, or driving licence)** if you cannot present one. Whether you are an experienced builder or attending your very first hackathon, beginners are warmly welcome—mentors will be on the floor throughout the event to help you.\n\n**Is there any registration fee?**\n\n**No. Recursive is 100% free of cost.** **Admission, high-speed Wi-Fi access, meals, snacks, beverages, exclusive swag kits, and mentorship** are provided **completely free** to all shortlisted participants.\n\n**How do I apply, and what is the idea submission process?**\n\nApplying for Recursive is done via **Devfolio** with an idea review round:\n\n**1.** **Register on Devfolio:** Click the '**Apply with Devfolio**' button and complete your profile. Form a team of **2 to 4 members** (min 2, max 4 builders).\n**2. Download the Idea Template:** Access the official **Recursive ACM Idea Submission Template** on Google Slides.\n**3. Prepare Your Proposal:** Fill out the slides with your problem statement, target track, **technical architecture**, and impact.\n**4.** **Export as PDF & Upload:** Save your completed deck as a **PDF (max 5–6 slides)** and upload it directly in your **Devfolio application form** before registration closes.\n**5. Review & RSVP: **Applications will be reviewed by the organizing committee. **Shortlisted teams** will receive an** acceptance invitation on Devfolio** and **email to confirm their attendance (RSVP)** for the **in-person hackathon at GNIT.**\n\n**What should be included in our Idea Submission PPT?**\n\nKeep your presentation concise and impactful **(5 to 6 slides)**. We recommend following this structure:\n\n• **Slide 1 — Team & Track:** Team name, members, college, contact info, and chosen track.\n• **Slide 2 — Problem Statement:** The real-world friction, inefficiency, or challenge you aim to solve.\n• **Slide 3 — Proposed Solution:** Your approach, key features, and core innovation.\n• **Slide 4 — System Architecture & Stack:** Software frameworks, databases, external APIs, ML models, or hardware components.\n• **Slide 5 — 8-Hour Execution Plan:** Minimum Viable Product (MVP) scope to be built and demonstrated live on stage.\n\n**What is the team size and can I apply solo?**\n\n**Teams** must consist of a **minimum of 2 and a maximum of 4 members (2–4 builders)**. ****Solo participation is not permitted****. If you don't have a team yet, you can team up with fellow participants before registration closes or connect with other builders in our Discord community to form your squad.\n\n**Where is the venue and what is the schedule?**\n\nThe hackathon takes place **in person at Guru Nanak Institute of Technology (GNIT), Sodepur, Kolkata.** **Check-in starts at 9:00 AM**, the official **8-hour hacking sprint** runs from **10:00 AM to 6:00 PM**, followed immediately by **project demos, judging, and the award ceremony.**\n\n**Can I work on a pre-existing project or start early?**\n\n****No. All code and designs must be created during the official 8-hour hacking window.**** You are encouraged to **come with ideas, sketches, and plans**, and you may **use open-source libraries, public APIs, and frameworks,** but ****writing core application code beforehand is strictly prohibited.****\n\n**What should I bring on the day of the event?**\n\nPlease **bring your laptop, charger, power strip/extension cord, a valid college ID card (or government ID proof if you don't have one)**, and any **specific hardware components your project might require.** High-speed campus Wi-Fi, dedicated power stations, meals, and snacks will be provided throughout the day.\n\n**How will projects be evaluated and what are the prizes?**\n\nProjects will be evaluated by **industry judges and academic mentors** based on **four core criteria: technical depth, problem innovation, design/UX craft, and the quality of your live demo**. Cash prizes, track awards, certificates, and sponsor perks will be awarded to **top teams.**",
+  "editionYear": 2026,
+  "endsAt": {
+    "at": 1791462600000,
+    "confidence": 1,
+    "precision": "DATETIME",
+    "raw": "2026-10-08T12:30:00+00:00"
+  },
+  "eventType": {
+    "confidence": 1,
+    "raw": "HACKATHON",
+    "value": "HACKATHON"
+  },
+  "externalKey": "devfolio:72aac6f9ba9f4fc6b24fe9bfe979acaf",
+  "fee": {
+    "confidence": 0.9,
+    "currency": "INR",
+    "known": true,
+    "minor": 0,
+    "text": "No registration fee (Devfolio)"
+  },
+  "isRecurringRound": false,
+  "mode": {
+    "confidence": 1,
+    "raw": "offline",
+    "value": "OFFLINE"
+  },
+  "officialUrl": "https://www.recursiveacm.in/",
+  "place": {
+    "city": "Panihati",
+    "countryCode": "IN",
+    "geoPrecision": "COUNTRY",
+    "venueName": "Guru Nanak Institute of Technology, Nilgunj Road, Sahid Colony, Panihati, West Bengal, India"
+  },
+  "registrationDeadlineAt": {
+    "at": 1789928940000,
+    "confidence": 1,
+    "precision": "DATETIME",
+    "raw": "2026-09-20T18:29:00+00:00"
+  },
+  "registrationOpensAt": {
+    "at": 1788633000000,
+    "confidence": 1,
+    "precision": "DATETIME",
+    "raw": "2026-09-05T18:30:00+00:00"
+  },
+  "registrationUrl": "https://recursiveacm.devfolio.co/",
+  "sourceKey": "devfolio",
+  "startsAt": {
+    "at": 1791433800000,
+    "confidence": 1,
+    "precision": "DATETIME",
+    "raw": "2026-10-08T04:30:00+00:00"
+  },
+  "summary": "Maybe the best ideas start when you simply sit down. RECURSIVE — Shift-8 Hackathon 2026 | The First ACM-Sponsored Hackathon at GNIT RECURSIVE is the first ACM-sponsored hackathon at Guru Nanak Institute of Technology (GNIT), organized by the Department of Information Technology, GNIT, in association with ACM and the GNIT Kolkata ACM Student Chapter. RECURSIVE brings together students, developers, designers, and problem-solvers for an intense 8-hour in-person hackathon at GNIT, Kolkata. Working…",
+  "teamSize": {
+    "confidence": 1,
+    "max": 4,
+    "min": 2
+  },
+  "timezone": "Asia/Kolkata",
+  "title": "Recursive",
+  "titleRaw": "Recursive",
+  "url": "https://recursiveacm.devfolio.co/",
+  "warnings": []
+}

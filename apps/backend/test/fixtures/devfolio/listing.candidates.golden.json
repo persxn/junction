@@ -1,0 +1,271 @@
+[
+  {
+    "editionYear": 2026,
+    "endsAt": {
+      "at": 1791462600000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-10-08T12:30:00+00:00"
+    },
+    "eventType": {
+      "confidence": 1,
+      "raw": "HACKATHON",
+      "value": "HACKATHON"
+    },
+    "externalKey": "devfolio:72aac6f9ba9f4fc6b24fe9bfe979acaf",
+    "fee": {
+      "confidence": 0,
+      "known": false
+    },
+    "isRecurringRound": false,
+    "mode": {
+      "confidence": 1,
+      "raw": "offline",
+      "value": "OFFLINE"
+    },
+    "officialUrl": "https://www.recursiveacm.in/",
+    "registrationDeadlineAt": {
+      "at": 1789928940000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-09-20T18:29:00+00:00"
+    },
+    "registrationOpensAt": {
+      "at": 1788633000000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-09-05T18:30:00+00:00"
+    },
+    "registrationUrl": "https://recursiveacm.devfolio.co/",
+    "sourceKey": "devfolio",
+    "sourceTags": [
+      "No Restrictions"
+    ],
+    "startsAt": {
+      "at": 1791433800000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-10-08T04:30:00+00:00"
+    },
+    "timezone": "Asia/Kolkata",
+    "title": "Recursive",
+    "titleRaw": "Recursive",
+    "url": "https://recursiveacm.devfolio.co/",
+    "warnings": []
+  },
+  {
+    "editionYear": 2026,
+    "endsAt": {
+      "at": 1791023400000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-10-03T10:30:00+00:00"
+    },
+    "eventType": {
+      "confidence": 1,
+      "raw": "HACKATHON",
+      "value": "HACKATHON"
+    },
+    "externalKey": "devfolio:9f3e3e2ea4194c7195b519b6808c4779",
+    "fee": {
+      "confidence": 0,
+      "known": false
+    },
+    "isRecurringRound": false,
+    "mode": {
+      "confidence": 1,
+      "raw": "offline",
+      "value": "OFFLINE"
+    },
+    "officialUrl": "https://www.hackspire.tech/",
+    "registrationDeadlineAt": {
+      "at": 1789928940000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-09-20T18:29:00+00:00"
+    },
+    "registrationOpensAt": {
+      "at": 1782844200000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-06-30T18:30:00+00:00"
+    },
+    "registrationUrl": "https://hackspire26.devfolio.co/",
+    "sourceKey": "devfolio",
+    "sourceTags": [
+      "No Restrictions"
+    ],
+    "startsAt": {
+      "at": 1790929800000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-10-02T08:30:00+00:00"
+    },
+    "timezone": "Asia/Kolkata",
+    "title": "HackSpire'26",
+    "titleRaw": "HackSpire'26",
+    "url": "https://hackspire26.devfolio.co/",
+    "warnings": []
+  },
+  {
+    "editionYear": 2026,
+    "endsAt": {
+      "at": 1790429400000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-09-26T13:30:00+00:00"
+    },
+    "eventType": {
+      "confidence": 1,
+      "raw": "HACKATHON",
+      "value": "HACKATHON"
+    },
+    "externalKey": "devfolio:6e3603d1dc1743ee81f13f11ed9af014",
+    "fee": {
+      "confidence": 0,
+      "known": false
+    },
+    "isRecurringRound": false,
+    "mode": {
+      "confidence": 1,
+      "raw": "offline",
+      "value": "OFFLINE"
+    },
+    "registrationDeadlineAt": {
+      "at": 1789928940000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-09-20T18:29:00+00:00"
+    },
+    "registrationOpensAt": {
+      "at": 1787096700000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-08-18T23:45:00+00:00"
+    },
+    "registrationUrl": "https://builders-day-hackunion.devfolio.co/",
+    "sourceKey": "devfolio",
+    "sourceTags": [
+      "No Restrictions"
+    ],
+    "startsAt": {
+      "at": 1790393400000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-09-26T03:30:00+00:00"
+    },
+    "timezone": "Asia/Kolkata",
+    "title": "Builders Day by HackUnion",
+    "titleRaw": "Builders Day by HackUnion",
+    "url": "https://builders-day-hackunion.devfolio.co/",
+    "warnings": []
+  },
+  {
+    "editionYear": 2026,
+    "endsAt": {
+      "at": 1791689400000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-10-11T03:30:00+00:00"
+    },
+    "eventType": {
+      "confidence": 1,
+      "raw": "HACKATHON",
+      "value": "HACKATHON"
+    },
+    "externalKey": "devfolio:1063827b27854568b65b08b5cab55030",
+    "fee": {
+      "confidence": 0,
+      "known": false
+    },
+    "isRecurringRound": false,
+    "mode": {
+      "confidence": 1,
+      "raw": "offline",
+      "value": "OFFLINE"
+    },
+    "officialUrl": "https://hackify.iedcmace.in/sponsors",
+    "registrationDeadlineAt": {
+      "at": 1790101740000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-09-22T18:29:00+00:00"
+    },
+    "registrationOpensAt": {
+      "at": 1788201000000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-08-31T18:30:00+00:00"
+    },
+    "registrationUrl": "https://hackify-3.devfolio.co/",
+    "sourceKey": "devfolio",
+    "sourceTags": [
+      "No Restrictions"
+    ],
+    "startsAt": {
+      "at": 1791541800000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-10-09T10:30:00+00:00"
+    },
+    "timezone": "Asia/Kolkata",
+    "title": "Hackify 3.0",
+    "titleRaw": "Hackify 3.0",
+    "url": "https://hackify-3.devfolio.co/",
+    "warnings": []
+  },
+  {
+    "editionYear": 2026,
+    "endsAt": {
+      "at": 1791615600000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-10-10T07:00:00+00:00"
+    },
+    "eventType": {
+      "confidence": 1,
+      "raw": "HACKATHON",
+      "value": "HACKATHON"
+    },
+    "externalKey": "devfolio:6434a62d[phone redacted]df8ab42f5a3ef",
+    "fee": {
+      "confidence": 0,
+      "known": false
+    },
+    "isRecurringRound": false,
+    "mode": {
+      "confidence": 1,
+      "raw": "offline",
+      "value": "OFFLINE"
+    },
+    "officialUrl": "https://define4.csembcet.in/",
+    "registrationDeadlineAt": {
+      "at": 1790274540000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-09-24T18:29:00+00:00"
+    },
+    "registrationOpensAt": {
+      "at": 1788805800000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-09-07T18:30:00+00:00"
+    },
+    "registrationUrl": "https://define4.devfolio.co/",
+    "sourceKey": "devfolio",
+    "sourceTags": [
+      "No Restrictions"
+    ],
+    "startsAt": {
+      "at": 1791518400000,
+      "confidence": 1,
+      "precision": "DATETIME",
+      "raw": "2026-10-09T04:00:00+00:00"
+    },
+    "timezone": "Asia/Kolkata",
+    "title": "DEFINE 4.0",
+    "titleRaw": "DEFINE 4.0",
+    "url": "https://define4.devfolio.co/",
+    "warnings": []
+  }
+]

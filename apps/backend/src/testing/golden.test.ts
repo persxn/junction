@@ -99,7 +99,7 @@ describe('the recorded source fixtures', () => {
    * — a golden is ours, and there is nothing for it to drift from.
    */
   const isRecordedResponse = (name: string): boolean =>
-    !name.endsWith('.golden.json') && !HAND_WRITTEN.has(name);
+    name.endsWith('.json') && !name.endsWith('.golden.json') && !HAND_WRITTEN.has(name);
 
   /**
    * Cases written by hand for paths no recording reaches (WP-09b: a
@@ -139,7 +139,9 @@ describe('the recorded source fixtures', () => {
 
   it('parse as JSON, so an adapter test starts from something real', () => {
     for (const source of SOURCES) {
-      for (const name of readdirSync(path.join(fixturesDir(), source))) {
+      for (const name of readdirSync(path.join(fixturesDir(), source)).filter((file) =>
+        file.endsWith('.json'),
+      )) {
         const raw = readFileSync(path.join(fixturesDir(), source, name), 'utf8');
         expect(() => JSON.parse(raw) as unknown, `${source}/${name}`).not.toThrow();
       }

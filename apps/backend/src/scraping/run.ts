@@ -141,6 +141,7 @@ export async function runScrape(
       now: () => deps.clock.now(),
       signal,
       config: config.raw,
+      isKnown: (externalKey: string) => deps.records.find(source.id, externalKey) !== undefined,
     },
     normalizeContext: {
       clock: deps.clock,
@@ -155,6 +156,9 @@ export async function runScrape(
   };
 
   let detailsLeft = adapter.detail === undefined ? 0 : config.detailCap;
+  // WP-12: a detail owed but not fetched this run — the cap, or a subdomain's
+  // robots.txt — leaves the listing complete but the run PARTIAL.
+  let degraded = false;
   try {
     const walk = adapter.listing(itemOptions.context);
     for (;;) {
@@ -182,11 +186,16 @@ export async function runScrape(
       }
       count(counters, listed.outcome);
 
-      if (!listed.changed || adapter.detail === undefined || !canFetchDetail) {
+      if (!listed.changed || adapter.detail === undefined) {
+        continue;
+      }
+      if (!canFetchDetail) {
+        degraded = true;
         continue;
       }
       detailsLeft -= 1;
       const detail = await adapter.detail(itemOptions.context, item);
+      degraded ||= detail.degraded === true;
       // A detail that does not validate is counted invalid, but the listing row
       // it would have replaced stays: half an event is better than none, and the
       // counter is what tells an admin the detail step is drifting.
@@ -218,6 +227,7 @@ export async function runScrape(
     startedAt,
     counters,
     listingComplete,
+    degraded,
     failure,
     requestsMade: client.requestsMade,
     robotsFetches: deps.http.robotsFetches,
@@ -280,6 +290,8 @@ interface FinishInput {
   readonly startedAt: number;
   readonly counters: Counters;
   readonly listingComplete: boolean;
+  /** Some detail was owed and not fetched; the walk may still be complete (§7.6). */
+  readonly degraded: boolean;
   readonly failure: RunFailure | undefined;
   readonly requestsMade: number;
   readonly robotsFetches: number;
@@ -302,7 +314,7 @@ function finish(deps: ScrapeRunDependencies, input: FinishInput): ScrapeRunRow {
 
   let outcome: ScrapeOutcome;
   if (failure === undefined) {
-    outcome = input.listingComplete ? 'SUCCESS' : 'PARTIAL';
+    outcome = input.listingComplete && !input.degraded ? 'SUCCESS' : 'PARTIAL';
   } else if (failure.refusal !== undefined) {
     outcome = 'BLOCKED_BY_POLICY';
   } else {

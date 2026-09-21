@@ -1,33 +1,24 @@
 # Progress — newest first, keep < 150 lines
 
 ## Current
-- **pre-M1 DONE** (`docs/handoff/pre-M1.md`) — `platform/time.ts` (one `Clock` + local-day arithmetic),
-  `src/domain/` with four linter-enforced boundary rules + `max-lines: 400`, `withAudit()`, settings
-  `define()`d by the owning module, `testing/golden.ts`, R12 error blocks, M0 debt cleared.
-  **Open for the architect:** `jobs/schedule.ts` cannot move to `domain/` until
-  `JobDefinition.nextDueAt` stops being typed against the Drizzle row (handoff §4).
-- **WP-08a DONE** (`docs/handoff/WP-08a.md`) — `EventCandidate` (`.strict()` = R50), migration 0004
-  (seven tables, R48/R49), `domain/normalize/` (12 pure modules, 156 cases). Deps: chrono-node, sanitize-html, turndown.
-- **WP-08b DONE** (`docs/handoff/WP-08b.md`) — gazetteer (68.5 MB, not committed, R53; committed `mini.db`, R54),
-  geocoder (R55 ladder, drops a rung rather than guess), `haversine_km` (R56), policies (R57), 116 institutions.
-- **WP-09a DONE** (`docs/handoff/WP-09a.md`) — PoliteHttpClient, gate, seeds (0005/0006), scrape runs, jobs,
-  snapshots. Host-qualified `allowed_paths_json` with `!` denials; no test opens an internet socket (grep-enforced).
-  Deps: undici 8.10.2, robots-parser 3.0.1.
-- **WP-09b PARTIAL** (`docs/handoff/WP-09b.md`) — CTFtime adapter, goldens, R62/R63, migration 0007
-  (attribution + path denial), `scrape:once`. **Manual live smoke not run** (no `scraper.contactEmail` on the dev DB).
+- **pre-M1 · WP-08a · WP-08b · WP-09a DONE** (handoffs in `docs/handoff/`): one `Clock`, lint-enforced domain
+  boundaries, settings registry, goldens; `EventCandidate` + normalization; gazetteer/geocoder/policies (R53–R57);
+  PoliteHttpClient, compliance gate, source seeds, scrape runs (R58–R61). Open: `jobs/schedule.ts` → `domain/` (pre-M1 §4).
+- **WP-09b PARTIAL** — CTFtime adapter; manual live smoke not run (no `scraper.contactEmail` on the dev DB).
 - **WP-10 DONE** (`docs/handoff/WP-10.md`) — dedup (§7.5, R64 first), merge/unmerge (R66, nothing deleted),
   resolution by field group, change detection, admin review API; migration 0008; scrapes now create events.
-- **WP-11 DONE** (21 Sep 2026, `docs/handoff/WP-11.md`) — CLIST adapter (key-gated, fixture-first) + series /
-  recurring-round detection. Migration **0009**: `event_series.series_key`, CLIST row enabled (no key → BLOCKED_BY_POLICY,
-  zero requests, no backoff), two v4 paths, auth shape + **seed-only robots exemption** (proposed ruling, handoff §4).
-  Secret settings `sources.clist.api{Key,Username}`: redacted, excluded from `exportableSettings()`, admin PUT/GET
-  credential routes. Pure `domain/series/`; `listMainFeed()` hides rounds, `listContestCalendar()` shows them.
-  Fixed a Windows bug: a `:` in an external key hid snapshots in an NTFS stream. **2555 tests.** No new deps.
-  `clist:smoke` **skipped** (U4 open).
+- **WP-11 DONE** (`docs/handoff/WP-11.md`) — CLIST adapter (key-gated; no key → BLOCKED_BY_POLICY, zero requests),
+  migration 0009, secret credential settings + routes, seed-only robots exemption (proposed ruling), `domain/series/`,
+  main feed vs Contest Calendar readers. `clist:smoke` skipped (U4 open).
 - **Owner ruling R74 / D-34 (21 Sep 2026, spec v1.1.12):** Devfolio and Unstop may be read with the professor's
   own session (pasted cookie or in-app login window), read-only, same gate; built in **WP-14** (prompt amended).
   §7.2 "Never", ADR-0007 and ADR-0016 amended. D-29 still drops other people's data. WP-13 lands as v1.1.13.
-- **Next: WP-12.** Still owed: the WP-09b live smoke (needs `scraper.contactEmail`) and U4 for CLIST.
+- **WP-12 DONE, awaiting owner approval** (21 Sep 2026, `docs/handoff/WP-12.md`) — Devfolio adapter: one listing +
+  ≤ 10 `<slug>.devfolio.co` details per run from `__NEXT_DATA__` (cheerio, loaded lazily), per-subdomain robots
+  (disallowed → skipped, run PARTIAL), `api.devfolio.co` refused before the transport (`SOURCE_HOST_FORBIDDEN`),
+  PII dropped by allowlist, format change → SCHEMA_CHANGED with nothing written. Migration **0010** enables the row.
+  **2578 tests.** Dep: cheerio 1.2.0. **Live smoke owed** (no `scraper.contactEmail`). main.test startup wait raised.
+- **Next: WP-13 — on owner approval of WP-12.** Still owed: the WP-09b live smoke (needs `scraper.contactEmail`) and U4 for CLIST.
   WP-08b's two questions are still open (handoff §6): the gazetteer is 68.5 MB of
   which 95% are zero-population hamlets that also *harm* matching — §4.17 says "towns/cities" where
   R53 says feature class P; and GeoNames has almost no Indian campuses, so the INSTITUTION rung is

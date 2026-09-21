@@ -115,6 +115,11 @@ export const PARSE_WARNING_CODES = [
    * an hour or more; the timestamps were kept and the duration ignored.
    */
   'DATE_DURATION_MISMATCH',
+  /**
+   * WP-12: the detail page could not be read this run (its host's robots.txt,
+   * for one), so the listing's fields stand in.
+   */
+  'DETAIL_UNAVAILABLE',
 ] as const;
 export const ParseWarningCode = z.enum(PARSE_WARNING_CODES);
 export type ParseWarningCode = z.infer<typeof ParseWarningCode>;

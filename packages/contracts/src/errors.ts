@@ -71,6 +71,8 @@ export const SOURCE_ERROR_CODES = [
   'SOURCE_PARSE_FAILED',
   'SOURCE_REFRESH_TOO_SOON',
   'SOURCE_SETUP_INCOMPLETE',
+  /** WP-12: a host an adapter must never contact (`api.devfolio.co`); refused before the transport. */
+  'SOURCE_HOST_FORBIDDEN',
 ] as const;
 
 /**

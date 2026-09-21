@@ -30,6 +30,12 @@ export interface AdapterContext {
   readonly signal: AbortSignal;
   /** `sources.config_json`, already parsed. Each adapter validates its own. */
   readonly config: unknown;
+  /**
+   * WP-12: whether this source already holds a record under the key — a
+   * read-only question, so an adapter can close out ended items it knows
+   * (§7.6) without ever touching the database itself.
+   */
+  readonly isKnown?: (externalKey: string) => boolean;
 }
 
 /**
@@ -52,6 +58,11 @@ export interface RawDetail {
   readonly item: ListingItem;
   readonly payload: unknown;
   readonly raw?: Uint8Array;
+  /**
+   * WP-12: the detail could not be fetched (robots on its host, for one) and the
+   * listing's data stands in; the run is recorded PARTIAL.
+   */
+  readonly degraded?: boolean;
 }
 
 /**

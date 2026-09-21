@@ -55,7 +55,12 @@ afterEach(() => {
   }
 });
 
-describe('startup handshake', () => {
+// Each case spawns a real backend through tsx: a cold compile of the whole
+// backend plus every migration. Alone that is ~2 s; under the full parallel
+// suite the first spawn reached 22 s once M1 had added its migrations (WP-12
+// measured the same failure on the WP-11 commit), so these get more room than
+// the suite's 20 s default. WP-31's bundled backend does not pay the tsx cost.
+describe('startup handshake', { timeout: 60_000 }, () => {
   it('writes one READY line that parses against the contract', async () => {
     const secret = randomBytes(32).toString('hex');
     const backend = await start(['--data-dir', tempDir()], { COMPINTEL_CLIENT_SECRET: secret });

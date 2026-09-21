@@ -238,12 +238,13 @@ describe('the five seed rows (D-26, migration 0006)', () => {
     expect(seed('devpost').complianceStatus).toBe('MANUAL_IMPORT_ONLY');
   });
 
-  it('enables CTFtime and CLIST; Devfolio waits on its adapter', () => {
+  it('enables CTFtime, CLIST and Devfolio; Unstop and Devpost stay off', () => {
     expect(seed('ctftime').isEnabled).toBe(true);
     // WP-11 (migration 0009): enabled, because with no key (U4) it records
     // BLOCKED_BY_POLICY and makes zero requests — a state, not a failure.
     expect(seed('clist').isEnabled).toBe(true);
-    expect(seed('devfolio').isEnabled).toBe(false);
+    // WP-12 (migration 0010): its adapter exists.
+    expect(seed('devfolio').isEnabled).toBe(true);
     expect(seed('unstop').isEnabled).toBe(false);
     expect(seed('devpost').isEnabled).toBe(false);
   });
