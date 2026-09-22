@@ -233,6 +233,19 @@ describe('Admin → Sources', () => {
     expect(put?.body).toEqual({ cookie: 'df=pasted', capturedVia: 'PASTE' });
   });
 
+  it('shows a session this machine cannot open as a state too (ruling R76)', async () => {
+    backend({
+      sessions: {
+        ...SESSIONS,
+        devfolio: { ...(SESSIONS.devfolio as object), isSet: true, state: 'UNAVAILABLE' },
+      },
+    });
+    const { container } = renderWithProviders(<SourcesPage />);
+    expect(await screen.findByText(/cannot be opened on this machine/)).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    await expect(container).toBeAccessible();
+  });
+
   it('shows an expired session as a state of the source, not as an error', async () => {
     backend({
       sessions: {

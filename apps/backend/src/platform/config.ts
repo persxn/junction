@@ -43,6 +43,19 @@ const ConfigSchema = z.object({
   nativeBinding: z.string().min(1).optional(),
   /** Explicit path to the Drizzle migrations folder; defaults to bundle-relative. */
   migrationsDir: z.string().min(1).optional(),
+  /**
+   * The data key that opens stored source sessions (ruling R76): 32 bytes as
+   * hex, handed over by the shell on every spawn.
+   *
+   * Absent is a supported state and not a failure. A backend started by hand, in
+   * server mode, or on a machine where the shell could not make a key has no way
+   * to open a session and reads the sources' public pages instead — which is
+   * what "no session" already meant.
+   */
+  sessionKeyHex: z
+    .string()
+    .regex(/^[0-9a-f]{64}$/)
+    .optional(),
   appVersion: z.string().min(1),
   apiVersion: z.string().min(1),
 });
@@ -160,6 +173,14 @@ export function loadConfig(sources: ConfigSources = {}): Config {
     env.COMPINTEL_MIGRATIONS_DIR,
   );
 
+  // Ruling R76. A key that is not 32 hex-encoded bytes is treated as absent
+  // rather than as a startup error: the app still works without one, and
+  // refusing to start over a malformed key would take the whole app down for a
+  // feature the professor may never use.
+  const sessionKeyRaw = env.COMPINTEL_SESSION_KEY?.trim().toLowerCase();
+  const sessionKeyHex =
+    sessionKeyRaw !== undefined && /^[0-9a-f]{64}$/.test(sessionKeyRaw) ? sessionKeyRaw : undefined;
+
   const candidate = {
     dataDir: path.resolve(dataDirRaw),
     host: '127.0.0.1',
@@ -171,6 +192,7 @@ export function loadConfig(sources: ConfigSources = {}): Config {
     logLevel,
     ...(nativeBinding === undefined ? {} : { nativeBinding: path.resolve(nativeBinding) }),
     ...(migrationsDir === undefined ? {} : { migrationsDir: path.resolve(migrationsDir) }),
+    ...(sessionKeyHex === undefined ? {} : { sessionKeyHex }),
     appVersion: APP_VERSION,
     apiVersion: API_VERSION,
   };

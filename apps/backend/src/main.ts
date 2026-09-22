@@ -42,15 +42,13 @@ import { createSearchModule } from './modules/search/wiring.js';
 import { SourceRecordsRepository } from './modules/sources/records.js';
 import { SourcesRepository } from './modules/sources/repository.js';
 import { SourcesService } from './modules/sources/service.js';
-import { resolveCredential, seedDevCredentials } from './modules/sources/credentials.js';
-import { resolveSessionCredential } from './modules/sources/session.js';
+import { seedDevCredentials } from './modules/sources/credentials.js';
+import { openSessionVault, sourceCredentials } from './modules/sources/vault.js';
 import { createSessionHooks } from './scraping/sessions.js';
 import { EventImportService } from './modules/events/import/service.js';
-import type { SourceRow } from './db/schema/index.js';
 import {
   HttpCacheStore,
   ScrapingHttp,
-  type SourceCredential,
   closeTransport,
   undiciFetcher,
 } from './scraping/http/index.js';
@@ -256,12 +254,15 @@ async function main(): Promise<void> {
     if (seedDevCredentials(settings, config.dev, process.env)) {
       logger.info('a CLIST credential was seeded from the environment (--dev)');
     }
-    // WP-11's documented API key, or — for the two sources R74 allows it —
-    // the professor's own session. A source has at most one of the two, and a
-    // session that the site has already rejected is not sent at all.
-    const credentials = (source: SourceRow): SourceCredential | undefined =>
-      resolveCredential(source, settings) ?? resolveSessionCredential(source, settings);
-    const sessions = createSessionHooks(settings);
+    // R76: the shell's data key, or nothing — nothing is a supported state.
+    const sessionVault = openSessionVault({
+      settings,
+      sessionKeyHex: config.sessionKeyHex,
+      sources: sourcesRepository.list(),
+      logger,
+    });
+    const credentials = sourceCredentials(sessionVault);
+    const sessions = createSessionHooks(sessionVault);
     const scrapeRuntime = {
       http: scrapingHttp,
       snapshots,
@@ -292,6 +293,7 @@ async function main(): Promise<void> {
       audit,
       logger,
       settings,
+      sessionKey: sessionVault.key,
       runtime: scrapeRuntime,
       onIngested: refreshVocabulary,
     });

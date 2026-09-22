@@ -54,10 +54,20 @@ export function SessionCard({ source }: SessionCardProps): React.JSX.Element {
 
       {supported && (
         <>
-          <p className={state === 'EXPIRED' ? 'text-warning-strong' : 'text-fg-muted'}>
+          <p
+            className={
+              state === 'EXPIRED' || state === 'UNAVAILABLE'
+                ? 'text-warning-strong'
+                : 'text-fg-muted'
+            }
+          >
             {state === 'ACTIVE' && 'Signed in with your own account, read-only.'}
             {state === 'EXPIRED' &&
               `Your ${source.name} session expired — sign in again. Until then ${source.name} is read from its public pages only.`}
+            {/* Ruling R76: the session is sealed under a key this machine does
+                not have — a backup restored elsewhere, another Windows account. */}
+            {state === 'UNAVAILABLE' &&
+              `Your ${source.name} session is stored but cannot be opened on this machine — sign in again. Until then ${source.name} is read from its public pages only.`}
             {state === 'NONE' &&
               'Not signed in. Public pages are read; signing in shows whatever your own account can see.'}
           </p>

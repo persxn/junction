@@ -9,6 +9,9 @@ import { SourceRecordsRepository } from '../modules/sources/records.js';
 import { SourcesRepository } from '../modules/sources/repository.js';
 import { AuditLog } from '../platform/audit.js';
 import { SettingsStore } from '../platform/settings.js';
+import { parseSessionKey } from '../modules/sources/seal.js';
+import type { SessionVault } from '../modules/sources/session.js';
+import { TEST_SESSION_KEY_HEX } from './session-key.js';
 import type { Clock } from '../platform/time.js';
 import type { Fetcher, ScrapingHttp } from '../scraping/http/index.js';
 import type { ScrapeRunDependencies } from '../scraping/run.js';
@@ -128,6 +131,8 @@ export interface DevfolioHarness {
   readonly source: SourceRow;
   /** WP-14: where a stored session lives, so a test can sign the app in. */
   readonly settings: SettingsStore;
+  /** R76: that store plus the data key that opens what is sealed in it. */
+  readonly vault: SessionVault;
   readonly adapter: SourceAdapter;
   readonly events: EventsModule;
   readonly records: SourceRecordsRepository;
@@ -150,6 +155,9 @@ export function openDevfolioHarness(): DevfolioHarness {
   const clock = movableClock(DEVFOLIO_START);
   const geo: TestGeo = openTestGeo();
   const settings = new SettingsStore(database.db, { clock });
+  // R76: a fixed key, so a sealed value is reproducible across a test run and a
+  // test can prove the ciphertext is not the cookie.
+  const vault: SessionVault = { settings, key: parseSessionKey(TEST_SESSION_KEY_HEX) };
   const audit = new AuditLog(database.db, { clock });
   const events = createEventsModule({
     db: database.db,
@@ -173,6 +181,7 @@ export function openDevfolioHarness(): DevfolioHarness {
     database,
     source,
     settings,
+    vault,
     adapter: createDevfolioAdapter({ geo: geo.geocoder }),
     events,
     records,

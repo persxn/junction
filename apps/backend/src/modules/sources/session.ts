@@ -8,6 +8,8 @@ import {
   type SettingsStore,
 } from '../../platform/settings.js';
 import type { SourceCredential } from '../../scraping/http/index.js';
+import { isSealed, seal, unseal, type SessionKey } from './seal.js';
+import { conflict } from '../../platform/errors.js';
 
 /**
  * The professor's own signed-in session for a source (owner ruling R74 / D-34,
@@ -29,6 +31,13 @@ import type { SourceCredential } from '../../scraping/http/index.js';
  * - **Expired is a state, not a failure.** A 401, a 403 or a login redirect
  *   while a session was set marks it `EXPIRED`, the cookie stops being sent, and
  *   the source falls back to its public pages until a new one is given.
+ *
+ * Ruling R76 adds a fourth: **sealed at rest.** The stored value is AES-256-GCM
+ * ciphertext under a key the shell holds outside the database (`seal.ts`), so a
+ * copy of `app.db` or a backup restored elsewhere carries nothing usable. A
+ * backend with no key — standalone, server mode, a machine where the shell could
+ * not make one — cannot open a session, reports it `UNAVAILABLE` and reads the
+ * source's public pages. That is a fifth state of the source, not an error.
  */
 
 const SessionConfig = z
@@ -57,6 +66,19 @@ export function sessionConfigOf(source: SourceRow): SessionConfig | undefined {
   }
   const parsed = SessionConfig.safeParse(raw);
   return parsed.success ? parsed.data : undefined;
+}
+
+/**
+ * Everything the session functions read and write: the settings table, and the
+ * key that opens what is in it (R76).
+ *
+ * One parameter rather than two, because every caller has both or neither, and
+ * because a call site that forgot the key would silently look like a backend
+ * with none.
+ */
+export interface SessionVault {
+  readonly settings: SettingsStore;
+  readonly key: SessionKey;
 }
 
 interface SessionSettings {
@@ -88,15 +110,40 @@ function instant(raw: string): number | null {
   return Number.isFinite(value) && value > 0 ? value : null;
 }
 
-function stateOf(raw: string, hasCookie: boolean): SourceSessionState {
-  if (!hasCookie) {
+/**
+ * The state a stored session is in, from the three things that decide it: is
+ * there one, was it refused, and can this machine open it (R76).
+ */
+function stateOfStored(
+  raw: string,
+  stored: string,
+  opened: string | undefined,
+): SourceSessionState {
+  if (stored.length === 0) {
     return 'NONE';
   }
-  return raw === 'EXPIRED' ? 'EXPIRED' : 'ACTIVE';
+  if (raw === 'EXPIRED') {
+    return 'EXPIRED';
+  }
+  return opened === undefined ? 'UNAVAILABLE' : 'ACTIVE';
+}
+
+/** The sealed cookie, opened, or `undefined` when this machine cannot. */
+export function openSession(source: SourceRow, vault: SessionVault): string | undefined {
+  const config = sessionConfigOf(source);
+  if (config === undefined) {
+    return undefined;
+  }
+  const stored = vault.settings.get(settingsOf(config).cookie).trim();
+  if (stored.length === 0) {
+    return undefined;
+  }
+  const opened = unseal(vault.key, stored);
+  return opened === undefined || opened.length === 0 ? undefined : opened;
 }
 
 /** What `GET /admin/sources/:key/session` answers. Never the cookie itself. */
-export function sessionStatus(source: SourceRow, settings: SettingsStore): SourceSessionStatus {
+export function sessionStatus(source: SourceRow, vault: SessionVault): SourceSessionStatus {
   const config = sessionConfigOf(source);
   if (config === undefined) {
     return {
@@ -109,13 +156,13 @@ export function sessionStatus(source: SourceRow, settings: SettingsStore): Sourc
     };
   }
   const keys = settingsOf(config);
-  const cookie = settings.get(keys.cookie).trim();
+  const stored = vault.settings.get(keys.cookie).trim();
   return {
     supported: true,
-    isSet: cookie.length > 0,
-    state: stateOf(settings.get(keys.state), cookie.length > 0),
-    capturedAt: instant(settings.get(keys.capturedAt)),
-    lastVerifiedAt: instant(settings.get(keys.verifiedAt)),
+    isSet: stored.length > 0,
+    state: stateOfStored(vault.settings.get(keys.state), stored, openSession(source, vault)),
+    capturedAt: instant(vault.settings.get(keys.capturedAt)),
+    lastVerifiedAt: instant(vault.settings.get(keys.verifiedAt)),
     loginUrl: config.loginUrl,
     hosts: [...config.hosts],
   };
@@ -126,19 +173,22 @@ export function sessionStatus(source: SourceRow, settings: SettingsStore): Sourc
  *
  * An `EXPIRED` session is deliberately not sent. Re-sending a cookie the site
  * has already rejected is how a signed-out account turns into a run of 401s, and
- * R74 says the source falls back to its public pages instead.
+ * R74 says the source falls back to its public pages instead. A session this
+ * machine cannot open (R76) is the same answer for a different reason.
  */
 export function resolveSessionCredential(
   source: SourceRow,
-  settings: SettingsStore,
+  vault: SessionVault,
 ): SourceCredential | undefined {
   const config = sessionConfigOf(source);
   if (config === undefined) {
     return undefined;
   }
-  const keys = settingsOf(config);
-  const cookie = settings.get(keys.cookie).trim();
-  if (cookie.length === 0 || settings.get(keys.state) === 'EXPIRED') {
+  if (vault.settings.get(settingsOf(config).state) === 'EXPIRED') {
+    return undefined;
+  }
+  const cookie = openSession(source, vault);
+  if (cookie === undefined) {
     return undefined;
   }
   return { header: config.header, value: cookie, hosts: config.hosts };
@@ -153,20 +203,76 @@ export function sessionIsSet(source: SourceRow, settings: SettingsStore): boolea
   return settings.get(settingsOf(config).cookie).trim().length > 0;
 }
 
-/** Stores the cookie and marks it active. The caller audits the act, never the value. */
+/**
+ * Refuses to take a session on a machine that cannot seal one (R76).
+ *
+ * Storing it anyway would mean writing live account access to the database in
+ * the clear, which is the exact thing R76 rules out — so this says so instead,
+ * in words the professor can act on.
+ */
+export function assertCanSeal(vault: SessionVault): void {
+  if (vault.key === undefined) {
+    throw conflict(
+      'This machine cannot store a session.',
+      'A session is sealed under a key the desktop shell holds (R76), and this backend was started without one. Start CompIntel from its own shortcut and try again.',
+    );
+  }
+}
+
+/**
+ * Seals the plaintext sessions an older build stored, once (R76).
+ *
+ * Runs at startup, after the migrations. It is idempotent by construction — a
+ * value that is already sealed is skipped — and it does nothing at all without a
+ * key, because overwriting the only copy of a session with something this
+ * machine could not open afterwards would be worse than leaving it.
+ *
+ * Returns how many were sealed, which the caller logs as a count and never as a
+ * value.
+ */
+export function sealStoredSessions(sources: readonly SourceRow[], vault: SessionVault): number {
+  if (vault.key === undefined) {
+    return 0;
+  }
+  let sealed = 0;
+  for (const source of sources) {
+    const config = sessionConfigOf(source);
+    if (config === undefined) {
+      continue;
+    }
+    const keys = settingsOf(config);
+    const stored = vault.settings.get(keys.cookie).trim();
+    if (stored.length === 0 || isSealed(stored)) {
+      continue;
+    }
+    vault.settings.set(keys.cookie, seal(vault.key, stored), 'SYSTEM');
+    sealed += 1;
+  }
+  return sealed;
+}
+
+/**
+ * Stores the cookie, sealed, and marks it active. The caller audits the act,
+ * never the value.
+ *
+ * `false` means it was not stored: the source may not hold a session, or this
+ * machine has no key and storing it would mean writing a live session in the
+ * clear (R76). The route turns that into a sentence the professor can act on.
+ */
 export function storeSession(
   source: SourceRow,
-  settings: SettingsStore,
+  vault: SessionVault,
   cookie: string,
   updatedBy: string,
   at: number,
 ): boolean {
   const config = sessionConfigOf(source);
-  if (config === undefined) {
+  if (config === undefined || vault.key === undefined) {
     return false;
   }
+  const { settings } = vault;
   const keys = settingsOf(config);
-  settings.set(keys.cookie, cookie.trim(), updatedBy);
+  settings.set(keys.cookie, seal(vault.key, cookie.trim()), updatedBy);
   settings.set(keys.capturedAt, String(at), updatedBy);
   settings.set(keys.state, 'ACTIVE', updatedBy);
   settings.set(keys.verifiedAt, '', updatedBy);
@@ -225,4 +331,13 @@ export function markSessionVerified(source: SourceRow, settings: SettingsStore, 
 /** The sentence Source status shows while a session is expired (§7.7's voice). */
 export function expiredDetail(source: SourceRow): string {
   return `Your ${source.name} session expired — sign in again. Until then ${source.name} is read from its public pages only.`;
+}
+
+/**
+ * …and the one it shows when the session is there but this machine cannot open
+ * it (R76): a restored backup, a different Windows account, a key file that went
+ * missing.
+ */
+export function unavailableDetail(source: SourceRow): string {
+  return `Your ${source.name} session is stored but cannot be opened on this machine — sign in again. Until then ${source.name} is read from its public pages only.`;
 }

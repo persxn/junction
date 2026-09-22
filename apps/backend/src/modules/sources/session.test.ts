@@ -10,16 +10,26 @@ import {
   robotsUrl,
   type DevfolioHarness,
 } from '../../testing/devfolio.js';
-import { secretSettingKeys } from '../../platform/settings.js';
+import {
+  definitionOf,
+  secretSettingKeys,
+  type SettingDefinition,
+} from '../../platform/settings.js';
 import '../../settings.js';
 import {
   clearSession,
   expiredDetail,
+  openSession,
   resolveSessionCredential,
+  sealStoredSessions,
   sessionConfigOf,
   sessionStatus,
   storeSession,
+  unavailableDetail,
+  type SessionVault,
 } from './session.js';
+import { isSealed, parseSessionKey } from './seal.js';
+import { TEST_SESSION_KEY_HEX } from '../../testing/session-key.js';
 
 /**
  * The professor's own signed-in session (owner ruling R74 / D-34, WP-14).
@@ -37,7 +47,7 @@ let harness: DevfolioHarness;
 
 /** Signs the app in to Devfolio as the test's professor. */
 function signIn(at = harness.clock.now().getTime()): void {
-  storeSession(harness.source, harness.settings, COOKIE, 'admin-1', at);
+  storeSession(harness.source, harness.vault, COOKIE, 'admin-1', at);
 }
 
 function transportForOneHackathon(): ReturnType<typeof fakeTransport> {
@@ -69,8 +79,8 @@ describe('where the cookie goes', () => {
     const transport = transportForOneHackathon();
     await runScrape(
       harness.deps(transport, undefined, {
-        credentials: (source) => resolveSessionCredential(source, harness.settings),
-        sessions: createSessionHooks(harness.settings),
+        credentials: (source) => resolveSessionCredential(source, harness.vault),
+        sessions: createSessionHooks(harness.vault),
       }),
       { source: harness.source, adapter: harness.adapter, trigger: 'MANUAL' },
     );
@@ -98,8 +108,8 @@ describe('where the cookie goes', () => {
     });
     await runScrape(
       harness.deps(transport, undefined, {
-        credentials: (source) => resolveSessionCredential(source, harness.settings),
-        sessions: createSessionHooks(harness.settings),
+        credentials: (source) => resolveSessionCredential(source, harness.vault),
+        sessions: createSessionHooks(harness.vault),
       }),
       { source: harness.source, adapter: harness.adapter, trigger: 'MANUAL' },
     );
@@ -123,7 +133,7 @@ describe('where the cookie never appears', () => {
 
   it('is never in what the API answers with', () => {
     signIn();
-    const status = sessionStatus(harness.source, harness.settings);
+    const status = sessionStatus(harness.source, harness.vault);
     expect(JSON.stringify(status)).not.toContain('abc123');
     expect(status).toMatchObject({ supported: true, isSet: true, state: 'ACTIVE' });
     expect(status.capturedAt).toBe(harness.clock.now().getTime());
@@ -132,20 +142,112 @@ describe('where the cookie never appears', () => {
   it('is gone once the professor signs the app out', () => {
     signIn();
     clearSession(harness.source, harness.settings, 'admin-1');
-    const status = sessionStatus(harness.source, harness.settings);
+    const status = sessionStatus(harness.source, harness.vault);
     expect(status.isSet).toBe(false);
     expect(status.state).toBe('NONE');
-    expect(resolveSessionCredential(harness.source, harness.settings)).toBeUndefined();
+    expect(resolveSessionCredential(harness.source, harness.vault)).toBeUndefined();
   });
 
   it('has no session at all for a source whose verdict does not allow one', () => {
     const ctftime = harness.sources.findByKey('ctftime');
     expect(sessionConfigOf(ctftime!)).toBeUndefined();
-    expect(sessionStatus(ctftime!, harness.settings)).toMatchObject({
+    expect(sessionStatus(ctftime!, harness.vault)).toMatchObject({
       supported: false,
       isSet: false,
       hosts: [],
     });
+  });
+});
+
+describe('a session is sealed at rest (R76)', () => {
+  /** The stored value, straight out of the settings table. */
+  function stored(): string {
+    return harness.settings.get(
+      definitionOf('sources.devfolio.sessionCookie') as SettingDefinition<string>,
+    );
+  }
+
+  it('is unreadable without the key, and readable with it', () => {
+    signIn();
+    const raw = stored();
+    expect(isSealed(raw)).toBe(true);
+    expect(raw).not.toContain('abc123');
+    expect(raw).not.toContain('df_session');
+    expect(openSession(harness.source, harness.vault)).toBe(COOKIE);
+
+    // A different key — a backup restored on another machine — opens nothing.
+    const elsewhere: SessionVault = {
+      settings: harness.settings,
+      key: parseSessionKey('a1'.repeat(32)),
+    };
+    expect(openSession(harness.source, elsewhere)).toBeUndefined();
+    expect(resolveSessionCredential(harness.source, elsewhere)).toBeUndefined();
+  });
+
+  it('says so, and reads the public pages, when this machine holds no key', async () => {
+    signIn();
+    const keyless: SessionVault = { settings: harness.settings, key: undefined };
+
+    const status = sessionStatus(harness.source, keyless);
+    expect(status).toMatchObject({ supported: true, isSet: true, state: 'UNAVAILABLE' });
+    expect(JSON.stringify(status)).not.toContain('abc123');
+    expect(unavailableDetail(harness.source)).toContain('cannot be opened on this machine');
+
+    const transport = transportForOneHackathon();
+    await runScrape(
+      harness.deps(transport, undefined, {
+        credentials: (source) => resolveSessionCredential(source, keyless),
+        sessions: createSessionHooks(keyless),
+      }),
+      { source: harness.source, adapter: harness.adapter, trigger: 'SCHEDULE' },
+    );
+    // The run happened, anonymously, which is exactly the "no session" state.
+    expect(transport.calls.map((call) => call.url)).toContain(LISTING);
+    expect(transport.calls.every((call) => call.headers.cookie === undefined)).toBe(true);
+  });
+
+  it('nothing is stored at all on a backend with no key', () => {
+    const keyless: SessionVault = { settings: harness.settings, key: undefined };
+    expect(storeSession(harness.source, keyless, COOKIE, 'admin-1', 1)).toBe(false);
+    expect(stored()).toBe('');
+  });
+
+  it('seals a plaintext session an older build left behind, once', () => {
+    // What WP-14 wrote: the cookie itself, in the setting.
+    harness.settings.set(
+      definitionOf('sources.devfolio.sessionCookie') as SettingDefinition<string>,
+      COOKIE,
+      'admin-1',
+    );
+    expect(isSealed(stored())).toBe(false);
+
+    const sources = harness.sources.list();
+    expect(sealStoredSessions(sources, harness.vault)).toBe(1);
+    const sealed = stored();
+    expect(isSealed(sealed)).toBe(true);
+    expect(openSession(harness.source, harness.vault)).toBe(COOKIE);
+
+    // Idempotent: a second pass has nothing to do and changes nothing.
+    expect(sealStoredSessions(sources, harness.vault)).toBe(0);
+    expect(stored()).toBe(sealed);
+  });
+
+  it('leaves a plaintext session alone rather than destroying it without a key', () => {
+    harness.settings.set(
+      definitionOf('sources.devfolio.sessionCookie') as SettingDefinition<string>,
+      COOKIE,
+      'admin-1',
+    );
+    const keyless: SessionVault = { settings: harness.settings, key: undefined };
+    expect(sealStoredSessions(harness.sources.list(), keyless)).toBe(0);
+    expect(stored()).toBe(COOKIE);
+    // It is still not used: only a sealed value is ever sent (R76).
+    expect(resolveSessionCredential(harness.source, keyless)).toBeUndefined();
+  });
+
+  it('the key the harness uses is the shape the shell sends', () => {
+    expect(TEST_SESSION_KEY_HEX).toMatch(/^[0-9a-f]{64}$/);
+    expect(parseSessionKey(TEST_SESSION_KEY_HEX)).toHaveLength(32);
   });
 });
 
@@ -164,14 +266,14 @@ describe('an expired session is a source state, not a failure (R74)', () => {
     const transport = refusing();
     const row = await runScrape(
       harness.deps(transport, undefined, {
-        credentials: (source) => resolveSessionCredential(source, harness.settings),
-        sessions: createSessionHooks(harness.settings),
+        credentials: (source) => resolveSessionCredential(source, harness.vault),
+        sessions: createSessionHooks(harness.vault),
       }),
       { source: harness.source, adapter: harness.adapter, trigger: 'SCHEDULE' },
     );
 
     expect(row.errorKind).toBe('BLOCKED');
-    const status = sessionStatus(harness.source, harness.settings);
+    const status = sessionStatus(harness.source, harness.vault);
     expect(status.state).toBe('EXPIRED');
     expect(status.isSet).toBe(true);
 
@@ -186,19 +288,19 @@ describe('an expired session is a source state, not a failure (R74)', () => {
     signIn();
     await runScrape(
       harness.deps(refusing(), undefined, {
-        credentials: (source) => resolveSessionCredential(source, harness.settings),
-        sessions: createSessionHooks(harness.settings),
+        credentials: (source) => resolveSessionCredential(source, harness.vault),
+        sessions: createSessionHooks(harness.vault),
       }),
       { source: harness.source, adapter: harness.adapter, trigger: 'SCHEDULE' },
     );
-    expect(resolveSessionCredential(harness.source, harness.settings)).toBeUndefined();
+    expect(resolveSessionCredential(harness.source, harness.vault)).toBeUndefined();
 
     const transport = transportForOneHackathon();
     harness.clock.advance(3_600_000);
     await runScrape(
       harness.deps(transport, undefined, {
-        credentials: (source) => resolveSessionCredential(source, harness.settings),
-        sessions: createSessionHooks(harness.settings),
+        credentials: (source) => resolveSessionCredential(source, harness.vault),
+        sessions: createSessionHooks(harness.vault),
       }),
       { source: harness.source, adapter: harness.adapter, trigger: 'SCHEDULE' },
     );
@@ -211,12 +313,12 @@ describe('an expired session is a source state, not a failure (R74)', () => {
     const transport = transportForOneHackathon();
     await runScrape(
       harness.deps(transport, undefined, {
-        credentials: (source) => resolveSessionCredential(source, harness.settings),
-        sessions: createSessionHooks(harness.settings),
+        credentials: (source) => resolveSessionCredential(source, harness.vault),
+        sessions: createSessionHooks(harness.vault),
       }),
       { source: harness.source, adapter: harness.adapter, trigger: 'SCHEDULE' },
     );
-    expect(sessionStatus(harness.source, harness.settings).lastVerifiedAt).not.toBeNull();
+    expect(sessionStatus(harness.source, harness.vault).lastVerifiedAt).not.toBeNull();
   });
 });
 
@@ -230,8 +332,8 @@ describe('D-29 is unchanged by signing in', () => {
     );
     await runScrape(
       harness.deps(transport, undefined, {
-        credentials: (source) => resolveSessionCredential(source, harness.settings),
-        sessions: createSessionHooks(harness.settings),
+        credentials: (source) => resolveSessionCredential(source, harness.vault),
+        sessions: createSessionHooks(harness.vault),
       }),
       { source: harness.source, adapter: harness.adapter, trigger: 'MANUAL' },
     );

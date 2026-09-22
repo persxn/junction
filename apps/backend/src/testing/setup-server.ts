@@ -7,6 +7,8 @@ import { SourcesRepository } from '../modules/sources/repository.js';
 import { SourcesService } from '../modules/sources/service.js';
 import { UsersRepository } from '../modules/users/repository.js';
 import { UsersService } from '../modules/users/service.js';
+import { parseSessionKey } from '../modules/sources/seal.js';
+import { TEST_SESSION_KEY_HEX } from './session-key.js';
 import { AdapterRegistry } from '../sources/registry.js';
 import { Geocoder } from '../modules/geo/geocoder.js';
 import { createSearchModule, type SearchModule } from '../modules/search/wiring.js';
@@ -106,6 +108,9 @@ export async function startSetupTestServer(
     audit,
     logger: silentLogger,
     settings,
+    // R76: the key the shell would have passed, so the session routes behave the
+    // way they do in the app rather than the way a keyless backend does.
+    sessionKey: parseSessionKey(TEST_SESSION_KEY_HEX),
     runtime: {
       http: testScrapingHttp({ transport: fakeTransport({}), clock: systemClock }),
       setupComplete: () => !setup.isRequired(),

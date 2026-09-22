@@ -244,10 +244,13 @@ export type SourceCredentialStatus = z.infer<typeof SourceCredentialStatus>;
  *
  * `EXPIRED` is a state of the source, not a failure: the site answered 401, 403
  * or a login redirect while a session was set, so the runs fall back to the
- * public pages and Source status says so until a new session is given. Nothing
- * here is the cookie, and no route ever echoes one back.
+ * public pages and Source status says so until a new session is given.
+ * `UNAVAILABLE` is the same answer for a different reason (ruling R76): the
+ * session is stored, sealed, and this machine holds no key that opens it — a
+ * backup restored elsewhere, another Windows account, a backend started by hand.
+ * Nothing here is the cookie, and no route ever echoes one back.
  */
-export const SOURCE_SESSION_STATES = ['NONE', 'ACTIVE', 'EXPIRED'] as const;
+export const SOURCE_SESSION_STATES = ['NONE', 'ACTIVE', 'EXPIRED', 'UNAVAILABLE'] as const;
 export const SourceSessionState = z.enum(SOURCE_SESSION_STATES);
 export type SourceSessionState = z.infer<typeof SourceSessionState>;
 

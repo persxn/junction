@@ -7,6 +7,7 @@ import {
   markSessionVerified,
   resolveSessionCredential,
   sessionIsSet,
+  type SessionVault,
 } from '../modules/sources/session.js';
 import type { SourcesRepository } from '../modules/sources/repository.js';
 import type { SettingsStore } from '../platform/settings.js';
@@ -34,9 +35,10 @@ export interface SessionHooks {
 }
 
 /** The hooks over the real settings store; `main.ts` and the harnesses use this. */
-export function createSessionHooks(settings: SettingsStore): SessionHooks {
+export function createSessionHooks(vault: SessionVault): SessionHooks {
+  const { settings } = vault;
   return {
-    isActive: (source) => resolveSessionCredential(source, settings) !== undefined,
+    isActive: (source) => resolveSessionCredential(source, vault) !== undefined,
     expire: (source, at) => markSessionExpired(source, settings, at),
     verify: (source, at) => {
       markSessionVerified(source, settings, at);

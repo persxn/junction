@@ -28,7 +28,15 @@ import {
   toStatusEntry,
   toSummary,
 } from './mappers.js';
-import { clearSession, sessionConfigOf, sessionStatus, storeSession } from './session.js';
+import {
+  assertCanSeal,
+  clearSession,
+  sessionConfigOf,
+  sessionStatus,
+  storeSession,
+  type SessionVault,
+} from './session.js';
+import type { SessionKey } from './seal.js';
 import type { SourceRecordsRepository } from './records.js';
 import type { SourcesRepository } from './repository.js';
 
@@ -58,6 +66,8 @@ export interface SourcesServiceDependencies {
   readonly clock?: Clock;
   /** WP-11: where source credentials live (secret settings). */
   readonly settings?: SettingsStore;
+  /** R76: the key that opens a stored session; absent is a state, not an error. */
+  readonly sessionKey?: SessionKey;
   /** Everything `runScrape` needs except the source and the adapter. */
   readonly runtime: Omit<ScrapeRunDependencies, 'sources' | 'records' | 'clock' | 'logger'>;
   /** WP-15a: called after every run that stored items, so the typo vocabulary is current. */
@@ -211,7 +221,7 @@ export class SourcesService {
   /** Whether the app holds the professor's own session for a source (R74). */
   sessionStatus(context: SourcesServiceContext, key: string): SourceSessionStatus {
     assertCan(context.actor, 'source.manage');
-    return sessionStatus(this.#require(key), this.#settings());
+    return sessionStatus(this.#require(key), this.#vault());
   }
 
   /**
@@ -235,7 +245,8 @@ export class SourcesService {
         'Only sources whose verdict allows signed-in reading accept a session (R74).',
       );
     }
-    const settings = this.#settings();
+    const vault = this.#vault();
+    assertCanSeal(vault);
     const at = nowMs(this.#clock);
     withAudit(
       this.#deps.audit,
@@ -249,9 +260,9 @@ export class SourcesService {
         diff: { capturedVia: request.capturedVia },
         requestId: context.requestId ?? null,
       },
-      () => storeSession(source, settings, request.cookie, context.actor.id, at),
+      () => storeSession(source, vault, request.cookie, context.actor.id, at),
     );
-    return sessionStatus(source, settings);
+    return sessionStatus(source, vault);
   }
 
   /** Signs the app out of a source; the next run reads its public pages. */
@@ -273,7 +284,7 @@ export class SourcesService {
       },
       () => clearSession(source, settings, context.actor.id),
     );
-    return sessionStatus(source, settings);
+    return sessionStatus(source, { settings, key: this.#deps.sessionKey });
   }
 
   #settings(): SettingsStore {
@@ -281,6 +292,11 @@ export class SourcesService {
       throw new Error('source credentials are not available on this backend');
     }
     return this.#deps.settings;
+  }
+
+  /** The settings store and the key that opens what is sealed in it (R76). */
+  #vault(): SessionVault {
+    return { settings: this.#settings(), key: this.#deps.sessionKey };
   }
 
   /**

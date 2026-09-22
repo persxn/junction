@@ -14,6 +14,7 @@ pub mod loopback;
 pub mod paths;
 pub mod ready;
 pub mod secret;
+pub mod session_key;
 pub mod settings;
 pub mod signin;
 pub mod supervisor;
@@ -92,6 +93,21 @@ pub fn run() {
             let preferences = store.get();
 
             let mut config = SupervisorConfig::new(paths, APP_VERSION);
+
+            // Ruling R76: the data key that seals stored sessions is created on
+            // first run, kept DPAPI-protected beside the database and handed to
+            // every backend spawn alongside the client secret. Failing to get
+            // one is not a reason to refuse to start: the backend is told there
+            // is no key, reports sessions as unavailable on this machine, and
+            // reads the sources' public pages, which is the state a standalone
+            // backend is in already.
+            match session_key::ensure(&config.paths.data_dir) {
+                Ok(key) => config
+                    .extra_env
+                    .push((session_key::KEY_ENV.to_owned(), key)),
+                Err(cause) => eprintln!("sessions cannot be sealed on this machine: {cause}"),
+            }
+
             if cfg!(debug_assertions) {
                 // Debug logging in a dev run; the secret still comes from the
                 // environment, so no connection file is written.
