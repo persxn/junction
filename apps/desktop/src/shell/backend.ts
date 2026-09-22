@@ -166,8 +166,31 @@ export interface SignInResult {
   readonly count: number;
 }
 
+/** The event the sign-in window emits when it is done, one way or the other. */
+export const SIGNIN_FINISHED_EVENT = 'signin://finished';
+
 export async function openSourceSignIn(request: SignInRequest): Promise<void> {
   await invoke('open_source_signin', { request: { ...request, hosts: [...request.hosts] } });
+}
+
+/**
+ * Subscribes to the sign-in window saying it is finished (pre-M2a).
+ *
+ * WP-14 left the window mute, so the card needed a second button for the
+ * professor to press once they were signed in. The window now says so itself -
+ * when it reaches a page past the login form, or when they close it - and the
+ * card captures on this event instead of on a button nobody should have had to
+ * understand.
+ */
+export async function onSignInFinished(
+  handler: (finished: { sourceKey: string }) => void,
+): Promise<UnlistenFn> {
+  return listen<unknown>(SIGNIN_FINISHED_EVENT, (event) => {
+    const payload = event.payload as Partial<{ sourceKey: string }>;
+    if (typeof payload.sourceKey === 'string') {
+      handler({ sourceKey: payload.sourceKey });
+    }
+  });
 }
 
 export async function captureSourceSession(request: SignInRequest): Promise<SignInResult> {

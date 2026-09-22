@@ -1,26 +1,21 @@
 import type { SourceSummary } from '@compintel/contracts';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { LogIn, LogOut, ClipboardPaste, Loader2 } from 'lucide-react';
+import { ClipboardPaste, Loader2, LogIn, LogOut } from 'lucide-react';
 import { useId, useState } from 'react';
 
-import {
-  clearSourceSession,
-  getSourceSession,
-  setSourceSession,
-} from '../../../api/admin-sources.js';
-import { isApiProblem, type ApiProblem } from '../../../api/problem.js';
-import { useToast } from '../../../components/toast/ToastProvider.js';
-import { useBackendConnection } from '../../../shell/connection-context.js';
-import { captureSourceSession, openSourceSignIn } from '../../../shell/backend.js';
+import { useSourceSession } from './use-source-session.js';
 
 /**
- * One source's signed-in state (owner ruling R74 / D-34, WP-14 step 12).
+ * One source's signed-in state (owner ruling R74 / D-34, WP-14; pre-M2a item 3).
  *
- * Two ways in, both the professor's own account and both read-only: a window
- * the app opens on the source's own login page, or a cookie pasted from the
- * browser they are already signed in to. The value is sent straight to the
- * backend and is never held in this component's state, never in `localStorage`,
- * and never in a log line.
+ * **One button.** Pressing "Sign in to Devfolio" opens the packaged window on
+ * that source's own login page; when the window says it is finished the session
+ * is read out of it and stored, with no second button to press. Pasting a cookie
+ * from a browser is still here, folded away, for the professor who is already
+ * signed in somewhere else.
+ *
+ * Both ways in are the professor's own account and both are read-only. The value
+ * is never held in this component's state, never in `localStorage`, and never in
+ * a log line — `useSourceSession` sends it straight to the backend.
  *
  * An expired session is shown as a state of the source with the sentence §7.7
  * gives it, not as an error: the source keeps working from its public pages.
@@ -31,99 +26,12 @@ export interface SessionCardProps {
 }
 
 export function SessionCard({ source }: SessionCardProps): React.JSX.Element {
-  const connection = useBackendConnection();
-  const queryClient = useQueryClient();
-  const toast = useToast();
   const id = useId();
   const [pasting, setPasting] = useState(false);
   const [pasted, setPasted] = useState('');
+  const session = useSourceSession(source);
 
-  const session = useQuery({
-    queryKey: ['admin', 'sources', source.key, 'session'],
-    queryFn: async () => getSourceSession(connection, source.key),
-  });
-
-  const invalidate = async (): Promise<void> => {
-    await queryClient.invalidateQueries({
-      queryKey: ['admin', 'sources', source.key, 'session'],
-    });
-  };
-
-  const complain = (cause: unknown): void => {
-    const problem = cause as ApiProblem;
-    toast.show({
-      tone: 'danger',
-      title: isApiProblem(cause) ? problem.title : 'That did not work',
-      description: isApiProblem(cause) ? (problem.detail ?? '') : String(cause),
-    });
-  };
-
-  const store = useMutation({
-    mutationFn: async (input: { cookie: string; via: 'PASTE' | 'LOGIN_WINDOW' }) =>
-      setSourceSession(connection, source.key, input.cookie, input.via),
-    onSuccess: async () => {
-      setPasting(false);
-      setPasted('');
-      toast.show({
-        tone: 'success',
-        title: `Signed in to ${source.name}`,
-        description: 'Your session is used read-only, on that site’s pages only.',
-      });
-      await invalidate();
-    },
-    onError: complain,
-  });
-
-  const signOut = useMutation({
-    mutationFn: async () => clearSourceSession(connection, source.key),
-    onSuccess: invalidate,
-    onError: complain,
-  });
-
-  const signIn = useMutation({
-    mutationFn: async () => {
-      const status = session.data;
-      if (status?.loginUrl === undefined) {
-        throw new Error('That source has no sign-in page.');
-      }
-      await openSourceSignIn({
-        sourceKey: source.key,
-        loginUrl: status.loginUrl,
-        hosts: status.hosts,
-      });
-    },
-    onError: complain,
-  });
-
-  const capture = useMutation({
-    mutationFn: async () => {
-      const status = session.data;
-      if (status?.loginUrl === undefined) {
-        throw new Error('That source has no sign-in page.');
-      }
-      const result = await captureSourceSession({
-        sourceKey: source.key,
-        loginUrl: status.loginUrl,
-        hosts: status.hosts,
-      });
-      if (result.cookie === '') {
-        throw new Error('The sign-in window is not signed in yet.');
-      }
-      return setSourceSession(connection, source.key, result.cookie, 'LOGIN_WINDOW');
-    },
-    onSuccess: async () => {
-      toast.show({
-        tone: 'success',
-        title: `Signed in to ${source.name}`,
-        description: 'Your session is used read-only, on that site’s pages only.',
-      });
-      await invalidate();
-    },
-    onError: complain,
-  });
-
-  const status = session.data;
-  const supported = status?.supported === true;
+  const { status, supported } = session;
   const state = status?.state ?? 'NONE';
 
   return (
@@ -157,30 +65,23 @@ export function SessionCard({ source }: SessionCardProps): React.JSX.Element {
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => {
-                signIn.mutate();
-              }}
-              className="inline-flex items-center gap-2 rounded-md bg-accent px-3 py-1.5 font-medium text-on-accent hover:bg-accent-hover"
+              disabled={session.signingIn}
+              onClick={session.signIn}
+              className="inline-flex items-center gap-2 rounded-md bg-accent px-3 py-1.5 font-medium text-on-accent hover:bg-accent-hover disabled:opacity-50"
             >
-              <LogIn aria-hidden="true" className="size-4" />
-              Open sign-in window
-            </button>
-            <button
-              type="button"
-              disabled={capture.isPending}
-              onClick={() => {
-                capture.mutate();
-              }}
-              className="inline-flex items-center gap-2 rounded-md border border-line px-3 py-1.5 font-medium hover:bg-surface-sunken disabled:opacity-50"
-            >
-              {capture.isPending && <Loader2 aria-hidden="true" className="size-4 animate-spin" />}
-              Use this session
+              {session.signingIn ? (
+                <Loader2 aria-hidden="true" className="size-4 animate-spin" />
+              ) : (
+                <LogIn aria-hidden="true" className="size-4" />
+              )}
+              {state === 'NONE' ? `Sign in to ${source.name}` : `Sign in to ${source.name} again`}
             </button>
             <button
               type="button"
               onClick={() => {
                 setPasting((open) => !open);
               }}
+              aria-expanded={pasting}
               className="inline-flex items-center gap-2 rounded-md border border-line px-3 py-1.5 font-medium hover:bg-surface-sunken"
             >
               <ClipboardPaste aria-hidden="true" className="size-4" />
@@ -189,9 +90,7 @@ export function SessionCard({ source }: SessionCardProps): React.JSX.Element {
             {status?.isSet === true && (
               <button
                 type="button"
-                onClick={() => {
-                  signOut.mutate();
-                }}
+                onClick={session.signOut}
                 className="inline-flex items-center gap-2 rounded-md border border-line px-3 py-1.5 font-medium hover:bg-surface-sunken"
               >
                 <LogOut aria-hidden="true" className="size-4" />
@@ -205,7 +104,8 @@ export function SessionCard({ source }: SessionCardProps): React.JSX.Element {
               className="flex flex-col gap-2"
               onSubmit={(event) => {
                 event.preventDefault();
-                store.mutate({ cookie: pasted, via: 'PASTE' });
+                session.savePasted(pasted);
+                setPasted('');
               }}
             >
               <label htmlFor={`${id}-cookie`} className="font-medium">
@@ -226,7 +126,7 @@ export function SessionCard({ source }: SessionCardProps): React.JSX.Element {
               </p>
               <button
                 type="submit"
-                disabled={pasted.trim().length === 0 || store.isPending}
+                disabled={pasted.trim().length === 0 || session.saving}
                 className="w-fit rounded-md bg-accent px-3 py-1.5 font-medium text-on-accent hover:bg-accent-hover disabled:opacity-50"
               >
                 Save session

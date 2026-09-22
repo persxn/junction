@@ -16,17 +16,29 @@
 //! 4. **Nothing is automated.** The professor types their own password and
 //!    solves their own CAPTCHA. The shell opens a window and reads cookies out
 //!    of it; it never fills a field and never presses a button.
+//!
+//! What pre-M2a adds is a way back. WP-14 left the window mute, so the card
+//! needed two buttons - one to open it and one to say "I am done" - and the
+//! professor had to know that. The window now emits `signin://finished` when it
+//! reaches a page past the login form, or when they close it, and the card is
+//! one button again.
 
 use std::path::PathBuf;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Manager, Url, WebviewUrl, WebviewWindowBuilder};
+use tauri::{AppHandle, Emitter, Manager, Url, WebviewUrl, WebviewWindowBuilder, WindowEvent};
 
 /// One window at a time, whichever source it is for.
 pub const WINDOW_LABEL: &str = "source-signin";
 
 /// Where the sign-in window keeps its profile: never the app's own WebView data.
 pub const PROFILE_DIR: &str = "signin-profile";
+
+/// Emitted once per sign-in window, when there is something worth reading or
+/// the professor has given up. The UI captures on it; nothing is read here.
+pub const FINISHED_EVENT: &str = "signin://finished";
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -37,6 +49,13 @@ pub struct SignInRequest {
     pub login_url: String,
     /// `config_json.session.hosts` — the only hosts this window may load.
     pub hosts: Vec<String>,
+}
+
+/// The payload of `FINISHED_EVENT`: which source's window is done.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SignInFinished {
+    pub source_key: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -104,6 +123,20 @@ pub fn cookie_header(cookies: &[CapturedCookie], hosts: &[String]) -> String {
         .join("; ")
 }
 
+/// Whether a navigation looks like the professor getting past the login form.
+///
+/// There is no configured "you are in now" URL, and inventing one per source
+/// would be a setting that goes stale the next time a site reorganizes itself.
+/// What is true of every login flow is that it ends somewhere that is not the
+/// login form: the same host, a different path. A form that posts to itself, a
+/// `?next=` round trip and an error reload all stay on the login path, and are
+/// not mistaken for success.
+#[must_use]
+pub fn is_landing(url: &Url, login: &Url, hosts: &[String]) -> bool {
+    url_allowed(url, hosts)
+        && url.path().trim_end_matches('/') != login.path().trim_end_matches('/')
+}
+
 /// The profile directory the sign-in window uses, inside the data directory.
 #[must_use]
 pub fn profile_dir(data_dir: &std::path::Path) -> PathBuf {
@@ -113,32 +146,72 @@ pub fn profile_dir(data_dir: &std::path::Path) -> PathBuf {
 /// Opens (or focuses) the sign-in window for one source.
 ///
 /// The window is an ordinary browser window pointed at the source's login page.
-/// Nothing is injected into it and nothing is read from it until the professor
-/// says they are signed in.
+/// Nothing is injected into it and nothing is read from it until it says it is
+/// finished - which it does exactly once, whether the professor signed in or
+/// closed the window, so the card never waits for an event that is not coming.
 pub fn open(
     app: &AppHandle,
     data_dir: &std::path::Path,
     request: &SignInRequest,
 ) -> Result<(), String> {
-    let url = Url::parse(&request.login_url).map_err(|error| error.to_string())?;
-    if !url_allowed(&url, &request.hosts) {
+    let login = Url::parse(&request.login_url).map_err(|error| error.to_string())?;
+    if !url_allowed(&login, &request.hosts) {
         return Err("That sign-in page is not one of this source's own pages.".to_owned());
     }
     if let Some(window) = app.get_webview_window(WINDOW_LABEL) {
         window.set_focus().map_err(|error| error.to_string())?;
         return Ok(());
     }
+
+    // One notification per window, from whichever of the two things happens
+    // first. An `AtomicBool` rather than a lock: both callbacks run on the main
+    // thread, but they are separate closures and the flag is all they share.
+    let finished = Arc::new(AtomicBool::new(false));
+    let announce = {
+        let app = app.clone();
+        let source_key = request.source_key.clone();
+        let finished = Arc::clone(&finished);
+        move || {
+            if !finished.swap(true, Ordering::SeqCst) {
+                let _ = app.emit(
+                    FINISHED_EVENT,
+                    SignInFinished {
+                        source_key: source_key.clone(),
+                    },
+                );
+            }
+        }
+    };
+
     let hosts = request.hosts.clone();
-    WebviewWindowBuilder::new(app, WINDOW_LABEL, WebviewUrl::External(url))
+    let on_landing = announce.clone();
+    let window = WebviewWindowBuilder::new(app, WINDOW_LABEL, WebviewUrl::External(login.clone()))
         .title(format!("Sign in to {}", request.source_key))
         .inner_size(1000.0, 800.0)
         // Rule 1: its own profile, never the application WebView's.
         .data_directory(profile_dir(data_dir))
-        // Rule 2: the source's hosts and nothing else.
-        .on_navigation(move |url| url_allowed(url, &hosts))
+        // Rule 2: the source's hosts and nothing else - and, on the way past the
+        // login form, the one event the card is waiting for.
+        .on_navigation(move |url| {
+            if !url_allowed(url, &hosts) {
+                return false;
+            }
+            if is_landing(url, &login, &hosts) {
+                on_landing();
+            }
+            true
+        })
         .build()
-        .map(|_| ())
-        .map_err(|error| error.to_string())
+        .map_err(|error| error.to_string())?;
+
+    // ...and if they close it instead, that is an answer too. The UI asks for
+    // the cookies either way; an empty capture is how "not signed in" is said.
+    window.on_window_event(move |event| {
+        if matches!(event, WindowEvent::Destroyed) {
+            announce();
+        }
+    });
+    Ok(())
 }
 
 /// Reads the source's cookies out of the sign-in window and closes it.
@@ -233,6 +306,38 @@ mod tests {
     #[test]
     fn an_empty_capture_is_an_empty_header_rather_than_a_lie() {
         assert_eq!(cookie_header(&[], &hosts()), "");
+    }
+
+    #[test]
+    fn getting_past_the_login_form_is_what_counts_as_finished() {
+        let login = Url::parse("https://devfolio.co/login").unwrap();
+        for landed in [
+            "https://devfolio.co/dashboard",
+            "https://devfolio.co/",
+            "https://codestorm.devfolio.co/overview",
+        ] {
+            let url = Url::parse(landed).unwrap();
+            assert!(
+                is_landing(&url, &login, &hosts()),
+                "{landed} is past the form"
+            );
+        }
+        // The form posting to itself, a round trip and a trailing slash are not.
+        for still_signing_in in [
+            "https://devfolio.co/login",
+            "https://devfolio.co/login?next=%2Fdashboard",
+            "https://devfolio.co/login/",
+            "https://devfolio.co/login#error",
+        ] {
+            let url = Url::parse(still_signing_in).unwrap();
+            assert!(
+                !is_landing(&url, &login, &hosts()),
+                "{still_signing_in} is still the form"
+            );
+        }
+        // Somewhere else entirely is refused by rule 2 before this is asked.
+        let elsewhere = Url::parse("https://accounts.google.com/x").unwrap();
+        assert!(!is_landing(&elsewhere, &login, &hosts()));
     }
 
     #[test]

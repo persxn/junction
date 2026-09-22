@@ -17,7 +17,20 @@ import { SourcesPage } from './SourcesPage.js';
 
 const invoke = vi.hoisted(() => vi.fn());
 vi.mock('@tauri-apps/api/core', () => ({ invoke }));
-vi.mock('@tauri-apps/api/event', () => ({ listen: vi.fn() }));
+const listen = vi.hoisted(() => vi.fn());
+vi.mock('@tauri-apps/api/event', () => ({ listen }));
+
+/** Delivers the shell's `signin://finished` the way the real window would. */
+function finishSignIn(sourceKey: string): void {
+  for (const [name, handler] of listen.mock.calls as [
+    string,
+    (event: { payload: unknown }) => void,
+  ][]) {
+    if (name === 'signin://finished') {
+      handler({ payload: { sourceKey } });
+    }
+  }
+}
 
 interface Recorded {
   readonly method: string;
@@ -119,6 +132,8 @@ beforeEach(() => {
   resetApiTransport();
   invoke.mockReset();
   invoke.mockResolvedValue(undefined);
+  listen.mockReset();
+  listen.mockResolvedValue(() => undefined);
 });
 
 afterEach(() => {
@@ -143,11 +158,11 @@ describe('Admin → Sources', () => {
     expect(within(ctftime!).queryByRole('button')).not.toBeInTheDocument();
   });
 
-  it('opens the packaged sign-in window on the source’s own login page', async () => {
+  it('opens the packaged sign-in window from one button (pre-M2a)', async () => {
     backend();
     const user = userEvent.setup();
     renderWithProviders(<SourcesPage />);
-    await user.click(await screen.findByRole('button', { name: 'Open sign-in window' }));
+    await user.click(await screen.findByRole('button', { name: 'Sign in to Devfolio' }));
     expect(invoke).toHaveBeenCalledWith('open_source_signin', {
       request: {
         sourceKey: 'devfolio',
@@ -155,14 +170,17 @@ describe('Admin → Sources', () => {
         hosts: ['devfolio.co', '*.devfolio.co'],
       },
     });
+    // The second button WP-14 needed is gone; the window reports back instead.
+    expect(screen.queryByRole('button', { name: 'Use this session' })).not.toBeInTheDocument();
   });
 
-  it('sends a captured session straight to the backend and keeps no copy', async () => {
+  it('stores the session when the window says it is finished, and keeps no copy', async () => {
     const calls = backend();
     invoke.mockResolvedValue({ sourceKey: 'devfolio', cookie: 'df=abc', count: 1 });
-    const user = userEvent.setup();
     const { container } = renderWithProviders(<SourcesPage />);
-    await user.click(await screen.findByRole('button', { name: 'Use this session' }));
+    await screen.findByRole('button', { name: 'Sign in to Devfolio' });
+
+    finishSignIn('devfolio');
 
     const put = await vi.waitFor(() => {
       const found = calls.find((call) => call.method === 'PUT');
@@ -172,6 +190,31 @@ describe('Admin → Sources', () => {
     expect(put?.body).toEqual({ cookie: 'df=abc', capturedVia: 'LOGIN_WINDOW' });
     // The cookie is nowhere on the screen, before or after.
     expect(container.textContent).not.toContain('df=abc');
+  });
+
+  it('says nothing was stored when the window is closed before signing in', async () => {
+    const calls = backend();
+    invoke.mockResolvedValue({ sourceKey: 'devfolio', cookie: '', count: 0 });
+    renderWithProviders(<SourcesPage />);
+    await screen.findByRole('button', { name: 'Sign in to Devfolio' });
+
+    finishSignIn('devfolio');
+
+    expect(await screen.findByText(/The window closed before you were signed in/)).toBeVisible();
+    expect(calls.find((call) => call.method === 'PUT')).toBeUndefined();
+  });
+
+  it('ignores a finished event for a different source', async () => {
+    const calls = backend();
+    invoke.mockResolvedValue({ sourceKey: 'unstop', cookie: 'un=abc', count: 1 });
+    renderWithProviders(<SourcesPage />);
+    await screen.findByRole('button', { name: 'Sign in to Devfolio' });
+
+    finishSignIn('unstop');
+
+    await vi.waitFor(() => {
+      expect(calls.find((call) => call.method === 'PUT')).toBeUndefined();
+    });
   });
 
   it('takes a pasted cookie and never shows it back', async () => {
