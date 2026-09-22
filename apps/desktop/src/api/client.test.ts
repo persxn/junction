@@ -44,6 +44,9 @@ const HEALTH = {
   database: { ok: true, migrationsApplied: 2 },
 };
 
+/** What the backend's own routes answer with; the shell returns it verbatim. */
+const JSON_HEADERS: [string, string][] = [['Content-Type', 'application/problem+json']];
+
 const NOT_FOUND = {
   type: problemType('NOT_FOUND'),
   title: 'That event does not exist',
@@ -63,7 +66,7 @@ function shell(answers: { connection?: unknown; proxy?: unknown }): void {
         ? Promise.reject(new Error('backend is not ready'))
         : Promise.resolve(answers.connection);
     }
-    if (command === 'backend_get') {
+    if (command === 'backend_request') {
       return answers.proxy === undefined
         ? Promise.reject(new Error('no proxy answer configured'))
         : Promise.resolve(answers.proxy);
@@ -202,25 +205,39 @@ describe('the API transport (finding F9, ruling R27)', () => {
   it('falls back to the shell when the WebView cannot reach loopback at all', async () => {
     // What Local Network Access, a CORS refusal and a dead socket all look like.
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
-    shell({ connection: CONNECTION, proxy: { status: 200, body: JSON.stringify(HEALTH) } });
+    shell({
+      connection: CONNECTION,
+      proxy: { status: 200, headers: JSON_HEADERS, body: JSON.stringify(HEALTH) },
+    });
 
     await expect(fetchHealth(CONNECTION)).resolves.toStrictEqual(HEALTH);
-    expect(invoke).toHaveBeenCalledWith('backend_get', {
-      path: '/api/v1/health',
-      authorization: null,
+    expect(invoke).toHaveBeenCalledWith('backend_request', {
+      request: {
+        method: 'GET',
+        path: '/api/v1/health',
+        headers: { Accept: 'application/json' },
+        body: null,
+      },
     });
     expect(apiTransport()).toBe('SHELL');
   });
 
   it('forwards the session token over the fallback too (ruling R27)', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
-    shell({ connection: CONNECTION, proxy: { status: 200, body: JSON.stringify(HEALTH) } });
+    shell({
+      connection: CONNECTION,
+      proxy: { status: 200, headers: JSON_HEADERS, body: JSON.stringify(HEALTH) },
+    });
     setAuthToken('session-token');
 
     await expect(apiGet(CONNECTION, '/api/v1/me')).resolves.toStrictEqual(HEALTH);
-    expect(invoke).toHaveBeenCalledWith('backend_get', {
-      path: '/api/v1/me',
-      authorization: 'Bearer session-token',
+    expect(invoke).toHaveBeenCalledWith('backend_request', {
+      request: {
+        method: 'GET',
+        path: '/api/v1/me',
+        headers: { Accept: 'application/json', Authorization: 'Bearer session-token' },
+        body: null,
+      },
     });
   });
 
@@ -239,7 +256,10 @@ describe('the API transport (finding F9, ruling R27)', () => {
         });
       }),
     );
-    shell({ connection: CONNECTION, proxy: { status: 200, body: JSON.stringify(HEALTH) } });
+    shell({
+      connection: CONNECTION,
+      proxy: { status: 200, headers: JSON_HEADERS, body: JSON.stringify(HEALTH) },
+    });
 
     await expect(fetchHealth(CONNECTION, { timeoutMs: 30 })).resolves.toStrictEqual(HEALTH);
     expect(apiTransport()).toBe('SHELL');
@@ -248,13 +268,16 @@ describe('the API transport (finding F9, ruling R27)', () => {
   it('stays on the fallback once it has switched, without trying fetch again', async () => {
     const fetchMock = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
     vi.stubGlobal('fetch', fetchMock);
-    shell({ connection: CONNECTION, proxy: { status: 200, body: JSON.stringify(HEALTH) } });
+    shell({
+      connection: CONNECTION,
+      proxy: { status: 200, headers: JSON_HEADERS, body: JSON.stringify(HEALTH) },
+    });
 
     await fetchHealth(CONNECTION);
     await fetchHealth(CONNECTION);
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(invoke.mock.calls.filter((call) => call[0] === 'backend_get')).toHaveLength(2);
+    expect(invoke.mock.calls.filter((call) => call[0] === 'backend_request')).toHaveLength(2);
   });
 
   it('treats an HTTP status as an answer, not as a broken transport', async () => {
@@ -268,7 +291,7 @@ describe('the API transport (finding F9, ruling R27)', () => {
 
   it('surfaces a non-2xx answer from the fallback too', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
-    shell({ connection: CONNECTION, proxy: { status: 503, body: '{}' } });
+    shell({ connection: CONNECTION, proxy: { status: 503, headers: JSON_HEADERS, body: '{}' } });
 
     const problem = await failure(apiGet(CONNECTION, '/api/v1/health'));
     expect(problem.status).toBe(503);
@@ -276,24 +299,22 @@ describe('the API transport (finding F9, ruling R27)', () => {
 
   it('refuses a proxy answer that is not the contract', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
-    shell({ connection: CONNECTION, proxy: { status: 'ok', body: '{}' } });
+    shell({ connection: CONNECTION, proxy: { status: 'ok', headers: JSON_HEADERS, body: '{}' } });
 
     await expect(apiGet(CONNECTION, '/api/v1/health')).rejects.toThrow(ApiProblem);
   });
 
-  it('says plainly that a write cannot go through the read-only proxy', async () => {
+  it('carries a write once it has switched, rather than refusing it (R78)', async () => {
+    // The M1 fault this replaces: the proxy was read-only, so the first Save on
+    // a machine with Local Network Access enforced failed with a message about
+    // the machine rather than saving anything.
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
-    shell({ connection: CONNECTION, proxy: { status: 200, body: '{}' } });
+    shell({ connection: CONNECTION, proxy: { status: 200, headers: JSON_HEADERS, body: '{}' } });
 
-    // The first call switches the transport…
     await apiGet(CONNECTION, '/api/v1/health');
-    // …and a write afterwards is refused rather than silently dropped.
-    const problem = await failure(
-      apiRequest(CONNECTION, '/api/v1/teams', { method: 'POST', body: {} }),
-    );
-    expect(problem.title).toBe('This action is not available on this machine');
-    expect(problem.detail).toMatch(/only forwards reads/);
-    expect(problem.retryable).toBe(false);
+    await expect(
+      apiRequest(CONNECTION, '/api/v1/teams', { method: 'POST', body: { name: 'Falcons' } }),
+    ).resolves.toStrictEqual({});
   });
 });
 
@@ -319,17 +340,53 @@ describe('a backend that restarted mid-request (§3.2, ruling A2)', () => {
   it('retries exactly once, then falls back rather than looping', async () => {
     const fetchMock = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
     vi.stubGlobal('fetch', fetchMock);
-    shell({ connection: RESTARTED, proxy: { status: 200, body: JSON.stringify(HEALTH) } });
+    shell({
+      connection: RESTARTED,
+      proxy: { status: 200, headers: JSON_HEADERS, body: JSON.stringify(HEALTH) },
+    });
 
     await expect(fetchHealth(CONNECTION)).resolves.toStrictEqual(HEALTH);
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(apiTransport()).toBe('SHELL');
   });
 
+  it('carries every method the screens use, with its body (ruling R78)', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+    shell({
+      connection: CONNECTION,
+      proxy: { status: 200, headers: JSON_HEADERS, body: '{"ok":true}' },
+    });
+    setAuthToken('session-token');
+
+    for (const method of ['POST', 'PUT', 'PATCH', 'DELETE'] as const) {
+      await expect(
+        apiRequest(CONNECTION, '/api/v1/events/e1/state', { method, body: { hidden: true } }),
+      ).resolves.toStrictEqual({ ok: true });
+    }
+
+    const sent = invoke.mock.calls
+      .filter((call) => call[0] === 'backend_request')
+      .map((call) => (call[1] as { request: Record<string, unknown> }).request);
+    expect(sent.map((request) => request.method)).toStrictEqual(['POST', 'PUT', 'PATCH', 'DELETE']);
+    expect(sent[0]).toStrictEqual({
+      method: 'POST',
+      path: '/api/v1/events/e1/state',
+      headers: {
+        Accept: 'application/json',
+        Authorization: 'Bearer session-token',
+        'Content-Type': 'application/json',
+      },
+      body: '{"hidden":true}',
+    });
+  });
+
   it('does not retry when the generation is unchanged', async () => {
     const fetchMock = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
     vi.stubGlobal('fetch', fetchMock);
-    shell({ connection: CONNECTION, proxy: { status: 200, body: JSON.stringify(HEALTH) } });
+    shell({
+      connection: CONNECTION,
+      proxy: { status: 200, headers: JSON_HEADERS, body: JSON.stringify(HEALTH) },
+    });
 
     await fetchHealth(CONNECTION);
     expect(fetchMock).toHaveBeenCalledTimes(1);

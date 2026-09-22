@@ -7,6 +7,7 @@
 pub mod actions;
 pub mod backoff;
 pub mod commands;
+pub mod external;
 pub mod files;
 pub mod job;
 pub mod loopback;
@@ -76,7 +77,8 @@ pub fn run() {
             commands::set_close_to_tray,
             commands::set_autostart,
             commands::hide_to_tray,
-            commands::backend_get,
+            commands::backend_request,
+            commands::open_external,
             commands::pick_folder,
             commands::save_text_file,
             commands::open_source_signin,

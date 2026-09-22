@@ -31,8 +31,13 @@ windows = { version = "0.62", features = [
   "Win32_Foundation",
   # CreateJobObjectW takes SECURITY_ATTRIBUTES, which lives behind this feature.
   "Win32_Security",
+  # DPAPI: the session data key is sealed to this Windows account (ruling R76).
+  "Win32_Security_Cryptography",
   "Win32_System_JobObjects",
   "Win32_System_Threading",
+  # ShellExecuteW opens a link in the default browser (§13, ruling R78).
+  "Win32_UI_Shell",
+  "Win32_UI_WindowsAndMessaging",
 ] }
 
 [profile.dev]

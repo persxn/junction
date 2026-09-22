@@ -82,9 +82,35 @@ export const API_TRANSPORTS = ['FETCH', 'SHELL'] as const;
 export const ApiTransport = z.enum(API_TRANSPORTS);
 export type ApiTransport = z.infer<typeof ApiTransport>;
 
-/** What the shell's proxy command returns. */
+/**
+ * What the shell may be asked to send over the fallback transport (ruling R78).
+ *
+ * The shell decides what it will actually forward — `loopback::authorise` is
+ * the authority — but the shape is a contract between the two processes like
+ * every other one here, so a mismatch fails at the boundary.
+ */
+export const LoopbackRequest = z.object({
+  method: z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE']),
+  /** Under `/api/v1/`, and not a system route or the stream; the shell checks. */
+  path: z.string().min(1),
+  /** `Authorization`, `Content-Type` and `Accept` only; anything else is refused. */
+  headers: z.record(z.string(), z.string()),
+  /** A serialized JSON document, or absent for a request without a body. */
+  body: z.string().optional(),
+});
+export type LoopbackRequest = z.infer<typeof LoopbackRequest>;
+
+/**
+ * What the shell's proxy command returns: the backend's own answer, verbatim.
+ *
+ * The headers are `[name, value]` pairs rather than a map because a header may
+ * legitimately appear twice, and because the API client reads `Content-Type` off
+ * them to tell a problem document from a plain body — the same thing it reads
+ * off a `Response` on the direct path.
+ */
 export const LoopbackResponse = z.object({
   status: z.int().min(100).max(599),
+  headers: z.array(z.tuple([z.string(), z.string()])),
   body: z.string(),
 });
 export type LoopbackResponse = z.infer<typeof LoopbackResponse>;

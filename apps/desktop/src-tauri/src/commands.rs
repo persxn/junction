@@ -11,8 +11,9 @@ use tauri::{AppHandle, Manager, State};
 use tauri_plugin_dialog::DialogExt;
 
 use crate::actions;
+use crate::external;
 use crate::files::{self, WriteRefusal};
-use crate::loopback::{self, LoopbackResponse};
+use crate::loopback::{self, LoopbackResponse, OutgoingRequest, ProxyRequest};
 use crate::settings::{SettingsStore, ShellSettings};
 use crate::signin::{self, SignInRequest, SignInResult};
 use crate::supervisor::{BackendConnection, BackendStatus, Supervisor};
@@ -103,24 +104,26 @@ pub fn hide_to_tray(app: AppHandle) {
     actions::hide_window(&app);
 }
 
-/// The finding-F9 fallback: a read-only window onto the API for the case where
-/// WebView2 will not let the page reach `127.0.0.1` itself. Only GETs under
-/// `/api/v1/` are allowed through - the WebView is the least trusted part of the
-/// app, and this must not become a general-purpose local HTTP client.
+/// The finding-F9 fallback (rulings R27 and R78): the shell makes the request
+/// on the page's behalf when WebView2 will not let it reach `127.0.0.1` itself.
 ///
-/// Ruling R27 adds `authorization`: the session bearer token the page already
-/// holds, forwarded so that authenticated reads work over the fallback too. It
-/// widens nothing else - the method and the path prefix are locked exactly as
-/// they were, and the shell never stores the token.
+/// R78 widened this from GET to the five methods the app's own screens use,
+/// because a read-only fallback meant Save, Hide, a category override, POST
+/// search and every M2 form failed on a machine with Local Network Access
+/// enforced — invisibly here, totally there.
+///
+/// It is still not a general-purpose local HTTP client. `loopback::authorise`
+/// holds every rule: the method, the `/api/v1/` prefix minus the system routes
+/// and the stream, JSON bodies only, the backend's own 1 MB limit, and the three
+/// headers the page may ask to have forwarded. The client secret is added here,
+/// from the shell's own state, and never taken from the page.
 #[tauri::command]
-pub fn backend_get(
+pub fn backend_request(
     state: State<'_, ShellState>,
-    path: String,
-    authorization: Option<String>,
+    request: ProxyRequest,
 ) -> Result<LoopbackResponse, String> {
-    if !loopback::is_proxyable("GET", &path) {
-        return Err(format!("{path} is not a proxyable API path"));
-    }
+    let (method, authorization) =
+        loopback::authorise(&request).map_err(|refusal| refusal.message())?;
     let connection = state.supervisor.connection()?;
     let port = connection
         .base_url
@@ -129,13 +132,25 @@ pub fn backend_get(
         .and_then(|port| port.parse::<u16>().ok())
         .ok_or_else(|| format!("cannot read a port out of {}", connection.base_url))?;
     loopback::request(
-        "GET",
-        &path,
-        port,
-        &connection.client_secret,
-        authorization.as_deref(),
+        &OutgoingRequest {
+            method: &method,
+            path: &request.path,
+            port,
+            secret: &connection.client_secret,
+            authorization,
+            body: request.body.as_deref(),
+        },
         PROXY_TIMEOUT,
     )
+}
+
+/// §13's "URLs open in the default browser" (ruling R78).
+///
+/// http, https and mailto only; `external::authorise` is where that is decided
+/// and where a refusal gets the sentence the page shows beside the URL to copy.
+#[tauri::command]
+pub fn open_external(url: String) -> Result<(), String> {
+    external::open(&url)
 }
 
 /// Opens the native folder picker and remembers what came back (ruling R43).

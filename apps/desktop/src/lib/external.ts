@@ -1,32 +1,45 @@
+import { openExternalUrl } from '../shell/backend.js';
+
 /**
- * Opening a link that is not ours (§13 "Opening safely").
+ * Opening a link that is not ours (§13 "Opening safely", ruling R78).
  *
- * Two rules, both of them the spec's. **http/https only** — §13 fixes the URL
- * kinds, and anything else (a `file:`, a `javascript:`, a custom scheme) is a
- * stored string being allowed to do something, which §13 exists to prevent.
- * And **never in the WebView**: the app must not navigate away from itself, so
- * the link is handed to a new context and the caller is told whether that
- * worked.
+ * M1 handed the URL to `window.open`. Inside the packaged WebView that call is
+ * refused, so "Open registration" was a button that did nothing on the only
+ * machine that matters — the built app. R78 moves the hand-off to the shell,
+ * which is what §3.2 rule 2 allows IPC for, and the shell refuses anything that
+ * is not http, https or mailto.
+ *
+ * The refusal rules live in Rust, not here: every URL is scraped or typed input,
+ * and the check that matters is the one on the side that can start a program.
+ * This function keeps a cheap local check so an obviously unopenable link never
+ * costs an IPC round trip, and reports `false` either way so the caller can show
+ * the URL to copy instead of leaving a dead button.
  */
+
+/** The three schemes §13 allows, matching `external.rs`. */
+const OPENABLE = new Set(['http:', 'https:', 'mailto:']);
 
 export function isExternalUrl(url: string): boolean {
   try {
-    const parsed = new URL(url);
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    return OPENABLE.has(new URL(url.trim()).protocol);
   } catch {
     return false;
   }
 }
 
 /**
- * Hands an http/https URL to the browser. `false` means it was refused (not a
- * web URL) or the environment blocked the hand-off, and the caller says so
- * rather than leaving a button that appears to do nothing.
+ * Hands a link to the default browser. `false` means it was refused — not an
+ * openable URL, or the shell would not open it — and the caller says so rather
+ * than leaving a button that appears to do nothing.
  */
-export function openExternal(url: string): boolean {
+export async function openExternal(url: string): Promise<boolean> {
   if (!isExternalUrl(url)) {
     return false;
   }
-  const opened = window.open(url, '_blank', 'noopener,noreferrer');
-  return opened !== null;
+  try {
+    await openExternalUrl(url);
+    return true;
+  } catch {
+    return false;
+  }
 }

@@ -5,6 +5,7 @@ import {
   ShellSettings,
   type BackendConnection as Connection,
   type BackendStatus as Status,
+  type LoopbackRequest as ProxyRequest,
   type LoopbackResponse as ProxyResponse,
   type ShellSettings as Settings,
 } from '@compintel/contracts';
@@ -69,20 +70,41 @@ export async function setAutostart(enabled: boolean): Promise<Settings> {
 }
 
 /**
- * The finding-F9 fallback transport (ruling R27): the shell makes the GET on the
- * page's behalf when WebView2 will not let it reach `127.0.0.1` itself. Read-only
- * and prefix-locked on the Rust side; widening it needs a ruling. It forwards
- * the session bearer token, and nothing else.
+ * The finding-F9 fallback transport (rulings R27 and R78): the shell makes the
+ * request on the page's behalf when WebView2 will not let it reach `127.0.0.1`
+ * itself.
+ *
+ * R78 widened it from GET to the five methods the app uses, so Save, Hide, a
+ * category override, POST search and every M2 form work on a machine with Local
+ * Network Access enforced. The Rust side holds every rule — the path prefix, the
+ * system routes and the stream being out, JSON bodies only, the 1 MB limit, and
+ * the three headers it will forward — so a refusal here is a message, not a
+ * silent no-op.
  */
-export async function backendGet(path: string, authorization?: string): Promise<ProxyResponse> {
+export async function backendRequest(request: ProxyRequest): Promise<ProxyResponse> {
   return LoopbackResponse.parse(
-    await invoke<unknown>('backend_get', {
-      path,
-      // Ruling R27: the session token is forwarded so authenticated reads work
-      // over the fallback too. The shell never keeps it.
-      authorization: authorization ?? null,
+    await invoke<unknown>('backend_request', {
+      request: {
+        method: request.method,
+        path: request.path,
+        headers: { ...request.headers },
+        // Rust reads `Option<String>`, which is `null` on this side.
+        body: request.body ?? null,
+      },
     }),
   );
+}
+
+/**
+ * §13's "URLs open in the default browser" (ruling R78).
+ *
+ * `window.open` is refused inside the packaged WebView, which is why "Open
+ * registration" did nothing in M1. The shell opens the link instead and refuses
+ * anything that is not http, https or mailto; `false` means it was refused, and
+ * the caller shows the URL to copy rather than leaving a dead button.
+ */
+export async function openExternalUrl(url: string): Promise<void> {
+  await invoke('open_external', { url });
 }
 
 /**

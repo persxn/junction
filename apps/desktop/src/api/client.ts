@@ -6,7 +6,7 @@ import {
   type HealthResponse as Health,
 } from '@compintel/contracts';
 
-import { backendConnection, backendGet } from '../shell/backend.js';
+import { backendConnection, backendRequest } from '../shell/backend.js';
 import { authToken } from './auth-token.js';
 import { ApiProblem, problemFromBody, unreachableProblem } from './problem.js';
 
@@ -18,7 +18,9 @@ import { ApiProblem, problemFromBody, unreachableProblem } from './problem.js';
  *     session bearer token once WP-07a has one;
  *   - turning an answer into data or into one `ApiProblem`;
  *   - which transport carries the request — direct `fetch`, or the shell's
- *     read-only proxy when WebView2 refuses to reach loopback (finding F9).
+ *     proxy when WebView2 refuses to reach loopback (finding F9). Ruling R78
+ *     makes that proxy carry every method, so a write is not something the app
+ *     can only do on some machines.
  *
  * There is no SSE client here; that is WP-07a (and ruling R30: SSE has no proxy,
  * so it degrades to polling rather than failing).
@@ -118,22 +120,24 @@ async function viaFetch(
 
 async function viaShell(path: string, options: ApiRequestOptions): Promise<unknown> {
   const method = options.method ?? 'GET';
-  if (method !== 'GET') {
-    // Ruling R27: the proxy is read-only and prefix-locked, and widening it is a
-    // ruling, not a patch. Saying so plainly beats a silent 405 from the shell.
-    throw new ApiProblem({
-      status: 0,
-      code: 'INTERNAL',
-      title: 'This action is not available on this machine',
-      detail: `${method} ${path} cannot be sent: the WebView cannot reach the local service directly and the shell fallback only forwards reads.`,
-      retryable: false,
-      path,
-    });
-  }
-  // Ruling R27: the fallback forwards the session token, so an authenticated
-  // read works on a machine where the WebView cannot reach loopback itself.
+  const hasBody = options.body !== undefined;
+  // Ruling R78: the fallback carries the app's own writes, with exactly the
+  // headers the direct path sends minus the client secret, which the shell adds
+  // from its own state rather than taking from the page.
+  const headers: Record<string, string> = { Accept: 'application/json' };
   const token = authToken();
-  const answer = await backendGet(path, token === undefined ? undefined : `Bearer ${token}`);
+  if (token !== undefined) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  if (hasBody) {
+    headers['Content-Type'] = 'application/json';
+  }
+  const answer = await backendRequest({
+    method,
+    path,
+    headers,
+    ...(hasBody ? { body: JSON.stringify(options.body) } : {}),
+  });
   let body: unknown;
   try {
     body = answer.body === '' ? undefined : JSON.parse(answer.body);

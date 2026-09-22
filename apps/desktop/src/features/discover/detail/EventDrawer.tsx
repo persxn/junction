@@ -177,13 +177,15 @@ export function EventDrawer(): React.JSX.Element {
           <button
             type="button"
             onClick={() => {
-              if (!openExternal(registration)) {
-                toast.show({
-                  tone: 'warning',
-                  title: 'Could not open the link here',
-                  description: `Copy it instead: ${registration}`,
-                });
-              }
+              void openExternal(registration).then((opened) => {
+                if (!opened) {
+                  toast.show({
+                    tone: 'warning',
+                    title: 'Could not open the link here',
+                    description: `Copy it instead: ${registration}`,
+                  });
+                }
+              });
             }}
             className="flex items-center gap-1 rounded-md border border-line px-2 py-1 text-sm hover:bg-surface-hover"
           >

@@ -3,11 +3,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   BACKEND_STATUS_EVENT,
   backendConnection,
-  backendGet,
+  backendRequest,
   backendStatus,
   exitCompletely,
   hideToTray,
   onBackendStatus,
+  openExternalUrl,
   openLogsFolder,
   retryBackend,
   setAutostart,
@@ -88,22 +89,53 @@ describe('the IPC wrappers', () => {
     ]);
   });
 
-  it('parses the proxy answer (the finding-F9 fallback, ruling R27)', async () => {
-    invoke.mockResolvedValue({ status: 200, body: '{}' });
-    await expect(backendGet('/api/v1/health')).resolves.toStrictEqual({
-      status: 200,
-      body: '{}',
+  it('parses the proxy answer (the finding-F9 fallback, rulings R27/R78)', async () => {
+    const headers: [string, string][] = [['Content-Type', 'application/json']];
+    invoke.mockResolvedValue({ status: 200, headers, body: '{}' });
+    await expect(
+      backendRequest({ method: 'GET', path: '/api/v1/health', headers: {} }),
+    ).resolves.toStrictEqual({ status: 200, headers, body: '{}' });
+    // Rust reads `Option<String>`; an absent body is null, not a missing key.
+    expect(invoke).toHaveBeenCalledWith('backend_request', {
+      request: { method: 'GET', path: '/api/v1/health', headers: {}, body: null },
     });
-    // Ruling R27: the token slot is always sent, null when there is no session.
-    expect(invoke).toHaveBeenCalledWith('backend_get', {
-      path: '/api/v1/health',
-      authorization: null,
+  });
+
+  it('sends a write with its headers and its body (ruling R78)', async () => {
+    invoke.mockResolvedValue({ status: 200, headers: [], body: '' });
+    await backendRequest({
+      method: 'PUT',
+      path: '/api/v1/events/e1/category',
+      headers: { Authorization: 'Bearer t', 'Content-Type': 'application/json' },
+      body: '{"categoryId":"c1"}',
+    });
+    expect(invoke).toHaveBeenCalledWith('backend_request', {
+      request: {
+        method: 'PUT',
+        path: '/api/v1/events/e1/category',
+        headers: { Authorization: 'Bearer t', 'Content-Type': 'application/json' },
+        body: '{"categoryId":"c1"}',
+      },
     });
   });
 
   it('refuses a proxy answer that is not the contract', async () => {
-    invoke.mockResolvedValue({ status: 'ok', body: '{}' });
-    await expect(backendGet('/api/v1/health')).rejects.toThrow();
+    invoke.mockResolvedValue({ status: 'ok', headers: [], body: '{}' });
+    await expect(
+      backendRequest({ method: 'GET', path: '/api/v1/health', headers: {} }),
+    ).rejects.toThrow();
+    invoke.mockResolvedValue({ status: 200, body: '{}' });
+    await expect(
+      backendRequest({ method: 'GET', path: '/api/v1/health', headers: {} }),
+    ).rejects.toThrow();
+  });
+
+  it('asks the shell to open an external link (§13, ruling R78)', async () => {
+    invoke.mockResolvedValue(undefined);
+    await openExternalUrl('https://devfolio.co/hackathon/x');
+    expect(invoke).toHaveBeenCalledWith('open_external', {
+      url: 'https://devfolio.co/hackathon/x',
+    });
   });
 
   it('subscribes to the status event and validates every payload', async () => {
