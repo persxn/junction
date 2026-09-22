@@ -1,6 +1,6 @@
 # Decisions register
 
-Copied from `ARCHITECTURE.md` §1 (resolved) and §2 (open). **Updated to spec v1.1.6, 20 Sep 2026** (architect review of WP-00…WP-02b, then of M0 — see `docs/handoff/M0-review.md`; rulings index in ARCHITECTURE.md §21: R1–R47 and R67–R69, with R48–R66 reserved for the M1 prompts).
+Copied from `ARCHITECTURE.md` §1 (resolved) and §2 (open). **Updated to spec v1.1.6, 20 Sep 2026** (architect review of WP-00…WP-02b, then of M0 — see `docs/handoff/M0-review.md`; rulings index in ARCHITECTURE.md §21 (through R90 after the M1 review, R91–R113 reserved): R1–R47 and R67–R69, with R48–R66 reserved for the M1 prompts).
 When the architect resolves an open question, update its row (status → RESOLVED + answer + date) and record the decision in an ADR where it affects architecture.
 **Keep this file in sync with ARCHITECTURE.md §2/§2.1 when either changes** — U1/U2 and Q3 were found out of sync during the M0 review (both said OPEN here after WP-03a/WP-07b had already closed them there); this file is the one that had drifted.
 
@@ -50,11 +50,11 @@ When the architect resolves an open question, update its row (status → RESOLVE
 | Q1 | RESOLVED (20 Sep 2026, owner) | Pilot host: one shared PC or individual professor machines? Is off-campus access required? **Answer:** standalone — one professor, one machine, his own students; no off-campus access; client mode not scheduled. | — | Host mode, single machine. |
 | Q2 | PARTLY ANSWERED (build machine known; pilot host unknown — check SAC + disk encryption) | Pilot facts: date, number of professors, host machine specs, who installs, IT restrictions (Smart App Control, WDAC/AppLocker, proxy), who maintains scrapers. | WP-26 model choice, WP-31 packaging | Taken from WP-00/WP-01 recon of the build machine until the pilot host is known. |
 | Q3 | CLOSED (WP-07b) | Campus name and coordinates. **Collected at runtime by the setup wizard** (`campuses.name/lat/lon`, R43). | — | — |
-| Q4 | OPEN | Notification recipients and thresholds. | WP-23 | Competition/stage/task deadlines → primary + co-mentors; watched-event changes → users who saved it; saved-search matches → owner; scraper/backup failures → admins. Thresholds 7 / 3 / 1 days + due day + overdue. |
+| Q4 | RESOLVED (22 Sep 2026, M1 review) | Notification recipients and thresholds. **Answer:** deadlines → primary + co-mentors; watched-event changes → users who saved it; saved-search matches → owner; source paused/blocked/credential expired and backup failures → admins; 7/3/1 days + due day + overdue, once each; per-user per-type preferences. | — | — |
 | Q5 | RESOLVED (v1.1.4 → R32) | Permission defaults in §10. **Answer:** the §10.2 matrix is the MVP matrix; `packages/contracts/src/permissions.ts` is its single source. | — | — |
-| Q6 | OPEN | Can teams include students from other colleges? (Other departments are already allowed.) | WP-17/18 | Supported in the data model (`is_external`); UI behind an admin setting, off by default. |
-| Q7 | OPEN | Outcome fields in MVP. | WP-21 | Team-level: result, rank, prize text, certificate reference, result URL, notes. |
-| Q8 | OPEN | Student personal fields & consent; does the university have a data-protection policy/officer? | WP-17 | Fields as in §6.2; phone off by default; record "privacy notice acknowledged" date. |
+| Q6 | RESOLVED (22 Sep 2026) | External students: in the model; creation UI behind `students.allowExternal`, off by default. | — | — |
+| Q7 | RESOLVED (22 Sep 2026) | Outcome fields: result, rank, prize text (+ optional amount/currency, never converted), certificate reference, result URL, notes, feedback. | — | — |
+| Q8 | RESOLVED for the build (22 Sep 2026) | Student fields: §6.2 minimal set, phone off by default, privacy-notice acknowledgement date. The owner checks the university's data-protection policy before real student data lands (D-33). | — | — |
 | Q9 | OPEN | Audit log retention and visibility. | WP-30 | Admins see all; professors see activity timelines of records they can view; retain 3 years (login events 1 year). |
 | Q10 | OPEN — higher priority (SAC was ON on the build machine) | Does university IT have a code-signing certificate or signing service? Will the project be open source? | WP-31 | Unsigned internal pilot if Smart App Control/WDAC allow (§18). |
 | Q11 | OPEN | University identity provider (Google Workspace / Microsoft 365). | Post-MVP SSO | — |

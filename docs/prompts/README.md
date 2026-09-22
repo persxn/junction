@@ -19,7 +19,7 @@ reported, and do not run two in one session.
 Earlier M0 prompts (WP-00…WP-05b) predate the `docs/prompts/` folder; their record is the handoff in
 `docs/handoff/`. Milestone account: `docs/handoff/M0.md`, architect's review: `docs/handoff/M0-review.md`.
 
-## M1 — Events · *real events, trustworthy and searchable* · **released as a batch**
+## M1 — Events · *real events, trustworthy and searchable* · **DONE**
 
 | Prompt | WP | Notes |
 |---|---|---|
@@ -41,16 +41,40 @@ Earlier M0 prompts (WP-00…WP-05b) predate the `docs/prompts/` folder; their re
 If a WP finds its reserved ruling numbers or spec version already taken, it uses the next free ones and
 says so in its report.
 
+## M2 — People & work · *assign an event to a team and track it* · **released**
+
+| Prompt | WP | Notes |
+|---|---|---|
+| `M2/pre-M2a.md` | UI & shell fault fixes | **Run first.** Writes through the F9 fallback, `open_external`, sealed sessions, verify < 2 min. Rust checks (R19). |
+| `M2/pre-M2b.md` | Ingestion & search corrections | R75, R77, R79–R82, R85, R87, R88; owed live runs |
+| `M2/WP-17.md` | Students, tags, mentorships, CSV/XLSX import | R91–R93, spec 1.1.15 · adds `papaparse` + `exceljs` |
+| `M2/WP-18.md` | Teams, members, mentors, skill coverage | R94–R95, 1.1.16 |
+| `M2/WP-19.md` | Competitions, status machine, roster, assign flow, pipeline board | R96–R98, 1.1.17 |
+| `M2/WP-20a.md` | Workflows, stages, tasks, progress & schedule health | R99–R101, 1.1.18 |
+| `M2/WP-20b.md` | Resources + shell-side open allowlist | R102–R103, 1.1.19 · Rust checks |
+| `M2/WP-21.md` | Outcomes, ownership transfer, student history | R104–R105, 1.1.20 · closes M2 |
+
+## M3 — Time · *nothing slips* · **released**
+
+| Prompt | WP | Notes |
+|---|---|---|
+| `M3/WP-22.md` | Deadline read model, Deadline Radar, Dashboard | R106–R107, 1.1.21 |
+| `M3/WP-23.md` | Notification engine, inbox, SSE, tray count + toasts | R108–R111, 1.1.22 · Rust checks |
+| `M3/WP-24.md` | Saved searches, new-match alerts, interests, Recommended | R112–R113, 1.1.23 · closes M3 |
+
+Every M2/M3 prompt ends with a **UI fault sweep** of the screens it touches and links to.
+
+## M4, M5
+
+M4 (WP-25a…27b) and M5 (WP-28…32) prompts are written after M3's `docs/` comes back. WP-33 (M4.5) is
+already released:
+
 ## M4.5 — Delight · *the app people want to open*
 
 | Prompt | WP | Notes |
 |---|---|---|
 | `M4/WP-33.md` | Appearance system (Catppuccin palettes, effect tiers, motion & glow) + Insights surface | Runs after WP-27b, **immediately before M5**. ADR-0019, rulings R67–R69. |
 
-## M2, M3, M4, M5
-
-Not yet written. The scope and acceptance criteria are in `ARCHITECTURE.md` §19; prompts are released a
-milestone at a time, after the previous milestone's docs come back for review.
 
 ## Writing a new prompt
 

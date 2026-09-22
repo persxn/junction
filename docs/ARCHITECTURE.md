@@ -1,6 +1,6 @@
 # Competition Intel — Architecture Specification
 
-**Version:** 1.1.13 · **Date:** 21 Sep 2026 · **Status:** ACCEPTED — implementation baseline (amended after WP-00…WP-02b)
+**Version:** 1.1.14 · **Date:** 22 Sep 2026 · **Status:** ACCEPTED — implementation baseline (amended after WP-00…WP-02b)
 **Author:** Architect (Claude, Cowork session) · **Implementer:** Claude Code (worker session)
 
 > **How to use this document.** This is the implementation source of truth. The worker must not
@@ -28,6 +28,7 @@
 | 1.1.10 | 20 Sep 2026 | Rulings R62–R63: pinned fixtures, second claims instead of conversions (see §21). |
 | 1.1.11 | 20 Sep 2026 | Rulings R64–R66: edition guard, dedup settings, reversible merges (see §21). |
 | 1.1.13 | 21 Sep 2026 | Unstop Terms read; rulings R70–R73 (see §21). Numbered 1.1.13 because the owner's R74 took 1.1.12. |
+| 1.1.14 | 22 Sep 2026 | **Architect review closing M1** (`docs/handoff/M1-review.md`): rulings R75–R90 — signed-in reads targeted not bulk, sessions sealed at rest, CLIST robots exemption, shell proxy carries writes + `open_external`, repeated blocks go to a person, credential failures are a source state, distance needs city precision, gazetteer filter, prize not material, machine changes not audited, offsets keep precision, scrape runs on the stream, event tags from source tags, denormalized trust + budgeted default feed, verify under 2 min, two tray badges. Q4/Q6/Q7/Q8 resolved for M2/M3. R91–R113 reserved for the M2/M3 prompts (spec 1.1.15–1.1.23). pre-M2 fix pass added; §19 gains a Prompt column. |
 | 1.1.12 | 21 Sep 2026 | Owner ruling R74: signed-in reading with the professor's own session for approved sources; §7.2 "Never" amended; built in WP-14 (see §21, D-34). R70–R73 stay reserved for WP-13, which lands as 1.1.13. |
 
 ---
@@ -94,11 +95,11 @@ Working name: **Competition Intel** (code/paths: `compintel`).
 | Q1 | ~~Pilot host: one shared PC or individual professor machines? Is off-campus access required?~~ **RESOLVED, 20 Sep 2026 (owner):** standalone deployment — one professor, one machine, his own students. No campus server, no LAN, no forwarded ports, no off-campus access. Host mode is therefore the *only* mode for the pilot; client mode is not scheduled. Accounts/RBAC/audit are unchanged (see M0-review.md §1) because the owner reviewed and kept the security posture as specified, and because a second account (a co-professor, a TA, or ADMINISTRATOR-vs-PROFESSOR separation on the one box) is a real, cheap-to-support case, not speculative scope. | — | Host mode, single machine, no off-campus access. |
 | Q2 | Pilot facts: date, number of professors, host machine specs, who installs, IT restrictions (Smart App Control, WDAC/AppLocker, proxy), who maintains scrapers. **Partly answered:** the build machine is Windows 11 Home, Ryzen 7 5700, 16 GB, RTX 4060 8 GB (GPU tier), SAC was ON, no BitLocker. The pilot host is still unknown — check it for Smart App Control and disk encryption. | WP-26 model choice, WP-31 packaging | Build-machine facts until the pilot host is known. |
 | Q3 | ~~Campus name and coordinates.~~ **CLOSED — collected at runtime by WP-07b's setup wizard** (`campuses.name/lat/lon`, R43). | — | — |
-| Q4 | Notification recipients and thresholds. | WP-23 | Competition/stage/task deadlines → primary + co-mentors; watched-event changes → users who saved it; saved-search matches → owner; scraper/backup failures → admins. Thresholds 7 / 3 / 1 days + due day + overdue. |
+| Q4 | ~~Notification recipients and thresholds.~~ **RESOLVED (22 Sep 2026, M1 review):** competition/stage/task deadlines → primary + co-mentors; watched-event changes (deadline moved, cancelled) → every user who saved it; saved-search new matches → its owner; source paused/blocked/credential expired (R79, R80) and backup failures → admins. Thresholds 7 / 3 / 1 days + due day + overdue, each firing once per `dedupe_key`; per-user, per-type on/off and threshold override in `notification_preferences`. In-app, tray count and CRITICAL toasts only (D-19, R90). | — | — |
 | Q5 | ~~Permission defaults in §10~~ **RESOLVED → R32 (v1.1.4):** the §10.2 matrix *is* the MVP matrix, and `packages/contracts/src/permissions.ts` is its single source. | — | — |
-| Q6 | Can teams include students from other colleges? (Other departments are already allowed.) | WP-17/18 | Supported in the data model (`is_external`); UI behind an admin setting, off by default. |
-| Q7 | Outcome fields in MVP. | WP-21 | Team-level: result, rank, prize text, certificate reference, result URL, notes. |
-| Q8 | Student personal fields & consent; does the university have a data-protection policy/officer? | WP-17 | Fields as in §6.2; phone off by default; record "privacy notice acknowledged" date. |
+| Q6 | ~~Can teams include students from other colleges?~~ **RESOLVED (22 Sep 2026):** yes in the model (`is_external`, `external_institution`); the UI to create them sits behind the admin setting `students.allowExternal`, off by default. | — | — |
+| Q7 | ~~Outcome fields in MVP.~~ **RESOLVED (22 Sep 2026):** team-level result, rank, prize text (+ optional minor units and currency, never converted — R63), certificate reference (a `resources` row, D-12), result URL, notes, feedback. | — | — |
+| Q8 | ~~Student personal fields & consent.~~ **RESOLVED for the build (22 Sep 2026):** the §6.2 minimal set; phone disabled by default (`students.phoneEnabled`); `privacy_notice_ack_at` recorded per student. Whether the university has a data-protection policy or officer is the owner's to check **before real student data lands** — D-33 keeps it synthetic until then. | — | — |
 | Q9 | Audit log retention and visibility. | WP-30 | Admins see all; professors see activity timelines of records they can view; retain 3 years (login events 1 year). |
 | Q10 | Does university IT have a code-signing certificate or signing service? Will the project be open source? **More important after WP-01:** Smart App Control was ON on the build machine, so a pilot host may have it on too — then either IT turns it off or everything we ship must be signed. | WP-31 | Unsigned internal pilot if Smart App Control/WDAC allow (§18). |
 | Q11 | University identity provider (Google Workspace / Microsoft 365). | Post-MVP SSO | — |
@@ -1415,82 +1416,84 @@ architect reviews every report before the next WP is issued. A demo to the produ
 milestone. Letter suffixes (03a/03b…) are splits recommended by the WP-01 review.
 
 ### M0 — Foundations · *app launches, signs in, survives crashes*
-| WP | Scope | Acceptance criteria |
-|---|---|---|
-| WP-00 | Environment recon | **DONE** |
-| WP-01 | Spec install, ADRs, engineering review | **DONE** |
-| WP-02 | Source feasibility & compliance matrix | **DONE** |
-| WP-02b | Fresh-session housekeeping (CLAUDE.md, PROGRESS.md) | **DONE** |
-| WP-03a | Toolchain install (after U1/U2) + probes: native modules (better-sqlite3 FTS5/trigram/UDF/backup, argon2) and a Tauri 2 hello-world build | All probes pass; exact versions recorded in PROGRESS.md |
-| WP-03b | Monorepo scaffold: pnpm workspaces, TS strict, ESLint/Prettier, Vitest, `packages/contracts`, `apps/backend` stub, `pnpm verify` | Verify green on a clean clone; failures make it exit non-zero |
-| WP-04a | Backend app factory: config, pino + rotation, problem+json, `/health`, READY line, stdin-EOF exit, graceful shutdown | Runs standalone with `--data-dir`; tests |
-| WP-04b | SQLite + Drizzle + migration runner (incl. custom SQL path) + pre-migration local copy + UUIDv7 | Migration tests (empty DB, upgrade, triggers present) |
-| WP-04c | DB-backed job runner | Tests: catch-up after "sleep", single-flight, stale lock, backoff |
-| WP-05a | Tauri shell: spawn via `Command`, Job Object, READY handshake, `backend_connection()`, restart/backoff, Exit completely | Killing the backend → restart with new secret; exit leaves no processes |
-| WP-05b | Tray menu, close-to-tray toggle, single instance, autostart setting, loopback/CORS/LNA check + fallback | LNA-flag test documented |
-| WP-06 | UI foundation: tokens (light/dark/system), app shell, Ctrl+K stub, API client, error boundary, toasts, skeletons, empty states | axe clean on shell; theme follows Windows |
-| WP-07a | Auth core: accounts, Argon2id, sessions, lockout, auto-lock, policy module + matrix tests, append-only audit (hash chain), authenticated SSE (server + fetch client) | Permission matrix green; audit rows for auth actions |
-| WP-07b | Setup wizard (admin, university/department, campus, scraper contact e-mail, data & backup folders, backup passphrase → age keys + recovery file) + user admin UI | Wizard can't be skipped; recovery file exported |
+| WP | Scope | Acceptance criteria | Prompt (`docs/prompts/`) |
+|---|---|---|---|
+| WP-00 | Environment recon | **DONE** | done |
+| WP-01 | Spec install, ADRs, engineering review | **DONE** | done |
+| WP-02 | Source feasibility & compliance matrix | **DONE** | done |
+| WP-02b | Fresh-session housekeeping (CLAUDE.md, PROGRESS.md) | **DONE** | done |
+| WP-03a | Toolchain install (after U1/U2) + probes: native modules (better-sqlite3 FTS5/trigram/UDF/backup, argon2) and a Tauri 2 hello-world build | All probes pass; exact versions recorded in PROGRESS.md | done |
+| WP-03b | Monorepo scaffold: pnpm workspaces, TS strict, ESLint/Prettier, Vitest, `packages/contracts`, `apps/backend` stub, `pnpm verify` | Verify green on a clean clone; failures make it exit non-zero | done |
+| WP-04a | Backend app factory: config, pino + rotation, problem+json, `/health`, READY line, stdin-EOF exit, graceful shutdown | Runs standalone with `--data-dir`; tests | done |
+| WP-04b | SQLite + Drizzle + migration runner (incl. custom SQL path) + pre-migration local copy + UUIDv7 | Migration tests (empty DB, upgrade, triggers present) | done |
+| WP-04c | DB-backed job runner | Tests: catch-up after "sleep", single-flight, stale lock, backoff | done |
+| WP-05a | Tauri shell: spawn via `Command`, Job Object, READY handshake, `backend_connection()`, restart/backoff, Exit completely | Killing the backend → restart with new secret; exit leaves no processes | done |
+| WP-05b | Tray menu, close-to-tray toggle, single instance, autostart setting, loopback/CORS/LNA check + fallback | LNA-flag test documented | done |
+| WP-06 | UI foundation: tokens (light/dark/system), app shell, Ctrl+K stub, API client, error boundary, toasts, skeletons, empty states | axe clean on shell; theme follows Windows | done · `M0/WP-06.md` |
+| WP-07a | Auth core: accounts, Argon2id, sessions, lockout, auto-lock, policy module + matrix tests, append-only audit (hash chain), authenticated SSE (server + fetch client) | Permission matrix green; audit rows for auth actions | done · `M0/WP-07a.md` |
+| WP-07b | Setup wizard (admin, university/department, campus, scraper contact e-mail, data & backup folders, backup passphrase → age keys + recovery file) + user admin UI | Wizard can't be skipped; recovery file exported | done · `M0/WP-07b.md` |
 
 ### M1 — Events · *real events, trustworthy and searchable*
-| WP | Scope | Acceptance criteria |
-|---|---|---|
-| pre-M1 | Consolidation refactor: shared time layer (`Clock`, IANA, A7 day bounds), mechanical layer boundaries + `max-lines: 400` lint, `withAudit` unit-of-work, module-owned settings registry, golden-fixture harness, error-code domains, M0 tech debt, `cargo clean` | No behaviour change; test count ≥ 1736; a boundary violation demonstrably fails the lint |
-| WP-08a | Event schema, `EventCandidate` contract, normalization library (dates/tz, fees, team size, mode, edition_year, PII redaction) | ≥ 100 cases incl. invalid dates/timezones; no e-mail/phone survives |
-| WP-08b | Gazetteer build, institutions seed, geocoder, distance, geography + event-type policies | Policy-hidden events stored but invisible |
-| WP-09a | PoliteHttpClient (per-host robots, delay rule, retries, conditional GET, TLS/403 handling, proxy), compliance gate, source seeds (D-26), scrape runs/state, scrape jobs, snapshots | Failure-mode tests: timeout, 429, 5xx, robots disallow, TLS error, 403, format change, offline |
-| WP-09b | CTFtime adapter (fixtures in `docs/research/fixtures/ctftime`) | Golden tests; one manual live smoke run |
-| WP-10 | Dedup/merge/unmerge, field resolution & conflicts, change detection, review API | Scenarios: same event on 3 sources; yearly editions; internal vs national round; CTFtime prize conflict |
-| WP-11 | CLIST adapter + series/recurring detection → Contest Calendar (fixtures from the documented schema; live after U4) | Weekly rounds hidden from main feed |
-| WP-12 | **Devfolio adapter** (re-scoped: Devpost is manual-only) — listing + subdomain detail pages | Participant/judge/contact data dropped; per-subdomain robots honoured |
-| WP-13 | **Unstop adapter** if U3 allows it; otherwise a docs-only WP recording MANUAL_IMPORT_ONLY | Compliance status recorded |
-| WP-14 | Manual event creation + URL import (dispatch per D-30) | 5 sample imports; Devpost URL opens manual form with no request made |
-| WP-15a | EventQuery, query builder, FTS5 + trigram, aliases, typo vocabulary, perf test | Halved budgets on build machine (§8.3); typo AC |
-| WP-15b | Category rules engine, facets, ranking, relevance reasons | Reasons for every ranked result |
-| WP-16a | Discover UI: tabs, filters/chips, cards, watchlist, hide | Playwright smoke; keyboard navigation |
-| WP-16b | Detail drawer (provenance, conflicts, history), freshness pill + source status, category override | "Sources disagree" visible on the conflict fixture |
+| WP | Scope | Acceptance criteria | Prompt (`docs/prompts/`) |
+|---|---|---|---|
+| pre-M1 | Consolidation refactor: shared time layer (`Clock`, IANA, A7 day bounds), mechanical layer boundaries + `max-lines: 400` lint, `withAudit` unit-of-work, module-owned settings registry, golden-fixture harness, error-code domains, M0 tech debt, `cargo clean` | No behaviour change; test count ≥ 1736; a boundary violation demonstrably fails the lint | done · `M1/pre-M1.md` |
+| WP-08a | Event schema, `EventCandidate` contract, normalization library (dates/tz, fees, team size, mode, edition_year, PII redaction) | ≥ 100 cases incl. invalid dates/timezones; no e-mail/phone survives | done · `M1/WP-08a.md` |
+| WP-08b | Gazetteer build, institutions seed, geocoder, distance, geography + event-type policies | Policy-hidden events stored but invisible | done · `M1/WP-08b.md` |
+| WP-09a | PoliteHttpClient (per-host robots, delay rule, retries, conditional GET, TLS/403 handling, proxy), compliance gate, source seeds (D-26), scrape runs/state, scrape jobs, snapshots | Failure-mode tests: timeout, 429, 5xx, robots disallow, TLS error, 403, format change, offline | done · `M1/WP-09a.md` |
+| WP-09b | CTFtime adapter (fixtures in `docs/research/fixtures/ctftime`) | Golden tests; one manual live smoke run | done · `M1/WP-09b.md` |
+| WP-10 | Dedup/merge/unmerge, field resolution & conflicts, change detection, review API | Scenarios: same event on 3 sources; yearly editions; internal vs national round; CTFtime prize conflict | done · `M1/WP-10.md` |
+| WP-11 | CLIST adapter + series/recurring detection → Contest Calendar (fixtures from the documented schema; live after U4) | Weekly rounds hidden from main feed | done · `M1/WP-11.md` |
+| WP-12 | **Devfolio adapter** (re-scoped: Devpost is manual-only) — listing + subdomain detail pages | Participant/judge/contact data dropped; per-subdomain robots honoured | done · `M1/WP-12.md` |
+| WP-13 | **Unstop adapter** if U3 allows it; otherwise a docs-only WP recording MANUAL_IMPORT_ONLY | Compliance status recorded | done · `M1/WP-13.md` |
+| WP-14 | Manual event creation + URL import (dispatch per D-30) | 5 sample imports; Devpost URL opens manual form with no request made | done · `M1/WP-14.md` |
+| WP-15a | EventQuery, query builder, FTS5 + trigram, aliases, typo vocabulary, perf test | Halved budgets on build machine (§8.3); typo AC | done · `M1/WP-15a.md` |
+| WP-15b | Category rules engine, facets, ranking, relevance reasons | Reasons for every ranked result | done · `M1/WP-15b.md` (perf miss → R88, pre-M2b) |
+| WP-16a | Discover UI: tabs, filters/chips, cards, watchlist, hide | Playwright smoke; keyboard navigation | done · `M1/WP-16a.md` |
+| WP-16b | Detail drawer (provenance, conflicts, history), freshness pill + source status, category override | "Sources disagree" visible on the conflict fixture | done · `M1/WP-16b.md` |
 
 ### M2 — People & work · *assign an event to a team and track it*
-| WP | Scope | Acceptance criteria |
-|---|---|---|
-| WP-17 | Students: CRUD, tags, mentorships, deactivate, CSV/XLSX import with validation preview | Import 500 rows with per-row errors |
-| WP-18 | Teams: members (roles, lead), mentors (primary/co), skill coverage | Student in 3 teams works |
-| WP-19 | Competitions: statuses + history, roster, assign flow, pipeline board | Invalid transitions rejected; one active participation per student per event |
-| WP-20a | Workflows: seeded templates, copy-on-assign, stages CRUD/reorder, tasks, progress & schedule health | Progress precedence tests (§11) |
-| WP-20b | Resources + open allowlist (shell-side path checks) | Executables can't be opened |
-| WP-21 | Outcomes, ownership transfer, student history | Transfer preserves history; audit complete |
+| WP | Scope | Acceptance criteria | Prompt (`docs/prompts/`) |
+|---|---|---|---|
+| pre-M2a | UI & shell fault fixes: writes through the F9 fallback (R78), `open_external`, one-button sign-in, sealed sessions (R76), "Connect your sources", live freshness (R86), landmark/`.invalid`/`mailto:`/bundle fixes, verify < 2 min (R89) | Save, Hide and an override work in the built exe with the LNA flags; verify < 120 s; Rust checks reported | **NEXT** · `M2/pre-M2a.md` |
+| pre-M2b | Ingestion & search corrections: R75, R77, R79–R82, R85, R87, R88, `recurringOnly`, small corrections, owed live runs | Every correction has a named test; perf scenario within budget; owed runs run or listed | released · `M2/pre-M2b.md` |
+| WP-17 | Students: CRUD, tags, mentorships, deactivate, CSV/XLSX import with validation preview | Import 500 rows with per-row errors | released · `M2/WP-17.md` |
+| WP-18 | Teams: members (roles, lead), mentors (primary/co), skill coverage | Student in 3 teams works | released · `M2/WP-18.md` |
+| WP-19 | Competitions: statuses + history, roster, assign flow, pipeline board | Invalid transitions rejected; one active participation per student per event | released · `M2/WP-19.md` |
+| WP-20a | Workflows: seeded templates, copy-on-assign, stages CRUD/reorder, tasks, progress & schedule health | Progress precedence tests (§11) | released · `M2/WP-20a.md` |
+| WP-20b | Resources + open allowlist (shell-side path checks) | Executables can't be opened | released · `M2/WP-20b.md` |
+| WP-21 | Outcomes, ownership transfer, student history | Transfer preserves history; audit complete | released · `M2/WP-21.md` |
 
 ### M3 — Time · *nothing slips*
-| WP | Scope | Acceptance criteria |
-|---|---|---|
-| WP-22 | Deadline read model, Deadline Radar, Dashboard | Counts match list views |
-| WP-23 | Notification engine, inbox, SSE delivery, tray badge/toasts (after Q4) | Each threshold fires once; snooze works |
-| WP-24 | Saved searches + new-match alerts; relevance "Why relevant?"; Recommended | Reasons shown for every recommendation |
+| WP | Scope | Acceptance criteria | Prompt (`docs/prompts/`) |
+|---|---|---|---|
+| WP-22 | Deadline read model, Deadline Radar, Dashboard | Counts match list views | released · `M3/WP-22.md` |
+| WP-23 | Notification engine, inbox, SSE delivery, tray badge/toasts (after Q4) | Each threshold fires once; snooze works | released · `M3/WP-23.md` |
+| WP-24 | Saved searches + new-match alerts; relevance "Why relevant?"; Recommended | Reasons shown for every recommendation | released · `M3/WP-24.md` |
 
 ### M4 — AI · *ask in plain English, nothing fabricated*
-| WP | Scope | Acceptance criteria |
-|---|---|---|
-| WP-25a | Deterministic NL parser + "Interpreted as" chips (no LLM) | Parser unit tests |
-| WP-25b | AI eval dataset (≥ 120) + harness | Baseline metrics for the deterministic parser |
-| WP-26 | LLM benchmark on the build machine: CPU / Vulkan / CUDA builds × 2–3 models (accuracy, latency, RAM), chat-template and schema self-test | Tier table with measured numbers → model ADR |
-| WP-27a | LLM supervisor (lazy load, memory guard, idle unload, first-run backend selection), planner, entity resolution & clarification, fallbacks | Eval gates met; LLM-down fallback test |
-| WP-27b | Grounded summaries + validator, Assistant UI, AI query log | Grounding tests; no ungrounded numbers/dates shown |
+| WP | Scope | Acceptance criteria | Prompt (`docs/prompts/`) |
+|---|---|---|---|
+| WP-25a | Deterministic NL parser + "Interpreted as" chips (no LLM) | Parser unit tests | not written |
+| WP-25b | AI eval dataset (≥ 120) + harness | Baseline metrics for the deterministic parser | not written |
+| WP-26 | LLM benchmark on the build machine: CPU / Vulkan / CUDA builds × 2–3 models (accuracy, latency, RAM), chat-template and schema self-test | Tier table with measured numbers → model ADR | not written |
+| WP-27a | LLM supervisor (lazy load, memory guard, idle unload, first-run backend selection), planner, entity resolution & clarification, fallbacks | Eval gates met; LLM-down fallback test | not written |
+| WP-27b | Grounded summaries + validator, Assistant UI, AI query log | Grounding tests; no ungrounded numbers/dates shown | not written |
 
 ### M4.5 — Delight · *the app people want to open*
-| WP | Scope | Acceptance criteria |
-|---|---|---|
-| WP-33 | Appearance system: Catppuccin palette layer (Latte/Frappé/Macchiato/Mocha + Classic) under the existing semantic tokens, effect tiers CALM/STANDARD/SHOWCASE, motion & glow layer (shimmer, eased progress, counters, gradient borders, RGB hue-cycle presets), and the **Insights** surface — participation over time, funnel, outcomes, mentor load, deadline-hit rate, source contribution, streaks | Contrast matrix passes in all five flavours; CALM loses no information and is forced by reduced-motion; idle tray CPU ≈ 0 % and 60 fps at SHOWCASE; every Insights number reconciles with the list view it summarises |
+| WP | Scope | Acceptance criteria | Prompt (`docs/prompts/`) |
+|---|---|---|---|
+| WP-33 | Appearance system: Catppuccin palette layer (Latte/Frappé/Macchiato/Mocha + Classic) under the existing semantic tokens, effect tiers CALM/STANDARD/SHOWCASE, motion & glow layer (shimmer, eased progress, counters, gradient borders, RGB hue-cycle presets), and the **Insights** surface — participation over time, funnel, outcomes, mentor load, deadline-hit rate, source contribution, streaks | Contrast matrix passes in all five flavours; CALM loses no information and is forced by reduced-motion; idle tray CPU ≈ 0 % and 60 fps at SHOWCASE; every Insights number reconciles with the list view it summarises | released · `M4/WP-33.md` |
 
 ### M5 — Hardening & pilot · *safe to hand to professors*
-| WP | Scope | Acceptance criteria |
-|---|---|---|
-| WP-28 | Backup/restore/test-restore (age), CSV/XLSX exports | Round-trip, wrong-passphrase, corrupt-file, `age` CLI interop tests |
-| WP-29 | Configurable college/fest adapter (RSS/Atom + selectors) + admin source editor with Test extraction; up to 3 starter sites (IIIT Hyderabad, BITS Pilani, IEM Kolkata) after per-site review. **May move after the pilot.** | Starter sites working after compliance review |
-| WP-30 | Admin completion: audit viewer, system health (disk, encryption via Shell property, backups, DB, LLM, sources), log viewer, diagnostics bundle, settings | Diagnostics bundle contains no PII |
-| WP-31 | Packaging: NSIS per-user installer, data-dir choice, model download/side-load, first run, uninstall, upgrade replaces all binaries, signing decision; install on an 8 GB machine/VM | Clean 8 GB install succeeds |
-| WP-32 | Performance, accessibility & reliability pass; 72 h tray soak (sleep/resume, network loss); pilot checklist | No leaks/crashes in soak; checklist signed off |
+| WP | Scope | Acceptance criteria | Prompt (`docs/prompts/`) |
+|---|---|---|---|
+| WP-28 | Backup/restore/test-restore (age), CSV/XLSX exports | Round-trip, wrong-passphrase, corrupt-file, `age` CLI interop tests | not written |
+| WP-29 | Configurable college/fest adapter (RSS/Atom + selectors) + admin source editor with Test extraction; up to 3 starter sites (IIIT Hyderabad, BITS Pilani, IEM Kolkata) after per-site review. **May move after the pilot.** | Starter sites working after compliance review | not written |
+| WP-30 | Admin completion: audit viewer, system health (disk, encryption via Shell property, backups, DB, LLM, sources), log viewer, diagnostics bundle, settings | Diagnostics bundle contains no PII | not written |
+| WP-31 | Packaging: NSIS per-user installer, data-dir choice, model download/side-load, first run, uninstall, upgrade replaces all binaries, signing decision; install on an 8 GB machine/VM | Clean 8 GB install succeeds | not written |
+| WP-32 | Performance, accessibility & reliability pass; 72 h tray soak (sleep/resume, network loss); pilot checklist | No leaks/crashes in soak; checklist signed off | not written |
 
-**Count:** 48 work packages (46 original + pre-M1 + WP-33), **14 done → 34 remaining**.
+**Count:** 50 work packages (46 original + pre-M1 + pre-M2a + pre-M2b + WP-33), **28 done → 22 remaining**.
 
 **Phase 2 candidates:** AI actions with confirmation · AI category suggestions and ingest-time
 summaries · team/skill-based recommendations · .ics calendar export · accreditation-style
@@ -1635,11 +1638,28 @@ ative\ (better-sqlite3 `nativeBinding`); the bundle must run from a folder with 
 | R64 The edition guard beats the URL rule | Two candidates whose non-null `edition_year` differ are NEW — never auto-merged and never even written as a `dedup_candidates` row — **even when the normalized official or registration URL is identical**, because yearly editions reuse one URL ("HackX 2025" / "HackX 2026"). A null year on either side leaves the ordinary score to decide. | §7.5 |
 | R65 Thresholds and weights are settings | `dedup.autoMergeThreshold` (0.90), `dedup.candidateThreshold` (0.70) and the four §7.5 weights (title 0.45, organizer 0.20, date proximity 0.20, location/mode 0.15) live in the typed settings registry, with a schema check that the weights sum to 1.0 and that candidate < autoMerge. Scoring reads them at call time so fixtures can retune them with no code change. | §7.5 |
 | R66 A merge deletes nothing | The survivor is the event with the earlier `first_seen_at` (tie: more source records); the other keeps its row with `visibility = MERGED` and `merged_into_event_id`, and its source records are re-pointed. Unmerge re-points them back to a restored event. Source records, overrides, watchlist entries and per-user state are never deleted, and both directions write `event_changes`. | §7.5, §6.2 |
-| R70 Unstop verdict | Terms read by the owner on 21 Sep 2026: **silent** on automated access, with no content-reuse or commercial-use restriction. Unstop is **APPROVED_WITH_LIMITS** on `/hackathons/`, `/competitions/` and `/api/public/*`; delay ≥ 3 s; cadence 15 min, manual floor 5 min; never `*/register`, `/u/`, `/p/`, `/pf/`, `/directory/user/*`, `/api/get-attachment/*`, or any other `/api/*`. The one access clause in the Terms — a bullet forbidding parts of the Site being cached in proxy servers and reached by people who have not registered — sits inside the account/password section and targets circumvention of registration; it does not reach us, because the app never authenticates (§7.2) (public-page basis; signed-in reading with the professor's own session is R74), reads only robots-allowed public paths, and never republishes (D-32). | §7.2, D-26, U3 |
+| R70 Unstop verdict *(rationale partly superseded: "the app never authenticates" stopped being true with R74 — see R75)* | Terms read by the owner on 21 Sep 2026: **silent** on automated access, with no content-reuse or commercial-use restriction. Unstop is **APPROVED_WITH_LIMITS** on `/hackathons/`, `/competitions/` and `/api/public/*`; delay ≥ 3 s; cadence 15 min, manual floor 5 min; never `*/register`, `/u/`, `/p/`, `/pf/`, `/directory/user/*`, `/api/get-attachment/*`, or any other `/api/*`. The one access clause in the Terms — a bullet forbidding parts of the Site being cached in proxy servers and reached by people who have not registered — sits inside the account/password section and targets circumvention of registration; it does not reach us, because the app never authenticates (§7.2) (public-page basis; signed-in reading with the professor's own session is R74), reads only robots-allowed public paths, and never republishes (D-32). | §7.2, D-26, U3 |
 | R71 `/api/public/*` is permitted | §7.2's ban on "undocumented private APIs" targets reverse-engineered internal endpoints (the `api.devfolio.co` case). `/api/public/*` is different: the site operator's own robots.txt **explicitly allows** it while disallowing every other `/api/*`, and the path is namespaced public. Using it is also the politer option — one request where rendering the Angular listing would cost dozens. It stays undocumented, so treat the schema as unstable: zod-validate every response, `SCHEMA_CHANGED` on drift, and never widen beyond `allowed_paths_json` without a new ruling. | §7.2, §7.7, R70 |
 | R72 Unstop IP clause | Unstop's Terms vest IP "created or developed by you by using the Services" in Unstop's client — aimed at competition submissions, but broad on its face. No code change: D-32 already keeps ingested data inside the department, unpublished and out of any model training. Recorded so a later reviewer sees it was read and weighed, and so exports (WP-28) never become a route to republishing it. | §7.2, D-32, WP-28 |
 | R73 Compliance reviews expire | Unstop's Terms can change at any time with no notice and carry **no "last updated" date**, so the verdict is pinned to the page version string in the footer (`9.18.2026.17.53`) and a **review-by date of 21 Mar 2027**. `sources` gains `compliance_review_due_at`; WP-30's system-health screen lists sources whose review is overdue. Applies to every source, not just this one. | §6.2, WP-30, R70 |
 | R74 Signed-in reading with the professor's own session (owner ruling, 21 Sep 2026) | For an APPROVED or APPROVED_WITH_LIMITS source whose Terms do not prohibit it (Devfolio, Unstop), the app may read pages with the professor's **own** session: a cookie pasted from their browser, or one captured from a login window packaged with the app. This amends §7.2's "never log in" for that case only: the app never creates accounts, never uses anyone else's session, never solves or bypasses a CAPTCHA, and uses the session **read-only** — GET requests to that source's allowed hosts, nothing submitted, registered or changed. robots.txt, `allowed_paths_json` (including `!api.devfolio.co`), the effective delay, request caps and backoff apply unchanged. The session is stored like an API key (secret setting, never logged or exported, sent only to its own host), and an expired or missing session is a source state, never a crash; the source then falls back to its public pages. **D-29 is unchanged:** the professor's own registrations and teams may be stored; other people's participant, judge, mentor and contact data is still dropped at the adapter boundary. The owner accepts the account risk. **Product flow (owner, 21 Sep 2026):** each professor installs the app, and first-run onboarding opens the packaged sign-in browser where they sign in to every approved source with their own accounts; the UA contact (`scraper.contactEmail`, A10) is that professor's own address, per installation — never a shared one. Devpost stays MANUAL_IMPORT_ONLY (D-26/D-30). Built in WP-14. | §7.2, D-26, D-29, D-34, ADR-0007, ADR-0016, WP-14 |
+| R75 Signed-in reads are targeted, not bulk | R74 stands. Unstop's Terms let it cancel an account **and block every user behind that IP address** on suspected misuse; on a campus network many students share one public address, so the exposure reaches people who never accepted it — R74's "the owner accepts the account risk" covered the account, not the network. So: scheduled listing walks always run **anonymous**; the professor's session is used only for (a) that professor's own account pages (registrations, teams) and (b) the detail page of an event already stored whose public page lacks a field the signed-in page carries; **≤ 5 signed-in requests per source per run, ≥ 10 s apart**, never in a catch-up burst. A 401, a login page or a CAPTCHA on a signed-in request ends signed-in reading for that source until the professor signs in again (R80). The owner can widen this; it is recorded so widening is a decision, not a drift. | §7.2, R74, D-34 |
+| R76 Sessions are sealed at rest | A pasted or captured session is live access to the professor's account, not a low-value key. It is stored AES-256-GCM-sealed under a data key the shell keeps DPAPI-protected (CurrentUser) in `<dataDir>\session-key.bin` and passes to each backend spawn beside the client secret (A2). A backend started without it — standalone, server mode, or a copy restored on another machine — cannot open sessions and reads public pages, which is the existing "no session" state. Sealed values never appear in exports, diagnostics or API responses; restoring a backup elsewhere means signing in again, by design. | R74, §3.2, §14 |
+| R77 A reviewed robots exemption for a documented, keyed API | WP-11's proposal, accepted. A seed may carry `config_json.robotsExemption = {paths, reason, reviewedBy, reviewedAt}`, honoured only when the path is inside both `allowed_paths_json` and `paths`, the request carries the source's documented API credential, and the exemption names a reviewer and a parseable date. Granted for CLIST `/api/v4/`: robots.txt addresses crawlers, and a documented API that requires a key and publishes a rate limit is the operator's explicit invitation to programmatic use. Reviewer: architect, M1 review, 22 Sep 2026 — the owner re-signs it when the U4 key is created. The admin API cannot write `config_json`; the client logs one line per run when the exemption is used. | §7.2, WP-11, U4 |
+| R78 The shell proxy carries writes | Supersedes R27's GET-only. Under enforced LNA the F9 fallback must carry the app's own writes, or Save, Hide, category overrides, POST search and every M2 form fail. `backend_request` forwards GET/POST/PUT/PATCH/DELETE for paths under `/api/v1/` except `/api/v1/system/*` and `/api/v1/stream`: JSON bodies only, a 1 MB cap (the backend's own limit), the `Authorization` and client-secret headers, no redirects followed. SSE keeps R30's polling degradation. The same change adds `open_external(url)` — http, https and mailto only — so §13's "links open in the default browser" holds. | §3.2, §13, R27, R30, F9 |
+| R79 Repeated blocks go to a person | Clarifies R60. One 403/WAF response is `BLOCKED` for that run and backs the source off; the next attempt is at the backed-off time with the same User-Agent (WP-09a's reading, confirmed). **Three consecutive BLOCKED runs** set `compliance_status = BLOCKED` and `is_enabled = false`; only an admin re-enables it, and from WP-23 admins are notified. | §7.2, R60 |
+| R80 Credential failures are a source state | A 401 — or a 403 that serves a login page — on a keyed source (CLIST) or a signed-in request (R74/R75) marks the credential `EXPIRED` or `INVALID`, stops sending it, falls back to public reading where the source has any, and counts toward **neither** backoff nor R79. Source status says so in a sentence; from WP-23 admins are notified. Never `BLOCKED`. | §7.7, R74, R79 |
+| R81 Distance needs city precision | An event whose `geo_precision` is STATE or COUNTRY is **unknown location** for distance filters, the WITHIN_RADIUS reason, the Nearby preset and the card's distance text: a figure measured from a state centroid looks exact and is not. `includeUnknown.location` (A6) decides whether such events appear. | §8.1, A6, R55 |
+| R82 The gazetteer keeps places that can be told apart | Supersedes R53's filter. India rows are kept when `population > 0` or the feature code is an administrative seat (PPLA–PPLA4, PPLC): about 7 600 rows instead of 558 000, a few MB instead of 68.5 MB, and R55's population tie-break works again. §4.17's "towns/cities" was the right reading. `cities15000` for the rest of the world is unchanged; the manifest records the new filter. Curating campus coordinates for the INSTITUTION rung moves to WP-29, where institution data is the work. | §4.17, R53, R55 |
+| R83 Prize is shown, not material | §7.5's material list stays dates > 1 h, team size, fee and mode. Prize disagreements are listed under "Minor differences" in the drawer. Making prize material would turn every cross-currency pair into a permanent conflict, since R63 forbids converting currencies. | §7.5, R63 |
+| R84 Machines change events; people are audited | Re-scrape updates live in `event_changes` (cause SCRAPE) and are **not** written to `audit_log`, which is D-24's record of what people did. Unmerge marks the pair REJECTED — an admin said "not the same", so it is not proposed again. Field-group resolution (WP-10) confirmed. | §7.5, D-24, R66 |
+| R85 An explicit offset keeps its precision | An instant carrying an explicit UTC offset or `Z` is exact whatever the source's default zone, and WP-08a's library must never lower its precision; precision drops only when the zone is inferred. Settles WP-09b Q4 and WP-11 Q2. A CTFtime event with no usable date is invalid (counted in `items_invalid`), not stored undated. | §7.3, ADR-0015 |
+| R86 Scrape runs publish on the stream | Every finished run publishes `source.run.finished {sourceKey, outcome, finishedAt}` on WP-07a's SSE hub; the freshness pill invalidates on it and keeps a 5-minute poll as its R30 fallback. WP-23 publishes notifications on the same hub. | §4.4, R36, R30 |
+| R87 Event tags come from source tags | The linker writes `event_tags` (origin SOURCE) from each candidate's source tags, normalized into `tags` (kind TECHNOLOGY or THEME by a small seeded map, unknown → THEME), so the tags filter, the FTS `tags` column and the tag-interest boost stop being inert. No AI tagging (D-15). | §6.2, §8, D-15 |
+| R88 Trust is denormalized; the default feed is budgeted | `events.top_trust_rank` is maintained by the resolver on every link, merge and unmerge, and RELEVANCE reads it instead of a per-row lookup. The unfiltered first Discover page **with facets** becomes a named §8.3 scenario — 100 ms at 20 k events, halved on the build machine. Interest boosts stay per-user lookups. Re-measured on the 8 GB machine in WP-31. | §8.3, §8.4 |
+| R89 Verify stays under two minutes | `pnpm verify` < 120 s again. The multi-pass jsdom axe integration suites move to `pnpm test:a11y`, which — like R19's Rust checks — every WP touching `apps/desktop` runs and reports; single-component axe assertions stay in verify. A test that needs a timeout above 20 s is a finding to fix, not a timeout to raise. | §4.15, R19 |
+| R90 Two tray badges, two owners | Clarifies R29. WP-23 owns the unread-notification count on the tray icon and Windows toasts for CRITICAL notifications; WP-30 still owns the FAILED/health badge and the freshness tooltip. One overlay slot: health beats count. | §16.1, R29, WP-23, WP-30 |
+| R91–R113 | **Reserved** for the M2/M3 prompts' STEP 0 blocks: WP-17 R91–R93 · WP-18 R94–R95 · WP-19 R96–R98 · WP-20a R99–R101 · WP-20b R102–R103 · WP-21 R104–R105 · WP-22 R106–R107 · WP-23 R108–R111 · WP-24 R112–R113, with spec versions 1.1.15–1.1.23 in that order. A WP that finds its numbers taken uses the next free ones and says so. | §19, docs/prompts/M2/, M3/ |
 | R67 Palette layer | The `--ci-*` semantic tokens from WP-06 are a contract and are never renamed; flavours are a palette layer beneath them (Catppuccin Latte default light, Mocha default dark, Frappé/Macchiato optional, Classic = the WP-06 neutrals). The measured contrast test decides: accent hues take non-text roles (borders, glows, chart marks, fills) and text uses the `text`/`subtext` ramp until every pair passes in every flavour. A failing pair is remapped, never exempted. | §16.3, WP-33, ADR-0019 |
 | R68 Effect tiers | One `appearance.effects` setting: CALM · STANDARD (default) · SHOWCASE. `prefers-reduced-motion: reduce` forces CALM regardless of the stored value. No effect carries meaning alone — "never colour alone" (§16.3) extends to "never glow alone", and CALM must lose no information. Decorative animation uses compositor-only properties (`transform`/`opacity`/`filter`) and **stops when the document is hidden or the window is in the tray**, so WP-32's 72-hour soak passes with SHOWCASE on. RGB hue-cycle presets apply to borders, glows and accent fills only — never to text or to a status colour. | §16.3, WP-33, WP-32 |
 | R69 Insights are computed, never invented | Every number on the Insights surface comes from a deterministic SQL read model over rows the app already holds — no AI commentary (§9 is read-only), no estimates, no extrapolation, and no new data collection or telemetry. A fresh install gets an empty state that says what will appear, not a page of zeros. Milestone celebrations are permitted at STANDARD+ as one-shot, dismissible acknowledgements of recorded outcomes; streak-loss warnings, artificial urgency and counters that exist only to be incremented are not. | §16.2, WP-33, D-11, ADR-0019 |

@@ -1,50 +1,19 @@
 # Progress — newest first, keep < 150 lines
 
 ## Current
-- **M1 ingestion (DONE, handoffs in `docs/handoff/`)** — pre-M1 · WP-08a/08b/09a: one `Clock`, lint-enforced
-  domain boundaries, settings registry, `EventCandidate` + normalization, gazetteer/geocoder/policies (R53–R57),
-  PoliteHttpClient + compliance gate + scrape runs (R58–R61). WP-10: dedup, merge/unmerge (R66), resolution by
-  field group, change detection, review API. WP-11/12/13: CLIST (key-gated), Devfolio (per-subdomain robots),
-  Unstop (`/api/public/*`, R70–R73); migrations 0008–0011. WP-14: manual entry + URL import + signed-in sessions
-  (R74/D-34, own-host only), migration 0012. Open: `jobs/schedule.ts` → `domain/`.
-  **Owed live runs:** WP-09b's CTFtime smoke, WP-12's Devfolio smoke, WP-13's `unstop:capture` — all three wait on
-  `scraper.contactEmail` on the dev DB; `clist:smoke` waits on U4. Fixtures stay synthetic until then.
-- **Owner rulings (21 Sep 2026):** R74/D-34 — Devfolio and Unstop may be read with the professor's **own** session
-  (pasted cookie or in-app login window), read-only, same gate; D-29 still drops other people's data. Product flow:
-  each professor installs the app, onboarding signs in to every approved source, the UA contact is their own address.
-- **WP-15a DONE** / **WP-15b PARTIAL** (`docs/handoff/WP-15a.md`, `WP-15b.md`) — query model, FTS5 + trigram, typo
-  vocabulary; categories (rules engine, seed, migration 0015, manual wins), ranking with reasons on every result,
-  facets, category admin API. 15b's only miss: perf filters+text p95 52.4 ms vs 50 (Q1 there: denormalize trust?).
-- **WP-16a DONE** (22 Sep 2026, `docs/handoff/WP-16a.md`) — Discover: tabs, 9 filter chips ↔ `EventQuery`, dense
-  cards with urgency (icon + words), "Why relevant?", Save/Hide optimistic with Undo, J/K/Enter/S/Esc, real top-bar
-  search, live Ctrl+K search, drawer route placeholder; `pnpm e2e` (Playwright 1.63.0, installed Edge, no download).
-  Qs: calendar "recurring only" filter; R27 proxy is GET-only.
-- **WP-16b DONE — M1 CLOSES** (22 Sep 2026, `docs/handoff/WP-16b.md`) — the detail drawer: `GET /events/:id/detail`
-  in one round trip (claims by field, conflicts, deadlines, sources, categories, history), **"Sources disagree"**
-  with every claimed value, its source and the reason the selected one won (`selectionReasonOf`, §7.5); provenance
-  as a keyboard disclosure; `/sources/status` reworked (health enum, overall `updatedAt`, compliance omitted for a
-  professor) behind the §16.1 freshness pill, refetched every 60 s because **nothing publishes scrape events**;
-  audited category override with 409 (D-15, survives re-classification). Conflict fixture in `test/fixtures/conflicts/`,
-  loaded by `seed:demo`; new `@compintel/backend/testing` entry point. **3111 tests**, 126 s; `pnpm e2e` green.
-  No new dependencies, no `src-tauri` change (R29). Qs: is a prize disagreement material? §13 needs one Rust
-  `open_external`; should anything publish scrape events on the SSE hub?
-- WP-08b's two questions are still open (handoff §6): the gazetteer is 68.5 MB of
-  which 95% are zero-population hamlets that also *harm* matching — §4.17 says "towns/cities" where
-  R53 says feature class P; and GeoNames has almost no Indian campuses, so the INSTITUTION rung is
-  mostly unreachable. Q12 stays OPEN in ARCHITECTURE.md §2 and DECISIONS.md.
-- **Architect reviewed M0** (20 Sep 2026, `docs/handoff/M0-review.md`): R1–R44 accepted as written, plus
-  R45–R47 (recovery-code sign-in → WP-30, Argon2id calibration deferred, `/system/shutdown` exemption).
-  **Q1 RESOLVED** — standalone single-professor deployment, §3.1 amended, accounts/RBAC/audit retained.
-  ADR-0010/0011 amended (R33/R34/R37/R38, R41/R42); DECISIONS.md drift fixed (U1/U2, Q3).
-- **M1 released as a batch** (`docs/prompts/`, index `prompts/README.md`). Order: pre-M1 · WP-08a ·
-  **08b** · **09a** · 09b · 10 · 11 · 12 · 13 · 14 · 15a · 15b · 16a · 16b (first four done).
-  Zip `docs/` and send it back when M1 closes. §21 R62–R66 stay reserved.
-- **New: WP-33** (`prompts/M4/WP-33.md`, milestone **M4.5**, just before M5) — appearance system
-  (Catppuccin palettes, CALM/STANDARD/SHOWCASE effect tiers, motion & glow) + Insights. ADR-0019, R67–R69.
-- **Owner, 20 Sep 2026:** standalone app — one professor, one machine (§3.1). Security posture left unchanged; less security framing in prose from here on.
-- Spec: docs/ARCHITECTURE.md **v1.1.11 — ACCEPTED** (§21 R1–R66 + R67–R69; §19 = **48 WPs, 22 done, 26 remaining**).
-- **M1 is closed** (WP-16b, 22 Sep 2026). Zip `docs/` and send it back to the architect; M2 (teams and work) is next.
-- ADR-0001…0019 Accepted. Decisions register: docs/DECISIONS.md (D-01…D-33, Q1 RESOLVED, U1/U2 DONE).
+- **Architect reviewed M1** (22 Sep 2026, `docs/handoff/M1-review.md`): accepted; spec **v1.1.14**, rulings
+  R75–R90 answer every M1 question. R74 stands with two constraints: signed-in reads targeted, not bulk (R75 —
+  an IP block would reach every student on the campus network) and sessions sealed at rest (R76).
+  Q4/Q6/Q7/Q8 resolved for M2/M3. Ten M1 UI faults listed in the review §3, worst: every write fails under the
+  F9 fallback (R78).
+- **Next: `prompts/M2/pre-M2a.md`** (UI & shell faults), then **pre-M2b** (ingestion/search corrections), then
+  WP-17 · 18 · 19 · 20a · 20b · 21 (M2) and WP-22 · 23 · 24 (M3). All released; R91–R113 reserved for their
+  STEP 0 blocks (spec 1.1.15–1.1.23). Every M2/M3 WP ends with a **UI fault sweep**. Send `docs/` back when
+  M3 closes.
+- **Owed live runs:** CTFtime / Devfolio smokes and `unstop:capture` wait on `scraper.contactEmail` (the
+  owner's own address, R74); `clist:smoke` waits on U4. pre-M2b runs them if the address is set.
+- Spec: docs/ARCHITECTURE.md **v1.1.14 — ACCEPTED** · roadmap §19 = **50 WPs, 28 done, 22 remaining** ·
+  ADR-0001…0019 · decisions register docs/DECISIONS.md.
 
 ## Environment facts
 - **OS / CPU / RAM / GPU:** Windows 11 **Home** 25H2 (build 26200.9457) · AMD Ryzen 7 5700, 8c/16t · 16 GB RAM ·
@@ -138,6 +107,6 @@ All WP-01/WP-02 findings are ruled on in ARCHITECTURE.md §21. Still open:
 3. **No 8 GB test machine**: needed for WP-31/32 (real laptop or VirtualBox VM).
 4. **Disk headroom: 35 GB free.** `target/` reached 11.2 GB before pre-M1 cleaned it and is 3.7 GB now;
    a debug rebuild from empty is ~2 min. R3 says clean again under 20 GB. WP-15/26/27 add models.
-5. Q6–Q9, Q11, Q12 open with defaults (DECISIONS.md); Q4 blocks WP-23. **Q1, Q3, Q5 closed** (Q5 → R32).
+5. Q9, Q11, Q12 open with defaults (DECISIONS.md). **Q1, Q3, Q4, Q5, Q6, Q7, Q8 closed.**
 6. No BitLocker here → synthetic data only (D-33). The dev admin in `%LOCALAPPDATA%\CompIntel-dev` has
    password `pre-M1-manual-check-2026`, set out-of-band for pre-M1's GUI check.
