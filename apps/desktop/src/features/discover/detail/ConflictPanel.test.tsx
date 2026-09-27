@@ -135,8 +135,8 @@ describe('the "Sources disagree" panel', () => {
   });
 
   it('is accessible', async () => {
-    const { container } = render(<ConflictPanel conflicts={CONFLICTS} now={NOW} />);
-    await expect(container).toBeAccessible();
+    render(<ConflictPanel conflicts={CONFLICTS} now={NOW} />);
+    await expect(document.body).toBeAccessible();
   });
 
   it('matches the fixture the backend serves', () => {

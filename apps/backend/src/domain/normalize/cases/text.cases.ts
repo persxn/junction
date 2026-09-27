@@ -47,6 +47,32 @@ export const TEXT_CASES: readonly NormalizeCase[] = [
     input: { description: '<p>See <a href="https://example.org/rules">the rules</a>.</p>' },
     expect: { fields: { descriptionMd: 'See [the rules](https://example.org/rules).' } },
   },
+  // pre-M2a (WP-13 Q2): a scraped `mailto:` is never a clickable link. The
+  // address is what the link becomes, and the redactor then has the last word —
+  // which is the whole point of doing it before the redactor runs.
+  {
+    name: 'a mailto: link becomes the address, and the sentence around it survives',
+    input: {
+      description:
+        "<p>Queries: write to <a href='mailto:organiser@example.com'>organiser@example.com</a> or call +91 98765 43210.</p>",
+    },
+    expect: {
+      warnings: ['PII_REDACTED'],
+      fields: { descriptionMd: `Queries: write to ${REDACTED} or call ${REDACTED}.` },
+    },
+  },
+  {
+    name: 'a mailto: link whose label is not the address still shows no link',
+    input: { description: '<p>Ask <a href="mailto:head@example.org">the department</a>.</p>' },
+    expect: { warnings: ['PII_REDACTED'], fields: { descriptionMd: `Ask ${REDACTED}.` } },
+  },
+  {
+    name: 'a mailto: link with a subject keeps only the address',
+    input: {
+      description: '<p><a href="mailto:a%40b.test?subject=Hi%20there">Mail us</a> about it.</p>',
+    },
+    expect: { warnings: ['PII_REDACTED'], fields: { descriptionMd: `${REDACTED} about it.` } },
+  },
   {
     name: 'a javascript: link loses its href',
     input: { description: '<p><a href="javascript:evil()">Click</a></p>' },

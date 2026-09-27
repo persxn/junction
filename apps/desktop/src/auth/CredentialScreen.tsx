@@ -55,7 +55,10 @@ export function CredentialScreen({
   };
 
   return (
-    <div className="flex h-full items-center justify-center bg-surface p-6">
+    // A `main` rather than a `div`: these screens *are* the window — there is no
+    // shell around them to provide the landmark, and without one every word on
+    // them is content outside any landmark (M1 review fault 5's other half).
+    <main className="flex h-full items-center justify-center bg-surface p-6">
       <form
         onSubmit={submit}
         className="flex w-full max-w-sm flex-col gap-4 rounded-lg border border-line bg-surface-raised p-6"
@@ -117,6 +120,6 @@ export function CredentialScreen({
           </button>
         )}
       </form>
-    </div>
+    </main>
   );
 }

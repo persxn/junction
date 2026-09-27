@@ -132,6 +132,12 @@ export const STREAM_EVENT_TYPES = [
   'data.invalidated',
   /** A scrape or import moved (WP-09a fills this in). */
   'job.progress',
+  /**
+   * A source's run ended, however it ended (ruling R86):
+   * `{ sourceKey, outcome, finishedAt }`. The freshness pill invalidates on it,
+   * which is what lets it stop polling every minute.
+   */
+  'source.run.finished',
   /** A notification was raised for this user (WP-23). */
   'notification.created',
 ] as const;

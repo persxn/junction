@@ -1,6 +1,7 @@
 import type { SourceSummary } from '@compintel/contracts';
 import { useQuery } from '@tanstack/react-query';
-import { Radio } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
+import { PlugZap, Radio } from 'lucide-react';
 
 import { listSources } from '../../../api/admin-sources.js';
 import { Skeleton } from '../../../components/Skeleton.js';
@@ -30,13 +31,31 @@ export function SourcesPage(): React.JSX.Element {
   );
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-6">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-lg">Sources &amp; scraper</h1>
-        <p className="text-fg-muted">
-          Where events come from. Sign in to the sources that show you more when you are signed in —
-          with your own account, read-only.
-        </p>
+    // A named `section`, not a `main`: AppShell already renders the one `main`
+    // this window has, and a second would be a duplicate landmark. The name is
+    // what keeps everything inside it within a landmark.
+    <section
+      aria-labelledby="sources-title"
+      className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-6"
+    >
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-col gap-1">
+          <h1 id="sources-title" className="text-lg">
+            Sources &amp; scraper
+          </h1>
+          <p className="text-fg-muted">
+            Where events come from. Sign in to the sources that show you more when you are signed in
+            — with your own account, read-only.
+          </p>
+        </div>
+        {/* R74: the one-time onboarding step, reopened whenever they want it. */}
+        <Link
+          to="/admin/sources/connect"
+          className="inline-flex shrink-0 items-center gap-2 rounded-md border border-line px-3 py-1.5 font-medium hover:bg-surface-sunken"
+        >
+          <PlugZap aria-hidden="true" className="size-4" />
+          Connect your sources
+        </Link>
       </header>
 
       {sources.isPending && <Skeleton lines={4} label="Loading the list of sources" />}
@@ -57,6 +76,6 @@ export function SourcesPage(): React.JSX.Element {
         <Radio aria-hidden="true" className="size-4" />
         Run history, freshness and “Run now” arrive with the system-health screen.
       </p>
-    </main>
+    </section>
   );
 }

@@ -9,8 +9,8 @@ import { describe, expect, it } from 'vitest';
  *
  * **No test in `pnpm verify` opens an internet socket.** The only code that can
  * is `undiciFetcher`, behind the `Fetcher` seam; everything else takes a
- * transport as an argument. So the property reduces to "nothing but `main.ts`
- * references `undiciFetcher`", which is a grep — and a grep that keeps being
+ * transport as an argument. So the property reduces to "nothing but the sources
+ * wiring references `undiciFetcher`", which is a grep — and a grep that keeps being
  * true as the codebase grows, unlike a reviewer's memory. (The suite also has no
  * outbound host names: the fakes answer for `example.test`, a reserved name that
  * resolves nowhere, and the two `node:http` servers bind 127.0.0.1.)
@@ -44,7 +44,7 @@ function read(file: string): string {
 }
 
 describe('no test opens an internet socket', () => {
-  it('references the real transport from main.ts and the dev-only tools', () => {
+  it('references the real transport from the sources wiring and the dev-only tools', () => {
     const referencing = sourceFiles().filter((file) => {
       const text = read(file);
       return (
@@ -60,7 +60,8 @@ describe('no test opens an internet socket', () => {
     expect(
       referencing.map((file) => path.relative(SOURCE_ROOT, file).split(path.sep).join('/')).sort(),
     ).toEqual([
-      'main.ts',
+      // pre-M2a moved the block out of `main.ts`, which was at the 400-line cap.
+      'modules/sources/wiring.ts',
       'tools/clist-smoke.ts',
       'tools/scrape-once.ts',
       'tools/unstop-capture.ts',

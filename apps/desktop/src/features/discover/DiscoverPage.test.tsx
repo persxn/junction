@@ -29,11 +29,9 @@ const cards = (): HTMLElement[] => screen.getAllByRole('article');
 const titles = (): string[] =>
   cards().map((card) => within(card).getByRole('heading', { level: 3 }).textContent ?? '');
 
-let container: HTMLElement;
-
 async function openDiscover(): Promise<ReturnType<typeof userEvent.setup>> {
   const user = userEvent.setup();
-  ({ container } = await renderApp('/discover'));
+  await renderApp('/discover');
   await screen.findByRole('heading', { name: 'Event 1' });
   return user;
 }
@@ -236,47 +234,4 @@ describe('the error state', () => {
   });
 });
 
-describe('accessibility', () => {
-  it('axe is clean on every tab, with a chip popover open and with the long list loaded', async () => {
-    const user = await openDiscover();
-    await user.click(screen.getByRole('button', { name: 'Load more' }));
-    await waitFor(() => {
-      expect(cards()).toHaveLength(30);
-    });
-    await user.click(within(cards()[0]!).getByRole('button', { name: 'Why relevant?' }));
-    await expect(container).toBeAccessible();
-
-    await user.click(screen.getByRole('button', { name: 'Registration filter' }));
-    await expect(container).toBeAccessible();
-    await user.keyboard('{Escape}');
-
-    for (const tab of ['All events', 'Contest Calendar'] as const) {
-      await user.click(screen.getByRole('tab', { name: tab }));
-      // The calendar's preset admits contest types only, so it may render its empty state.
-      await screen.findByRole('heading', { name: /^(Event 1|Nothing yet)$/ });
-      await expect(container).toBeAccessible();
-    }
-    // Four axe passes over a 30-card list in jsdom: the slowest test in the
-    // suite, and the one that grew when WP-16b gave the top bar a real pill.
-  }, 45_000);
-});
-
-describe('the palette searches events (§16.3)', () => {
-  it('typing searches after a pause; "See all results" lands on Discover with the text', async () => {
-    const user = userEvent.setup();
-    await renderApp('/');
-    await user.keyboard('{Control>}k{/Control}');
-    await user.keyboard('Event 12');
-    const option = await screen.findByRole('option', { name: /Event 12/ });
-    expect(option).toBeInTheDocument();
-    const paletteSearches = api.searches().filter((body) => body.limit === 5);
-    // Debounced: one request for the settled text, not one per keystroke.
-    expect(paletteSearches.map((body) => body.text)).toEqual(['Event 12']);
-
-    await user.click(screen.getByRole('option', { name: 'See all results in Discover' }));
-    await screen.findByRole('heading', { level: 1, name: 'Discover' });
-    await waitFor(() => {
-      expect(api.searches().at(-1)).toMatchObject({ text: 'Event 12', limit: 25 });
-    });
-  });
-});
+// The four-pass axe run over the whole screen lives in `DiscoverPage.a11y.test.tsx` (R89).

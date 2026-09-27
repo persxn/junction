@@ -449,3 +449,54 @@ describe('/admin/sources/:key/session', () => {
     expect(answer.status).toBe(400);
   });
 });
+
+/**
+ * R74's one-time "Connect your sources" step (pre-M2a item 5).
+ *
+ * The screen is the professor's first sight of signing in to a source, so the
+ * two things worth proving here are that it is offered exactly once and that
+ * nobody without `source.manage` can close it for everybody.
+ */
+describe('the connect-sources prompt', () => {
+  it('is pending on a fresh installation, and lists the sources that can hold a session', async () => {
+    const answer = await call('GET', '/api/v1/sources/connect-prompt', { token: adminToken });
+    expect(answer.status).toBe(200);
+    expect(answer.body.pending).toBe(true);
+    expect(answer.body.keys).toStrictEqual(['devfolio', 'unstop']);
+  });
+
+  it('is readable by a professor, who is not the one who closes it', async () => {
+    const read = await call('GET', '/api/v1/sources/connect-prompt', { token: professor });
+    expect(read.status).toBe(200);
+    const refused = await call('POST', '/api/v1/admin/sources/connect-prompt/seen', {
+      token: professor,
+    });
+    expect(refused.status).toBe(403);
+    const still = await call('GET', '/api/v1/sources/connect-prompt', { token: adminToken });
+    expect(still.body.pending).toBe(true);
+  });
+
+  it('needs a session at all', async () => {
+    expect((await call('GET', '/api/v1/sources/connect-prompt')).status).toBe(401);
+  });
+
+  it('stays finished once it has been finished, and is audited once', async () => {
+    const first = await call('POST', '/api/v1/admin/sources/connect-prompt/seen', {
+      token: adminToken,
+    });
+    expect(first.status).toBe(200);
+    expect(first.body.pending).toBe(false);
+
+    // Pressing it twice — two windows, a reload — must not write a second row.
+    const again = await call('POST', '/api/v1/admin/sources/connect-prompt/seen', {
+      token: adminToken,
+    });
+    expect(again.body.pending).toBe(false);
+    expect(
+      harness.audit.all().filter((row) => row.action === 'source.connect_prompt.finished'),
+    ).toHaveLength(1);
+
+    const read = await call('GET', '/api/v1/sources/connect-prompt', { token: adminToken });
+    expect(read.body.pending).toBe(false);
+  });
+});

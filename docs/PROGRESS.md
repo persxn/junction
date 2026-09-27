@@ -1,19 +1,23 @@
 # Progress — newest first, keep < 150 lines
 
 ## Current
-- **Architect reviewed M1** (22 Sep 2026, `docs/handoff/M1-review.md`): accepted; spec **v1.1.14**, rulings
-  R75–R90 answer every M1 question. R74 stands with two constraints: signed-in reads targeted, not bulk (R75 —
-  an IP block would reach every student on the campus network) and sessions sealed at rest (R76).
-  Q4/Q6/Q7/Q8 resolved for M2/M3. Ten M1 UI faults listed in the review §3, worst: every write fails under the
-  F9 fallback (R78).
-- **Next: `prompts/M2/pre-M2a.md`** (UI & shell faults), then **pre-M2b** (ingestion/search corrections), then
-  WP-17 · 18 · 19 · 20a · 20b · 21 (M2) and WP-22 · 23 · 24 (M3). All released; R91–R113 reserved for their
-  STEP 0 blocks (spec 1.1.15–1.1.23). Every M2/M3 WP ends with a **UI fault sweep**. Send `docs/` back when
-  M3 closes.
+- **pre-M2a done (PARTIAL), 27 Sep 2026** (`docs/handoff/pre-M2a.md`): all eight items built — writes and
+  links through the F9 fallback, one-button sign-in, sealed sessions (items 1-4, earlier session), plus
+  **Connect your sources** (R74, once, below sign-in — handoff §4.1), **live freshness** (R86, pill poll
+  60 s → 5 min), the four small UI faults (landmark · `.invalid` URL · `mailto:` as text · lazy routes,
+  683 kB → 428 kB largest chunk) and R89's `pnpm test:a11y` split. **Two acceptance lines unmet:** verify
+  is **134 s** against 120 s (its test half fell 113 → 101 s; the rest is Argon2id at R17's cost in six
+  suites — handoff question 1), and the **built exe is not click-tested** (needs a person, handoff §7).
+  Three faults the sweep found and fixed: two screens rendered a second `<main>`, the credential screens
+  sat in no landmark, and `cargo clippy --all-targets` was already failing on a stray tab in
+  `session_key.rs`.
+- **Next: `prompts/M2/pre-M2b.md`** (ingestion/search corrections), then WP-17 · 18 · 19 · 20a · 20b · 21
+  (M2) and WP-22 · 23 · 24 (M3). All released; R91-R113 reserved for their STEP 0 blocks
+  (spec 1.1.15-1.1.23). Every M2/M3 WP ends with a **UI fault sweep**. Send `docs/` back when M3 closes.
 - **Owed live runs:** CTFtime / Devfolio smokes and `unstop:capture` wait on `scraper.contactEmail` (the
   owner's own address, R74); `clist:smoke` waits on U4. pre-M2b runs them if the address is set.
-- Spec: docs/ARCHITECTURE.md **v1.1.14 — ACCEPTED** · roadmap §19 = **50 WPs, 28 done, 22 remaining** ·
-  ADR-0001…0019 · decisions register docs/DECISIONS.md.
+- Spec: docs/ARCHITECTURE.md **v1.1.14 - ACCEPTED** · roadmap §19 = **50 WPs, 28 done, 22 remaining** ·
+  ADR-0001...0019 · decisions register docs/DECISIONS.md.
 
 ## Environment facts
 - **OS / CPU / RAM / GPU:** Windows 11 **Home** 25H2 (build 26200.9457) · AMD Ryzen 7 5700, 8c/16t · 16 GB RAM ·
@@ -35,7 +39,12 @@
 
 ## Standard commands
 - `pnpm install --frozen-lockfile` · **`pnpm verify`** = `format:check && lint && typecheck && test`
-  (~126 s here with 3111 tests; budget is < 2 min per §4.15 — **over**, see WP-16b §5). `pnpm e2e` = Playwright on Edge, outside verify.
+  (**134 s** here with 3137 tests: format 7 s, lint 26 s, typecheck ~1 s warm, test 101 s; budget is
+  < 2 min per §4.15/R89 — **over**, see pre-M2a §3). **`pnpm test:a11y`** = R89's axe project
+  (`*.a11y.test.tsx`, 23 tests, 9 s) — every WP touching `apps/desktop` runs and reports it, like R19's
+  Rust checks. `pnpm test` runs the `node` and `desktop` projects only. **`vitest.config.ts` caps
+  `maxWorkers` at 8**: this box has 8 cores, and at more the Argon2id suites starve a spawning test past
+  its 20 s ceiling. `pnpm e2e` = Playwright on Edge, outside verify.
   Individually: `pnpm format` / `format:check` (Prettier) · `pnpm lint` (ESLint) · `pnpm typecheck` (`tsc -b`) ·
   `pnpm test` (Vitest, single run) · `pnpm clean` (`tsc -b --clean`).
 - Git identity is repo-local: `Calamity <sohomaroy2005@gmail.com>`; `core.autocrlf=false`.

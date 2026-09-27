@@ -19,6 +19,13 @@ import { apiGet, apiRequest } from './client.js';
  * of quiet wrongness this screen exists to rule out.
  */
 
+/**
+ * The freshness pill's query key, here rather than in the feature that reads it:
+ * `use-live-updates.ts` invalidates it when R86's `source.run.finished` arrives,
+ * and the api layer must not import a feature to learn the name of its own query.
+ */
+export const SOURCE_STATUS_KEY = ['sources', 'status'] as const;
+
 const eventPath = (id: string, tail: string): string =>
   `/api/v1/events/${encodeURIComponent(id)}/${tail}`;
 

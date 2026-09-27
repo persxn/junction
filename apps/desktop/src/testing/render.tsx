@@ -1,5 +1,10 @@
 import { QueryClientProvider } from '@tanstack/react-query';
-import { RouterProvider } from '@tanstack/react-router';
+import {
+  createMemoryHistory,
+  createRootRoute,
+  createRouter,
+  RouterProvider,
+} from '@tanstack/react-router';
 import { render, screen, type RenderResult } from '@testing-library/react';
 
 import { createQueryClient } from '../api/query.js';
@@ -30,6 +35,28 @@ export function renderWithProviders(ui: React.ReactNode): RenderResult {
         </ConnectionProvider>
       </QueryClientProvider>
     </ThemeProvider>,
+  );
+}
+
+/**
+ * One screen, with a router above it but without the shell around it.
+ *
+ * A screen that renders a `<Link>` needs a router context, and `renderApp` is the
+ * wrong tool for it: the whole shell brings the top bar's queries, the rail and
+ * the gates with it, so a test about one screen would be answering calls for
+ * five. The tree here is a root route that renders the screen, which is enough
+ * for `<Link>` to build a location.
+ */
+export async function renderInRouter(ui: React.ReactNode): Promise<RenderResult> {
+  const router = createRouter({
+    routeTree: createRootRoute({ component: () => <>{ui}</> }),
+    history: createMemoryHistory({ initialEntries: ['/'] }),
+  });
+  await router.load();
+  // The cast is the price of one root route: the app's `Register` declaration
+  // types `RouterProvider` for the real tree, and this one is deliberately not it.
+  return renderWithProviders(
+    <RouterProvider router={router as unknown as ReturnType<typeof createAppRouter>} />,
   );
 }
 

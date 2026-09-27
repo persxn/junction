@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom/vitest';
 
-import { cleanup } from '@testing-library/react';
+import { cleanup, configure } from '@testing-library/react';
 import { afterEach, expect } from 'vitest';
 
 import { axeMatchers } from './axe.js';
@@ -13,6 +13,13 @@ import { setSystemTheme } from './match-media.js';
  */
 
 expect.extend(axeMatchers);
+
+// Every screen is a lazy route since pre-M2a, so entering one waits on a dynamic
+// import as well as on a render. Under a full suite that can take longer than the
+// one second `findBy*` allows by default, and a test that fails because a chunk
+// was still loading is noise. Five seconds is still a quarter of the 20 s ceiling
+// ruling R89 puts on any test in `pnpm verify`.
+configure({ asyncUtilTimeout: 5_000 });
 
 // jsdom has no `matchMedia`. The theme reads it, and so does anything that asks
 // about reduced motion, so every test starts from a known system state.

@@ -8,6 +8,7 @@ import { useLiveUpdates } from '../api/use-live-updates.js';
 import { AuthProvider, useAuth } from '../auth/auth-context.js';
 import { ChangePasswordScreen, LockScreen, LoginScreen } from '../auth/AuthScreens.js';
 import { ConnectionScreen } from '../components/ConnectionScreen.js';
+import { ConnectSourcesGate } from '../features/setup/ConnectSourcesGate.js';
 import { SetupChecking, SetupUnreachable } from '../features/setup/SetupStatusScreens.js';
 import { SetupWizard } from '../features/setup/SetupWizard.js';
 import { useSetupStatus } from '../features/setup/use-setup-status.js';
@@ -157,6 +158,13 @@ function AuthGate({ connection }: { readonly connection: BackendConnection }): R
     case 'LOCKED':
       return <LockScreen />;
     case 'READY':
-      return <RouterProvider router={router} context={{ can }} />;
+      // R74's one-time "Connect your sources" step sits here, above the router
+      // and below sign-in: it needs an administrator's session to store anything,
+      // and it must never stand between somebody and the login screen.
+      return (
+        <ConnectSourcesGate>
+          <RouterProvider router={router} context={{ can }} />
+        </ConnectSourcesGate>
+      );
   }
 }

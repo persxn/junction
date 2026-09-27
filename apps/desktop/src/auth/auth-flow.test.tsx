@@ -126,13 +126,6 @@ describe('signing in (§10.3)', () => {
       api.calls.find((call) => call.path === '/api/v1/auth/login')?.authorization,
     ).toBeUndefined();
   });
-
-  it('has no axe violations on the login screen', async () => {
-    installFakeApi();
-    const { container } = renderWithProviders(<SessionGate connection={CONNECTION} />);
-    await screen.findByRole('heading', { name: 'Sign in to CompIntel' });
-    await expect(container).toBeAccessible();
-  });
 });
 
 describe('the forced first change (ruling R38)', () => {
@@ -169,16 +162,6 @@ describe('the forced first change (ruling R38)', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('That password does not match');
     expect(screen.getByRole('heading', { name: 'Choose a new password' })).toBeInTheDocument();
-  });
-
-  it('has no axe violations on the change-password screen', async () => {
-    const user = userEvent.setup();
-    installFakeApi({ mustChangePassword: true });
-    const { container } = renderWithProviders(<SessionGate connection={CONNECTION} />);
-
-    await signIn(user);
-    await screen.findByRole('heading', { name: 'Choose a new password' });
-    await expect(container).toBeAccessible();
   });
 });
 
@@ -218,3 +201,5 @@ describe('the admin rail (ruling R32)', () => {
     expect(admin === null).toBe(!visible);
   });
 });
+
+// The axe passes over these screens live in `auth.a11y.test.tsx` (ruling R89).

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { resetApiTransport } from '../../../api/client.js';
-import { renderWithProviders } from '../../../testing/render.js';
+import { renderInRouter } from '../../../testing/render.js';
 import { SourcesPage } from './SourcesPage.js';
 
 /**
@@ -143,7 +143,7 @@ afterEach(() => {
 describe('Admin → Sources', () => {
   it('lists the sources that are read from the internet, and no others', async () => {
     backend();
-    renderWithProviders(<SourcesPage />);
+    await renderInRouter(<SourcesPage />);
     expect(await screen.findByRole('heading', { name: 'Devfolio' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'CTFtime' })).toBeInTheDocument();
     // `manual` and `url-import` are rows an event belongs to, not sites.
@@ -152,7 +152,7 @@ describe('Admin → Sources', () => {
 
   it('offers no sign-in for a source whose verdict does not allow one', async () => {
     backend();
-    renderWithProviders(<SourcesPage />);
+    await renderInRouter(<SourcesPage />);
     const ctftime = (await screen.findByRole('heading', { name: 'CTFtime' })).closest('article');
     expect(ctftime).toHaveTextContent('there is nothing to sign in to');
     expect(within(ctftime!).queryByRole('button')).not.toBeInTheDocument();
@@ -161,7 +161,7 @@ describe('Admin → Sources', () => {
   it('opens the packaged sign-in window from one button (pre-M2a)', async () => {
     backend();
     const user = userEvent.setup();
-    renderWithProviders(<SourcesPage />);
+    await renderInRouter(<SourcesPage />);
     await user.click(await screen.findByRole('button', { name: 'Sign in to Devfolio' }));
     expect(invoke).toHaveBeenCalledWith('open_source_signin', {
       request: {
@@ -177,7 +177,7 @@ describe('Admin → Sources', () => {
   it('stores the session when the window says it is finished, and keeps no copy', async () => {
     const calls = backend();
     invoke.mockResolvedValue({ sourceKey: 'devfolio', cookie: 'df=abc', count: 1 });
-    const { container } = renderWithProviders(<SourcesPage />);
+    await renderInRouter(<SourcesPage />);
     await screen.findByRole('button', { name: 'Sign in to Devfolio' });
 
     finishSignIn('devfolio');
@@ -189,13 +189,13 @@ describe('Admin → Sources', () => {
     });
     expect(put?.body).toEqual({ cookie: 'df=abc', capturedVia: 'LOGIN_WINDOW' });
     // The cookie is nowhere on the screen, before or after.
-    expect(container.textContent).not.toContain('df=abc');
+    expect(document.body.textContent).not.toContain('df=abc');
   });
 
   it('says nothing was stored when the window is closed before signing in', async () => {
     const calls = backend();
     invoke.mockResolvedValue({ sourceKey: 'devfolio', cookie: '', count: 0 });
-    renderWithProviders(<SourcesPage />);
+    await renderInRouter(<SourcesPage />);
     await screen.findByRole('button', { name: 'Sign in to Devfolio' });
 
     finishSignIn('devfolio');
@@ -207,7 +207,7 @@ describe('Admin → Sources', () => {
   it('ignores a finished event for a different source', async () => {
     const calls = backend();
     invoke.mockResolvedValue({ sourceKey: 'unstop', cookie: 'un=abc', count: 1 });
-    renderWithProviders(<SourcesPage />);
+    await renderInRouter(<SourcesPage />);
     await screen.findByRole('button', { name: 'Sign in to Devfolio' });
 
     finishSignIn('unstop');
@@ -220,7 +220,7 @@ describe('Admin → Sources', () => {
   it('takes a pasted cookie and never shows it back', async () => {
     const calls = backend();
     const user = userEvent.setup();
-    renderWithProviders(<SourcesPage />);
+    await renderInRouter(<SourcesPage />);
     await user.click(await screen.findByRole('button', { name: 'Paste session' }));
     await user.type(screen.getByLabelText('Cookie header from your browser'), 'df=pasted');
     await user.click(screen.getByRole('button', { name: 'Save session' }));
@@ -240,10 +240,10 @@ describe('Admin → Sources', () => {
         devfolio: { ...(SESSIONS.devfolio as object), isSet: true, state: 'UNAVAILABLE' },
       },
     });
-    const { container } = renderWithProviders(<SourcesPage />);
+    await renderInRouter(<SourcesPage />);
     expect(await screen.findByText(/cannot be opened on this machine/)).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-    await expect(container).toBeAccessible();
+    await expect(document.body).toBeAccessible();
   });
 
   it('shows an expired session as a state of the source, not as an error', async () => {
@@ -253,10 +253,10 @@ describe('Admin → Sources', () => {
         devfolio: { ...(SESSIONS.devfolio as object), isSet: true, state: 'EXPIRED' },
       },
     });
-    const { container } = renderWithProviders(<SourcesPage />);
+    await renderInRouter(<SourcesPage />);
     expect(await screen.findByText(/Your Devfolio session expired/)).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument();
-    await expect(container).toBeAccessible();
+    await expect(document.body).toBeAccessible();
   });
 });

@@ -34,6 +34,7 @@ import { eventDetailRoutes } from './routes/event-detail.js';
 import { userStateRoutes } from './routes/user-state.js';
 import { categoryRoutes } from './routes/categories.js';
 import { searchRoutes } from './routes/search.js';
+import type { ConnectPromptService } from './modules/sources/connect-prompt.js';
 import { sourcesRoutes } from './routes/sources.js';
 import { streamRoutes } from './routes/stream.js';
 import { systemRoutes } from './routes/system.js';
@@ -72,6 +73,8 @@ export interface BuildAppOptions {
   readonly users?: () => UsersService | undefined;
   /** Resolved per request; absent on a backend built without a database. */
   readonly sources?: () => SourcesService | undefined;
+  /** R74's one-time "Connect your sources" step. */
+  readonly connectPrompt?: () => ConnectPromptService | undefined;
   /** WP-10's duplicate review, conflicts and change history. */
   readonly review?: () => DedupReviewService | undefined;
   /** WP-14's manual entry and URL import. */
@@ -137,6 +140,8 @@ export function buildApp(
   const setup = options.setup ?? ((): SetupService | undefined => undefined);
   const users = options.users ?? ((): UsersService | undefined => undefined);
   const sources = options.sources ?? ((): SourcesService | undefined => undefined);
+  const connectPrompt =
+    options.connectPrompt ?? ((): ConnectPromptService | undefined => undefined);
   const review = options.review ?? ((): DedupReviewService | undefined => undefined);
   const imports = options.imports ?? ((): EventImportService | undefined => undefined);
   const search = options.search ?? ((): SearchModule | undefined => undefined);
@@ -170,7 +175,7 @@ export function buildApp(
   void server.register(meRoutes({ auth }), { prefix: API_PREFIX });
   void server.register(setupRoutes({ setup }), { prefix: API_PREFIX });
   void server.register(adminUsersRoutes({ users }), { prefix: API_PREFIX });
-  void server.register(sourcesRoutes({ sources }), { prefix: API_PREFIX });
+  void server.register(sourcesRoutes({ sources, connectPrompt }), { prefix: API_PREFIX });
   void server.register(dedupRoutes({ review }), { prefix: API_PREFIX });
   void server.register(eventsRoutes({ imports }), { prefix: API_PREFIX });
   void server.register(searchRoutes({ search }), { prefix: API_PREFIX });

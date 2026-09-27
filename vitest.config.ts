@@ -13,8 +13,21 @@ const resolve = { alias: { '@compintel/contracts': contractsSource } };
 export default defineConfig({
   resolve,
   test: {
-    // One root `pnpm test` still runs everything; the split below only decides
-    // which global environment each file gets (WP-06).
+    /**
+     * Ruling R89, measured: this box has 8 cores and 16 threads, and vitest's
+     * default (one worker per thread) oversubscribes it badly. Two of the suites
+     * hash with Argon2id at 128 MiB and three spawn real backend processes, so at
+     * sixteen workers a cold `node --import tsx` start could be starved for more
+     * than twenty seconds — a timeout that says nothing about the code. Twelve is
+     * where the whole run stopped getting faster: 118 s at the default, 96 s here.
+     */
+    maxWorkers: 8,
+    // Three projects. `node` and `desktop` are the split WP-06 made — which
+    // global environment a file gets — and are what `pnpm verify` runs. `a11y`
+    // is ruling R89's: the multi-pass axe suites over whole screens are the
+    // slowest thing in the suite and they proved nothing the rest of it does, so
+    // they live in `*.a11y.test.tsx` and run as `pnpm test:a11y`, which every WP
+    // touching `apps/desktop` runs and reports like R19's Rust checks.
     projects: [
       {
         resolve,
@@ -39,6 +52,17 @@ export default defineConfig({
           name: 'desktop',
           environment: 'jsdom',
           include: ['apps/desktop/src/**/*.test.{ts,tsx}'],
+          exclude: ['apps/desktop/src/**/*.a11y.test.{ts,tsx}'],
+          setupFiles: ['./apps/desktop/src/testing/setup.ts'],
+          clearMocks: true,
+        },
+      },
+      {
+        resolve,
+        test: {
+          name: 'a11y',
+          environment: 'jsdom',
+          include: ['apps/desktop/src/**/*.a11y.test.{ts,tsx}'],
           setupFiles: ['./apps/desktop/src/testing/setup.ts'],
           clearMocks: true,
         },

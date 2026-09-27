@@ -184,15 +184,33 @@ export function rawRequest(
  * `fetch` cannot be used for a body the server will refuse mid-upload: Fastify
  * answers 413 and hangs up while the client is still writing, and undici turns
  * that into a rejected promise with `ECONNRESET` instead of handing over the
- * response it already received. `node:http` emits `response` either way, so the
- * refusal can actually be asserted on rather than raced against.
+ * response it already received.
+ *
+ * **Headers first, body only if it is still wanted** (pre-M2a item 8). Fastify
+ * decides the body limit from `Content-Length` alone, so flushing the headers
+ * and waiting is enough to get the real 413 with its problem document — and a
+ * megabyte that is never written cannot lose the race it used to lose one run in
+ * three, where the write failed with EPIPE before the response callback ran and
+ * neither half of the promise ever settled. A server that really does want the
+ * body gets it after {@link HEADER_GRACE_MS}, and a silent one fails on the
+ * socket timeout instead of hanging until the suite's.
  */
+
+/** How long the server gets to answer on the headers alone. */
+const HEADER_GRACE_MS = 250;
+
+/** The socket must say something within this, or the helper gives up. */
+const RAW_REQUEST_TIMEOUT_MS = 5_000;
+
 export function rawRequestWithBody(
   server: TestServer,
   options: { path: string; method?: string; headers?: Record<string, string>; body: string },
 ): Promise<RawResponse> {
   const url = new URL(server.baseUrl);
+  const body = Buffer.from(options.body, 'utf8');
   return new Promise((resolve, reject) => {
+    let settled = false;
+    let answered = false;
     const request = httpRequest(
       {
         host: url.hostname,
@@ -200,18 +218,25 @@ export function rawRequestWithBody(
         path: options.path,
         method: options.method ?? 'POST',
         headers: {
-          'Content-Length': Buffer.byteLength(options.body).toString(),
+          'Content-Length': String(body.byteLength),
           ...(options.headers ?? {}),
         },
       },
       (response) => {
-        let body = '';
+        answered = true;
+        let text = '';
         response.setEncoding('utf8');
         response.on('data', (chunk: string) => {
-          body += chunk;
+          text += chunk;
         });
         const finish = (): void => {
-          resolve({ status: response.statusCode ?? 0, headers: response.headers, body });
+          if (settled) {
+            return;
+          }
+          settled = true;
+          resolve({ status: response.statusCode ?? 0, headers: response.headers, body: text });
+          // Nothing is owed to a server that has already answered.
+          request.destroy();
         };
         response.on('end', finish);
         // The server may destroy the socket the moment it has answered; the
@@ -220,14 +245,38 @@ export function rawRequestWithBody(
         response.on('error', finish);
       },
     );
-    // Likewise for the write side: an EPIPE here means the refusal arrived
-    // before we finished sending, which is exactly the behaviour under test.
-    request.on('error', (error: NodeJS.ErrnoException) => {
-      if (error.code !== 'ECONNRESET' && error.code !== 'EPIPE') {
-        reject(error);
+
+    const grace = setTimeout(() => {
+      if (!answered && !settled) {
+        request.end(body);
+      }
+    }, HEADER_GRACE_MS);
+
+    request.setTimeout(RAW_REQUEST_TIMEOUT_MS, () => {
+      if (!settled) {
+        settled = true;
+        clearTimeout(grace);
+        request.destroy();
+        reject(new Error(`${options.path} neither answered nor closed within the socket timeout`));
       }
     });
-    request.end(options.body);
+
+    request.on('error', (error: NodeJS.ErrnoException) => {
+      clearTimeout(grace);
+      // An EPIPE or ECONNRESET on the write side means the refusal arrived while
+      // the body was going out, which is the behaviour under test — the response
+      // half settles. Only a socket that dies with no answer at all is a failure.
+      if (settled || answered) {
+        return;
+      }
+      settled = true;
+      reject(error);
+    });
+    request.on('close', () => {
+      clearTimeout(grace);
+    });
+
+    request.flushHeaders();
   });
 }
 

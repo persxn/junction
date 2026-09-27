@@ -124,9 +124,16 @@ export function CreateEventPage(): React.JSX.Element {
   const blocked = whySaveDisabled(form);
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-6">
+    // A named `section`, not a `main`: AppShell renders the window's one `main`,
+    // and a second would be a duplicate landmark.
+    <section
+      aria-labelledby="create-event-title"
+      className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-6"
+    >
       <header className="flex flex-col gap-1">
-        <h1 className="text-lg">Add an event</h1>
+        <h1 id="create-event-title" className="text-lg">
+          Add an event
+        </h1>
         <p className="text-fg-muted">
           Type it in, or paste a link and check what could be read off the page.
         </p>
@@ -207,6 +214,6 @@ export function CreateEventPage(): React.JSX.Element {
           )}
         </form>
       )}
-    </main>
+    </section>
   );
 }

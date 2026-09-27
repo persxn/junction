@@ -5,6 +5,7 @@ import { SetupService } from '../modules/setup/service.js';
 import { SourceRecordsRepository } from '../modules/sources/records.js';
 import { SourcesRepository } from '../modules/sources/repository.js';
 import { SourcesService } from '../modules/sources/service.js';
+import { ConnectPromptService } from '../modules/sources/connect-prompt.js';
 import { UsersRepository } from '../modules/users/repository.js';
 import { UsersService } from '../modules/users/service.js';
 import { parseSessionKey } from '../modules/sources/seal.js';
@@ -41,6 +42,8 @@ export interface SetupTestServer {
   readonly users: UsersService;
   readonly auth: AuthService;
   readonly sources: SourcesService;
+  /** R74's one-time "Connect your sources" step. */
+  readonly connectPrompt: ConnectPromptService;
   /** WP-14's manual entry and URL import. */
   readonly imports: EventImportService;
   /** WP-10's linker, merges and review API, on the same database. */
@@ -101,8 +104,14 @@ export async function startSetupTestServer(
   // tests are about permissions, versions and the manual floor, and a request
   // that reached the network would mean one of those had already failed.
   const registry = new AdapterRegistry();
+  const sourcesRepository = new SourcesRepository(database.db);
+  const connectPrompt = new ConnectPromptService({
+    settings,
+    sources: sourcesRepository,
+    audit,
+  });
   const sources = new SourcesService({
-    sources: new SourcesRepository(database.db),
+    sources: sourcesRepository,
     records: new SourceRecordsRepository(database.db),
     registry,
     audit,
@@ -158,6 +167,7 @@ export async function startSetupTestServer(
     setup: () => setup,
     users: () => users,
     sources: () => sources,
+    connectPrompt: () => connectPrompt,
     review: () => events.review,
     imports: () => imports,
     eventDetail: () => events.detail,
@@ -171,6 +181,7 @@ export async function startSetupTestServer(
     users,
     auth,
     sources,
+    connectPrompt,
     imports,
     events,
     search,

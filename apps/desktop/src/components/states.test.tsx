@@ -85,12 +85,12 @@ describe('<ErrorBoundary> (§16.3)', () => {
 
   it('has no axe violations', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
-    const { container } = render(
+    render(
       <ErrorBoundary label="the dashboard" lastGoodAt={new Date()}>
         <Boom shouldThrow />
       </ErrorBoundary>,
     );
-    await expect(container).toBeAccessible();
+    await expect(document.body).toBeAccessible();
   });
 });
 
@@ -236,8 +236,8 @@ describe('the toast system (§16.3)', () => {
 
   it('has no axe violations', async () => {
     const user = userEvent.setup();
-    const { container } = renderWithProviders(<Trigger />);
+    renderWithProviders(<Trigger />);
     await user.click(screen.getByRole('button', { name: 'hide with undo' }));
-    await expect(container).toBeAccessible();
+    await expect(document.body).toBeAccessible();
   });
 });

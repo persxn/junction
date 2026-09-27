@@ -93,8 +93,8 @@ describe('<ConnectionScreen> (ruling R26)', () => {
   it.each(['STARTING', 'RESTARTING', 'FAILED'] as const)(
     'has no axe violations in %s',
     async (phase) => {
-      const { container } = renderScreen(phase, 'DATA_DIR_LOCKED: pid 4242');
-      await expect(container).toBeAccessible();
+      renderScreen(phase, 'DATA_DIR_LOCKED: pid 4242');
+      await expect(document.body).toBeAccessible();
     },
   );
 });

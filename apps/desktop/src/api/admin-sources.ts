@@ -1,4 +1,5 @@
 import {
+  SourceConnectPrompt,
   SourceListResponse,
   SourceSessionStatus,
   type BackendConnection,
@@ -50,5 +51,28 @@ export async function clearSourceSession(
 ): Promise<SourceSessionStatus> {
   return SourceSessionStatus.parse(
     await apiRequest(connection, `/api/v1/admin/sources/${key}/session`, { method: 'DELETE' }),
+  );
+}
+
+/** The query key for the answer below; the gate and the reopen button share it. */
+export const CONNECT_PROMPT_KEY = ['sources', 'connect-prompt'] as const;
+
+/**
+ * Whether R74's one-time "Connect your sources" step is still owed. Readable by
+ * anyone signed in, because the gate has to decide before it knows what the
+ * account may do.
+ */
+export async function fetchConnectPrompt(
+  connection: BackendConnection,
+): Promise<SourceConnectPrompt> {
+  return SourceConnectPrompt.parse(await apiGet(connection, '/api/v1/sources/connect-prompt'));
+}
+
+/** "I have signed in" or "Skip for now" — both close it for good (`source.manage`). */
+export async function markConnectPromptSeen(
+  connection: BackendConnection,
+): Promise<SourceConnectPrompt> {
+  return SourceConnectPrompt.parse(
+    await apiRequest(connection, '/api/v1/admin/sources/connect-prompt/seen', { method: 'POST' }),
   );
 }

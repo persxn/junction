@@ -16,6 +16,23 @@ import { CandidatePlace, EventCandidate, ParseWarning } from './event-candidate.
  */
 
 /**
+ * The URL a manual event with no link of its own is recorded under (RFC 2606:
+ * `.invalid` never resolves).
+ *
+ * It lives in the contracts because both halves of the app have to agree about
+ * it: the backend writes it as a source record's URL, and the UI has to know it
+ * is a placeholder so it never shows it to anybody. A professor reading
+ * "https://manual.compintel.invalid/…" in the drawer would reasonably think the
+ * data was broken.
+ */
+export const MANUAL_URL_PREFIX = 'https://manual.compintel.invalid/';
+
+/** True for the reserved URL above, whatever key it was built from. */
+export function isManualUrl(url: string | null | undefined): boolean {
+  return url?.startsWith(MANUAL_URL_PREFIX) === true;
+}
+
+/**
  * What URL import does with a link, decided before any request is made (D-30).
  *
  * - `ADAPTER` — the domain belongs to an approved source, so that adapter's

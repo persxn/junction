@@ -110,7 +110,12 @@ export const EventSourceDetail = z
   .object({
     key: z.string().min(1),
     name: z.string().min(1),
-    url: z.string().min(1),
+    /**
+     * The page this source lists the event on, or `null` when there is none to
+     * open: a manual entry's reserved {@link MANUAL_URL_PREFIX} URL is dropped
+     * here rather than in the UI, so no screen can show it by accident.
+     */
+    url: z.string().min(1).nullable(),
     firstSeenAt: Instant,
     lastSeenAt: Instant,
     lastFetchedAt: Instant,

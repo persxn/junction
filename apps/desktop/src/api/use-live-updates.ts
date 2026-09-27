@@ -3,13 +3,16 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 
 import { useToast } from '../components/toast/ToastProvider.js';
+import { SOURCE_STATUS_KEY } from './event-detail.js';
 import { openStream, POLL_INTERVAL_MS, type StreamUnavailableReason } from './stream.js';
 
 /**
  * Live updates, and what to do when there are none (rulings R30 and R36).
  *
- * The happy path is one SSE connection whose `data.invalidated` events drive
- * TanStack Query's invalidation, exactly as §4.2 describes. The unhappy path is
+ * The happy path is one SSE connection whose events drive TanStack Query's
+ * invalidation, exactly as §4.2 describes: `data.invalidated` for a domain that
+ * changed, and `source.run.finished` for the freshness pill (R86). The unhappy
+ * path is
  * ruling R30: the shell's fallback transport cannot carry a stream, so rather
  * than failing, the app says "live updates unavailable" once and falls back to
  * re-reading on a timer. Stale data that is honest about being stale beats an
@@ -66,6 +69,13 @@ export function useLiveUpdates(options: LiveUpdatesOptions): LiveUpdatesView {
             void queryClient.invalidateQueries(
               typeof domain === 'string' ? { queryKey: [domain] } : undefined,
             );
+          }
+          // R86: a run ended, so the freshness pill is out of date. Only the
+          // status query is re-read — a finished run says nothing about the
+          // events on screen, and WP-09a's linker publishes `data.invalidated`
+          // for those when it has actually written something.
+          if (event.type === 'source.run.finished') {
+            void queryClient.invalidateQueries({ queryKey: SOURCE_STATUS_KEY });
           }
         },
         onOpen: () => {

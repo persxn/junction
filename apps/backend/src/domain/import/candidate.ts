@@ -1,3 +1,4 @@
+import { MANUAL_URL_PREFIX } from '@compintel/contracts';
 import type {
   CandidateDeadline,
   CandidatePlace,
@@ -25,10 +26,7 @@ import { FOUND_FIELDS, FOUND_LABELS, type FoundEvent, type FoundField } from './
  * gets forgotten is always the one a person uses twice a year.
  */
 
-/** The URL a manual event with no link of its own is recorded under. */
-export const MANUAL_URL_PREFIX = 'https://manual.compintel.invalid/';
-
-/** A stable, reserved URL for a manual entry (RFC 2606: `.invalid` never resolves). */
+/** A stable, reserved URL for a manual entry; the prefix is a contract (WP-16b). */
 export function manualRecordUrl(externalKey: string): string {
   return `${MANUAL_URL_PREFIX}${encodeURIComponent(externalKey)}`;
 }

@@ -4,15 +4,11 @@ import {
   createRootRouteWithContext,
   createRoute,
   createRouter,
+  lazyRouteComponent,
   redirect,
 } from '@tanstack/react-router';
 
-import { UsersPage } from '../features/admin/users/UsersPage.js';
-import { DiscoverPage } from '../features/discover/DiscoverPage.js';
-import { EventDrawer } from '../features/discover/detail/EventDrawer.js';
 import { parseDiscoverSearch } from '../features/discover/search-state.js';
-import { CreateEventPage } from '../features/events/create/CreateEventPage.js';
-import { SourcesPage } from '../features/admin/sources/SourcesPage.js';
 import { AppShell } from './AppShell.js';
 import { ADMIN_NAV, MAIN_NAV, type NavItem } from './nav.js';
 import { NotFoundPage } from './routes/NotFoundPage.js';
@@ -30,6 +26,12 @@ import { PlaceholderPage } from './routes/PlaceholderPage.js';
  * `RouterProvider` refreshes from `/me` (ruling R32). That guard is not the
  * security — §10.1 is explicit that the UI only hides controls — it is what stops
  * a stale bookmark landing on a screen that will only ever show 403s.
+ *
+ * **Every screen is loaded on demand** (pre-M2a item 7). The paths stay written
+ * out here, so a typo is still a build error; what moved is the component, into
+ * `lazyRouteComponent`, which is what takes the one 683 kB chunk apart. The rail
+ * and the top bar are not lazy — they are on screen from the first frame, and
+ * splitting them would only add a spinner where there was none.
  */
 
 export interface RouterContext {
@@ -75,13 +77,19 @@ export const discoverRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/discover',
   validateSearch: parseDiscoverSearch,
-  component: DiscoverPage,
+  component: lazyRouteComponent(
+    () => import('../features/discover/DiscoverPage.js'),
+    'DiscoverPage',
+  ),
 });
 
 export const discoverEventRoute = createRoute({
   getParentRoute: () => discoverRoute,
   path: 'event/$eventId',
-  component: EventDrawer,
+  component: lazyRouteComponent(
+    () => import('../features/discover/detail/EventDrawer.js'),
+    'EventDrawer',
+  ),
 });
 
 // WP-14: reachable from the palette and from a link, with no rail item of its
@@ -89,7 +97,10 @@ export const discoverEventRoute = createRoute({
 const createEventRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/events/new',
-  component: CreateEventPage,
+  component: lazyRouteComponent(
+    () => import('../features/events/create/CreateEventPage.js'),
+    'CreateEventPage',
+  ),
 });
 
 const competitionsRoute = createRoute({
@@ -126,14 +137,29 @@ const adminUsersRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/admin/users',
   beforeLoad: adminGuard('user.manage'),
-  component: UsersPage,
+  component: lazyRouteComponent(() => import('../features/admin/users/UsersPage.js'), 'UsersPage'),
 });
 
 const adminSourcesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/admin/sources',
   beforeLoad: adminGuard('source.manage'),
-  component: SourcesPage,
+  component: lazyRouteComponent(
+    () => import('../features/admin/sources/SourcesPage.js'),
+    'SourcesPage',
+  ),
+});
+
+// pre-M2a: R74's "Connect your sources" step, reopened from the sources screen.
+// A route of its own so reopening it keeps the rest of the app mounted.
+const adminSourcesConnectRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin/sources/connect',
+  beforeLoad: adminGuard('source.manage'),
+  component: lazyRouteComponent(
+    () => import('../features/admin/sources/ConnectSourcesPage.js'),
+    'ConnectSourcesPage',
+  ),
 });
 
 const adminCategoriesRoute = createRoute({
@@ -189,6 +215,7 @@ const routeTree = rootRoute.addChildren([
   notificationsRoute,
   adminUsersRoute,
   adminSourcesRoute,
+  adminSourcesConnectRoute,
   adminCategoriesRoute,
   adminDuplicatesRoute,
   adminSettingsRoute,

@@ -1,5 +1,6 @@
 import {
   SetSourceCredentialRequest,
+  SourceConnectPrompt,
   SetSourceSessionRequest,
   SourceCredentialStatus,
   SourceListResponse,
@@ -13,6 +14,7 @@ import type { FastifyRequest } from 'fastify';
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 
+import type { ConnectPromptService } from '../modules/sources/connect-prompt.js';
 import type { SourcesService, SourcesServiceContext } from '../modules/sources/service.js';
 import { requireSession } from '../platform/authn.js';
 
@@ -32,12 +34,22 @@ import { requireSession } from '../platform/authn.js';
 
 export interface SourcesRouteOptions {
   readonly sources: () => SourcesService | undefined;
+  /** R74's one-time onboarding step; absent on a backend with no database. */
+  readonly connectPrompt: () => ConnectPromptService | undefined;
 }
 
 const SourceParams = z.object({ key: z.string().min(1).max(64) });
 
 function service(options: SourcesRouteOptions): SourcesService {
   const resolved = options.sources();
+  if (resolved === undefined) {
+    throw new Error('source administration is not available on this backend');
+  }
+  return resolved;
+}
+
+function prompt(options: SourcesRouteOptions): ConnectPromptService {
+  const resolved = options.connectPrompt();
   if (resolved === undefined) {
     throw new Error('source administration is not available on this backend');
   }
@@ -60,6 +72,24 @@ export const sourcesRoutes =
     // session, so a professor cannot ask for them by any spelling of the URL.
     app.get('/sources/status', { schema: { response: { 200: SourceStatusResponse } } }, (request) =>
       service(options).statusView(requireSession(request).user),
+    );
+
+    // R74's product flow: the one-time "Connect your sources" step. Reading is
+    // open to anyone signed in — the screen decides whether to appear before it
+    // knows what the account may do — and finishing it is `source.manage`.
+    app.get(
+      '/sources/connect-prompt',
+      { schema: { response: { 200: SourceConnectPrompt } } },
+      (request) => {
+        requireSession(request);
+        return prompt(options).status();
+      },
+    );
+
+    app.post(
+      '/admin/sources/connect-prompt/seen',
+      { schema: { response: { 200: SourceConnectPrompt } } },
+      (request) => prompt(options).markSeen(contextOf(request)),
     );
 
     app.patch(

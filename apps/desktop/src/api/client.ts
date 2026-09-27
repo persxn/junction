@@ -69,6 +69,18 @@ export function resetApiTransport(): void {
   transport = ApiTransport.parse('FETCH');
 }
 
+/**
+ * Test seam: the state a machine with Local Network Access enforced reaches
+ * after its first request (finding F9).
+ *
+ * The app gets here by timing a `fetch` out, which a screen test would have to
+ * fake with a two-second wait; this is the same state without the wait, so
+ * `fallback.test.tsx` can drive real screens over the shell proxy (R78).
+ */
+export function useShellTransportForTests(): void {
+  transport = ApiTransport.parse('SHELL');
+}
+
 function requestHeaders(connection: Connection, hasBody: boolean): Record<string, string> {
   const headers: Record<string, string> = {
     [CLIENT_SECRET_HEADER]: connection.clientSecret,

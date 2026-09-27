@@ -33,27 +33,33 @@ export function NavRail({ collapsed, onToggle }: NavRailProps): React.JSX.Elemen
         width: collapsed ? 'var(--ci-rail-width-collapsed)' : 'var(--ci-rail-width)',
       }}
     >
-      <div className="flex items-center gap-2 px-2" style={{ height: 'var(--ci-topbar-height)' }}>
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-expanded={!collapsed}
-          aria-label={collapsed ? 'Expand the navigation' : 'Collapse the navigation'}
-          className="rounded-md p-2 text-fg-muted hover:bg-surface-hover"
-        >
-          {collapsed ? (
-            <PanelLeftOpen aria-hidden="true" className="size-4" />
-          ) : (
-            <PanelLeftClose aria-hidden="true" className="size-4" />
-          )}
-        </button>
-        {!collapsed && <span className="font-display font-semibold">CompIntel</span>}
-      </div>
+      {/* The brand and the collapse control live inside the landmark, not above
+          it: at the top level of a <div> they were content in no landmark at all,
+          which axe's `region` rule reports and which the shell tests used to hide
+          by scoping axe to the app container (M1 review fault 5). */}
+      <nav aria-label="Main" className="flex flex-col">
+        <div className="flex items-center gap-2 px-2" style={{ height: 'var(--ci-topbar-height)' }}>
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-expanded={!collapsed}
+            aria-label={collapsed ? 'Expand the navigation' : 'Collapse the navigation'}
+            className="rounded-md p-2 text-fg-muted hover:bg-surface-hover"
+          >
+            {collapsed ? (
+              <PanelLeftOpen aria-hidden="true" className="size-4" />
+            ) : (
+              <PanelLeftClose aria-hidden="true" className="size-4" />
+            )}
+          </button>
+          {!collapsed && <span className="font-display font-semibold">CompIntel</span>}
+        </div>
 
-      <nav aria-label="Main" className="flex flex-col gap-0.5 p-2">
-        {MAIN_NAV.map((item) => (
-          <RailLink key={item.id} item={item} collapsed={collapsed} />
-        ))}
+        <div className="flex flex-col gap-0.5 p-2">
+          {MAIN_NAV.map((item) => (
+            <RailLink key={item.id} item={item} collapsed={collapsed} />
+          ))}
+        </div>
       </nav>
 
       {adminItems.length > 0 && (

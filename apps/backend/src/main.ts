@@ -39,23 +39,10 @@ import {
 import { EventUserStateService } from './modules/events/user-state.js';
 import { createEventsModule } from './modules/events/wiring.js';
 import { createSearchModule } from './modules/search/wiring.js';
-import { SourceRecordsRepository } from './modules/sources/records.js';
-import { SourcesRepository } from './modules/sources/repository.js';
-import { SourcesService } from './modules/sources/service.js';
-import { seedDevCredentials } from './modules/sources/credentials.js';
-import { openSessionVault, sourceCredentials } from './modules/sources/vault.js';
-import { createSessionHooks } from './scraping/sessions.js';
-import { EventImportService } from './modules/events/import/service.js';
-import {
-  HttpCacheStore,
-  ScrapingHttp,
-  closeTransport,
-  undiciFetcher,
-} from './scraping/http/index.js';
+import { createSourcesModule } from './modules/sources/wiring.js';
 import { registerScrapeJobs } from './scraping/jobs.js';
-import { SnapshotStore } from './scraping/snapshots.js';
-import { SCRAPER_CONTACT_EMAIL } from './modules/org/settings.js';
-import { adapterRegistry, registerBuiltInAdapters } from './sources/registry.js';
+import { StreamHub } from './platform/stream.js';
+import { adapterRegistry } from './sources/registry.js';
 import './settings.js';
 
 /**
@@ -231,72 +218,30 @@ async function main(): Promise<void> {
       }
     };
 
-    // Event ingestion (§7, rulings R58-R61). The transport is the only place a
-    // socket is opened, and it is injected here and nowhere else: every test
-    // passes a fake, which is what makes "no test opens an internet socket"
-    // something the wiring guarantees rather than something a reviewer checks.
-    const scrapingHttp = new ScrapingHttp({
-      fetcher: undiciFetcher,
-      logger,
-      cache: new HttpCacheStore(db),
-      appVersion: config.appVersion,
-      contactEmail: () => settings.get(SCRAPER_CONTACT_EMAIL),
-      // A10/R44: nothing is contacted before the wizard has finished.
-      setupComplete: () => !setup.isRequired(),
-      hasNetworkInterface,
-    });
-    shutdown.register('resources', 'scraping-transport', closeTransport);
-    const snapshots = new SnapshotStore({ config, logger });
-    registerBuiltInAdapters(adapterRegistry, { geo: geocoder });
-    const sourcesRepository = new SourcesRepository(db);
-    const sourceRecords = new SourceRecordsRepository(db);
-    // WP-11: in --dev only, env vars may seed the CLIST credential (never logged).
-    if (seedDevCredentials(settings, config.dev, process.env)) {
-      logger.info('a CLIST credential was seeded from the environment (--dev)');
-    }
-    // R76: the shell's data key, or nothing — nothing is a supported state.
-    const sessionVault = openSessionVault({
+    // Event ingestion (§7, rulings R58-R61), and everything that reads a source:
+    // the transport, the adapters, the session vault (R76) and the services over
+    // them. `modules/sources/wiring.ts` holds the order they have to be built in.
+    //
+    // The SSE hub is created here rather than inside `buildApp` because a scrape
+    // run is announced on it (R86) and runs start before the first request: one
+    // hub, passed to both halves, is what keeps "one per process" true.
+    const streamHub = new StreamHub();
+    const sourcesModule = createSourcesModule({
+      db,
+      config,
       settings,
-      sessionKeyHex: config.sessionKeyHex,
-      sources: sourcesRepository.list(),
+      audit,
       logger,
-    });
-    const credentials = sourceCredentials(sessionVault);
-    const sessions = createSessionHooks(sessionVault);
-    const scrapeRuntime = {
-      http: scrapingHttp,
-      snapshots,
-      linker: eventsModule.linker,
-      credentials,
-      sessions,
-      setupComplete: () => !setup.isRequired(),
-    };
-    const imports = new EventImportService({
-      sources: sourcesRepository,
-      records: sourceRecords,
-      linker: eventsModule.linker,
-      provenance: eventsModule.provenance,
-      resolver: eventsModule.resolver,
+      shutdown,
       geocoder,
-      registry: adapterRegistry,
-      http: scrapingHttp,
-      audit,
-      logger,
-      snapshots,
-      credentials,
+      events: eventsModule,
+      setupComplete: () => !setup.isRequired(),
       onIngested: refreshVocabulary,
+      onRunFinished: (event) => {
+        streamHub.publish('source.run.finished', { ...event });
+      },
     });
-    const sourcesService = new SourcesService({
-      sources: sourcesRepository,
-      records: sourceRecords,
-      registry: adapterRegistry,
-      audit,
-      logger,
-      settings,
-      sessionKey: sessionVault.key,
-      runtime: scrapeRuntime,
-      onIngested: refreshVocabulary,
-    });
+    const sourcesService = sourcesModule.service;
 
     // Constructed before the HTTP layer so its `resources` hook is registered
     // even if the process is asked to stop during startup (R14); started only
@@ -312,14 +257,7 @@ async function main(): Promise<void> {
     const scrapeJobs = registerScrapeJobs(scheduler, {
       sources: sourcesService,
       registry: adapterRegistry,
-      runtime: {
-        records: sourceRecords,
-        http: scrapingHttp,
-        snapshots,
-        clock: systemClock,
-        logger,
-        linker: eventsModule.linker,
-      },
+      runtime: { ...sourcesModule.scrapeRuntime, clock: systemClock, logger },
       logger,
     });
     logger.info({ scrapeJobs, adapters: adapterRegistry.size }, 'scrape jobs registered');
@@ -337,7 +275,9 @@ async function main(): Promise<void> {
       setup: () => setup,
       users: () => users,
       sources: () => sourcesService,
-      imports: () => imports,
+      connectPrompt: () => sourcesModule.connectPrompt,
+      imports: () => sourcesModule.imports,
+      streamHub,
       review: () => eventsModule.review,
       search: () => searchModule,
       categories: () => categoriesModule.admin,

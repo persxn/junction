@@ -23,7 +23,6 @@ const ITEMS = Array.from({ length: 30 }, (_unused, index) =>
 );
 
 let api: FakeSearch;
-let container: HTMLElement;
 
 beforeEach(() => {
   resetApiTransport();
@@ -38,7 +37,7 @@ const cards = (): HTMLElement[] => screen.getAllByRole('article');
 
 async function openDrawer(index = 2): Promise<ReturnType<typeof userEvent.setup>> {
   const user = userEvent.setup();
-  ({ container } = await renderApp('/discover'));
+  await renderApp('/discover');
   await screen.findByRole('heading', { name: 'Event 1' });
   cards()[index]!.focus();
   await user.keyboard('{Enter}');
@@ -121,13 +120,5 @@ describe('the drawer', () => {
     expect(api.categorySets[1]).toHaveLength(2);
   });
 
-  it('is axe-clean with the drawer, the conflict panel and the freshness popover open', async () => {
-    const user = await openDrawer();
-    await screen.findByTestId('sources-disagree');
-    // A provenance disclosure open too — the panel a keyboard user reaches.
-    await user.click(screen.getByTestId('provenance-registrationDeadlineAt'));
-    await user.click(screen.getByTestId('freshness-pill'));
-    await screen.findByTestId('freshness-popover');
-    await expect(container).toBeAccessible();
-  });
+  // The axe pass with every overlay open lives in `EventDrawer.a11y.test.tsx` (R89).
 });

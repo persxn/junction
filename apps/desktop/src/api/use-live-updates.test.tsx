@@ -1,8 +1,10 @@
-import type { BackendConnection } from '@compintel/contracts';
+import type { BackendConnection, StreamEvent } from '@compintel/contracts';
+import { useQuery } from '@tanstack/react-query';
 import { screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { renderWithProviders } from '../testing/render.js';
+import { SOURCE_STATUS_KEY } from './event-detail.js';
 import { useLiveUpdates } from './use-live-updates.js';
 import type * as StreamModule from './stream.js';
 import type { StreamHandlers, StreamSubscription, StreamUnavailableReason } from './stream.js';
@@ -39,7 +41,33 @@ function fail(reason: StreamUnavailableReason): void {
   handlers.onUnavailable?.(reason);
 }
 
+function deliver(event: StreamEvent): void {
+  handlers.onEvent(event);
+}
+
+/** How many times the pill's query has been read; reset before every test. */
+let statusReads = 0;
+
+/**
+ * A stand-in for the freshness pill: the same query key, and a `queryFn` that
+ * counts. What R86 promises is that this query is re-read when a run ends, and
+ * counting the reads is the only way to see that from outside the hook.
+ */
+function PillHarness(): React.JSX.Element {
+  useLiveUpdates({ connection: CONNECTION, enabled: true, refresh: () => Promise.resolve() });
+  const status = useQuery({
+    queryKey: SOURCE_STATUS_KEY,
+    queryFn: () => {
+      statusReads += 1;
+      return Promise.resolve(statusReads);
+    },
+    staleTime: Infinity,
+  });
+  return <p>reads: {status.data ?? 0}</p>;
+}
+
 beforeEach(() => {
+  statusReads = 0;
   vi.useFakeTimers({ shouldAdvanceTime: true });
   close.mockReset();
   openStream.mockReset();
@@ -122,5 +150,30 @@ describe('live updates (rulings R30 and R36)', () => {
     await screen.findByText('signed in');
     view.unmount();
     expect(close).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * Ruling R86. The pill used to poll every minute because nothing published;
+   * now a finished run invalidates exactly its query and nothing else's.
+   */
+  it('re-reads the source status within one event of a run finishing', async () => {
+    renderWithProviders(<PillHarness />);
+    await screen.findByText('reads: 1');
+
+    deliver({
+      id: 1,
+      type: 'source.run.finished',
+      payload: { sourceKey: 'ctftime', outcome: 'SUCCESS', finishedAt: 1_759_000_000_000 },
+    });
+    await screen.findByText('reads: 2');
+  });
+
+  it('leaves the source status alone for an event that is not about a run', async () => {
+    renderWithProviders(<PillHarness />);
+    await screen.findByText('reads: 1');
+
+    deliver({ id: 1, type: 'job.progress', payload: { key: 'scrape:ctftime' } });
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(statusReads).toBe(1);
   });
 });

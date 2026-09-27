@@ -56,13 +56,73 @@ const ALLOWED_TAGS = [
 
 const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
   allowedTags: ALLOWED_TAGS,
-  // `href` only, and only to somewhere a browser may safely go.
+  // `href` only, and only to somewhere a browser may safely go. `mailto:`
+  // survives the sanitizer and is turned into text by the converter below, which
+  // is the only way to keep the address without keeping the link.
   allowedAttributes: { a: ['href'] },
   allowedSchemes: ['http', 'https', 'mailto'],
   // Text inside a dropped tag is kept; text inside these is not text.
   nonTextTags: ['style', 'script', 'textarea', 'option', 'noscript'],
   disallowedTagsMode: 'discard',
 };
+
+/**
+ * `<a href="mailto:cell@example.edu">Write to us</a>` becomes the address as
+ * text, never a link (WP-13 Q2, answered in the M1 review).
+ *
+ * A scraped `mailto:` is somebody's e-mail address, and D-29 says an address
+ * from a source is not stored. Keeping the link made it worse than useless: the
+ * redactor runs after the conversion, so what a professor read was
+ * `[[contact details…]](mailto:[contact details…])`. Reducing the link to its
+ * address here — after the sanitizer, before the redactor — leaves one
+ * placeholder in a sentence.
+ *
+ * It is a Turndown rule rather than a `transformTags` entry because
+ * `sanitize-html` drops the text that follows a tag whose contents it is asked
+ * to replace, so "write to <a…>x@y</a> or call …" lost the rest of the sentence.
+ */
+/**
+ * The two bits of a DOM node the rule needs. Declared here because the backend
+ * builds without the DOM library — `@types/turndown` types its nodes as
+ * `HTMLElement`, which resolves to nothing in this project.
+ */
+interface TagNode {
+  readonly nodeName: string;
+  getAttribute(name: string): string | null;
+}
+
+/** The address a `mailto:` href carries, or `undefined` for any other link. */
+function mailtoAddress(node: TagNode): string | undefined {
+  if (node.nodeName !== 'A') {
+    return undefined;
+  }
+  const match = /^\s*mailto:([^?]*)/i.exec(node.getAttribute('href') ?? '');
+  if (match === null) {
+    return undefined;
+  }
+  const address = match[1] ?? '';
+  try {
+    return decodeURIComponent(address).trim();
+  } catch {
+    // A malformed escape is not worth a warning; the raw text is the address.
+    return address.trim();
+  }
+}
+
+/**
+ * The assertion is at the object, not at each node: `Rule` types its nodes as the
+ * DOM `HTMLElement`, which resolves to nothing in a project built without the DOM
+ * library, so every use of a node inside would otherwise be an unchecked one.
+ * {@link TagNode} says what is actually touched.
+ */
+const MAILTO_AS_TEXT = {
+  filter: (node: TagNode) => mailtoAddress(node) !== undefined,
+  replacement: (content: string, node: TagNode) => {
+    const address = mailtoAddress(node);
+    // An empty `mailto:` is a link to nobody; the label is the better text.
+    return address === undefined || address === '' ? content : address;
+  },
+} as unknown as TurndownService.Rule;
 
 function turndown(): TurndownService {
   const service = new TurndownService({
@@ -73,6 +133,7 @@ function turndown(): TurndownService {
   });
   // A table would otherwise come out as a run of unseparated cell text.
   service.keep(['table', 'thead', 'tbody', 'tr', 'th', 'td']);
+  service.addRule('mailtoAsText', MAILTO_AS_TEXT);
   return service;
 }
 

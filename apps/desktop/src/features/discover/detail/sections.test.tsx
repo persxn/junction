@@ -76,8 +76,8 @@ describe('the facts grid and its provenance', () => {
   });
 
   it('is accessible', async () => {
-    const { container } = render(<FactsGrid event={detailFixture()} now={NOW} />);
-    await expect(container).toBeAccessible();
+    render(<FactsGrid event={detailFixture()} now={NOW} />);
+    await expect(document.body).toBeAccessible();
   });
 });
 

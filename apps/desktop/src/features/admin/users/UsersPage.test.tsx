@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { resetApiTransport } from '../../../api/client.js';
 import { renderWithProviders } from '../../../testing/render.js';
+import { installUsersApi, ONE_TIME } from '../../../testing/users-api.js';
 import { UsersPage } from './UsersPage.js';
 
 /**
@@ -12,100 +13,12 @@ import { UsersPage } from './UsersPage.js';
  * end up anywhere a later reader could find it.
  */
 
-const ADMIN = {
-  id: '0192f0c1-0000-7000-8000-000000000001',
-  email: 'admin@example.edu',
-  displayName: 'A. Administrator',
-  departmentId: null,
-  status: 'ACTIVE',
-  mustChangePassword: false,
-  roles: ['ADMINISTRATOR', 'PROFESSOR'],
-  lastLoginAt: '2026-09-20T09:00:00.000Z',
-  lockedUntil: null,
-  createdAt: '2026-09-20T08:00:00.000Z',
-  version: 1,
-};
-
-const PROFESSOR = {
-  ...ADMIN,
-  id: '0192f0c1-0000-7000-8000-000000000002',
-  email: 'professor@example.edu',
-  displayName: 'A. Professor',
-  roles: ['PROFESSOR'],
-  mustChangePassword: true,
-  lastLoginAt: null,
-  version: 3,
-};
-
-const ONE_TIME = 'Hx7kPq2mRt9vBn4W';
-
 const invoke = vi.hoisted(() => vi.fn());
 vi.mock('@tauri-apps/api/core', () => ({ invoke }));
 vi.mock('@tauri-apps/api/event', () => ({ listen: vi.fn() }));
 
-interface Recorded {
-  readonly method: string;
-  readonly path: string;
-  readonly body: Record<string, unknown> | undefined;
-}
-
-function backend(options: { users?: unknown[]; failCreate?: boolean } = {}): Recorded[] {
-  const calls: Recorded[] = [];
-  vi.stubGlobal(
-    'fetch',
-    vi.fn((url: string, init?: RequestInit) => {
-      const path = new URL(url).pathname;
-      const method = init?.method ?? 'GET';
-      calls.push({
-        method,
-        path,
-        body: typeof init?.body === 'string' ? (JSON.parse(init.body) as never) : undefined,
-      });
-
-      const json = (status: number, body: unknown): Response =>
-        ({
-          ok: status >= 200 && status < 300,
-          status,
-          text: () => Promise.resolve(JSON.stringify(body)),
-        }) as unknown as Response;
-
-      if (path === '/api/v1/admin/users' && method === 'GET') {
-        return Promise.resolve(json(200, { users: options.users ?? [ADMIN, PROFESSOR] }));
-      }
-      if (path === '/api/v1/admin/users' && method === 'POST') {
-        if (options.failCreate === true) {
-          return Promise.resolve(
-            json(409, {
-              type: 'urn:compintel:problem:CONFLICT',
-              title: 'That does not fit the current state',
-              detail: 'An account for taken@example.edu already exists.',
-              status: 409,
-              code: 'CONFLICT',
-              requestId: '0199a0d4-0000-7000-8000-000000000001',
-            }),
-          );
-        }
-        return Promise.resolve(
-          json(200, {
-            user: { ...PROFESSOR, email: 'new@example.edu', displayName: 'New Person' },
-            temporaryPassword: ONE_TIME,
-          }),
-        );
-      }
-      if (path.endsWith('/reset-password')) {
-        return Promise.resolve(json(200, { user: PROFESSOR, temporaryPassword: ONE_TIME }));
-      }
-      if (path.endsWith('/disable') || path.endsWith('/enable')) {
-        return Promise.resolve(json(200, { user: PROFESSOR }));
-      }
-      if (method === 'PATCH') {
-        return Promise.resolve(json(200, { user: PROFESSOR }));
-      }
-      return Promise.resolve(json(404, {}));
-    }),
-  );
-  return calls;
-}
+/** The fixtures and the stubbed API live in `testing/users-api.ts` (ruling R89). */
+const backend = installUsersApi;
 
 const user = (): ReturnType<typeof userEvent.setup> => userEvent.setup({ delay: null });
 
@@ -224,27 +137,4 @@ describe('the row actions', () => {
   });
 });
 
-describe('accessibility', () => {
-  it('has no axe violations on the list', async () => {
-    backend();
-    const { container } = renderWithProviders(<UsersPage />);
-    await screen.findByText('A. Administrator');
-    await expect(container).toBeAccessible();
-  });
-
-  it('has no axe violations with the add dialog open', async () => {
-    backend();
-    // The dialog is portalled to `document.body`, so the whole body is what has
-    // to be clean here — which means giving the page the `<main>` landmark the
-    // shell renders its routes into (AppShell.tsx), or axe flags the list as
-    // content outside any landmark.
-    const { baseElement } = renderWithProviders(
-      <main>
-        <UsersPage />
-      </main>,
-    );
-    await screen.findByText('A. Administrator');
-    await user().click(screen.getByRole('button', { name: /Add a person/ }));
-    await expect(baseElement).toBeAccessible();
-  });
-});
+// The axe passes over the list and the dialog live in `UsersPage.a11y.test.tsx` (R89).

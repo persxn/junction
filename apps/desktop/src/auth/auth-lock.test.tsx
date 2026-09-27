@@ -98,17 +98,6 @@ describe('auto-lock (§10.5)', () => {
 
     expect(await screen.findByRole('heading', { name: 'CompIntel is locked' })).toBeInTheDocument();
   });
-
-  it('has no axe violations on the lock screen', async () => {
-    const user = setup();
-    installFakeApi({ autoLockMinutes: AUTO_LOCK_MINUTES });
-    const { container } = renderWithProviders(<SessionGate connection={CONNECTION} />);
-    await signIn(user);
-
-    await vi.advanceTimersByTimeAsync(AUTO_LOCK_MINUTES * 60_000);
-    await screen.findByRole('heading', { name: 'CompIntel is locked' });
-    await expect(container).toBeAccessible();
-  });
 });
 
 describe('unlocking (ruling R37)', () => {
@@ -166,3 +155,5 @@ describe('unlocking (ruling R37)', () => {
     ).toBeInTheDocument();
   });
 });
+
+// The axe pass over the lock screen lives in `auth.a11y.test.tsx` (ruling R89).

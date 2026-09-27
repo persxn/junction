@@ -66,3 +66,19 @@ function defineSessionSettings(key: string, name: string): void {
 
 defineSessionSettings('devfolio', 'Devfolio');
 defineSessionSettings('unstop', 'Unstop');
+
+/**
+ * When the professor finished — or skipped — the one-time "Connect your sources"
+ * step (R74's product flow). Empty means it is still owed.
+ *
+ * It is a setting rather than a column because it is a fact about this
+ * installation, like the scraper's contact address, and because a professor who
+ * restores a backup on a new machine should be asked again: the sessions do not
+ * travel (R76), so neither should the "already done" flag.
+ */
+export const SOURCE_CONNECT_PROMPT_SEEN_AT = define('sources.connectPromptSeenAt', {
+  schema: z.string(),
+  default: '',
+  description:
+    'When the one-time “Connect your sources” step was finished or skipped, in epoch milliseconds.',
+});

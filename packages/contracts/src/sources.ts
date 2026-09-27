@@ -286,3 +286,23 @@ export const SetSourceSessionRequest = z
   })
   .strict();
 export type SetSourceSessionRequest = z.infer<typeof SetSourceSessionRequest>;
+
+/**
+ * `GET /sources/connect-prompt` — whether the one-time "Connect your sources"
+ * step is still owed (R74's product flow, R75's limits).
+ *
+ * It is one flag and a list, not a screen's worth of state: which sources can
+ * hold a session is already `GET /sources`, and what the professor has done
+ * about each one is already `GET /admin/sources/:key/session`. This answers only
+ * "has this installation been through the step yet", so the step can be shown
+ * once and then stay out of the way.
+ */
+export const SourceConnectPrompt = z
+  .object({
+    /** False once the professor has finished it or skipped it, for ever. */
+    pending: z.boolean(),
+    /** Source keys that may hold a session (R74), in list order. */
+    keys: z.array(z.string().min(1)),
+  })
+  .strict();
+export type SourceConnectPrompt = z.infer<typeof SourceConnectPrompt>;

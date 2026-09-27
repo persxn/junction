@@ -177,12 +177,12 @@ describe('adding an event by hand', () => {
   it('is usable with the keyboard alone and has no axe violations', async () => {
     backend();
     const user = userEvent.setup();
-    const { container } = renderWithProviders(<CreateEventPage />);
+    renderWithProviders(<CreateEventPage />);
     await user.tab();
     expect(screen.getByRole('button', { name: 'Add event' })).toHaveFocus();
     await user.keyboard('{Enter}');
     expect(screen.getByLabelText('Title')).toBeInTheDocument();
-    await expect(container).toBeAccessible();
+    await expect(document.body).toBeAccessible();
   });
 });
 
@@ -233,7 +233,7 @@ describe('importing from a link', () => {
   it('shows a Devpost link as its own state, not as an error toast (D-30)', async () => {
     backend({ preview: MANUAL_ONLY_PREVIEW });
     const user = userEvent.setup();
-    const { container } = renderWithProviders(<CreateEventPage />);
+    renderWithProviders(<CreateEventPage />);
     await user.click(screen.getByRole('button', { name: 'Import from a link' }));
     await user.type(screen.getByLabelText('Event page'), 'https://devpost.com/software/codestorm');
     await user.click(screen.getByRole('button', { name: 'Read the page' }));
@@ -243,7 +243,7 @@ describe('importing from a link', () => {
       "Devpost doesn't allow automated reading",
     );
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-    await expect(container).toBeAccessible();
+    await expect(document.body).toBeAccessible();
 
     await user.click(screen.getByRole('button', { name: 'Type the details in, with this link' }));
     expect(screen.getByLabelText('Official link')).toHaveValue(

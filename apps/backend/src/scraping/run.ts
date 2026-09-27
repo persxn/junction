@@ -1,19 +1,19 @@
-import type { ScrapeOutcome, ScrapeTrigger } from '@compintel/contracts';
-import type { Logger } from 'pino';
+import type { ScrapeTrigger } from '@compintel/contracts';
 
 import type { ScrapeRunRow, SourceRow } from '../db/schema/index.js';
-import { backoffDelayMs } from '../domain/scheduling.js';
-import { DEFAULT_BACKOFF_BASE_MS, DEFAULT_BACKOFF_MAX_MS } from '../jobs/types.js';
-import type { SourceRecordsRepository } from '../modules/sources/records.js';
-import type { SourcesRepository, RunTotals } from '../modules/sources/repository.js';
-import { nowMs, type Clock } from '../platform/time.js';
+import { nowMs } from '../platform/time.js';
 import type { SourceAdapter } from '../sources/types.js';
-import { AdapterFormatError, pausesSource, toRunFailure, type RunFailure } from './errors.js';
+import { AdapterFormatError, toRunFailure, type RunFailure } from './errors.js';
+import {
+  closeImmediately,
+  count,
+  finish,
+  type Counters,
+  type RunCloseDependencies,
+} from './finish.js';
 import type { ScrapingHttp, SourceCredential } from './http/index.js';
 import { processItem, type RecordLinker } from './items.js';
-import type { SnapshotStore } from './snapshots.js';
 import { policyRefusal } from './policy.js';
-import { recordSessionExpiry, type SessionHooks } from './sessions.js';
 import { missingCredentialDetail, sourceConfig, sourceRequestContext } from './source-row.js';
 
 /**
@@ -42,20 +42,16 @@ export const FAILED_BODY_RECORD = 'format-failure';
 /** How many detail fetches one run may make when the source does not say. */
 export { DEFAULT_DETAIL_CAP } from './source-row.js';
 
-export interface ScrapeRunDependencies {
-  readonly sources: SourcesRepository;
-  readonly records: SourceRecordsRepository;
+/** Closing a run lives in `finish.ts`; these are its names, re-exported. */
+export type { RunFinished, RunCloseDependencies } from './finish.js';
+
+export interface ScrapeRunDependencies extends RunCloseDependencies {
   readonly http: ScrapingHttp;
-  readonly snapshots?: SnapshotStore;
-  readonly clock: Clock;
-  readonly logger: Logger;
   readonly setupComplete: () => boolean;
   /** WP-10: turns each stored record into an event, in the item's transaction. */
   readonly linker?: RecordLinker;
   /** WP-11: a source's API credential from the secret settings, when it has one set. */
   readonly credentials?: (source: SourceRow) => SourceCredential | undefined;
-  /** WP-14/R74: the professor's own session, and what a refusal does to it. */
-  readonly sessions?: SessionHooks;
 }
 
 export interface ScrapeRunRequest {
@@ -63,14 +59,6 @@ export interface ScrapeRunRequest {
   readonly adapter: SourceAdapter;
   readonly trigger: ScrapeTrigger;
   readonly signal?: AbortSignal;
-}
-
-interface Counters {
-  itemsSeen: number;
-  itemsNew: number;
-  itemsUpdated: number;
-  itemsUnchanged: number;
-  itemsInvalid: number;
 }
 
 /** Runs one source once and returns the closed `scrape_runs` row. */
@@ -248,150 +236,4 @@ function keepFailedBody(deps: ScrapeRunDependencies, sourceKey: string, error: u
   }
   const ref = deps.snapshots?.write(sourceKey, FAILED_BODY_RECORD, error.raw);
   deps.logger.warn({ source: sourceKey, snapshot: ref }, 'the body that failed to parse was kept');
-}
-
-/** Bumps the counter an upsert outcome belongs to. */
-function count(counters: Counters, outcome: 'NEW' | 'UPDATED' | 'UNCHANGED'): void {
-  if (outcome === 'NEW') {
-    counters.itemsNew += 1;
-  } else if (outcome === 'UPDATED') {
-    counters.itemsUpdated += 1;
-  } else {
-    counters.itemsUnchanged += 1;
-  }
-}
-
-/** A run that never started: no requests, no state change, but a row all the same. */
-function closeImmediately(
-  deps: ScrapeRunDependencies,
-  source: SourceRow,
-  trigger: ScrapeTrigger,
-  startedAt: number,
-  outcome: Extract<ScrapeOutcome, 'BLOCKED_BY_POLICY' | 'SKIPPED_OFFLINE' | 'SKIPPED_BACKOFF'>,
-  failure: RunFailure | undefined,
-): ScrapeRunRow {
-  const run = deps.sources.openRun(source.id, trigger, startedAt);
-  const totals: RunTotals = {
-    outcome,
-    errorKind: failure?.kind ?? null,
-    errorDetail: failure?.message ?? null,
-    listingComplete: false,
-    requestsMade: 0,
-    itemsSeen: 0,
-    itemsNew: 0,
-    itemsUpdated: 0,
-    itemsUnchanged: 0,
-    itemsInvalid: 0,
-  };
-  deps.logger.info({ source: source.key, outcome }, 'scrape run skipped');
-  return deps.sources.closeRun(run.id, nowMs(deps.clock), startedAt, totals);
-}
-
-interface FinishInput {
-  readonly source: SourceRow;
-  readonly run: ScrapeRunRow;
-  readonly startedAt: number;
-  readonly counters: Counters;
-  readonly listingComplete: boolean;
-  /** Some detail was owed and not fetched; the walk may still be complete (§7.6). */
-  readonly degraded: boolean;
-  readonly failure: RunFailure | undefined;
-  readonly requestsMade: number;
-  readonly robotsFetches: number;
-}
-
-/**
- * Closes the run, updates `source_state` and applies §7.6.
- *
- * Which outcome a run gets is the one decision worth reading twice. A refusal by
- * the gate is `BLOCKED_BY_POLICY`, never a failure. A failure that happened
- * after some items had already been written is `PARTIAL`, because the data that
- * did land is real. A clean walk that the adapter did not call complete is also
- * `PARTIAL`: §7.6 counts only complete runs towards MISSING, and a run that
- * stopped at a cap has not proved anything is gone.
- */
-function finish(deps: ScrapeRunDependencies, input: FinishInput): ScrapeRunRow {
-  const { source, counters, failure } = input;
-  const finishedAt = nowMs(deps.clock);
-  const wrote = counters.itemsNew + counters.itemsUpdated + counters.itemsUnchanged > 0;
-
-  let outcome: ScrapeOutcome;
-  if (failure === undefined) {
-    outcome = input.listingComplete && !input.degraded ? 'SUCCESS' : 'PARTIAL';
-  } else if (failure.refusal !== undefined) {
-    outcome = 'BLOCKED_BY_POLICY';
-  } else {
-    outcome = wrote ? 'PARTIAL' : 'FAILED';
-  }
-
-  const row = deps.sources.closeRun(input.run.id, finishedAt, input.startedAt, {
-    outcome,
-    errorKind: failure?.kind ?? null,
-    errorDetail: failure?.message ?? null,
-    // A failed run never claims a complete walk, whatever the adapter reported
-    // before it threw.
-    listingComplete: failure === undefined && input.listingComplete,
-    requestsMade: input.requestsMade,
-    ...counters,
-  });
-
-  // R74: the site refused a signed-in read, so the session — not the source —
-  // is what stopped working. It is marked expired, the run says so in §7.7's
-  // words, and the failure streak and backoff are left exactly as they were.
-  const sessions = deps.sessions;
-  if (failure?.kind === 'BLOCKED' && sessions?.isActive(source) === true) {
-    recordSessionExpiry(
-      { sources: deps.sources, sessions, logger: deps.logger },
-      source,
-      finishedAt,
-    );
-  } else if (outcome === 'FAILED' || outcome === 'BLOCKED_BY_POLICY') {
-    const failures = deps.sources.state(source.id, input.startedAt).consecutiveFailures + 1;
-    const backoffUntil =
-      finishedAt + backoffDelayMs(failures, DEFAULT_BACKOFF_BASE_MS, DEFAULT_BACKOFF_MAX_MS);
-    deps.sources.recordFailure(
-      source.id,
-      finishedAt,
-      backoffUntil,
-      failure?.kind ?? 'UNKNOWN',
-      failure?.message ?? 'The run failed.',
-      failures,
-    );
-  } else {
-    if (deps.sessions?.isActive(source) === true) {
-      deps.sessions.verify(source, finishedAt);
-    }
-    const nextDueAt = finishedAt + source.cadenceMinutes * 60_000;
-    // §7.6 again: PARTIAL updates `last_run_at` but is not proof the source is
-    // healthy, so it does not stamp `last_success_at`.
-    deps.sources.recordSuccess(source.id, finishedAt, nextDueAt, outcome === 'SUCCESS');
-  }
-
-  // Only a complete run may age a record out (§7.6).
-  const marked = row.listingComplete ? deps.records.markMissing(source.id, finishedAt) : 0;
-
-  if (failure !== undefined && pausesSource(failure.kind)) {
-    deps.sources.pause(source.id, finishedAt);
-    deps.logger.warn(
-      { source: source.key, kind: failure.kind },
-      'the source format changed, so the source is paused until an administrator re-enables it',
-    );
-  }
-
-  deps.snapshots?.prune();
-  deps.logger.info(
-    {
-      source: source.key,
-      outcome,
-      errorKind: row.errorKind,
-      listingComplete: row.listingComplete,
-      requestsMade: row.requestsMade,
-      robotsFetches: input.robotsFetches,
-      items: counters,
-      markedMissing: marked,
-      durationMs: row.durationMs,
-    },
-    'scrape run finished',
-  );
-  return row;
 }

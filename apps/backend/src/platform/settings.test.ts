@@ -186,6 +186,9 @@ describe('module-owned definitions', () => {
       // WP-11's, declared by modules/sources — secret, never logged or exported.
       'sources.clist.apiKey',
       'sources.clist.apiUsername',
+      // pre-M2a's, declared by modules/sources: whether R74's one-time "Connect
+      // your sources" step has been through.
+      'sources.connectPromptSeenAt',
       // WP-14/R74's, one set per source that may hold the professor's own
       // session. The cookie and its capture time are secret; the state and the
       // last-verified time are what Source status shows.

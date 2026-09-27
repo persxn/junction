@@ -212,31 +212,4 @@ describe('the user menu', () => {
   });
 });
 
-describe('accessibility (the §19 acceptance criterion)', () => {
-  it.each(MAIN_NAV.map((item) => [item.label, item.path] as const))(
-    'has no axe violations on %s',
-    async (_label, path) => {
-      const { container } = await renderApp(path);
-      await expect(container).toBeAccessible();
-    },
-  );
-
-  it('has no axe violations with the rail collapsed', async () => {
-    const user = userEvent.setup();
-    const { container } = await renderApp();
-    await user.click(screen.getByRole('button', { name: 'Collapse the navigation' }));
-    await expect(container).toBeAccessible();
-  });
-
-  it('has no axe violations with the user menu open', async () => {
-    const user = userEvent.setup();
-    const { container } = await renderApp();
-    await user.click(screen.getByRole('button', { name: TEST_USER.displayName }));
-    await expect(container).toBeAccessible();
-  });
-
-  it('has no axe violations on an admin screen', async () => {
-    const { container } = await renderApp('/admin/users', { roles: ['ADMINISTRATOR'] });
-    await expect(container).toBeAccessible();
-  });
-});
+// The axe passes over every screen live in `AppShell.a11y.test.tsx` (R89).

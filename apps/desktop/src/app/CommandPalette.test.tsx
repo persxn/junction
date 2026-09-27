@@ -124,10 +124,6 @@ describe('the Ctrl+K palette (§16.3)', () => {
     });
   });
 
-  it('has no axe violations while it is open', async () => {
-    const user = userEvent.setup();
-    const { baseElement } = await renderApp();
-    await user.keyboard('{Control>}k{/Control}');
-    await expect(baseElement).toBeAccessible();
-  });
+  // The axe pass over the open palette lives in `CommandPalette.a11y.test.tsx`
+  // (ruling R89).
 });

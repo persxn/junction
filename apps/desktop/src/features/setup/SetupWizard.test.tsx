@@ -1,11 +1,17 @@
-import type { BackendConnection } from '@compintel/contracts';
 import { screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { resetApiTransport } from '../../api/client.js';
-import { renderWithProviders } from '../../testing/render.js';
-import { SetupWizard } from './SetupWizard.js';
+import {
+  fillTo,
+  installWizardApi,
+  installWizardShell,
+  nextStep,
+  renderWizard,
+  wizardUser,
+  WIZARD_DATA_DIR,
+  WIZARD_RECOVERY,
+} from '../../testing/wizard.js';
 
 /**
  * The wizard, driven the way a person drives it (rulings R39–R44).
@@ -18,150 +24,24 @@ import { SetupWizard } from './SetupWizard.js';
 /**
  * Every case here drives the whole nine-step wizard through `userEvent`, which
  * is ~a hundred keystrokes and a re-render each. Alone that takes well under a
- * second, but the full suite runs 69 files at once on this box and one of them
- * is hashing with Argon2id, so the default 5 s timeout turned this file into a
- * coin flip. The work is the same; only the budget is bigger.
+ * second, but the full suite runs sixty-odd files at once on this box and one of
+ * them is hashing with Argon2id, so the default 5 s timeout turned this file into
+ * a coin flip. Twenty seconds is the ceiling ruling R89 allows, and it was the
+ * axe passes — now in `SetupWizard.a11y.test.tsx` — that had pushed it past it.
  */
-vi.setConfig({ testTimeout: 30_000 });
-
-const CONNECTION: BackendConnection = {
-  baseUrl: 'http://127.0.0.1:52991',
-  clientSecret: 'a'.repeat(64),
-  generation: 2,
-};
-
-const DATA_DIR = 'C:\\CompIntel';
-
-const RECOVERY = {
-  recoveryCode: 'ABCDE-FGHJK-MNPQR-STVWX-YZ234-56789-ABCDE',
-  recoveryFileName: 'compintel-recovery-20260920.txt',
-  recoveryFile: 'CompIntel — backup recovery material\n…',
-};
+vi.setConfig({ testTimeout: 20_000 });
 
 const invoke = vi.hoisted(() => vi.fn());
 vi.mock('@tauri-apps/api/core', () => ({ invoke }));
 vi.mock('@tauri-apps/api/event', () => ({ listen: vi.fn(() => Promise.resolve(() => undefined)) }));
 
-/** The backend, as far as the wizard can tell. */
-function api(
-  options: { completeFails?: { code: string; title: string; detail: string } } = {},
-): void {
-  vi.stubGlobal(
-    'fetch',
-    vi.fn((url: string, init?: RequestInit) => {
-      const path = new URL(url).pathname;
-      const json = (status: number, body: unknown): Response =>
-        ({
-          ok: status >= 200 && status < 300,
-          status,
-          text: () => Promise.resolve(JSON.stringify(body)),
-        }) as unknown as Response;
-
-      if (path === '/api/v1/setup/check-path') {
-        const body = JSON.parse((init?.body ?? '{}') as string) as { path: string };
-        return Promise.resolve(
-          json(200, {
-            ok: !body.path.includes('bad'),
-            ...(body.path.includes('bad') ? { reason: 'NOT_WRITABLE' } : {}),
-            resolvedPath: body.path,
-            freeBytes: 250 * 1024 ** 3,
-          }),
-        );
-      }
-      if (path === '/api/v1/setup/complete') {
-        if (options.completeFails !== undefined) {
-          return Promise.resolve(
-            json(422, {
-              type: `urn:compintel:problem:${options.completeFails.code}`,
-              ...options.completeFails,
-              status: 422,
-              requestId: '0199a0d4-0000-7000-8000-000000000001',
-            }),
-          );
-        }
-        return Promise.resolve(json(200, RECOVERY));
-      }
-      return Promise.resolve(json(404, {}));
-    }),
-  );
-}
-
-/** The shell's two dialogs. */
-function shell(options: { folder?: string | null } = {}): void {
-  invoke.mockImplementation((command: string, args?: { folder?: string; fileName?: string }) => {
-    if (command === 'pick_folder') {
-      return Promise.resolve(options.folder === undefined ? 'D:\\Backups' : options.folder);
-    }
-    if (command === 'save_text_file') {
-      return Promise.resolve(`${String(args?.folder)}\\${String(args?.fileName)}`);
-    }
-    return Promise.reject(new Error(`unexpected command ${command}`));
-  });
-}
-
-function render(onFinished = vi.fn()): { onFinished: ReturnType<typeof vi.fn> } {
-  renderWithProviders(
-    <SetupWizard connection={CONNECTION} dataDir={DATA_DIR} onFinished={onFinished} />,
-  );
-  return { onFinished };
-}
-
-// `delay: null` keeps a nine-step wizard's worth of typing under a second.
-const user = (): ReturnType<typeof userEvent.setup> => userEvent.setup({ delay: null });
-
-async function type(label: string | RegExp, value: string): Promise<void> {
-  await user().type(screen.getByLabelText(label), value);
-}
-
-async function next(name = /Next|Get started|Set up CompIntel/): Promise<void> {
-  await user().click(screen.getByRole('button', { name }));
-}
-
-/** Fills everything up to, but not including, the step named. */
-async function fillTo(
-  step: 'campus' | 'administrator' | 'contact' | 'folders' | 'passphrase' | 'submit',
-): Promise<void> {
-  await next(/Get started/);
-  await type('Institution', 'Example Institute of Technology');
-  await type('Department', 'Computer Science and Engineering');
-  if (step === 'campus') {
-    return;
-  }
-  await next();
-
-  await type('Campus name', 'Main Campus');
-  await type('Latitude', '10.7594');
-  await type('Longitude', '78.8149');
-  if (step === 'administrator') {
-    return;
-  }
-  await next();
-
-  await type('Your name', 'A. Administrator');
-  await type('E-mail', 'admin@example.edu');
-  await type('Password', 'an-admin-password');
-  await type('Password again', 'an-admin-password');
-  if (step === 'contact') {
-    return;
-  }
-  await next();
-
-  await type(/Contact e-mail/, 'compintel@example.edu');
-  if (step === 'folders') {
-    return;
-  }
-  await next();
-
-  await user().click(screen.getByRole('button', { name: /Choose…/ }));
-  await screen.findByText(/Looks good/);
-  if (step === 'passphrase') {
-    return;
-  }
-  await next();
-
-  await type('Backup passphrase', 'a-different-passphrase');
-  await type('Passphrase again', 'a-different-passphrase');
-}
+/** Everything that drives the wizard lives in `testing/wizard.tsx` (ruling R89). */
+const api = installWizardApi;
+const render = renderWizard;
+const user = wizardUser;
+const next = nextStep;
+const shell = (options: { folder?: string | null } = {}): void =>
+  installWizardShell(invoke, options);
 
 beforeEach(() => {
   invoke.mockReset();
@@ -213,7 +93,7 @@ describe('the wizard cannot be skipped (the §19 criterion)', () => {
     await fillTo('folders');
     await next();
     const dataDir = screen.getByLabelText('Data folder');
-    expect(dataDir).toHaveValue(DATA_DIR);
+    expect(dataDir).toHaveValue(WIZARD_DATA_DIR);
     expect(dataDir).toHaveAttribute('readonly');
   });
 });
@@ -261,7 +141,7 @@ describe('the recovery step (rulings R41 and R42)', () => {
     render();
     await reachRecovery();
 
-    expect(screen.getByText(RECOVERY.recoveryCode)).toBeInTheDocument();
+    expect(screen.getByText(WIZARD_RECOVERY.recoveryCode)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /I have saved both/ })).toBeDisabled();
     // There is no way back: the installation has already been written.
     expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
@@ -295,8 +175,8 @@ describe('the recovery step (rulings R41 and R42)', () => {
 
     expect(invoke).toHaveBeenCalledWith('save_text_file', {
       folder: 'D:\\Backups',
-      fileName: RECOVERY.recoveryFileName,
-      contents: RECOVERY.recoveryFile,
+      fileName: WIZARD_RECOVERY.recoveryFileName,
+      contents: WIZARD_RECOVERY.recoveryFile,
       overwrite: true,
     });
   });
@@ -350,27 +230,4 @@ describe('the step rail', () => {
   });
 });
 
-describe('accessibility (the §19 criterion)', () => {
-  it.each([
-    ['welcome', (): Promise<void> => Promise.resolve()],
-    ['organization', async (): Promise<void> => next(/Get started/)],
-    ['campus', async (): Promise<void> => fillTo('campus').then(() => next())],
-    ['folders', async (): Promise<void> => fillTo('folders').then(() => next())],
-  ])('has no axe violations on %s', async (_name, reach) => {
-    const { container } = renderWithProviders(
-      <SetupWizard connection={CONNECTION} dataDir={DATA_DIR} onFinished={vi.fn()} />,
-    );
-    await reach();
-    await expect(container).toBeAccessible();
-  });
-
-  it('has no axe violations on the recovery step', async () => {
-    const { container } = renderWithProviders(
-      <SetupWizard connection={CONNECTION} dataDir={DATA_DIR} onFinished={vi.fn()} />,
-    );
-    await fillTo('submit');
-    await next(/Set up CompIntel/);
-    await screen.findByRole('heading', { name: 'Save your recovery material' });
-    await expect(container).toBeAccessible();
-  });
-});
+// The axe passes over each step live in `SetupWizard.a11y.test.tsx` (ruling R89).

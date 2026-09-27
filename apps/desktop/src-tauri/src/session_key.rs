@@ -170,7 +170,7 @@ pub fn ensure(data_dir: &Path) -> Result<String, String> {
 mod tests {
     use super::*;
 
-    /// Scratch under `%LOCALAPPDATA%\CompIntel-dev	est-tmp`, never the system
+    /// Scratch under `%LOCALAPPDATA%\CompIntel-dev\test-tmp`, never the system
     /// temp folder — the same rule the rest of the repository's tests follow.
     fn scratch(name: &str) -> PathBuf {
         let base = std::env::var("LOCALAPPDATA")

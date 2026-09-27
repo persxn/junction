@@ -52,15 +52,36 @@ async function stubShell(page: Page): Promise<void> {
   );
 }
 
-test('sign in → Discover → two filters → J/K/Enter → Save → Undo', async ({ page }) => {
+/**
+ * Signing in, and then R74's one-time "Connect your sources" step if this
+ * installation has not been through it yet (pre-M2a item 5).
+ *
+ * The step is the first thing an administrator meets after the wizard, so the
+ * smoke meets it too. Going through it here is the real-browser evidence that it
+ * appears once and then stands between nobody and the app: the second spec signs
+ * in to the same backend and never sees it again.
+ */
+async function signIn(page: Page): Promise<void> {
   const env = readEnvironment();
+  await page.getByLabel('Email').fill(env.email);
+  await page.getByLabel('Password').fill(env.password);
+  await page.getByRole('button', { name: 'Sign in' }).click();
+
+  const connect = page.getByRole('heading', { name: 'Connect your sources' });
+  const rail = page.getByRole('navigation', { name: 'Main' });
+  await expect(connect.or(rail).first()).toBeVisible();
+  if (await connect.isVisible()) {
+    await page.getByRole('button', { name: 'Skip for now' }).click();
+  }
+  await expect(rail).toBeVisible();
+}
+
+test('sign in → Discover → two filters → J/K/Enter → Save → Undo', async ({ page }) => {
   await stubShell(page);
   await page.goto('/');
 
   // Sign in with the account the real setup wizard created.
-  await page.getByLabel('Email').fill(env.email);
-  await page.getByLabel('Password').fill(env.password);
-  await page.getByRole('button', { name: 'Sign in' }).click();
+  await signIn(page);
 
   // Discover, from the rail.
   await page
@@ -125,13 +146,10 @@ test('sign in → Discover → two filters → J/K/Enter → Save → Undo', asy
  * back exactly where it was.
  */
 test('the conflict fixture opens a drawer that says "Sources disagree"', async ({ page }) => {
-  const env = readEnvironment();
   await stubShell(page);
   await page.goto('/');
 
-  await page.getByLabel('Email').fill(env.email);
-  await page.getByLabel('Password').fill(env.password);
-  await page.getByRole('button', { name: 'Sign in' }).click();
+  await signIn(page);
 
   // Find the seeded fixture by name rather than by id: the search box is the
   // path a professor actually takes.

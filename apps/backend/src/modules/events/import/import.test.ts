@@ -1,4 +1,4 @@
-import type { ManualEventInput } from '@compintel/contracts';
+import { MANUAL_URL_PREFIX, type ManualEventInput } from '@compintel/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { auditLog, eventOverrides, sourceRecords } from '../../../db/schema/index.js';
@@ -382,6 +382,30 @@ describe('manual entry (§10.2)', () => {
   it('audits the creation with the actor, and never the whole record', () => {
     harness.service.createManual(context, MANUAL);
     expect(auditActions()).toContain('event.created.manual');
+  });
+
+  /**
+   * M1 review fault 6. A manual event with no link of its own is recorded under
+   * the reserved `.invalid` URL, which is a key and not a page: the drawer must
+   * never offer it. The check is on the API boundary rather than on the screen,
+   * because a UI-side filter is one forgotten component away from leaking it.
+   */
+  it('never hands out the reserved .invalid URL for an event with no link', () => {
+    const { officialUrl: _officialUrl, ...noLinks } = MANUAL;
+    const saved = harness.service.createManual(context, noLinks);
+
+    const stored = harness.database.db.drizzle.select().from(sourceRecords).all();
+    expect(stored.some((row) => row.url.startsWith(MANUAL_URL_PREFIX))).toBe(true);
+
+    const shown = harness.events.detailRepo.sourcesOf(saved.eventId);
+    expect(shown).toHaveLength(1);
+    expect(shown[0]?.key).toBe('manual');
+    expect(shown[0]?.url).toBeNull();
+  });
+
+  it('still hands out a real URL when the professor gave one', () => {
+    const saved = harness.service.createManual(context, MANUAL);
+    expect(harness.events.detailRepo.sourcesOf(saved.eventId)[0]?.url).toBe(MANUAL.officialUrl);
   });
 });
 

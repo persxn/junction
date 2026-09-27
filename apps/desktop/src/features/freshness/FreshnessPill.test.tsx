@@ -205,11 +205,9 @@ describe('the freshness pill', () => {
       updatedAt: new Date(NOW - 4 * MINUTE).toISOString(),
       offline: false,
     });
-    const { container } = renderWithProviders(
-      <FreshnessPill defaultOpen refetchIntervalMs={600_000} />,
-    );
+    renderWithProviders(<FreshnessPill defaultOpen refetchIntervalMs={600_000} />);
     await screen.findByTestId('freshness-popover');
     await screen.findByText('CTFtime');
-    await expect(container).toBeAccessible();
+    await expect(document.body).toBeAccessible();
   });
 });

@@ -17,7 +17,7 @@ import {
 import { toStatus } from '../modules/sources/mappers.js';
 import { AdapterFormatError } from './errors.js';
 import { TransportError } from './http/index.js';
-import { runScrape, type ScrapeRunDependencies } from './run.js';
+import { runScrape, type RunFinished, type ScrapeRunDependencies } from './run.js';
 
 /**
  * The orchestrator, against a real migrated database and a fake transport.
@@ -47,7 +47,12 @@ afterEach(() => {
 
 function deps(
   transport: FakeTransport,
-  options: { online?: boolean; setupComplete?: boolean } = {},
+  options: {
+    online?: boolean;
+    setupComplete?: boolean;
+    /** R86: where the announcements land, when a case is about them. */
+    announced?: RunFinished[];
+  } = {},
 ): ScrapeRunDependencies {
   return {
     sources: new SourcesRepository(database.db),
@@ -61,6 +66,13 @@ function deps(
     clock,
     logger: silentLogger,
     setupComplete: () => options.setupComplete ?? true,
+    ...(options.announced === undefined
+      ? {}
+      : {
+          onRunFinished: (event: RunFinished) => {
+            options.announced?.push(event);
+          },
+        }),
   };
 }
 
@@ -585,5 +597,59 @@ describe('the run row itself', () => {
     expect(row?.finishedAt).not.toBeNull();
     // An unexpected throw is UNKNOWN, not a network problem it never had.
     expect(row?.errorKind).toBe('UNKNOWN');
+  });
+});
+
+/**
+ * Ruling R86: a run that ended says so, whatever "ended" meant.
+ *
+ * The skipped case is the one worth having. It is tempting to announce only the
+ * runs that did something, but a run skipped for being offline still moves the
+ * source's last-run time, so a freshness pill that did not hear about it would
+ * go on claiming the source was overdue.
+ */
+describe('announcing a finished run (R86)', () => {
+  it('announces a successful run once, with the key, the outcome and the time', async () => {
+    const announced: RunFinished[] = [];
+    const source = insertSource(database.db);
+    const run = await runScrape(deps(ALLOWING_TRANSPORT(), { announced }), {
+      source,
+      adapter: testAdapter({ fetches: [LISTING], items: [listingItem('a')] }),
+      trigger: 'SCHEDULE',
+    });
+    expect(announced).toStrictEqual([
+      { sourceKey: source.key, outcome: 'SUCCESS', finishedAt: run.finishedAt },
+    ]);
+  });
+
+  it('announces a run that never started, too', async () => {
+    const announced: RunFinished[] = [];
+    const source = insertSource(database.db);
+    const run = await runScrape(deps(ALLOWING_TRANSPORT(), { announced, online: false }), {
+      source,
+      adapter: testAdapter({ fetches: [LISTING] }),
+      trigger: 'SCHEDULE',
+    });
+    expect(run.outcome).toBe('SKIPPED_OFFLINE');
+    expect(announced).toStrictEqual([
+      { sourceKey: source.key, outcome: 'SKIPPED_OFFLINE', finishedAt: run.finishedAt },
+    ]);
+  });
+
+  it('survives a subscriber that throws: the run is already committed', async () => {
+    const source = insertSource(database.db);
+    const dependencies: ScrapeRunDependencies = {
+      ...deps(ALLOWING_TRANSPORT()),
+      onRunFinished: () => {
+        throw new Error('the socket went away');
+      },
+    };
+    const run = await runScrape(dependencies, {
+      source,
+      adapter: testAdapter({ fetches: [LISTING], items: [listingItem('a')] }),
+      trigger: 'SCHEDULE',
+    });
+    expect(run.outcome).toBe('SUCCESS');
+    expect(runsOf(source)).toHaveLength(1);
   });
 });

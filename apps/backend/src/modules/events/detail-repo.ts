@@ -1,3 +1,4 @@
+import { isManualUrl } from '@compintel/contracts';
 import type { EventCategoryDetail, EventSourceDetail } from '@compintel/contracts';
 import { and, asc, desc, eq } from 'drizzle-orm';
 
@@ -27,9 +28,16 @@ export class EventDetailRepository {
     this.#db = db;
   }
 
-  /** Every source that lists the event, most trusted first, with its attribution. */
+  /**
+   * Every source that lists the event, most trusted first, with its attribution.
+   *
+   * A manual entry's URL is the reserved `.invalid` placeholder, which is a
+   * record key rather than a page anybody can open, so it leaves here as `null`.
+   * Doing it at this boundary means no screen, export or summary can show it by
+   * forgetting to check (M1 review fault 6).
+   */
   sourcesOf(eventId: string): EventSourceDetail[] {
-    return this.#db.drizzle
+    const rows = this.#db.drizzle
       .select({
         key: sources.key,
         name: sources.name,
@@ -45,6 +53,7 @@ export class EventDetailRepository {
       .where(eq(sourceRecords.eventId, eventId))
       .orderBy(desc(sources.trustRank), asc(sources.key))
       .all();
+    return rows.map((row) => (isManualUrl(row.url) ? { ...row, url: null } : row));
   }
 
   /**
