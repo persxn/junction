@@ -1,6 +1,7 @@
 import {
   ADAPTER_KINDS,
   COMPLIANCE_STATUSES,
+  CREDENTIAL_STATES,
   MATCH_METHODS,
   PRESENCES,
   SCRAPE_ERROR_KINDS,
@@ -8,6 +9,7 @@ import {
   SCRAPE_TRIGGERS,
   type AdapterKind,
   type ComplianceStatus,
+  type CredentialState,
   type MatchMethod,
   type Presence,
   type ScrapeErrorKind,
@@ -117,9 +119,41 @@ export const sourceState = sqliteTable(
     backoffUntil: integer('backoff_until'),
     lastErrorKind: text('last_error_kind').$type<ScrapeErrorKind>(),
     lastErrorMessage: text('last_error_message'),
+    /**
+     * R79: finished runs in a row that the site refused (403/WAF). The third
+     * sets `compliance_status = BLOCKED`; any other finished run resets it.
+     * Skipped runs and credential failures (R80) leave it alone.
+     */
+    consecutiveBlocked: integer('consecutive_blocked').notNull().default(0),
+    /**
+     * R79: the verdict a person reached before three blocks overrode it, so an
+     * administrator's re-enable restores *that* rather than inventing one. Null
+     * for every source R79 has not blocked.
+     */
+    verdictBeforeBlock: text('verdict_before_block').$type<ComplianceStatus>(),
+    /** R80: the source's API key was refused. Cleared when a new one is stored. */
+    credentialState: text('credential_state').$type<CredentialState>(),
+    /**
+     * R79/R80: a standing sentence Source status shows instead of the outcome's
+     * — "your session expired", "three blocks in a row". Set by the event,
+     * cleared by the person's act that answers it, and untouched by runs in
+     * between, which is why it is not `last_error_message`.
+     */
+    notice: text('notice'),
   },
   (table) => [
     index('source_state_next_due_at_idx').on(table.nextDueAt),
+    check('source_state_consecutive_blocked_check', sql.raw(`"consecutive_blocked" >= 0`)),
+    check(
+      'source_state_verdict_before_block_check',
+      sql.raw(
+        `"verdict_before_block" is null or "verdict_before_block" in (${quoted(COMPLIANCE_STATUSES)})`,
+      ),
+    ),
+    check(
+      'source_state_credential_state_check',
+      sql.raw(`"credential_state" is null or "credential_state" in (${quoted(CREDENTIAL_STATES)})`),
+    ),
     check(
       'source_state_last_error_kind_check',
       sql.raw(`"last_error_kind" is null or "last_error_kind" in (${quoted(SCRAPE_ERROR_KINDS)})`),

@@ -52,6 +52,10 @@ export interface RunFailure {
   readonly refusal: GateRefusal | undefined;
   /** True for PARSE/SCHEMA_CHANGED, which switch the source off (§7.7). */
   readonly pausesSource: boolean;
+  /** R80: the site refused this credential; a source state, not a failure. */
+  readonly credential?: 'SESSION' | 'API_KEY' | undefined;
+  /** The HTTP status, when the failure was an answer rather than silence. */
+  readonly status?: number | undefined;
 }
 
 /** Kinds that pause a source rather than backing it off. */
@@ -74,6 +78,8 @@ export function toRunFailure(error: unknown): RunFailure {
       message: error.message,
       refusal: error.refusal,
       pausesSource: false,
+      credential: error.credential,
+      status: error.status,
     };
   }
   if (error instanceof AdapterFormatError) {

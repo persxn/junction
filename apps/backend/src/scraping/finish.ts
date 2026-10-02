@@ -9,7 +9,8 @@ import type { SourcesRepository, RunTotals } from '../modules/sources/repository
 import { nowMs, type Clock } from '../platform/time.js';
 import type { RunFailure } from './errors.js';
 import { pausesSource } from './errors.js';
-import { recordSessionExpiry, type SessionHooks } from './sessions.js';
+import type { SessionHooks } from './sessions.js';
+import { countBlocks, recordRefusedKey, recordRefusedSession } from './standing.js';
 import type { SnapshotStore } from './snapshots.js';
 
 /**
@@ -165,7 +166,9 @@ export function finish(deps: RunCloseDependencies, input: FinishInput): ScrapeRu
   let outcome: ScrapeOutcome;
   if (failure === undefined) {
     outcome = input.listingComplete && !input.degraded ? 'SUCCESS' : 'PARTIAL';
-  } else if (failure.refusal !== undefined) {
+  } else if (failure.refusal !== undefined || (failure.credential !== undefined && !wrote)) {
+    // R80: a refused credential with nothing read is the same state as a
+    // missing one (WP-11) — the source is not readable until a person acts.
     outcome = 'BLOCKED_BY_POLICY';
   } else {
     outcome = wrote ? 'PARTIAL' : 'FAILED';
@@ -182,18 +185,25 @@ export function finish(deps: RunCloseDependencies, input: FinishInput): ScrapeRu
     ...counters,
   });
 
-  // R74: the site refused a signed-in read, so the session — not the source —
-  // is what stopped working. It is marked expired, the run says so in §7.7's
-  // words, and the failure streak and backoff are left exactly as they were.
-  const sessions = deps.sessions;
-  if (failure !== undefined && input.sessionRejected && sessions !== undefined) {
-    recordSessionExpiry(
-      { sources: deps.sources, sessions, logger: deps.logger },
-      source,
-      finishedAt,
-    );
+  // R79 counts against the streak as it stood before this run.
+  const before = deps.sources.state(source.id, input.startedAt);
+  const standing = { sources: deps.sources, sessions: deps.sessions, logger: deps.logger };
+  if (failure?.credential !== undefined) {
+    // R80: the credential — not the site — stopped working. No backoff, no
+    // streak, no R79 count; Source status says what to do about it.
+    if (failure.credential === 'API_KEY') {
+      recordRefusedKey(standing, source, failure, finishedAt);
+    } else {
+      deps.sources.recordBlocked(
+        source.id,
+        finishedAt,
+        finishedAt + source.cadenceMinutes * 60_000,
+        failure.kind,
+        failure.message,
+      );
+    }
   } else if (outcome === 'FAILED' || outcome === 'BLOCKED_BY_POLICY') {
-    const failures = deps.sources.state(source.id, input.startedAt).consecutiveFailures + 1;
+    const failures = before.consecutiveFailures + 1;
     const backoffUntil =
       finishedAt + backoffDelayMs(failures, DEFAULT_BACKOFF_BASE_MS, DEFAULT_BACKOFF_MAX_MS);
     deps.sources.recordFailure(
@@ -214,6 +224,11 @@ export function finish(deps: RunCloseDependencies, input: FinishInput): ScrapeRu
     // healthy, so it does not stamp `last_success_at`.
     deps.sources.recordSuccess(source.id, finishedAt, nextDueAt, outcome === 'SUCCESS');
   }
+
+  if (input.sessionRejected) {
+    recordRefusedSession(standing, source, finishedAt);
+  }
+  countBlocks(standing, source, failure, before.consecutiveBlocked, finishedAt);
 
   // Only a complete run may age a record out (§7.6).
   const marked = row.listingComplete ? deps.records.markMissing(source.id, finishedAt) : 0;

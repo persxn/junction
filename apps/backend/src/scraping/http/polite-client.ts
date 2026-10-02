@@ -4,18 +4,17 @@ import type { Logger } from 'pino';
 import { assessRequest, effectiveDelayMs, refusalErrorKind } from '../../domain/scraping/gate.js';
 import type { RobotsVerdict } from '../../domain/scraping/gate.js';
 import type { Clock } from '../../platform/time.js';
-import { grantSignedIn, retryDelay, statusError } from './attempt-rules.js';
+import { credentialRefused, grantSignedIn, retryDelay, statusError } from './attempt-rules.js';
 import type { ValidatorStore } from './cache.js';
 import { asTransportError, isLoginRedirect } from './classify.js';
 import { hostKey } from './queue.js';
 import type { HostQueue } from './queue.js';
 import { probeReachability } from './reachability.js';
-import { frozen, header, readCapped, requestHeaders } from './read.js';
+import { notModifiedResponse, requestHeaders, storedResponse } from './read.js';
 import type { RobotsCache } from './robots.js';
 import { newRunLedger, type RunLedger } from './run-ledger.js';
 import {
   CONNECT_TIMEOUT_MS,
-  MAX_RESPONSE_BYTES,
   MAX_RETRIES,
   ScrapeRequestError,
   TOTAL_TIMEOUT_MS,
@@ -37,16 +36,13 @@ import {
  * one-in-flight rule. Only then is a socket opened, and only through the
  * injected `Fetcher`.
  *
- * The retry rules are §7.2's, not a general-purpose HTTP client's. A 403 is
- * answered once, with the same User-Agent, and recorded `BLOCKED` (R60). A TLS
- * failure is answered once and never worked around. A 429 or 503 is obeyed:
- * `Retry-After` is honoured when it fits in the run, and reported as
- * `RATE_LIMITED` when it does not.
+ * The retry rules are §7.2's: a 403 is answered once, same User-Agent,
+ * `BLOCKED` (R60); TLS is never worked around; 429/503 honour `Retry-After`
+ * when it fits in the run. A refused credential is R80's (`#rejected`).
  *
- * R75 is enforced here rather than trusted to the adapter: each request is
- * `anonymous` unless it asks to be `signed-in` *and* the client it was made on
- * is a view the orchestrator opened for targeted reading (see
- * {@link PoliteHttpClient.signedInView}). A listing walk's client never is.
+ * R75 is enforced here, not trusted to the adapter: a request is `anonymous`
+ * unless it asks for `signed-in` *and* is made on a view the orchestrator
+ * opened for targeted reading ({@link PoliteHttpClient.signedInView}).
  */
 
 /** What the client is allowed to spend on one run. */
@@ -291,7 +287,7 @@ export class PoliteHttpClient {
   ): Promise<PoliteResponse> {
     const target = url.toString();
     const conditional = options.conditional === true ? this.#env.cache?.get(target) : undefined;
-    const { headers, sentSession } = requestHeaders({
+    const { headers, sentSession, sentCredential } = requestHeaders({
       host: url.hostname,
       userAgent: this.#env.userAgent(),
       accept: options.accept,
@@ -333,60 +329,52 @@ export class PoliteHttpClient {
       });
     }
 
-    const now = this.#env.clock.now().getTime();
     if (response.status === 304) {
-      this.#env.cache?.touch(target, now);
-      return frozen({
-        status: 304,
-        url: target,
-        headers: response.headers,
-        body: new Uint8Array(0),
-        notModified: true,
-        contentHash: '',
-      });
+      return notModifiedResponse(this.#env.cache, response, target, this.#env.clock.now());
     }
     if (response.status >= 400) {
-      if (sentSession && (response.status === 401 || response.status === 403)) {
-        this.#ledger.sessionRejected = true;
+      const refused = await credentialRefused(response, {
+        session: sentSession,
+        credential: sentCredential,
+      });
+      if (refused !== undefined) {
+        throw this.#rejected(
+          refused,
+          response.status,
+          `${method} ${target} answered ${response.status}`,
+        );
       }
       throw statusError(response, target, method, this.#env.clock.now());
     }
     if (sentSession && isLoginRedirect(target, response.url)) {
-      this.#ledger.sessionRejected = true;
-      // R74: the site answered a signed-in read by sending us to its sign-in
-      // page, which is a 200 and would otherwise be parsed as an empty listing.
-      // It means the same thing a 401 does, so it is reported the same way and
-      // the run marks the session expired.
-      throw new ScrapeRequestError({
-        kind: 'BLOCKED',
-        status: response.status,
-        message: `${method} ${target} was redirected to a sign-in page, so the stored session is no longer valid.`,
-      });
+      // R74: a signed-in read sent to the sign-in page is a 200 that means what
+      // a 401 does, and would otherwise be parsed as an empty listing.
+      const message = `${method} ${target} was redirected to a sign-in page`;
+      throw this.#rejected('SESSION', response.status, message);
     }
 
-    const { body, contentHash } = await readCapped(response, MAX_RESPONSE_BYTES).catch(
-      (error: unknown) => {
-        const transport = asTransportError(error);
-        throw new ScrapeRequestError({
-          kind: transport.kind,
-          message: `${method} ${target} failed while reading: ${transport.message}`,
-          cause: error,
-        });
-      },
-    );
-    this.#env.cache?.put(
-      target,
-      { etag: header(response, 'etag'), lastModified: header(response, 'last-modified') },
-      contentHash,
-      now,
-    );
-    return frozen({
-      status: response.status,
-      url: response.url,
-      headers: response.headers,
-      body,
-      notModified: false,
-      contentHash,
+    return storedResponse(this.#env.cache, response, target, method, this.#env.clock.now());
+  }
+
+  /**
+   * R80: the site refused the credential. It is not offered again this run; a
+   * refused session falls back to an anonymous read (see `retryDelay`), a
+   * refused API key ends the request. `HTTP_4XX`, never `BLOCKED`, so R79's
+   * count and the backoff ladder never see it.
+   */
+  #rejected(which: 'SESSION' | 'API_KEY', status: number, message: string): ScrapeRequestError {
+    if (which === 'SESSION') {
+      this.#ledger.sessionRejected = true;
+    } else {
+      this.#ledger.credentialRejected = true;
+    }
+    const what = which === 'SESSION' ? 'the stored session' : 'the API key';
+    this.#env.logger.warn({ source: this.#source.key, status }, `${what} was refused (R80)`);
+    return new ScrapeRequestError({
+      kind: 'HTTP_4XX',
+      status,
+      credential: which,
+      message: `${message}, so ${what} is no longer accepted.`,
     });
   }
 }

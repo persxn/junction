@@ -1,7 +1,13 @@
 import { createHash } from 'node:crypto';
 
+import type { ScrapeMethod } from '@compintel/contracts';
+
 import { hostAllowed } from '../../domain/scraping/paths.js';
+import type { ValidatorStore } from './cache.js';
+import { asTransportError } from './classify.js';
 import {
+  MAX_RESPONSE_BYTES,
+  ScrapeRequestError,
   TransportError,
   type PoliteResponse,
   type SourceCredential,
@@ -142,4 +148,59 @@ export function requestHeaders(input: RequestHeaderInput): RequestHeaders {
     headers['if-modified-since'] = input.conditional.lastModified;
   }
   return { headers, sentSession, sentCredential };
+}
+
+/** A 304: nothing to read, and the cached validators are still good (R58). */
+export function notModifiedResponse(
+  cache: ValidatorStore | undefined,
+  response: TransportResponse,
+  target: string,
+  now: Date,
+): PoliteResponse {
+  cache?.touch(target, now.getTime());
+  return frozen({
+    status: 304,
+    url: target,
+    headers: response.headers,
+    body: new Uint8Array(0),
+    notModified: true,
+    contentHash: '',
+  });
+}
+
+/**
+ * A 2xx/3xx body, read under §4.8's cap and hashed, with its validators kept
+ * for the next conditional GET (R58).
+ */
+export async function storedResponse(
+  cache: ValidatorStore | undefined,
+  response: TransportResponse,
+  target: string,
+  method: ScrapeMethod,
+  now: Date,
+): Promise<PoliteResponse> {
+  const { body, contentHash } = await readCapped(response, MAX_RESPONSE_BYTES).catch(
+    (error: unknown) => {
+      const transport = asTransportError(error);
+      throw new ScrapeRequestError({
+        kind: transport.kind,
+        message: `${method} ${target} failed while reading: ${transport.message}`,
+        cause: error,
+      });
+    },
+  );
+  cache?.put(
+    target,
+    { etag: header(response, 'etag'), lastModified: header(response, 'last-modified') },
+    contentHash,
+    now.getTime(),
+  );
+  return frozen({
+    status: response.status,
+    url: response.url,
+    headers: response.headers,
+    body,
+    notModified: false,
+    contentHash,
+  });
 }

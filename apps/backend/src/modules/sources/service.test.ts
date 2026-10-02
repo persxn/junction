@@ -260,4 +260,27 @@ describe('administration', () => {
     });
     expect(service.byKey('demo')?.complianceStatus).toBe('MANUAL_IMPORT_ONLY');
   });
+
+  it('re-enabling a source R79 blocked restores its verdict, audited; a written BLOCKED stays', () => {
+    const repo = new SourcesRepository(database.db);
+    const source = insertSource(database.db, { key: 'demo' });
+    repo.state(source.id, clock.now().getTime());
+    repo.blockAfterRepeatedRefusals(source, clock.now().getTime(), 'blocked three times');
+    const blocked = service.byKey('demo')!;
+    expect(blocked).toMatchObject({ complianceStatus: 'BLOCKED', isEnabled: false });
+
+    const restored = service.update({ actor: ADMIN }, 'demo', {
+      isEnabled: true,
+      version: blocked.version,
+    });
+    expect(restored).toMatchObject({ complianceStatus: 'APPROVED_WITH_LIMITS', isEnabled: true });
+    expect(service.statusOf('demo').message).not.toBe('blocked three times');
+    const audit = new AuditLog(database.db, { clock });
+    expect(audit.all().map((row) => row.action)).toContain('source.updated');
+
+    // A verdict a person wrote as BLOCKED is not undone by the switch.
+    const written = insertSource(database.db, { key: 'written', complianceStatus: 'BLOCKED' });
+    service.update({ actor: ADMIN }, 'written', { isEnabled: true, version: written.version });
+    expect(service.byKey('written')?.complianceStatus).toBe('BLOCKED');
+  });
 });

@@ -95,6 +95,11 @@ export class ScrapeRequestError extends Error {
   readonly refusal: GateRefusal | undefined;
   /** Set for 429/503 with a `Retry-After` we could not wait out. */
   readonly retryAfterMs: number | undefined;
+  /**
+   * R80: the site refused the credential this request carried — a 401, or a
+   * 403 that serves a sign-in page. A source state, never `BLOCKED`.
+   */
+  readonly credential: 'SESSION' | 'API_KEY' | undefined;
 
   constructor(init: {
     kind: ScrapeErrorKind;
@@ -102,6 +107,7 @@ export class ScrapeRequestError extends Error {
     status?: number;
     refusal?: GateRefusal;
     retryAfterMs?: number;
+    credential?: 'SESSION' | 'API_KEY';
     cause?: unknown;
   }) {
     super(init.message, init.cause === undefined ? undefined : { cause: init.cause });
@@ -110,6 +116,7 @@ export class ScrapeRequestError extends Error {
     this.status = init.status;
     this.refusal = init.refusal;
     this.retryAfterMs = init.retryAfterMs;
+    this.credential = init.credential;
   }
 }
 

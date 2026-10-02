@@ -120,6 +120,13 @@
       "when": 1790898732446,
       "tag": "0016_signed_in_budget",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1790899380221,
+      "tag": "0017_blocks_and_credentials",
+      "breakpoints": true
     }
   ]
 }

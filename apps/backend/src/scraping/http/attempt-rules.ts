@@ -3,9 +3,9 @@ import type { ScrapeMethod } from '@compintel/contracts';
 import { hostAllowed } from '../../domain/scraping/paths.js';
 import { decideSignedIn, signedInWaitMs } from '../../domain/scraping/signed-in.js';
 import { applyJitter } from '../../domain/scheduling.js';
-import { classifyStatus, parseRetryAfter } from './classify.js';
+import { classifyStatus, looksLikeLoginPage, parseRetryAfter } from './classify.js';
 import type { HttpEnvironment } from './polite-client.js';
-import { header } from './read.js';
+import { decode, header, readCapped } from './read.js';
 import type { RunLedger } from './run-ledger.js';
 import {
   DEFAULT_SIGNED_IN_BUDGET,
@@ -106,6 +106,12 @@ export function retryDelay(
   if (attempt >= MAX_RETRIES) {
     return undefined;
   }
+  if (error.credential === 'SESSION') {
+    // R80: the session is gone for this run, so the same page is read again
+    // anonymously — the public reading R74 falls back to — after the host's
+    // ordinary delay and no backoff.
+    return delayMs;
+  }
   if (error.kind === 'RATE_LIMITED') {
     const asked = error.retryAfterMs;
     if (asked === undefined) {
@@ -117,6 +123,37 @@ export function retryDelay(
     return undefined;
   }
   return Math.max(applyJitter(RETRY_BASE_MS * 2 ** attempt, 0.25, random), delayMs);
+}
+
+/** How much of a 403 is read to tell a sign-in page from a refusal. */
+export const LOGIN_PAGE_PEEK_BYTES = 256 * 1024;
+
+/**
+ * R80: whether a 401/403 is about the credential the request carried — and
+ * which one. A 401 always is; a 403 is only when it serves a sign-in page
+ * (a WAF's 403 is a block, and R79 counts it). A request that carried neither
+ * credential gets `undefined`: an anonymous 401 or 403 is the site refusing us.
+ */
+export async function credentialRefused(
+  response: TransportResponse,
+  sent: { readonly session: boolean; readonly credential: boolean },
+): Promise<'SESSION' | 'API_KEY' | undefined> {
+  if (!sent.session && !sent.credential) {
+    return undefined;
+  }
+  if (response.status !== 401 && response.status !== 403) {
+    return undefined;
+  }
+  if (response.status === 403) {
+    const page = await readCapped(response, LOGIN_PAGE_PEEK_BYTES).then(
+      (read) => decode(read.body),
+      () => '',
+    );
+    if (!looksLikeLoginPage(page)) {
+      return undefined;
+    }
+  }
+  return sent.session ? 'SESSION' : 'API_KEY';
 }
 
 /** What a 4xx/5xx answer is recorded as, with any `Retry-After` it carried. */

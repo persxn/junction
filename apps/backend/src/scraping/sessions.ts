@@ -1,5 +1,3 @@
-import type { Logger } from 'pino';
-
 import type { SourceRow } from '../db/schema/index.js';
 import {
   expiredDetail,
@@ -9,7 +7,6 @@ import {
   sessionIsSet,
   type SessionVault,
 } from '../modules/sources/session.js';
-import type { SourcesRepository } from '../modules/sources/repository.js';
 import type { SettingsStore } from '../platform/settings.js';
 
 /**
@@ -50,27 +47,4 @@ export function createSessionHooks(vault: SessionVault): SessionHooks {
 /** Whether a session is stored at all, expired or not. */
 export function hasStoredSession(source: SourceRow, settings: SettingsStore): boolean {
   return sessionIsSet(source, settings);
-}
-
-/**
- * The run's whole answer to "the site refused a signed-in read": expire the
- * session, say so in §7.7's words, and leave the streak alone.
- */
-export function recordSessionExpiry(
-  deps: { sources: SourcesRepository; sessions: SessionHooks; logger: Logger },
-  source: SourceRow,
-  finishedAt: number,
-): void {
-  deps.sessions.expire(source, finishedAt);
-  deps.sources.recordBlocked(
-    source.id,
-    finishedAt,
-    finishedAt + source.cadenceMinutes * 60_000,
-    'BLOCKED',
-    deps.sessions.expiredDetail(source),
-  );
-  deps.logger.warn(
-    { source: source.key },
-    'the stored session was refused, so it is marked expired and the public pages are used from now on',
-  );
 }

@@ -15,6 +15,7 @@ import type { ScrapingHttp, SourceCredential } from './http/index.js';
 import { processItem, type RecordLinker } from './items.js';
 import { policyRefusal } from './policy.js';
 import { missingCredentialDetail, sourceConfig, sourceRequestContext } from './source-row.js';
+import { refusedKeyDetail } from './standing.js';
 
 /**
  * The scrape orchestrator (§7's pipeline, §7.6, §7.7).
@@ -79,7 +80,16 @@ export async function runScrape(
   }
   // WP-11: a missing API key is a state of the source, not a failure — zero
   // requests, no backoff, no streak, and the job stays on its cadence (U4).
-  const missing = credential === undefined ? missingCredentialDetail(source) : undefined;
+  // R80: so is one the site has refused, until an administrator replaces it.
+  const refusedKey =
+    credential?.kind !== 'SESSION' &&
+    deps.sources.state(source.id, startedAt).credentialState !== null;
+  const missing =
+    credential === undefined
+      ? missingCredentialDetail(source)
+      : refusedKey
+        ? refusedKeyDetail(source)
+        : undefined;
   if (missing !== undefined) {
     const blocked = {
       kind: 'BLOCKED' as const,

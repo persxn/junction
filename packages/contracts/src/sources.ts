@@ -88,6 +88,15 @@ export const MATCH_METHODS = ['URL', 'AUTO_SCORE', 'MANUAL', 'NEW'] as const;
 export const MatchMethod = z.enum(MATCH_METHODS);
 export type MatchMethod = z.infer<typeof MatchMethod>;
 
+/**
+ * `source_state.credential_state` (R80): what the site said about the source's
+ * API key. `INVALID` is a key it refused; `EXPIRED` is kept for a key a source
+ * reports as lapsed. A refused session has its own state (`SourceSessionState`).
+ */
+export const CREDENTIAL_STATES = ['EXPIRED', 'INVALID'] as const;
+export const CredentialState = z.enum(CREDENTIAL_STATES);
+export type CredentialState = z.infer<typeof CredentialState>;
+
 /** Only GET and HEAD are ever made (§7.2); nothing here writes to a source. */
 export const SCRAPE_METHODS = ['GET', 'HEAD'] as const;
 export const ScrapeMethod = z.enum(SCRAPE_METHODS);

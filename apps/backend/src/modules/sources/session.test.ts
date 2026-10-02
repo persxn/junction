@@ -329,8 +329,10 @@ describe('an expired session is a source state, not a failure (R74, R80)', () =>
     const after = harness.sources.state(harness.source.id, harness.clock.now().getTime());
     expect(after.consecutiveFailures).toBe(before.consecutiveFailures);
     expect(after.backoffUntil).toBeNull();
-    expect(after.lastErrorMessage).toBe(expiredDetail(harness.source));
-    expect(after.lastErrorMessage).toContain('sign in again');
+    // R80: the page was read anonymously, so the run itself succeeded; the
+    // sentence is the source's standing notice until the professor signs in.
+    expect(after.notice).toBe(expiredDetail(harness.source));
+    expect(after.notice).toContain('sign in again');
   });
 
   it('stops sending it, so the next run reads the public pages', async () => {

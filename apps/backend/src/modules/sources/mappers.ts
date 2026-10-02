@@ -114,14 +114,18 @@ export function toStatus(input: StatusInput): SourceStatus {
     lastOutcome: outcome,
     lastErrorKind: state.lastErrorKind,
     lastErrorMessage: state.lastErrorMessage,
-    message: sourceStatusMessage({
-      sourceName: source.name,
-      // A source that has never run has nothing to report but its verdict.
-      outcome: outcome ?? (source.isEnabled ? 'SUCCESS' : 'BLOCKED_BY_POLICY'),
-      errorKind: state.lastErrorKind,
-      freshnessMinutes,
-      nextAttemptLabel: nextAttemptAt === null ? null : clockLabel(nextAttemptAt),
-    }),
+    // R79/R80: a standing sentence outranks the last outcome's, because it says
+    // what a person has to do and stays true until they have done it.
+    message:
+      state.notice ??
+      sourceStatusMessage({
+        sourceName: source.name,
+        // A source that has never run has nothing to report but its verdict.
+        outcome: outcome ?? (source.isEnabled ? 'SUCCESS' : 'BLOCKED_BY_POLICY'),
+        errorKind: state.lastErrorKind,
+        freshnessMinutes,
+        nextAttemptLabel: nextAttemptAt === null ? null : clockLabel(nextAttemptAt),
+      }),
   };
 }
 

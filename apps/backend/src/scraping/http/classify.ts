@@ -157,3 +157,19 @@ export function isLoginRedirect(requested: string, finalUrl: string): boolean {
     return false;
   }
 }
+
+/**
+ * Whether a 403 body is a sign-in page rather than a refusal (R80). A site that
+ * no longer accepts the session often answers with its login form and a 403;
+ * that is a credential to renew, not a site that has blocked us.
+ *
+ * Deliberately narrow: a password field, or a title that says "log in" or "sign
+ * in". A WAF challenge page has neither, and stays `BLOCKED` (R79).
+ */
+export function looksLikeLoginPage(html: string): boolean {
+  if (/<input[^>]*type\s*=\s*["']?password/i.test(html)) {
+    return true;
+  }
+  const title = /<title[^>]*>([^<]*)<\/title>/i.exec(html)?.[1] ?? '';
+  return /\b(log|sign)[\s-]?in\b/i.test(title);
+}

@@ -39,6 +39,12 @@ import {
 import type { SessionKey } from './seal.js';
 import type { SourceRecordsRepository } from './records.js';
 import type { SourcesRepository } from './repository.js';
+import {
+  recordCredentialStored,
+  recordSessionCleared,
+  recordSessionStored,
+  type AccessActDependencies,
+} from './access.js';
 
 /**
  * Source administration and the manual refresh (§7.2, §10.2 `source.manage`).
@@ -165,7 +171,17 @@ export class SourcesService {
         diff: { ...patch },
         requestId: context.requestId ?? null,
       },
-      () => this.#deps.sources.update(source.id, patch, version, nowMs(this.#clock)),
+      () => {
+        const at = nowMs(this.#clock);
+        const changed = this.#deps.sources.update(source.id, patch, version, at);
+        // R79: switching on a source three blocks switched off restores the
+        // verdict a person had reached. Inside the audited act, so the log
+        // says who re-enabled it.
+        if (changed !== undefined && patch.isEnabled === true) {
+          return this.#deps.sources.restoreAfterBlock(source.id, at) ?? changed;
+        }
+        return changed;
+      },
     );
     if (updated === undefined) {
       throw conflict(
@@ -201,19 +217,8 @@ export class SourcesService {
       );
     }
     const settings = this.#settings();
-    withAudit(
-      this.#deps.audit,
-      {
-        actorKind: 'USER',
-        actorUserId: context.actor.id,
-        action: 'source.credential.set',
-        entityKind: 'source',
-        entityId: source.id,
-        summary: `Stored the ${source.name} API credential`,
-        diff: {},
-        requestId: context.requestId ?? null,
-      },
-      () => storeCredential(source, settings, value, context.actor.id),
+    recordCredentialStored(this.#acts(), context, source, () =>
+      storeCredential(source, settings, value, context.actor.id),
     );
     return { isSet: credentialIsSet(source, settings) };
   }
@@ -248,19 +253,8 @@ export class SourcesService {
     const vault = this.#vault();
     assertCanSeal(vault);
     const at = nowMs(this.#clock);
-    withAudit(
-      this.#deps.audit,
-      {
-        actorKind: 'USER',
-        actorUserId: context.actor.id,
-        action: 'source.session.set',
-        entityKind: 'source',
-        entityId: source.id,
-        summary: `Stored a ${source.name} session for ${context.actor.displayName}`,
-        diff: { capturedVia: request.capturedVia },
-        requestId: context.requestId ?? null,
-      },
-      () => storeSession(source, vault, request.cookie, context.actor.id, at),
+    recordSessionStored(this.#acts(), context, source, request.capturedVia, () =>
+      storeSession(source, vault, request.cookie, context.actor.id, at),
     );
     return sessionStatus(source, vault);
   }
@@ -270,19 +264,8 @@ export class SourcesService {
     assertCan(context.actor, 'source.manage');
     const source = this.#require(key);
     const settings = this.#settings();
-    withAudit(
-      this.#deps.audit,
-      {
-        actorKind: 'USER',
-        actorUserId: context.actor.id,
-        action: 'source.session.cleared',
-        entityKind: 'source',
-        entityId: source.id,
-        summary: `Removed the stored ${source.name} session`,
-        diff: {},
-        requestId: context.requestId ?? null,
-      },
-      () => clearSession(source, settings, context.actor.id),
+    recordSessionCleared(this.#acts(), context, source, () =>
+      clearSession(source, settings, context.actor.id),
     );
     return sessionStatus(source, { settings, key: this.#deps.sessionKey });
   }
@@ -292,6 +275,11 @@ export class SourcesService {
       throw new Error('source credentials are not available on this backend');
     }
     return this.#deps.settings;
+  }
+
+  /** What the audited credential and session acts need (`access.ts`). */
+  #acts(): AccessActDependencies {
+    return { audit: this.#deps.audit, sources: this.#deps.sources };
   }
 
   /** The settings store and the key that opens what is sealed in it (R76). */

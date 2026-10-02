@@ -1,4 +1,9 @@
-import type { ScrapeErrorKind, ScrapeOutcome, ScrapeTrigger } from '@compintel/contracts';
+import type {
+  CredentialState,
+  ScrapeErrorKind,
+  ScrapeOutcome,
+  ScrapeTrigger,
+} from '@compintel/contracts';
 import { and, desc, eq, gt, sql } from 'drizzle-orm';
 
 import {
@@ -148,6 +153,10 @@ export class SourcesRepository {
       backoffUntil: null,
       lastErrorKind: null,
       lastErrorMessage: null,
+      consecutiveBlocked: 0,
+      verdictBeforeBlock: null,
+      credentialState: null,
+      notice: null,
     };
     this.#db.drizzle.insert(sourceState).values(row).onConflictDoNothing().run();
     return row;
@@ -212,6 +221,67 @@ export class SourcesRepository {
       lastErrorKind: errorKind,
       lastErrorMessage: errorMessage,
     });
+  }
+
+  /** R79: how many finished runs in a row the site has refused. */
+  setConsecutiveBlocked(sourceId: string, count: number): void {
+    this.#setState(sourceId, { consecutiveBlocked: count });
+  }
+
+  /**
+   * R79/R80's standing sentence for Source status, or `null` to clear it. Set
+   * by the event, cleared by the person's act that answers it.
+   */
+  setNotice(sourceId: string, notice: string | null): void {
+    this.#setState(sourceId, { notice });
+  }
+
+  /** R80: what the site said about the source's API key; `null` once a new one is stored. */
+  setCredentialState(sourceId: string, state: CredentialState | null): void {
+    this.#setState(sourceId, { credentialState: state });
+  }
+
+  /**
+   * R79: three blocks in a row. The verdict becomes `BLOCKED` and the source is
+   * switched off, in one transaction, with the verdict a person had reached kept
+   * so that an administrator's re-enable can restore it.
+   */
+  blockAfterRepeatedRefusals(source: SourceRow, at: number, notice: string): void {
+    this.#db.raw.transaction(() => {
+      this.#db.drizzle
+        .update(sources)
+        .set({
+          complianceStatus: 'BLOCKED',
+          isEnabled: false,
+          updatedAt: at,
+          version: sql`${sources.version} + 1`,
+        })
+        .where(eq(sources.id, source.id))
+        .run();
+      this.#setState(source.id, { verdictBeforeBlock: source.complianceStatus, notice });
+    })();
+  }
+
+  /**
+   * An administrator re-enabling a source R79 blocked: the verdict it had
+   * before is restored and the streak forgotten. `undefined` when R79 did not
+   * block it — a verdict a person wrote is not undone by a switch.
+   */
+  restoreAfterBlock(sourceId: string, at: number): SourceRow | undefined {
+    const state = this.state(sourceId, at);
+    const verdict = state.verdictBeforeBlock;
+    if (verdict === null) {
+      return undefined;
+    }
+    this.#db.raw.transaction(() => {
+      this.#db.drizzle
+        .update(sources)
+        .set({ complianceStatus: verdict, updatedAt: at, version: sql`${sources.version} + 1` })
+        .where(eq(sources.id, sourceId))
+        .run();
+      this.#setState(sourceId, { verdictBeforeBlock: null, consecutiveBlocked: 0, notice: null });
+    })();
+    return this.findById(sourceId);
   }
 
   /**
