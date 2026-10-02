@@ -8,11 +8,15 @@
   `top_trust_rank` · `recurringOnly` · `$` anchor, CTFtime `detailPolicy: never`, `scrape_runs.kind`,
   `domain/jobs/schedule.ts`, URL-import diff. Migrations 0016-0022. **Unmet:** R88's first page **94 ms vs
   50** (handoff Q1), verify **~137 s vs 120** (pre-M2a Q1), live runs **still owed** (no contactEmail).
-- **Next: `prompts/M2/WP-18.md`** (WP-17 in progress); then WP-19 · 19 · 20a · 20b · 21
+- **WP-17 BLOCKED, 2 Oct 2026** (`docs/handoff/WP-17.md`): STEP 0 done (spec v1.1.15, R91-R93); the
+  dependency gate stopped the build — `exceljs@4.4.0 > uuid <11.1.1` is a moderate advisory and no exceljs
+  release fixes it. Install reverted, audit clean. **Needs the architect's answer to WP-17 Q1** (in-house XLSX
+  reader recommended).
+- **Next: `prompts/M2/WP-17.md`** once Q1 is answered; then WP-18 · WP-19 · 19 · 20a · 20b · 21
   (M2), WP-22 · 23 · 24 (M3). Every M2/M3 WP ends with a **UI fault sweep**. Send `docs/` back when M3 closes.
 - **Owed live runs:** CTFtime / Devfolio smokes and `unstop:capture` wait on `scraper.contactEmail` (the
   owner's own address, R74); `clist:smoke` waits on U4.
-- Spec: docs/ARCHITECTURE.md **v1.1.15 - ACCEPTED** · roadmap §19 = **50 WPs, 29 done, 21 remaining** ·
+- Spec: docs/ARCHITECTURE.md **v1.1.15 - ACCEPTED** · roadmap §19 = **50 WPs, 28 done, 22 remaining** (WP-17 blocked) ·
   ADR-0001...0019 · decisions register docs/DECISIONS.md.
 
 ## Environment facts
