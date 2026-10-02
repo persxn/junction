@@ -241,6 +241,19 @@ describe('PATCH /admin/sources/:key', () => {
     expect((await source('devpost')).complianceStatus).toBe('MANUAL_IMPORT_ONLY');
   });
 
+  it('refuses a write to config_json, where R77’s robots exemption lives', async () => {
+    const before = await source('clist');
+    for (const field of ['configJson', 'config_json', 'robotsExemption']) {
+      const answer = await call('PATCH', '/api/v1/admin/sources/clist', {
+        token: adminToken,
+        body: { [field]: '{"robotsExemption":{"paths":["clist.by/"]}}', version: before.version },
+      });
+      expect(answer.status).toBe(400);
+      expect(answer.body.code).toBe('VALIDATION_FAILED');
+    }
+    expect((await source('clist')).version).toBe(before.version);
+  });
+
   it('answers 404 for a key that does not exist', async () => {
     const answer = await call('PATCH', '/api/v1/admin/sources/nosuch', {
       token: adminToken,

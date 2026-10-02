@@ -200,7 +200,7 @@ export interface SourceRequestContext {
   readonly credential?: SourceCredential | undefined;
   /** The professor's own session (R74), sent only on a `signed-in` request (R75). */
   readonly session?: SourceCredential | undefined;
-  /** A reviewed, seed-only robots exemption (WP-11, proposed ruling). */
+  /** A reviewed, seed-only robots exemption (ruling R77). */
   readonly robotsExemption?: RobotsExemption | undefined;
 }
 

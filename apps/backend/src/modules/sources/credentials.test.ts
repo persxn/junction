@@ -110,7 +110,7 @@ describe('the robots exemption is honoured only when all three hold', () => {
   it('the seed carries a reviewed exemption for the two API paths', () => {
     expect(robotsExemptionOf(clist())).toMatchObject({
       paths: allowedPaths,
-      reviewedAt: '2026-09-20',
+      reviewedAt: '2026-09-22',
     });
   });
 

@@ -226,3 +226,63 @@ describe('effectiveDelayMs (A9/D-28)', () => {
     expect(effectiveDelayMs(3_000, -5)).toBe(MIN_DELAY_FLOOR_MS);
   });
 });
+
+describe('the reviewed robots exemption (R77)', () => {
+  const CLIST_PATHS = ['clist.by/api/v4/contest/', 'clist.by/api/v4/resource/'];
+  const EXEMPTION = {
+    paths: ['clist.by/api/v4/contest/'],
+    reason: 'A documented, keyed API with a published rate limit.',
+    reviewedBy: 'architect, M1 review',
+    reviewedAt: '2026-09-22',
+  };
+
+  function clist(overrides: Partial<GateInput> = {}): GateInput {
+    return input({
+      allowedPaths: CLIST_PATHS,
+      url: 'https://clist.by/api/v4/contest/?limit=100',
+      robots: 'DISALLOWED',
+      robotsExemption: EXEMPTION,
+      credentialPresent: true,
+      ...overrides,
+    });
+  }
+
+  it('is honoured when all three conditions hold, and says so', () => {
+    expect(assessRequest(clist())).toEqual({ allowed: true, robotsExempted: true });
+  });
+
+  it('is ignored without the credential', () => {
+    expect(assessRequest(clist({ credentialPresent: false }))).toMatchObject({
+      allowed: false,
+      refusal: 'ROBOTS_DISALLOWED',
+    });
+  });
+
+  it('is ignored outside its own paths, even inside the allowed ones', () => {
+    expect(
+      assessRequest(clist({ url: 'https://clist.by/api/v4/resource/?limit=10' })),
+    ).toMatchObject({ allowed: false, refusal: 'ROBOTS_DISALLOWED' });
+  });
+
+  it('never widens the allowed paths', () => {
+    const wide = { ...EXEMPTION, paths: ['clist.by/'] };
+    expect(
+      assessRequest(clist({ robotsExemption: wide, url: 'https://clist.by/standings/' })),
+    ).toMatchObject({ allowed: false, refusal: 'PATH_NOT_ALLOWED' });
+  });
+
+  it.each([
+    ['no reviewer', { reviewedBy: '  ' }],
+    ['no reason', { reason: '' }],
+    ['no parseable date', { reviewedAt: 'last week' }],
+  ])('is ignored with %s', (_label, change) => {
+    expect(assessRequest(clist({ robotsExemption: { ...EXEMPTION, ...change } }))).toMatchObject({
+      allowed: false,
+      refusal: 'ROBOTS_DISALLOWED',
+    });
+  });
+
+  it('is not needed where robots allows the path', () => {
+    expect(assessRequest(clist({ robots: 'ALLOWED' }))).toEqual({ allowed: true });
+  });
+});

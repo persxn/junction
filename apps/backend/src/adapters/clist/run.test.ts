@@ -192,7 +192,7 @@ describe('the key (U4)', () => {
   });
 });
 
-describe('robots.txt: the reviewed exemption (proposed ruling)', () => {
+describe('robots.txt: the reviewed exemption (R77)', () => {
   function client(withCredential = true) {
     const credential = withCredential ? TEST_CREDENTIAL : undefined;
     const transport = clistTransport(h.clock, { 0: asResponse('listing-recurring.json') });
@@ -229,5 +229,21 @@ describe('robots.txt: the reviewed exemption (proposed ruling)', () => {
       (refused as ScrapeRequestError).refusal,
     );
     expect(transport.calls).toHaveLength(0);
+  });
+});
+
+describe('R77 — the seeded exemption after migration 0018', () => {
+  it('names the architect as reviewer, with a parseable date, over unchanged paths', () => {
+    const config = JSON.parse(h.source.configJson) as {
+      robotsExemption: { paths: string[]; reviewedBy: string; reviewedAt: string };
+    };
+    expect(config.robotsExemption.reviewedBy).toContain('architect');
+    expect(config.robotsExemption.reviewedAt).toBe('2026-09-22');
+    expect(Number.isNaN(Date.parse(config.robotsExemption.reviewedAt))).toBe(false);
+    expect(config.robotsExemption.paths).toEqual([
+      'clist.by/api/v4/contest/',
+      'clist.by/api/v4/resource/',
+    ]);
+    expect(h.source.complianceNotes).toContain('ruling R77');
   });
 });

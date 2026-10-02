@@ -55,7 +55,7 @@ export type RobotsVerdict = 'ALLOWED' | 'DISALLOWED' | 'UNKNOWN';
 
 /**
  * A robots.txt exemption decided by a person and written into a source's seed
- * (WP-11, proposed ruling — CLIST's robots disallows `/api/` while its Terms
+ * (WP-11, accepted as ruling R77 — CLIST's robots disallows `/api/` while its Terms
  * invite authenticated API use). It is honoured only when **all** of these hold:
  * the path is inside `allowed_paths_json` *and* inside `paths`, the request
  * carries the source's credential, and the exemption names a reviewer and a
