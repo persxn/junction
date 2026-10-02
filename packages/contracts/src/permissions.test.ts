@@ -10,6 +10,8 @@ import {
   ROLE_KEYS,
   ruleFor,
   ruleSatisfied,
+  canDeactivateStudent,
+  isSelf,
   type Action,
   type OwnershipFacts,
   type OwnershipRule,
@@ -113,6 +115,24 @@ describe('the §10.2 rows that are not a plain yes or no', () => {
   it('lets a professor deactivate only a student they mentor', () => {
     expect(decide(['PROFESSOR'], 'student.deactivate', { isStudentMentor: true })).toBe(true);
     expect(decide(['PROFESSOR'], 'student.deactivate', { isTeamMentor: true })).toBe(false);
+  });
+
+  it('lets a professor manage only his own mentorships (R91), an admin any mentorship', () => {
+    const me = { id: 'u-1' };
+    expect(decide(['PROFESSOR'], 'mentorship.manage', { isOwner: isSelf(me, 'u-1') })).toBe(true);
+    expect(decide(['PROFESSOR'], 'mentorship.manage', { isOwner: isSelf(me, 'u-2') })).toBe(false);
+    expect(decide(['ADMINISTRATOR'], 'mentorship.manage', { isOwner: false })).toBe(true);
+  });
+
+  it('decides deactivation from either mentor list (§10.2)', () => {
+    const me = { id: 'u-1' };
+    const facts = (mentorUserIds: string[], teamMentorUserIds: string[]) => ({
+      isStudentMentor: canDeactivateStudent(me, { mentorUserIds, teamMentorUserIds }),
+    });
+    expect(decide(['PROFESSOR'], 'student.deactivate', facts(['u-1'], []))).toBe(true);
+    expect(decide(['PROFESSOR'], 'student.deactivate', facts([], ['u-1']))).toBe(true);
+    expect(decide(['PROFESSOR'], 'student.deactivate', facts(['u-2'], ['u-3']))).toBe(false);
+    expect(decide(['ADMINISTRATOR'], 'student.deactivate', facts([], []))).toBe(true);
   });
 
   it('keeps the admin-only rows admin-only', () => {

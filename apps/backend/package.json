@@ -26,7 +26,8 @@
     "smoke:bundle": "pnpm bundle && tsx src/tools/smoke-bundle.ts",
     "scrape:once": "tsx src/tools/scrape-once.ts",
     "clist:smoke": "tsx src/tools/clist-smoke.ts",
-    "unstop:capture": "tsx src/tools/unstop-capture.ts"
+    "unstop:capture": "tsx src/tools/unstop-capture.ts",
+    "students:fixture": "tsx src/tools/students-fixture.ts"
   },
   "dependencies": {
     "@compintel/contracts": "workspace:*",
@@ -39,6 +40,7 @@
     "drizzle-orm": "0.45.2",
     "fastify": "5.12.5",
     "fastify-type-provider-zod": "7.0.0",
+    "papaparse": "5.7.0",
     "pino": "10.3.1",
     "robots-parser": "3.0.1",
     "sanitize-html": "2.17.7",
@@ -48,6 +50,7 @@
   },
   "devDependencies": {
     "@types/better-sqlite3": "9.6.0",
+    "@types/papaparse": "5.5.2",
     "@types/sanitize-html": "2.16.1",
     "@types/turndown": "5.0.6",
     "drizzle-kit": "0.31.10",

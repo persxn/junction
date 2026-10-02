@@ -18,3 +18,4 @@ export * from './modules/geo/settings.js';
 export * from './modules/org/settings.js';
 export * from './modules/search/settings.js';
 export * from './modules/sources/settings.js';
+export * from './modules/students/settings.js';

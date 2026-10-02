@@ -52,6 +52,8 @@ export const ACTIONS = [
   'student.deactivate',
   'student.erase',
   'student.import',
+  /** R91: a professor starts and ends only his own mentorships; an admin anyone's. */
+  'mentorship.manage',
 
   // Teams
   'team.create',
@@ -150,6 +152,7 @@ export const ROLE_ACTIONS: Matrix = {
     'student.deactivate': 'ALWAYS',
     'student.erase': 'ALWAYS',
     'student.import': 'ALWAYS',
+    'mentorship.manage': 'ALWAYS',
 
     'team.create': 'ALWAYS',
     'team.edit': 'ALWAYS',
@@ -198,6 +201,7 @@ export const ROLE_ACTIONS: Matrix = {
     'student.deactivate': 'STUDENT_MENTOR',
     'student.erase': 'NEVER',
     'student.import': 'ALWAYS',
+    'mentorship.manage': 'OWN',
 
     'team.create': 'ALWAYS',
     'team.edit': 'TEAM_MENTOR',
@@ -295,4 +299,33 @@ export function permissionsFor(
   return ACTIONS.map((action) => ({ action, rule: effectiveRule(roles, action) })).filter(
     (entry) => entry.rule !== 'NEVER',
   );
+}
+
+/** Just the part of a user the ownership predicates read. */
+export interface PredicateSubject {
+  readonly id: string;
+}
+
+/**
+ * R91's mentorship rule: a professor's own mentorship is the one whose mentor
+ * is him. Feeds `OwnershipFacts.isOwner` for `mentorship.manage`.
+ */
+export function isSelf(user: PredicateSubject, userId: string): boolean {
+  return user.id === userId;
+}
+
+/**
+ * §10.2's deactivate rule, as the facts that decide it: the user is an active
+ * mentor of the student (`mentorUserIds`), or the primary or co-mentor of an
+ * active team the student belongs to (`teamMentorUserIds` — empty until WP-18
+ * gives teams their mentors). Feeds `OwnershipFacts.isStudentMentor`.
+ */
+export function canDeactivateStudent(
+  user: PredicateSubject,
+  relation: {
+    readonly mentorUserIds: readonly string[];
+    readonly teamMentorUserIds: readonly string[];
+  },
+): boolean {
+  return relation.mentorUserIds.includes(user.id) || relation.teamMentorUserIds.includes(user.id);
 }

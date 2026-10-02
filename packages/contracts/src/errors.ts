@@ -167,6 +167,25 @@ export const IMPORT_ERROR_CODES = [
   'IMPORT_RATE_LIMITED',
 ] as const;
 
+/**
+ * Students, mentorships and the student import (WP-17, rulings R91–R93).
+ * `STUDENT_IMPORT_PREVIEW_EXPIRED` is R93's 410: the preview is in memory, so a
+ * restart or 30 quiet minutes ends it.
+ */
+export const STUDENT_ERROR_CODES = [
+  'STUDENT_NOT_FOUND',
+  'STUDENT_UNIVERSITY_ID_TAKEN',
+  'STUDENT_PHONE_DISABLED',
+  'STUDENT_EXTERNAL_DISABLED',
+  'STUDENT_ERASED',
+  'STUDENT_VERSION_CONFLICT',
+  'STUDENT_ALREADY_MENTORED',
+  'STUDENT_MENTORSHIP_NOT_FOUND',
+  'STUDENT_IMPORT_PREVIEW_EXPIRED',
+  'STUDENT_IMPORT_FILE_INVALID',
+  'STUDENT_IMPORT_TOO_LARGE',
+] as const;
+
 /** Database failures the API may surface at request time (WP-04b). */
 export const DB_ERROR_CODES = ['DB_UNAVAILABLE', 'DB_CONSTRAINT_VIOLATED'] as const;
 
@@ -184,6 +203,7 @@ export const ERROR_CODES = [
   ...SEARCH_ERROR_CODES,
   ...CATEGORY_ERROR_CODES,
   ...IMPORT_ERROR_CODES,
+  ...STUDENT_ERROR_CODES,
   ...DB_ERROR_CODES,
 ] as const;
 
@@ -201,6 +221,7 @@ export const ERROR_CODE_DOMAINS = [
   'SEARCH',
   'CATEGORY',
   'IMPORT',
+  'STUDENT',
   'DB',
 ] as const;
 export type ErrorCodeDomain = (typeof ERROR_CODE_DOMAINS)[number];

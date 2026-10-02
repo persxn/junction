@@ -38,6 +38,8 @@ import type { ConnectPromptService } from './modules/sources/connect-prompt.js';
 import { sourcesRoutes } from './routes/sources.js';
 import { streamRoutes } from './routes/stream.js';
 import { systemRoutes } from './routes/system.js';
+import { studentsRoutes } from './routes/students.js';
+import type { StudentsModule } from './modules/students/wiring.js';
 import { systemClock, type Clock } from './platform/time.js';
 
 /** Request bodies larger than this are rejected before they are parsed. */
@@ -89,6 +91,8 @@ export interface BuildAppOptions {
   readonly eventDetail?: () => EventDetailService | undefined;
   /** WP-16b's per-event category override (D-15). */
   readonly eventCategories?: () => EventCategoriesService | undefined;
+  /** WP-17's students, mentorships and import. */
+  readonly students?: () => StudentsModule | undefined;
   /** Shared so jobs and services can publish; one hub per process (R36). */
   readonly streamHub?: StreamHub;
   /** Injected in tests so a heartbeat does not take fifteen real seconds. */
@@ -181,6 +185,9 @@ export function buildApp(
   void server.register(searchRoutes({ search }), { prefix: API_PREFIX });
   void server.register(categoryRoutes({ categories }), { prefix: API_PREFIX });
   void server.register(userStateRoutes({ userState }), { prefix: API_PREFIX });
+  void server.register(studentsRoutes({ students: options.students ?? (() => undefined) }), {
+    prefix: API_PREFIX,
+  });
   void server.register(
     eventDetailRoutes({
       detail: options.eventDetail ?? ((): EventDetailService | undefined => undefined),

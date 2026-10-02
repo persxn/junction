@@ -200,6 +200,9 @@ describe('module-owned definitions', () => {
       'sources.unstop.sessionCookie',
       'sources.unstop.sessionState',
       'sources.unstop.sessionVerifiedAt',
+      // WP-17's, declared by modules/students (Q6, Q8): both off by default.
+      'students.allowExternal',
+      'students.phoneEnabled',
     ]);
 
     const { store } = open();

@@ -1,0 +1,501 @@
+Roll No.,Name,College Email,Programme,Branch,Dept,Batch,Skills,Interests,Notes,Hostel
+NEW0001,Pooja Sharma,pooja.sharma.new0001@example.edu,B.Tech,Artificial Intelligence,CSE,2026,"Machine Learning:1; Android:2; Java:2",Open Source,,Block A
+NEW0002,Diya Khan,diya.khan.new0002@example.edu,B.Tech,Computer Science,CSE,2028,"Python:2; Figma:3; Machine Learning:1",Fintech,,Block A
+NEW0003,Diya Banerjee,diya.banerjee.new0003@example.edu,MCA,Artificial Intelligence,CSE,2026,"Android:1; Cybersecurity:2; SQL:3",CTF,,Block A
+NEW0004,Zoya Banerjee,zoya.banerjee.new0004@example.edu,B.Tech,Artificial Intelligence,CSE,2028,"Cybersecurity:1; SQL:2",Healthtech,,Block A
+NEW0005,Sneha Pillai,sneha.pillai.new0005@example.edu,MCA,Computer Science,CSE,2028,"SQL:2; React:1",Fintech,,Block A
+NEW0006,Aarav Joshi,aarav.joshi.new0006@example.edu,B.Tech,Data Science,CSE,2027,"Android:1; Python:2; SQL:2",Fintech,,Block A
+NEW0007,Saanvi Rao,saanvi.rao.new0007@example.edu,B.Tech,Artificial Intelligence,CSE,2027,"Android:2; SQL:3; React:1",Open Source,,Block A
+NEW0008,Tanvi Nair,tanvi.nair.new0008@example.edu,B.Tech,Data Science,CSE,2028,"React:1; Cloud:1",Fintech,,Block A
+NEW0009,Aditi Nair,aditi.nair.new0009@example.edu,M.Tech,Artificial Intelligence,CSE,2028,SQL:1,Open Source,,Block A
+NEW0010,Aarav Khan,aarav.khan.new0010@example.edu,B.Tech,Artificial Intelligence,CSE,2026,"C++:2; Machine Learning:3; Python:2",Robotics,,Block A
+NEW0011,Sneha Patel,sneha.patel.new0011@example.edu,M.Tech,Artificial Intelligence,CSE,2027,"React:1; Figma:1",Robotics,,Block A
+NEW0012,Diya Joshi,diya.joshi.new0012@example.edu,M.Tech,Computer Science,CSE,2029,Java:1,Hackathons,,Block A
+,Harsh Patel,harsh.patel.err0001@example.edu,B.Tech,Computer Science,CSE,2029,"Machine Learning:1; Figma:2; C++:2",Open Source,,Block A
+NEW0013,Varun Banerjee,varun.banerjee.new0013@example.edu,MCA,Data Science,CSE,2027,"Python:2; SQL:2; Figma:1",Hackathons,,Block A
+NEW0014,Kabir Patel,kabir.patel.new0014@example.edu,B.Tech,Artificial Intelligence,CSE,2029,Java:1,Healthtech,,Block A
+NEW0015,Pooja Nair,pooja.nair.new0015@example.edu,M.Tech,Artificial Intelligence,CSE,2029,Cloud:1,Hackathons,,Block A
+NEW0016,Arjun Patel,arjun.patel.new0016@example.edu,M.Tech,Data Science,CSE,2026,React:1,Fintech,,Block A
+NEW0017,Kavya Khan,kavya.khan.new0017@example.edu,B.Tech,Artificial Intelligence,CSE,2027,"Figma:1; Java:3",Fintech,,Block A
+NEW0018,Nikhil Kulkarni,nikhil.kulkarni.new0018@example.edu,B.Tech,Computer Science,CSE,2029,C++:1,Hackathons,,Block A
+NEW0019,Saanvi Iyer,saanvi.iyer.new0019@example.edu,B.Tech,Artificial Intelligence,CSE,2029,"Cloud:3; Java:3",Open Source,,Block A
+NEW0020,Varun Banerjee,varun.banerjee.new0020@example.edu,B.Tech,Computer Science,CSE,2028,Android:3,Hackathons,,Block A
+NEW0021,Varun Nair,varun.nair.new0021@example.edu,B.Tech,Artificial Intelligence,CSE,2028,"Machine Learning:3; React:3",Open Source,,Block A
+NEW0022,Aditi Menon,aditi.menon.new0022@example.edu,B.Tech,Data Science,CSE,2026,Figma:2,Hackathons,,Block A
+NEW0023,Diya Khan,diya.khan.new0023@example.edu,B.Tech,Computer Science,CSE,2026,"C++:2; Cloud:2; React:1",Fintech,,Block A
+NEW0001,Pooja Pillai,pooja.pillai.err0002@example.edu,B.Tech,Data Science,CSE,2026,Java:1,Hackathons,,Block A
+NEW0024,Aditi Sharma,aditi.sharma.new0024@example.edu,MCA,Data Science,CSE,2027,"Figma:2; Android:3",CTF,,Block A
+NEW0025,Harsh Menon,harsh.menon.new0025@example.edu,M.Tech,Data Science,CSE,2029,Python:3,Healthtech,,Block A
+NEW0026,Pooja Singh,pooja.singh.new0026@example.edu,MCA,Data Science,CSE,2027,Java:1,Fintech,,Block A
+NEW0027,Ishaan Iyer,ishaan.iyer.new0027@example.edu,MCA,Artificial Intelligence,CSE,2029,"Java:2; Machine Learning:1",Healthtech,,Block A
+NEW0028,Ishaan Reddy,ishaan.reddy.new0028@example.edu,B.Tech,Data Science,CSE,2027,"Cybersecurity:1; Cloud:2",CTF,,Block A
+NEW0029,Vivaan Sharma,vivaan.sharma.new0029@example.edu,MCA,Data Science,CSE,2027,"Java:1; Android:3",Robotics,,Block A
+NEW0030,Kabir Menon,kabir.menon.new0030@example.edu,MCA,Artificial Intelligence,CSE,2029,"Android:1; C++:1; SQL:3",Fintech,,Block A
+NEW0031,Zoya Joshi,zoya.joshi.new0031@example.edu,MCA,Data Science,CSE,2026,"Android:3; C++:2; Cloud:1",Robotics,,Block A
+NEW0032,Harsh Rao,harsh.rao.new0032@example.edu,B.Tech,Computer Science,CSE,2026,"Figma:3; Cybersecurity:3; Machine Learning:2",CTF,,Block A
+NEW0033,Kavya Rao,kavya.rao.new0033@example.edu,B.Tech,Data Science,CSE,2029,"Cybersecurity:3; Machine Learning:2",Healthtech,,Block A
+NEW0034,Zoya Nair,zoya.nair.new0034@example.edu,B.Tech,Data Science,CSE,2029,Cloud:1,Hackathons,,Block A
+ERR0003,Tanvi Patel,not-an-email,MCA,Artificial Intelligence,CSE,2026,Cybersecurity:1,Healthtech,,Block A
+NEW0035,Tanvi Joshi,tanvi.joshi.new0035@example.edu,M.Tech,Computer Science,CSE,2029,C++:2,Robotics,,Block A
+NEW0036,Diya Nair,diya.nair.new0036@example.edu,B.Tech,Data Science,CSE,2027,"Cybersecurity:2; Java:3",Healthtech,,Block A
+NEW0037,Ishaan Gupta,ishaan.gupta.new0037@example.edu,M.Tech,Computer Science,CSE,2028,"Python:2; SQL:1",Hackathons,,Block A
+NEW0038,Diya Pillai,diya.pillai.new0038@example.edu,B.Tech,Data Science,CSE,2028,"Android:3; C++:1; Cybersecurity:3",Fintech,,Block A
+NEW0039,Aditi Iyer,aditi.iyer.new0039@example.edu,B.Tech,Data Science,CSE,2029,"React:1; Figma:1; C++:2",Robotics,,Block A
+NEW0040,Kabir Khan,kabir.khan.new0040@example.edu,M.Tech,Computer Science,CSE,2028,Figma:1,Fintech,,Block A
+NEW0041,Diya Menon,diya.menon.new0041@example.edu,B.Tech,Computer Science,CSE,2026,C++:2,Healthtech,,Block A
+NEW0042,Varun Menon,varun.menon.new0042@example.edu,MCA,Data Science,CSE,2028,"Python:1; React:1",Robotics,,Block A
+NEW0043,Aditi Menon,aditi.menon.new0043@example.edu,B.Tech,Artificial Intelligence,CSE,2027,"React:2; C++:1",Open Source,,Block A
+NEW0044,Vivaan Joshi,vivaan.joshi.new0044@example.edu,B.Tech,Computer Science,CSE,2028,Java:1,Fintech,,Block A
+NEW0045,Aditi Das,aditi.das.new0045@example.edu,M.Tech,Computer Science,CSE,2027,"C++:1; Android:1",Open Source,,Block A
+ERR0004,Rohan Das,rohan.das.err0004@example.edu,Diploma,Data Science,CSE,2027,"Cybersecurity:1; Android:3",Healthtech,,Block A
+NEW0046,Vivaan Pillai,vivaan.pillai.new0046@example.edu,MCA,Computer Science,CSE,2029,"Cloud:2; Python:3",Open Source,,Block A
+NEW0047,Aarav Rao,aarav.rao.new0047@example.edu,M.Tech,Artificial Intelligence,CSE,2029,React:2,Open Source,,Block A
+NEW0048,Saanvi Gupta,saanvi.gupta.new0048@example.edu,B.Tech,Artificial Intelligence,CSE,2028,"Java:3; Android:1",Robotics,,Block A
+NEW0049,Rohan Patel,rohan.patel.new0049@example.edu,B.Tech,Data Science,CSE,2027,Figma:3,Fintech,,Block A
+NEW0050,Rahul Khan,rahul.khan.new0050@example.edu,MCA,Computer Science,CSE,2028,Cybersecurity:2,Fintech,,Block A
+NEW0051,Ishaan Menon,ishaan.menon.new0051@example.edu,B.Tech,Computer Science,CSE,2027,"Cloud:2; Machine Learning:2",Fintech,,Block A
+NEW0052,Tanvi Gupta,tanvi.gupta.new0052@example.edu,B.Tech,Artificial Intelligence,CSE,2026,"Python:1; C++:1; React:2",CTF,,Block A
+NEW0053,Pooja Menon,pooja.menon.new0053@example.edu,B.Tech,Computer Science,CSE,2027,C++:3,Healthtech,,Block A
+NEW0054,Tanvi Joshi,tanvi.joshi.new0054@example.edu,MCA,Data Science,CSE,2028,"Python:2; React:1; Android:2",CTF,,Block A
+NEW0055,Ananya Iyer,ananya.iyer.new0055@example.edu,MCA,Artificial Intelligence,CSE,2026,"Android:2; C++:1",Hackathons,,Block A
+NEW0056,Aarav Sharma,aarav.sharma.new0056@example.edu,M.Tech,Computer Science,CSE,2026,"Figma:1; Android:3; C++:2",Fintech,,Block A
+ERR0005,Saanvi Iyer,saanvi.iyer.err0005@example.edu,MCA,Computer Science,CSE,twenty,Figma:2,Open Source,,Block A
+NEW0057,Varun Reddy,varun.reddy.new0057@example.edu,B.Tech,Data Science,CSE,2028,"Android:2; Python:2",Open Source,,Block A
+NEW0058,Harsh Joshi,harsh.joshi.new0058@example.edu,B.Tech,Artificial Intelligence,CSE,2026,"Figma:1; Cybersecurity:1; Cloud:1",Robotics,,Block A
+NEW0059,Ishaan Singh,ishaan.singh.new0059@example.edu,MCA,Data Science,CSE,2029,Machine Learning:1,Fintech,,Block A
+NEW0060,Arjun Sharma,arjun.sharma.new0060@example.edu,M.Tech,Data Science,CSE,2027,"Cybersecurity:3; SQL:1; Figma:1",Open Source,,Block A
+NEW0061,Kabir Das,kabir.das.new0061@example.edu,M.Tech,Artificial Intelligence,CSE,2027,"Cloud:3; React:2",Fintech,,Block A
+NEW0062,Meera Das,meera.das.new0062@example.edu,B.Tech,Artificial Intelligence,CSE,2027,Android:3,Hackathons,,Block A
+NEW0063,Rahul Patel,rahul.patel.new0063@example.edu,MCA,Computer Science,CSE,2029,Cloud:2,Robotics,,Block A
+NEW0064,Rahul Patel,rahul.patel.new0064@example.edu,B.Tech,Data Science,CSE,2029,"C++:2; React:1",Robotics,,Block A
+NEW0065,Harsh Kulkarni,harsh.kulkarni.new0065@example.edu,B.Tech,Computer Science,CSE,2029,"Figma:3; Python:1; SQL:3",Hackathons,,Block A
+NEW0066,Diya Singh,diya.singh.new0066@example.edu,B.Tech,Computer Science,CSE,2028,"Machine Learning:3; React:3",CTF,,Block A
+NEW0067,Pooja Sharma,pooja.sharma.new0067@example.edu,M.Tech,Data Science,CSE,2028,"Figma:2; Python:1",Robotics,,Block A
+ERR0006,Aarav Joshi,aarav.joshi.err0006@example.edu,B.Tech,Computer Science,MECH,2029,Cloud:1,Open Source,,Block A
+NEW0068,Rahul Sharma,rahul.sharma.new0068@example.edu,B.Tech,Computer Science,CSE,2028,"Machine Learning:1; SQL:2; C++:2",Open Source,,Block A
+NEW0069,Varun Nair,varun.nair.new0069@example.edu,M.Tech,Artificial Intelligence,CSE,2029,"React:3; C++:2",Open Source,,Block A
+NEW0070,Nikhil Nair,nikhil.nair.new0070@example.edu,B.Tech,Artificial Intelligence,CSE,2027,Python:2,Hackathons,,Block A
+NEW0071,Pooja Kulkarni,pooja.kulkarni.new0071@example.edu,B.Tech,Data Science,CSE,2027,"React:2; Cloud:1",Healthtech,,Block A
+NEW0072,Nikhil Rao,nikhil.rao.new0072@example.edu,MCA,Computer Science,CSE,2029,"Machine Learning:1; Java:1; C++:1",Healthtech,,Block A
+NEW0073,Ishaan Das,ishaan.das.new0073@example.edu,B.Tech,Data Science,CSE,2026,"Machine Learning:1; Figma:3",Healthtech,,Block A
+NEW0074,Rohan Khan,rohan.khan.new0074@example.edu,MCA,Data Science,CSE,2028,C++:3,Healthtech,,Block A
+NEW0075,Meera Banerjee,meera.banerjee.new0075@example.edu,MCA,Artificial Intelligence,CSE,2027,"C++:2; SQL:3; Java:3",Robotics,,Block A
+NEW0076,Aditi Iyer,aditi.iyer.new0076@example.edu,B.Tech,Data Science,CSE,2029,"Java:2; Cybersecurity:2; Android:1",Robotics,,Block A
+NEW0077,Rohan Das,rohan.das.new0077@example.edu,MCA,Data Science,CSE,2026,Cybersecurity:2,Open Source,,Block A
+NEW0078,Nikhil Kulkarni,nikhil.kulkarni.new0078@example.edu,B.Tech,Computer Science,CSE,2027,Java:1,CTF,,Block A
+ERR0007,Vivaan Joshi,vivaan.joshi.err0007@example.edu,M.Tech,Artificial Intelligence,CSE,2027,Python:5,Healthtech,,Block A
+NEW0079,Aditi Sharma,aditi.sharma.new0079@example.edu,M.Tech,Artificial Intelligence,CSE,2026,"Figma:3; Android:3; Machine Learning:1",CTF,,Block A
+NEW0080,Varun Kulkarni,varun.kulkarni.new0080@example.edu,MCA,Data Science,CSE,2028,"Android:2; SQL:2; Machine Learning:1",Open Source,,Block A
+NEW0081,Zoya Singh,zoya.singh.new0081@example.edu,B.Tech,Data Science,CSE,2029,"Python:2; React:2; Cybersecurity:2",Robotics,,Block A
+NEW0082,Aditi Sharma,aditi.sharma.new0082@example.edu,B.Tech,Computer Science,CSE,2028,Android:3,Fintech,,Block A
+NEW0083,Meera Gupta,meera.gupta.new0083@example.edu,B.Tech,Artificial Intelligence,CSE,2027,"Cybersecurity:1; Python:2; React:2",CTF,,Block A
+NEW0084,Zoya Khan,zoya.khan.new0084@example.edu,B.Tech,Data Science,CSE,2029,Android:1,Fintech,,Block A
+NEW0085,Ananya Nair,ananya.nair.new0085@example.edu,MCA,Artificial Intelligence,CSE,2027,"SQL:3; Python:2",Open Source,,Block A
+NEW0086,Harsh Banerjee,harsh.banerjee.new0086@example.edu,B.Tech,Data Science,CSE,2027,Cloud:2,CTF,,Block A
+NEW0087,Meera Gupta,meera.gupta.new0087@example.edu,B.Tech,Computer Science,CSE,2028,"Cybersecurity:2; C++:1; SQL:3",Healthtech,,Block A
+NEW0088,Aarav Rao,aarav.rao.new0088@example.edu,B.Tech,Artificial Intelligence,CSE,2029,"Cloud:2; React:3; Python:2",Fintech,,Block A
+NEW0089,Sneha Das,sneha.das.new0089@example.edu,B.Tech,Data Science,CSE,2029,"Python:2; Cybersecurity:2; Java:2",Healthtech,,Block A
+ERR0008,XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX,rohan.das.err0008@example.edu,B.Tech,Artificial Intelligence,CSE,2026,"SQL:1; C++:2; Figma:2",Fintech,,Block A
+NEW0090,Nikhil Iyer,nikhil.iyer.new0090@example.edu,M.Tech,Computer Science,CSE,2029,React:1,Fintech,,Block A
+NEW0091,Ananya Kulkarni,ananya.kulkarni.new0091@example.edu,B.Tech,Artificial Intelligence,CSE,2027,Machine Learning:1,Fintech,,Block A
+NEW0092,Kavya Khan,kavya.khan.new0092@example.edu,M.Tech,Computer Science,CSE,2027,"SQL:1; Cloud:2",CTF,,Block A
+NEW0093,Tanvi Das,tanvi.das.new0093@example.edu,MCA,Data Science,CSE,2028,"Python:2; C++:1",Robotics,,Block A
+NEW0094,Rohan Joshi,rohan.joshi.new0094@example.edu,MCA,Computer Science,CSE,2028,"SQL:1; React:2; Figma:2",Open Source,,Block A
+NEW0095,Ishaan Sharma,ishaan.sharma.new0095@example.edu,B.Tech,Data Science,CSE,2027,"Cloud:3; Java:2",Robotics,,Block A
+NEW0096,Sneha Patel,sneha.patel.new0096@example.edu,B.Tech,Data Science,CSE,2027,"React:2; Machine Learning:1; Java:2",Healthtech,,Block A
+NEW0097,Ananya Iyer,ananya.iyer.new0097@example.edu,B.Tech,Data Science,CSE,2028,"Python:3; React:1; Java:2",Open Source,,Block A
+NEW0098,Arjun Sharma,arjun.sharma.new0098@example.edu,B.Tech,Artificial Intelligence,CSE,2028,"Machine Learning:1; Java:1; Android:1",CTF,,Block A
+NEW0099,Rohan Menon,rohan.menon.new0099@example.edu,M.Tech,Data Science,CSE,2027,"Figma:3; C++:3",Robotics,,Block A
+NEW0100,Ananya Reddy,ananya.reddy.new0100@example.edu,M.Tech,Artificial Intelligence,CSE,2029,"Python:2; Java:3; React:2",Robotics,,Block A
+ERR0009,,rahul.khan.err0009@example.edu,B.Tech,Artificial Intelligence,CSE,2026,"Cybersecurity:2; Python:2",Hackathons,,Block A
+NEW0101,Ishaan Khan,ishaan.khan.new0101@example.edu,B.Tech,Data Science,CSE,2026,Figma:3,Open Source,,Block A
+NEW0102,Rohan Nair,rohan.nair.new0102@example.edu,B.Tech,Artificial Intelligence,CSE,2028,C++:1,Hackathons,,Block A
+NEW0103,Arjun Khan,arjun.khan.new0103@example.edu,B.Tech,Data Science,CSE,2028,C++:3,Healthtech,,Block A
+NEW0104,Kabir Sharma,kabir.sharma.new0104@example.edu,M.Tech,Data Science,CSE,2029,"React:3; Python:2; C++:3",Healthtech,,Block A
+NEW0105,Sneha Nair,sneha.nair.new0105@example.edu,B.Tech,Data Science,CSE,2026,"Android:2; Python:2; Cloud:1",Robotics,,Block A
+NEW0106,Aditi Rao,aditi.rao.new0106@example.edu,M.Tech,Data Science,CSE,2026,"Python:1; Android:1",CTF,,Block A
+NEW0107,Arjun Pillai,arjun.pillai.new0107@example.edu,B.Tech,Artificial Intelligence,CSE,2026,Java:3,Robotics,,Block A
+NEW0108,Arjun Rao,arjun.rao.new0108@example.edu,MCA,Computer Science,CSE,2029,"SQL:3; Figma:1; React:2",Robotics,,Block A
+NEW0109,Nikhil Banerjee,nikhil.banerjee.new0109@example.edu,M.Tech,Computer Science,CSE,2026,"React:1; Machine Learning:1; Cybersecurity:1",Hackathons,,Block A
+NEW0110,Aarav Khan,aarav.khan.new0110@example.edu,B.Tech,Computer Science,CSE,2026,Java:3,CTF,,Block A
+NEW0111,Harsh Pillai,harsh.pillai.new0111@example.edu,B.Tech,Computer Science,CSE,2029,"Cybersecurity:1; Python:2; Cloud:3",Hackathons,,Block A
+ERR0010,Ananya Sharma,ananya.sharma.err0010@example.edu,,Artificial Intelligence,CSE,2026,"Cybersecurity:3; Python:2; Java:2",Robotics,,Block A
+NEW0112,Kabir Sharma,kabir.sharma.new0112@example.edu,B.Tech,Data Science,CSE,2026,"React:1; Python:1",CTF,,Block A
+NEW0113,Kabir Reddy,kabir.reddy.new0113@example.edu,B.Tech,Computer Science,CSE,2028,Android:2,CTF,,Block A
+NEW0114,Saanvi Iyer,saanvi.iyer.new0114@example.edu,B.Tech,Computer Science,CSE,2029,Java:1,CTF,,Block A
+NEW0115,Diya Sharma,diya.sharma.new0115@example.edu,MCA,Data Science,CSE,2026,React:1,Fintech,,Block A
+NEW0116,Saanvi Sharma,saanvi.sharma.new0116@example.edu,M.Tech,Computer Science,CSE,2029,Machine Learning:1,Robotics,,Block A
+NEW0117,Pooja Sharma,pooja.sharma.new0117@example.edu,B.Tech,Computer Science,CSE,2029,Android:2,CTF,,Block A
+NEW0118,Diya Kulkarni,diya.kulkarni.new0118@example.edu,B.Tech,Computer Science,CSE,2029,"C++:1; SQL:2; Cybersecurity:1",Fintech,,Block A
+NEW0119,Kabir Patel,kabir.patel.new0119@example.edu,B.Tech,Artificial Intelligence,CSE,2026,"Figma:2; React:2",Robotics,,Block A
+NEW0120,Meera Gupta,meera.gupta.new0120@example.edu,MCA,Data Science,CSE,2027,"Java:2; Cybersecurity:3",Robotics,,Block A
+NEW0121,Diya Khan,diya.khan.new0121@example.edu,M.Tech,Artificial Intelligence,CSE,2027,"SQL:2; Cybersecurity:1",Healthtech,,Block A
+NEW0122,Pooja Kulkarni,pooja.kulkarni.new0122@example.edu,B.Tech,Computer Science,CSE,2026,"C++:2; Python:3",CTF,,Block A
+,Varun Banerjee,varun.banerjee.err0011@example.edu,B.Tech,Artificial Intelligence,CSE,2027,"C++:3; Python:1; Java:1",CTF,,Block A
+NEW0123,Zoya Menon,zoya.menon.new0123@example.edu,M.Tech,Data Science,CSE,2026,"C++:2; SQL:2",Open Source,,Block A
+NEW0124,Ishaan Khan,ishaan.khan.new0124@example.edu,B.Tech,Computer Science,CSE,2028,"Cloud:2; SQL:1; Python:3",Hackathons,,Block A
+NEW0125,Kabir Reddy,kabir.reddy.new0125@example.edu,B.Tech,Computer Science,CSE,2029,"C++:2; React:1",Hackathons,,Block A
+NEW0126,Sneha Iyer,sneha.iyer.new0126@example.edu,B.Tech,Computer Science,CSE,2028,Cloud:1,Open Source,,Block A
+NEW0127,Harsh Banerjee,harsh.banerjee.new0127@example.edu,B.Tech,Data Science,CSE,2028,"Python:1; C++:1",Healthtech,,Block A
+NEW0128,Meera Das,meera.das.new0128@example.edu,MCA,Data Science,CSE,2028,"Cybersecurity:3; Java:3; Machine Learning:1",Robotics,,Block A
+NEW0129,Kavya Menon,kavya.menon.new0129@example.edu,MCA,Computer Science,CSE,2029,"React:2; SQL:1; C++:1",Hackathons,,Block A
+NEW0130,Sneha Menon,sneha.menon.new0130@example.edu,M.Tech,Data Science,CSE,2026,"Figma:3; Cybersecurity:2",CTF,,Block A
+NEW0131,Diya Joshi,diya.joshi.new0131@example.edu,B.Tech,Artificial Intelligence,CSE,2028,Cybersecurity:2,Fintech,,Block A
+NEW0132,Sneha Joshi,sneha.joshi.new0132@example.edu,B.Tech,Artificial Intelligence,CSE,2026,"Figma:1; Cloud:2; SQL:2",Hackathons,,Block A
+NEW0133,Kabir Kulkarni,kabir.kulkarni.new0133@example.edu,MCA,Artificial Intelligence,CSE,2029,"Java:3; Figma:2; SQL:1",Fintech,,Block A
+NEW0001,Kavya Joshi,kavya.joshi.err0012@example.edu,B.Tech,Computer Science,CSE,2026,"Figma:2; SQL:3",Hackathons,,Block A
+NEW0134,Saanvi Gupta,saanvi.gupta.new0134@example.edu,B.Tech,Artificial Intelligence,CSE,2028,React:1,Healthtech,,Block A
+NEW0135,Aarav Khan,aarav.khan.new0135@example.edu,B.Tech,Artificial Intelligence,CSE,2028,"Android:2; Cybersecurity:2; SQL:3",Healthtech,,Block A
+NEW0136,Sneha Banerjee,sneha.banerjee.new0136@example.edu,MCA,Data Science,CSE,2027,"Cloud:2; Android:2",CTF,,Block A
+NEW0137,Ananya Kulkarni,ananya.kulkarni.new0137@example.edu,MCA,Computer Science,CSE,2027,"React:1; Cybersecurity:1; C++:3",Robotics,,Block A
+NEW0138,Diya Khan,diya.khan.new0138@example.edu,B.Tech,Data Science,CSE,2028,"Figma:3; Android:2; SQL:1",Fintech,,Block A
+NEW0139,Ishaan Gupta,ishaan.gupta.new0139@example.edu,M.Tech,Artificial Intelligence,CSE,2026,Android:2,Open Source,,Block A
+NEW0140,Diya Joshi,diya.joshi.new0140@example.edu,B.Tech,Computer Science,CSE,2028,"Cybersecurity:1; Machine Learning:3",Fintech,,Block A
+NEW0141,Kabir Menon,kabir.menon.new0141@example.edu,B.Tech,Artificial Intelligence,CSE,2027,"Java:2; Machine Learning:2; SQL:1",CTF,,Block A
+NEW0142,Varun Menon,varun.menon.new0142@example.edu,MCA,Artificial Intelligence,CSE,2027,"Cybersecurity:3; Java:2; SQL:1",Robotics,,Block A
+NEW0143,Arjun Patel,arjun.patel.new0143@example.edu,B.Tech,Artificial Intelligence,CSE,2028,Android:3,Healthtech,,Block A
+NEW0144,Sneha Patel,sneha.patel.new0144@example.edu,MCA,Computer Science,CSE,2027,React:3,Healthtech,,Block A
+ERR0013,Rohan Kulkarni,not-an-email,MCA,Computer Science,CSE,2027,"Cloud:1; Java:3; React:1",Fintech,,Block A
+NEW0145,Pooja Menon,pooja.menon.new0145@example.edu,B.Tech,Artificial Intelligence,CSE,2028,Java:3,Hackathons,,Block A
+NEW0146,Aarav Das,aarav.das.new0146@example.edu,M.Tech,Computer Science,CSE,2028,"Cybersecurity:2; Android:1; Machine Learning:2",Open Source,,Block A
+NEW0147,Arjun Sharma,arjun.sharma.new0147@example.edu,B.Tech,Artificial Intelligence,CSE,2026,SQL:1,Healthtech,,Block A
+NEW0148,Meera Kulkarni,meera.kulkarni.new0148@example.edu,B.Tech,Computer Science,CSE,2028,Python:2,Robotics,,Block A
+NEW0149,Saanvi Khan,saanvi.khan.new0149@example.edu,B.Tech,Artificial Intelligence,CSE,2026,"Android:3; React:1; Cybersecurity:1",Robotics,,Block A
+NEW0150,Nikhil Pillai,nikhil.pillai.new0150@example.edu,B.Tech,Data Science,CSE,2028,"React:1; Python:1",CTF,,Block A
+NEW0151,Kabir Das,kabir.das.new0151@example.edu,B.Tech,Artificial Intelligence,CSE,2026,Python:1,Healthtech,,Block A
+NEW0152,Tanvi Reddy,tanvi.reddy.new0152@example.edu,B.Tech,Computer Science,CSE,2026,"Android:2; Java:1; Figma:1",Robotics,,Block A
+NEW0153,Aarav Sharma,aarav.sharma.new0153@example.edu,M.Tech,Data Science,CSE,2028,Cybersecurity:1,Fintech,,Block A
+NEW0154,Nikhil Iyer,nikhil.iyer.new0154@example.edu,B.Tech,Computer Science,CSE,2029,"Figma:2; SQL:2; Cybersecurity:1",Healthtech,,Block A
+NEW0155,Kavya Kulkarni,kavya.kulkarni.new0155@example.edu,M.Tech,Artificial Intelligence,CSE,2028,"Python:2; Cybersecurity:2; React:1",Open Source,,Block A
+ERR0014,Rohan Pillai,rohan.pillai.err0014@example.edu,Diploma,Artificial Intelligence,CSE,2028,React:2,Healthtech,,Block A
+NEW0156,Aarav Gupta,aarav.gupta.new0156@example.edu,B.Tech,Data Science,CSE,2026,"React:2; Java:2; C++:2",Healthtech,,Block A
+NEW0157,Vivaan Patel,vivaan.patel.new0157@example.edu,M.Tech,Computer Science,CSE,2027,"SQL:1; Figma:2; Python:2",CTF,,Block A
+NEW0158,Ananya Khan,ananya.khan.new0158@example.edu,MCA,Computer Science,CSE,2029,"React:3; C++:2; Machine Learning:3",CTF,,Block A
+NEW0159,Vivaan Das,vivaan.das.new0159@example.edu,B.Tech,Computer Science,CSE,2028,"C++:2; Machine Learning:2; Cloud:2",Fintech,,Block A
+NEW0160,Harsh Iyer,harsh.iyer.new0160@example.edu,B.Tech,Computer Science,CSE,2027,C++:2,Fintech,,Block A
+NEW0161,Tanvi Rao,tanvi.rao.new0161@example.edu,M.Tech,Computer Science,CSE,2028,"Java:2; Figma:3; Android:1",Hackathons,,Block A
+NEW0162,Nikhil Sharma,nikhil.sharma.new0162@example.edu,B.Tech,Artificial Intelligence,CSE,2027,"Android:3; Python:3; Cloud:1",CTF,,Block A
+NEW0163,Zoya Patel,zoya.patel.new0163@example.edu,MCA,Computer Science,CSE,2026,C++:1,Fintech,,Block A
+NEW0164,Zoya Pillai,zoya.pillai.new0164@example.edu,B.Tech,Computer Science,CSE,2029,"SQL:1; Cybersecurity:1",Robotics,,Block A
+NEW0165,Sneha Rao,sneha.rao.new0165@example.edu,B.Tech,Data Science,CSE,2027,"Machine Learning:1; SQL:1",Robotics,,Block A
+NEW0166,Tanvi Menon,tanvi.menon.new0166@example.edu,B.Tech,Data Science,CSE,2026,"React:3; Cybersecurity:2",CTF,,Block A
+ERR0015,Varun Iyer,varun.iyer.err0015@example.edu,B.Tech,Computer Science,CSE,twenty,Machine Learning:3,Fintech,,Block A
+NEW0167,Harsh Pillai,harsh.pillai.new0167@example.edu,MCA,Data Science,CSE,2026,"Machine Learning:1; Figma:1; Android:3",Fintech,,Block A
+NEW0168,Kabir Kulkarni,kabir.kulkarni.new0168@example.edu,B.Tech,Data Science,CSE,2027,Cybersecurity:3,Healthtech,,Block A
+NEW0169,Rahul Pillai,rahul.pillai.new0169@example.edu,MCA,Data Science,CSE,2029,Machine Learning:1,Open Source,,Block A
+NEW0170,Zoya Reddy,zoya.reddy.new0170@example.edu,MCA,Computer Science,CSE,2026,"Cloud:3; Figma:3; Cybersecurity:3",Fintech,,Block A
+NEW0171,Kabir Banerjee,kabir.banerjee.new0171@example.edu,B.Tech,Computer Science,CSE,2028,"Cloud:3; Figma:2; Java:2",Hackathons,,Block A
+NEW0172,Aditi Reddy,aditi.reddy.new0172@example.edu,B.Tech,Artificial Intelligence,CSE,2028,"Figma:1; Cloud:3; SQL:3",Robotics,,Block A
+NEW0173,Arjun Banerjee,arjun.banerjee.new0173@example.edu,M.Tech,Artificial Intelligence,CSE,2028,"Python:1; Cloud:3; SQL:3",CTF,,Block A
+NEW0174,Harsh Gupta,harsh.gupta.new0174@example.edu,M.Tech,Computer Science,CSE,2028,"Cybersecurity:2; Machine Learning:1",Hackathons,,Block A
+NEW0175,Nikhil Das,nikhil.das.new0175@example.edu,M.Tech,Artificial Intelligence,CSE,2026,Python:1,Robotics,,Block A
+NEW0176,Ananya Kulkarni,ananya.kulkarni.new0176@example.edu,B.Tech,Data Science,CSE,2028,"Java:1; SQL:3; Cloud:3",Hackathons,,Block A
+NEW0177,Tanvi Kulkarni,tanvi.kulkarni.new0177@example.edu,B.Tech,Computer Science,CSE,2026,React:1,Robotics,,Block A
+ERR0016,Zoya Gupta,zoya.gupta.err0016@example.edu,B.Tech,Artificial Intelligence,MECH,2026,SQL:2,Hackathons,,Block A
+NEW0178,Meera Joshi,meera.joshi.new0178@example.edu,MCA,Computer Science,CSE,2027,"Machine Learning:3; React:1",Healthtech,,Block A
+NEW0179,Ishaan Banerjee,ishaan.banerjee.new0179@example.edu,M.Tech,Artificial Intelligence,CSE,2029,"Figma:3; Java:2; C++:2",CTF,,Block A
+NEW0180,Vivaan Das,vivaan.das.new0180@example.edu,B.Tech,Data Science,CSE,2029,"Java:1; Android:1; Figma:3",Fintech,,Block A
+NEW0181,Harsh Patel,harsh.patel.new0181@example.edu,B.Tech,Data Science,CSE,2026,"Android:2; Cybersecurity:1",Robotics,,Block A
+NEW0182,Ananya Nair,ananya.nair.new0182@example.edu,B.Tech,Artificial Intelligence,CSE,2029,"SQL:2; Java:1",Fintech,,Block A
+NEW0183,Aarav Rao,aarav.rao.new0183@example.edu,B.Tech,Artificial Intelligence,CSE,2028,Java:1,CTF,,Block A
+NEW0184,Saanvi Menon,saanvi.menon.new0184@example.edu,B.Tech,Data Science,CSE,2029,Android:1,Open Source,,Block A
+NEW0185,Sneha Nair,sneha.nair.new0185@example.edu,B.Tech,Artificial Intelligence,CSE,2026,Machine Learning:2,Fintech,,Block A
+NEW0186,Varun Rao,varun.rao.new0186@example.edu,M.Tech,Data Science,CSE,2028,"SQL:3; Android:1; C++:2",Robotics,,Block A
+NEW0187,Tanvi Sharma,tanvi.sharma.new0187@example.edu,M.Tech,Artificial Intelligence,CSE,2027,"Machine Learning:2; Java:2; Cloud:3",Hackathons,,Block A
+NEW0188,Kavya Rao,kavya.rao.new0188@example.edu,B.Tech,Artificial Intelligence,CSE,2026,"Android:2; Machine Learning:2",Open Source,,Block A
+ERR0017,Zoya Iyer,zoya.iyer.err0017@example.edu,B.Tech,Computer Science,CSE,2028,Python:5,Robotics,,Block A
+NEW0189,Kabir Das,kabir.das.new0189@example.edu,B.Tech,Artificial Intelligence,CSE,2026,"C++:3; Android:2; SQL:3",Hackathons,,Block A
+NEW0190,Varun Joshi,varun.joshi.new0190@example.edu,M.Tech,Computer Science,CSE,2028,"React:3; Cloud:1; Java:3",Hackathons,,Block A
+NEW0191,Aditi Joshi,aditi.joshi.new0191@example.edu,B.Tech,Computer Science,CSE,2026,"Java:1; Cloud:2; Figma:3",CTF,,Block A
+NEW0192,Vivaan Reddy,vivaan.reddy.new0192@example.edu,B.Tech,Data Science,CSE,2028,Machine Learning:3,Fintech,,Block A
+NEW0193,Saanvi Reddy,saanvi.reddy.new0193@example.edu,B.Tech,Computer Science,CSE,2027,Android:2,Fintech,,Block A
+NEW0194,Kavya Menon,kavya.menon.new0194@example.edu,B.Tech,Artificial Intelligence,CSE,2026,React:3,Open Source,,Block A
+NEW0195,Rohan Kulkarni,rohan.kulkarni.new0195@example.edu,B.Tech,Computer Science,CSE,2029,"C++:1; Cloud:1",Fintech,,Block A
+NEW0196,Diya Pillai,diya.pillai.new0196@example.edu,B.Tech,Data Science,CSE,2029,"Cybersecurity:1; Python:1",Healthtech,,Block A
+NEW0197,Ishaan Patel,ishaan.patel.new0197@example.edu,M.Tech,Computer Science,CSE,2028,"Python:2; Figma:3",Hackathons,,Block A
+NEW0198,Harsh Nair,harsh.nair.new0198@example.edu,M.Tech,Artificial Intelligence,CSE,2026,"C++:2; Machine Learning:2; React:1",Hackathons,,Block A
+NEW0199,Arjun Nair,arjun.nair.new0199@example.edu,M.Tech,Artificial Intelligence,CSE,2026,"SQL:2; Java:1; Cybersecurity:2",Robotics,,Block A
+ERR0018,XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX,kavya.rao.err0018@example.edu,B.Tech,Artificial Intelligence,CSE,2027,Machine Learning:1,Healthtech,,Block A
+NEW0200,Diya Gupta,diya.gupta.new0200@example.edu,B.Tech,Data Science,CSE,2028,Python:2,Open Source,,Block A
+NEW0201,Arjun Patel,arjun.patel.new0201@example.edu,B.Tech,Artificial Intelligence,CSE,2029,"Android:3; Java:3",Healthtech,,Block A
+NEW0202,Kabir Das,kabir.das.new0202@example.edu,B.Tech,Artificial Intelligence,CSE,2029,Cloud:3,CTF,,Block A
+NEW0203,Nikhil Singh,nikhil.singh.new0203@example.edu,B.Tech,Artificial Intelligence,CSE,2027,"C++:1; Android:3; Java:3",CTF,,Block A
+NEW0204,Saanvi Gupta,saanvi.gupta.new0204@example.edu,B.Tech,Computer Science,CSE,2027,"Android:1; Cybersecurity:1; Cloud:2",Healthtech,,Block A
+NEW0205,Pooja Kulkarni,pooja.kulkarni.new0205@example.edu,B.Tech,Computer Science,CSE,2028,"Cloud:3; Python:2",Healthtech,,Block A
+NEW0206,Vivaan Pillai,vivaan.pillai.new0206@example.edu,M.Tech,Artificial Intelligence,CSE,2027,"SQL:3; Python:2",Robotics,,Block A
+NEW0207,Aarav Kulkarni,aarav.kulkarni.new0207@example.edu,B.Tech,Artificial Intelligence,CSE,2028,"Figma:1; SQL:1; Java:3",Healthtech,,Block A
+NEW0208,Tanvi Kulkarni,tanvi.kulkarni.new0208@example.edu,M.Tech,Artificial Intelligence,CSE,2029,"Machine Learning:3; Figma:3",CTF,,Block A
+NEW0209,Diya Nair,diya.nair.new0209@example.edu,MCA,Computer Science,CSE,2028,Figma:2,Healthtech,,Block A
+NEW0210,Vivaan Menon,vivaan.menon.new0210@example.edu,B.Tech,Computer Science,CSE,2026,C++:2,Robotics,,Block A
+ERR0019,,sneha.singh.err0019@example.edu,MCA,Computer Science,CSE,2028,"Figma:1; Machine Learning:3; SQL:3",Fintech,,Block A
+NEW0211,Sneha Rao,sneha.rao.new0211@example.edu,B.Tech,Computer Science,CSE,2027,"Python:2; Cloud:3; Java:3",Open Source,,Block A
+NEW0212,Aditi Joshi,aditi.joshi.new0212@example.edu,M.Tech,Artificial Intelligence,CSE,2029,Python:3,Open Source,,Block A
+NEW0213,Kabir Gupta,kabir.gupta.new0213@example.edu,B.Tech,Computer Science,CSE,2028,"C++:2; Cloud:2",Robotics,,Block A
+NEW0214,Ananya Patel,ananya.patel.new0214@example.edu,B.Tech,Data Science,CSE,2028,"Cybersecurity:2; Java:2; C++:2",CTF,,Block A
+NEW0215,Ishaan Reddy,ishaan.reddy.new0215@example.edu,B.Tech,Artificial Intelligence,CSE,2028,"Cloud:2; Figma:3; C++:2",Hackathons,,Block A
+NEW0216,Rohan Patel,rohan.patel.new0216@example.edu,B.Tech,Artificial Intelligence,CSE,2027,"React:3; Cybersecurity:3",CTF,,Block A
+NEW0217,Pooja Nair,pooja.nair.new0217@example.edu,MCA,Computer Science,CSE,2029,"Python:1; Cloud:3",Robotics,,Block A
+NEW0218,Rohan Patel,rohan.patel.new0218@example.edu,M.Tech,Artificial Intelligence,CSE,2028,"Machine Learning:2; Java:2",Robotics,,Block A
+NEW0219,Aarav Nair,aarav.nair.new0219@example.edu,MCA,Artificial Intelligence,CSE,2029,Cybersecurity:3,Healthtech,,Block A
+NEW0220,Kabir Gupta,kabir.gupta.new0220@example.edu,MCA,Computer Science,CSE,2027,"Cloud:3; Figma:1; Cybersecurity:2",Healthtech,,Block A
+NEW0221,Kavya Menon,kavya.menon.new0221@example.edu,MCA,Computer Science,CSE,2029,"Figma:1; Android:2",Open Source,,Block A
+ERR0020,Rohan Menon,rohan.menon.err0020@example.edu,,Data Science,CSE,2026,"Java:1; Figma:1; C++:1",Hackathons,,Block A
+NEW0222,Meera Sharma,meera.sharma.new0222@example.edu,B.Tech,Computer Science,CSE,2028,"Machine Learning:1; Figma:1; Python:2",CTF,,Block A
+NEW0223,Arjun Nair,arjun.nair.new0223@example.edu,B.Tech,Computer Science,CSE,2029,"C++:3; Cloud:2; Python:1",Hackathons,,Block A
+NEW0224,Vivaan Kulkarni,vivaan.kulkarni.new0224@example.edu,B.Tech,Data Science,CSE,2028,"Cybersecurity:1; React:3; Android:1",Hackathons,,Block A
+NEW0225,Rahul Rao,rahul.rao.new0225@example.edu,MCA,Computer Science,CSE,2028,"C++:2; React:2; Android:1",Robotics,,Block A
+NEW0226,Ananya Joshi,ananya.joshi.new0226@example.edu,M.Tech,Computer Science,CSE,2028,"Cloud:1; SQL:3",Healthtech,,Block A
+NEW0227,Aditi Gupta,aditi.gupta.new0227@example.edu,MCA,Computer Science,CSE,2026,"Cloud:2; Java:2; Python:1",Healthtech,,Block A
+NEW0228,Rohan Iyer,rohan.iyer.new0228@example.edu,M.Tech,Computer Science,CSE,2027,"C++:2; Android:2; Machine Learning:2",Open Source,,Block A
+NEW0229,Nikhil Sharma,nikhil.sharma.new0229@example.edu,B.Tech,Data Science,CSE,2027,"Cloud:2; Machine Learning:3; C++:2",Hackathons,,Block A
+NEW0230,Saanvi Sharma,saanvi.sharma.new0230@example.edu,B.Tech,Artificial Intelligence,CSE,2029,"React:2; Figma:1",Open Source,,Block A
+NEW0231,Diya Kulkarni,diya.kulkarni.new0231@example.edu,B.Tech,Computer Science,CSE,2027,Cloud:3,Fintech,,Block A
+NEW0232,Kavya Singh,kavya.singh.new0232@example.edu,B.Tech,Computer Science,CSE,2027,"C++:1; Android:3; Python:3",Fintech,,Block A
+,Ananya Gupta,ananya.gupta.err0021@example.edu,M.Tech,Computer Science,CSE,2029,Figma:2,CTF,,Block A
+NEW0233,Ishaan Khan,ishaan.khan.new0233@example.edu,B.Tech,Data Science,CSE,2028,C++:2,CTF,,Block A
+NEW0234,Vivaan Khan,vivaan.khan.new0234@example.edu,MCA,Artificial Intelligence,CSE,2027,"Cybersecurity:2; Cloud:1",Open Source,,Block A
+NEW0235,Rahul Nair,rahul.nair.new0235@example.edu,M.Tech,Artificial Intelligence,CSE,2029,"React:3; Android:3",Robotics,,Block A
+NEW0236,Zoya Rao,zoya.rao.new0236@example.edu,MCA,Data Science,CSE,2026,React:1,Robotics,,Block A
+NEW0237,Diya Singh,diya.singh.new0237@example.edu,B.Tech,Artificial Intelligence,CSE,2027,"Figma:2; SQL:3; Cloud:3",Hackathons,,Block A
+NEW0238,Kavya Singh,kavya.singh.new0238@example.edu,B.Tech,Data Science,CSE,2028,"C++:3; Cloud:1; Machine Learning:3",Healthtech,,Block A
+NEW0239,Arjun Menon,arjun.menon.new0239@example.edu,B.Tech,Artificial Intelligence,CSE,2027,"Java:2; Python:1; Figma:1",Fintech,,Block A
+NEW0240,Kavya Gupta,kavya.gupta.new0240@example.edu,B.Tech,Computer Science,CSE,2029,"Cybersecurity:3; C++:2; Python:2",Hackathons,,Block A
+NEW0241,Rohan Nair,rohan.nair.new0241@example.edu,MCA,Computer Science,CSE,2029,"Cloud:1; SQL:3; Machine Learning:3",Open Source,,Block A
+NEW0242,Rohan Reddy,rohan.reddy.new0242@example.edu,MCA,Computer Science,CSE,2027,"Python:3; React:2",Open Source,,Block A
+NEW0243,Saanvi Singh,saanvi.singh.new0243@example.edu,B.Tech,Data Science,CSE,2029,"Java:2; Android:1",Hackathons,,Block A
+NEW0001,Sneha Kulkarni,sneha.kulkarni.err0022@example.edu,M.Tech,Computer Science,CSE,2026,"Machine Learning:2; Cloud:1; Java:3",Fintech,,Block A
+NEW0244,Arjun Sharma,arjun.sharma.new0244@example.edu,M.Tech,Artificial Intelligence,CSE,2028,"SQL:1; Java:1; Python:2",Fintech,,Block A
+NEW0245,Arjun Das,arjun.das.new0245@example.edu,B.Tech,Computer Science,CSE,2029,"Cloud:2; Figma:2; Android:2",Fintech,,Block A
+NEW0246,Varun Gupta,varun.gupta.new0246@example.edu,B.Tech,Computer Science,CSE,2029,React:3,Healthtech,,Block A
+NEW0247,Varun Patel,varun.patel.new0247@example.edu,B.Tech,Computer Science,CSE,2029,"Android:2; C++:1",Hackathons,,Block A
+NEW0248,Saanvi Banerjee,saanvi.banerjee.new0248@example.edu,B.Tech,Computer Science,CSE,2027,Figma:3,Open Source,,Block A
+NEW0249,Saanvi Pillai,saanvi.pillai.new0249@example.edu,B.Tech,Data Science,CSE,2027,"Machine Learning:2; Java:3; Android:1",Hackathons,,Block A
+NEW0250,Saanvi Banerjee,saanvi.banerjee.new0250@example.edu,B.Tech,Artificial Intelligence,CSE,2026,Cybersecurity:3,Fintech,,Block A
+NEW0251,Vivaan Das,vivaan.das.new0251@example.edu,B.Tech,Computer Science,CSE,2029,"Android:1; Figma:1",CTF,,Block A
+NEW0252,Zoya Singh,zoya.singh.new0252@example.edu,B.Tech,Data Science,CSE,2028,"C++:1; Java:3",Healthtech,,Block A
+NEW0253,Varun Rao,varun.rao.new0253@example.edu,M.Tech,Computer Science,CSE,2029,"Figma:2; React:2; SQL:2",Hackathons,,Block A
+NEW0254,Pooja Sharma,pooja.sharma.new0254@example.edu,B.Tech,Computer Science,CSE,2026,"Android:2; Machine Learning:2; Python:2",Fintech,,Block A
+ERR0023,Ananya Singh,not-an-email,M.Tech,Computer Science,CSE,2029,"Java:3; Cybersecurity:1; React:2",Healthtech,,Block A
+NEW0255,Ananya Khan,ananya.khan.new0255@example.edu,B.Tech,Data Science,CSE,2027,Python:2,Healthtech,,Block A
+NEW0256,Aarav Rao,aarav.rao.new0256@example.edu,MCA,Artificial Intelligence,CSE,2026,Android:1,Fintech,,Block A
+NEW0257,Varun Das,varun.das.new0257@example.edu,B.Tech,Data Science,CSE,2026,"SQL:1; Java:2; Cybersecurity:2",Healthtech,,Block A
+NEW0258,Diya Gupta,diya.gupta.new0258@example.edu,MCA,Data Science,CSE,2026,"Android:3; C++:2",Healthtech,,Block A
+NEW0259,Aditi Nair,aditi.nair.new0259@example.edu,M.Tech,Computer Science,CSE,2026,C++:2,Open Source,,Block A
+NEW0260,Ishaan Khan,ishaan.khan.new0260@example.edu,M.Tech,Data Science,CSE,2027,SQL:2,Healthtech,,Block A
+NEW0261,Kabir Singh,kabir.singh.new0261@example.edu,B.Tech,Data Science,CSE,2027,"Python:3; SQL:1",Hackathons,,Block A
+NEW0262,Nikhil Kulkarni,nikhil.kulkarni.new0262@example.edu,M.Tech,Artificial Intelligence,CSE,2027,"SQL:3; Java:1",CTF,,Block A
+NEW0263,Tanvi Gupta,tanvi.gupta.new0263@example.edu,M.Tech,Artificial Intelligence,CSE,2027,"C++:1; Figma:1",CTF,,Block A
+NEW0264,Kabir Joshi,kabir.joshi.new0264@example.edu,B.Tech,Data Science,CSE,2026,"React:1; C++:1",Fintech,,Block A
+NEW0265,Kavya Joshi,kavya.joshi.new0265@example.edu,M.Tech,Artificial Intelligence,CSE,2026,"SQL:3; Machine Learning:3; Python:1",Robotics,,Block A
+ERR0024,Sneha Gupta,sneha.gupta.err0024@example.edu,Diploma,Data Science,CSE,2029,React:1,Healthtech,,Block A
+NEW0266,Zoya Kulkarni,zoya.kulkarni.new0266@example.edu,B.Tech,Artificial Intelligence,CSE,2028,"Cloud:3; React:3; Android:2",Open Source,,Block A
+NEW0267,Saanvi Menon,saanvi.menon.new0267@example.edu,B.Tech,Data Science,CSE,2029,"C++:3; Cloud:1; SQL:1",Fintech,,Block A
+NEW0268,Sneha Pillai,sneha.pillai.new0268@example.edu,B.Tech,Data Science,CSE,2028,"SQL:2; Machine Learning:2",CTF,,Block A
+NEW0269,Ananya Rao,ananya.rao.new0269@example.edu,M.Tech,Computer Science,CSE,2026,Figma:3,Hackathons,,Block A
+NEW0270,Ananya Pillai,ananya.pillai.new0270@example.edu,M.Tech,Data Science,CSE,2026,SQL:1,Fintech,,Block A
+NEW0271,Kabir Khan,kabir.khan.new0271@example.edu,M.Tech,Artificial Intelligence,CSE,2028,"Cybersecurity:2; SQL:2",Robotics,,Block A
+NEW0272,Pooja Singh,pooja.singh.new0272@example.edu,B.Tech,Artificial Intelligence,CSE,2028,React:2,Open Source,,Block A
+NEW0273,Sneha Rao,sneha.rao.new0273@example.edu,B.Tech,Artificial Intelligence,CSE,2029,Python:1,Robotics,,Block A
+NEW0274,Saanvi Menon,saanvi.menon.new0274@example.edu,M.Tech,Artificial Intelligence,CSE,2027,"C++:3; Java:2",Fintech,,Block A
+NEW0275,Varun Khan,varun.khan.new0275@example.edu,B.Tech,Computer Science,CSE,2026,Cloud:2,Hackathons,,Block A
+NEW0276,Rahul Joshi,rahul.joshi.new0276@example.edu,MCA,Artificial Intelligence,CSE,2026,"Machine Learning:3; Python:1; C++:3",CTF,,Block A
+ERR0025,Aarav Khan,aarav.khan.err0025@example.edu,MCA,Data Science,CSE,twenty,Python:3,Fintech,,Block A
+NEW0277,Aditi Khan,aditi.khan.new0277@example.edu,B.Tech,Computer Science,CSE,2027,Cloud:1,CTF,,Block A
+NEW0278,Pooja Banerjee,pooja.banerjee.new0278@example.edu,MCA,Data Science,CSE,2027,"Machine Learning:1; React:3",Hackathons,,Block A
+NEW0279,Tanvi Banerjee,tanvi.banerjee.new0279@example.edu,B.Tech,Data Science,CSE,2028,Figma:1,Fintech,,Block A
+NEW0280,Rohan Joshi,rohan.joshi.new0280@example.edu,M.Tech,Artificial Intelligence,CSE,2026,"Cybersecurity:3; Cloud:2; React:2",CTF,,Block A
+NEW0281,Kavya Singh,kavya.singh.new0281@example.edu,MCA,Artificial Intelligence,CSE,2028,"Java:2; React:1",CTF,,Block A
+NEW0282,Tanvi Khan,tanvi.khan.new0282@example.edu,B.Tech,Artificial Intelligence,CSE,2027,"React:2; Python:1",Fintech,,Block A
+NEW0283,Meera Nair,meera.nair.new0283@example.edu,B.Tech,Artificial Intelligence,CSE,2029,"Python:3; React:3; Cloud:2",Fintech,,Block A
+NEW0284,Sneha Sharma,sneha.sharma.new0284@example.edu,M.Tech,Artificial Intelligence,CSE,2027,"Android:2; Python:1",Healthtech,,Block A
+NEW0285,Arjun Das,arjun.das.new0285@example.edu,MCA,Computer Science,CSE,2028,React:3,Healthtech,,Block A
+NEW0286,Harsh Singh,harsh.singh.new0286@example.edu,MCA,Computer Science,CSE,2028,"Cybersecurity:2; Cloud:3; Machine Learning:1",Healthtech,,Block A
+NEW0287,Tanvi Kulkarni,tanvi.kulkarni.new0287@example.edu,B.Tech,Computer Science,CSE,2028,"SQL:2; Figma:3; C++:3",CTF,,Block A
+ERR0026,Aditi Reddy,aditi.reddy.err0026@example.edu,M.Tech,Data Science,MECH,2029,"Cybersecurity:1; Cloud:3; React:1",Robotics,,Block A
+NEW0288,Kabir Joshi,kabir.joshi.new0288@example.edu,MCA,Data Science,CSE,2028,"Python:2; Android:2",Fintech,,Block A
+NEW0289,Arjun Nair,arjun.nair.new0289@example.edu,MCA,Data Science,CSE,2026,"React:3; C++:1; Machine Learning:2",Fintech,,Block A
+NEW0290,Varun Kulkarni,varun.kulkarni.new0290@example.edu,M.Tech,Computer Science,CSE,2026,"Figma:3; Machine Learning:3; Android:1",Fintech,,Block A
+NEW0291,Ishaan Nair,ishaan.nair.new0291@example.edu,MCA,Data Science,CSE,2028,Java:1,Open Source,,Block A
+NEW0292,Zoya Iyer,zoya.iyer.new0292@example.edu,B.Tech,Data Science,CSE,2026,Cloud:1,Hackathons,,Block A
+NEW0293,Aarav Patel,aarav.patel.new0293@example.edu,B.Tech,Artificial Intelligence,CSE,2026,"SQL:3; Machine Learning:2",Open Source,,Block A
+NEW0294,Rahul Nair,rahul.nair.new0294@example.edu,B.Tech,Data Science,CSE,2026,"Android:2; Python:1; Machine Learning:1",Healthtech,,Block A
+NEW0295,Zoya Khan,zoya.khan.new0295@example.edu,B.Tech,Artificial Intelligence,CSE,2028,"C++:3; Cloud:3; Machine Learning:2",Robotics,,Block A
+NEW0296,Aditi Kulkarni,aditi.kulkarni.new0296@example.edu,B.Tech,Computer Science,CSE,2027,"Python:2; React:1; Java:1",Hackathons,,Block A
+NEW0297,Pooja Iyer,pooja.iyer.new0297@example.edu,B.Tech,Computer Science,CSE,2026,Cloud:2,Open Source,,Block A
+NEW0298,Pooja Rao,pooja.rao.new0298@example.edu,B.Tech,Computer Science,CSE,2027,"Java:2; Figma:2",Fintech,,Block A
+ERR0027,Pooja Menon,pooja.menon.err0027@example.edu,B.Tech,Data Science,CSE,2027,Python:5,Hackathons,,Block A
+NEW0299,Saanvi Reddy,saanvi.reddy.new0299@example.edu,B.Tech,Artificial Intelligence,CSE,2029,"Cybersecurity:3; React:1; Cloud:3",Robotics,,Block A
+NEW0300,Sneha Sharma,sneha.sharma.new0300@example.edu,B.Tech,Data Science,CSE,2027,"Java:3; Android:3; SQL:3",CTF,,Block A
+NEW0301,Kavya Sharma,kavya.sharma.new0301@example.edu,MCA,Artificial Intelligence,CSE,2026,"C++:2; Android:1",Fintech,,Block A
+NEW0302,Harsh Sharma,harsh.sharma.new0302@example.edu,M.Tech,Computer Science,CSE,2029,"Machine Learning:2; React:1; Android:1",Hackathons,,Block A
+NEW0303,Diya Kulkarni,diya.kulkarni.new0303@example.edu,B.Tech,Artificial Intelligence,CSE,2028,Android:3,Healthtech,,Block A
+NEW0304,Aarav Joshi,aarav.joshi.new0304@example.edu,B.Tech,Computer Science,CSE,2029,"Figma:1; Machine Learning:2",Robotics,,Block A
+NEW0305,Ishaan Pillai,ishaan.pillai.new0305@example.edu,B.Tech,Computer Science,CSE,2026,"Cybersecurity:2; SQL:2; Python:1",Open Source,,Block A
+NEW0306,Varun Kulkarni,varun.kulkarni.new0306@example.edu,B.Tech,Computer Science,CSE,2027,Cloud:3,Healthtech,,Block A
+NEW0307,Nikhil Sharma,nikhil.sharma.new0307@example.edu,B.Tech,Data Science,CSE,2026,"SQL:1; Android:1; React:1",Hackathons,,Block A
+NEW0308,Rahul Menon,rahul.menon.new0308@example.edu,B.Tech,Artificial Intelligence,CSE,2029,"Python:2; Android:1; Machine Learning:1",Hackathons,,Block A
+NEW0309,Rohan Patel,rohan.patel.new0309@example.edu,B.Tech,Artificial Intelligence,CSE,2026,"C++:2; Cloud:1",Robotics,,Block A
+ERR0028,XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX,aditi.patel.err0028@example.edu,MCA,Computer Science,CSE,2029,Android:3,Robotics,,Block A
+NEW0310,Kabir Patel,kabir.patel.new0310@example.edu,B.Tech,Computer Science,CSE,2029,"Python:1; React:2; Figma:2",Robotics,,Block A
+NEW0311,Ananya Reddy,ananya.reddy.new0311@example.edu,B.Tech,Computer Science,CSE,2028,"SQL:2; Cybersecurity:1",Robotics,,Block A
+NEW0312,Meera Kulkarni,meera.kulkarni.new0312@example.edu,B.Tech,Artificial Intelligence,CSE,2028,"Cybersecurity:2; Figma:1; SQL:1",Hackathons,,Block A
+NEW0313,Diya Pillai,diya.pillai.new0313@example.edu,B.Tech,Artificial Intelligence,CSE,2029,Cloud:1,Healthtech,,Block A
+NEW0314,Ananya Pillai,ananya.pillai.new0314@example.edu,B.Tech,Data Science,CSE,2027,"Cloud:3; React:3",Fintech,,Block A
+NEW0315,Kavya Kulkarni,kavya.kulkarni.new0315@example.edu,MCA,Data Science,CSE,2027,"Python:3; Android:2; C++:2",Healthtech,,Block A
+NEW0316,Nikhil Rao,nikhil.rao.new0316@example.edu,M.Tech,Data Science,CSE,2029,"Figma:2; Cloud:2; SQL:3",CTF,,Block A
+NEW0317,Ananya Iyer,ananya.iyer.new0317@example.edu,M.Tech,Artificial Intelligence,CSE,2029,"Cloud:1; Python:1",CTF,,Block A
+NEW0318,Kavya Menon,kavya.menon.new0318@example.edu,B.Tech,Artificial Intelligence,CSE,2026,"SQL:2; Figma:3; React:3",Fintech,,Block A
+NEW0319,Nikhil Khan,nikhil.khan.new0319@example.edu,M.Tech,Data Science,CSE,2027,"Cybersecurity:1; C++:2; Machine Learning:1",Hackathons,,Block A
+NEW0320,Ananya Banerjee,ananya.banerjee.new0320@example.edu,MCA,Computer Science,CSE,2029,C++:3,Hackathons,,Block A
+ERR0029,,meera.rao.err0029@example.edu,B.Tech,Data Science,CSE,2027,Cloud:2,Healthtech,,Block A
+NEW0321,Varun Banerjee,varun.banerjee.new0321@example.edu,B.Tech,Computer Science,CSE,2026,"Android:1; Figma:3",Robotics,,Block A
+NEW0322,Sneha Sharma,sneha.sharma.new0322@example.edu,B.Tech,Computer Science,CSE,2027,"Android:1; Machine Learning:2",Fintech,,Block A
+NEW0323,Arjun Menon,arjun.menon.new0323@example.edu,B.Tech,Data Science,CSE,2027,"C++:1; Android:2; Machine Learning:2",Hackathons,,Block A
+NEW0324,Pooja Menon,pooja.menon.new0324@example.edu,B.Tech,Artificial Intelligence,CSE,2029,"Cybersecurity:3; Python:2",Healthtech,,Block A
+NEW0325,Zoya Pillai,zoya.pillai.new0325@example.edu,B.Tech,Computer Science,CSE,2029,Java:1,Robotics,,Block A
+NEW0326,Ananya Patel,ananya.patel.new0326@example.edu,B.Tech,Computer Science,CSE,2029,"SQL:2; Python:2",Open Source,,Block A
+NEW0327,Kavya Reddy,kavya.reddy.new0327@example.edu,M.Tech,Artificial Intelligence,CSE,2026,Machine Learning:1,Fintech,,Block A
+NEW0328,Kabir Pillai,kabir.pillai.new0328@example.edu,B.Tech,Computer Science,CSE,2028,"Figma:3; SQL:1; Cloud:2",Fintech,,Block A
+NEW0329,Tanvi Kulkarni,tanvi.kulkarni.new0329@example.edu,M.Tech,Data Science,CSE,2026,"Cloud:1; Java:3; Python:1",Hackathons,,Block A
+NEW0330,Diya Iyer,diya.iyer.new0330@example.edu,B.Tech,Computer Science,CSE,2026,"Java:2; C++:1; Python:2",Healthtech,,Block A
+NEW0331,Harsh Joshi,harsh.joshi.new0331@example.edu,B.Tech,Data Science,CSE,2026,"React:1; Java:1; C++:3",Hackathons,,Block A
+ERR0030,Aarav Reddy,aarav.reddy.err0030@example.edu,,Data Science,CSE,2026,"C++:3; Cloud:3",Robotics,,Block A
+NEW0332,Harsh Das,harsh.das.new0332@example.edu,B.Tech,Artificial Intelligence,CSE,2028,"Machine Learning:3; Android:3; React:3",Robotics,,Block A
+NEW0333,Rohan Kulkarni,rohan.kulkarni.new0333@example.edu,MCA,Data Science,CSE,2026,"Android:3; Java:1",Open Source,,Block A
+NEW0334,Sneha Rao,sneha.rao.new0334@example.edu,B.Tech,Artificial Intelligence,CSE,2029,"Python:2; Machine Learning:2",Open Source,,Block A
+NEW0335,Ishaan Iyer,ishaan.iyer.new0335@example.edu,M.Tech,Computer Science,CSE,2028,"SQL:3; Cloud:2",Fintech,,Block A
+NEW0336,Aarav Singh,aarav.singh.new0336@example.edu,B.Tech,Artificial Intelligence,CSE,2029,"Cloud:1; Python:2; Machine Learning:2",Robotics,,Block A
+NEW0337,Arjun Menon,arjun.menon.new0337@example.edu,B.Tech,Data Science,CSE,2027,"Android:3; Cloud:1; Cybersecurity:2",Healthtech,,Block A
+NEW0338,Pooja Rao,pooja.rao.new0338@example.edu,M.Tech,Computer Science,CSE,2026,"SQL:1; Figma:1",CTF,,Block A
+NEW0339,Sneha Banerjee,sneha.banerjee.new0339@example.edu,B.Tech,Data Science,CSE,2027,"Cloud:3; React:2",Fintech,,Block A
+NEW0340,Diya Joshi,diya.joshi.new0340@example.edu,MCA,Data Science,CSE,2026,"Figma:1; Java:1; React:1",Hackathons,,Block A
+NEW0341,Ananya Joshi,ananya.joshi.new0341@example.edu,M.Tech,Data Science,CSE,2029,"Figma:1; Cloud:3",Robotics,,Block A
+NEW0342,Aarav Khan,aarav.khan.new0342@example.edu,B.Tech,Artificial Intelligence,CSE,2026,"Figma:3; SQL:1; Cybersecurity:2",Open Source,,Block A
+,Diya Patel,diya.patel.err0031@example.edu,B.Tech,Artificial Intelligence,CSE,2029,"Cloud:1; C++:2",Open Source,,Block A
+NEW0343,Meera Singh,meera.singh.new0343@example.edu,B.Tech,Data Science,CSE,2028,"Python:2; Android:1",Fintech,,Block A
+NEW0344,Rahul Nair,rahul.nair.new0344@example.edu,B.Tech,Data Science,CSE,2029,"C++:2; Android:2",Robotics,,Block A
+NEW0345,Aditi Joshi,aditi.joshi.new0345@example.edu,B.Tech,Computer Science,CSE,2026,Machine Learning:2,Hackathons,,Block A
+NEW0346,Harsh Sharma,harsh.sharma.new0346@example.edu,B.Tech,Data Science,CSE,2028,SQL:1,Open Source,,Block A
+NEW0347,Zoya Singh,zoya.singh.new0347@example.edu,MCA,Artificial Intelligence,CSE,2028,C++:1,Hackathons,,Block A
+NEW0348,Aarav Joshi,aarav.joshi.new0348@example.edu,B.Tech,Computer Science,CSE,2028,"SQL:2; Cybersecurity:3; Android:3",Healthtech,,Block A
+NEW0349,Kavya Joshi,kavya.joshi.new0349@example.edu,MCA,Artificial Intelligence,CSE,2026,"Android:3; Machine Learning:3",Open Source,,Block A
+NEW0350,Kabir Kulkarni,kabir.kulkarni.new0350@example.edu,B.Tech,Artificial Intelligence,CSE,2028,"Figma:1; Android:2; SQL:2",Hackathons,,Block A
+NEW0351,Diya Gupta,diya.gupta.new0351@example.edu,B.Tech,Data Science,CSE,2026,"Android:3; Cloud:1; Java:3",Healthtech,,Block A
+NEW0352,Kabir Gupta,kabir.gupta.new0352@example.edu,M.Tech,Data Science,CSE,2028,Python:2,CTF,,Block A
+NEW0353,Arjun Singh,arjun.singh.new0353@example.edu,B.Tech,Artificial Intelligence,CSE,2028,"SQL:1; React:1",Open Source,,Block A
+NEW0001,Arjun Joshi,arjun.joshi.err0032@example.edu,B.Tech,Data Science,CSE,2027,Java:1,Robotics,,Block A
+NEW0354,Meera Das,meera.das.new0354@example.edu,B.Tech,Computer Science,CSE,2028,"Machine Learning:3; C++:3; SQL:3",Hackathons,,Block A
+NEW0355,Meera Iyer,meera.iyer.new0355@example.edu,B.Tech,Computer Science,CSE,2028,Cloud:1,Robotics,,Block A
+NEW0356,Rahul Reddy,rahul.reddy.new0356@example.edu,MCA,Artificial Intelligence,CSE,2026,React:1,Open Source,,Block A
+NEW0357,Ananya Nair,ananya.nair.new0357@example.edu,B.Tech,Data Science,CSE,2026,"Cloud:3; Cybersecurity:2; Android:2",Fintech,,Block A
+NEW0358,Zoya Joshi,zoya.joshi.new0358@example.edu,B.Tech,Artificial Intelligence,CSE,2028,"React:2; Android:2; Python:2",CTF,,Block A
+NEW0359,Zoya Banerjee,zoya.banerjee.new0359@example.edu,MCA,Data Science,CSE,2029,"SQL:1; React:1",Healthtech,,Block A
+NEW0360,Aditi Iyer,aditi.iyer.new0360@example.edu,B.Tech,Artificial Intelligence,CSE,2029,"Cybersecurity:2; Cloud:3",Open Source,,Block A
+NEW0361,Sneha Pillai,sneha.pillai.new0361@example.edu,MCA,Computer Science,CSE,2028,SQL:1,Hackathons,,Block A
+NEW0362,Aarav Joshi,aarav.joshi.new0362@example.edu,B.Tech,Artificial Intelligence,CSE,2027,"Figma:2; Machine Learning:1",Healthtech,,Block A
+NEW0363,Rohan Joshi,rohan.joshi.new0363@example.edu,B.Tech,Data Science,CSE,2026,C++:1,Fintech,,Block A
+NEW0364,Meera Sharma,meera.sharma.new0364@example.edu,MCA,Data Science,CSE,2028,"Java:3; Figma:3; Cybersecurity:3",Robotics,,Block A
+ERR0033,Saanvi Sharma,not-an-email,B.Tech,Artificial Intelligence,CSE,2029,"SQL:1; Cybersecurity:1; Python:3",Open Source,,Block A
+NEW0365,Saanvi Rao,saanvi.rao.new0365@example.edu,MCA,Data Science,CSE,2028,"C++:1; Python:1",Fintech,,Block A
+NEW0366,Zoya Nair,zoya.nair.new0366@example.edu,B.Tech,Computer Science,CSE,2028,Figma:2,Open Source,,Block A
+NEW0367,Saanvi Khan,saanvi.khan.new0367@example.edu,B.Tech,Computer Science,CSE,2029,C++:3,Fintech,,Block A
+NEW0368,Saanvi Nair,saanvi.nair.new0368@example.edu,B.Tech,Computer Science,CSE,2027,"SQL:1; Cybersecurity:3; Cloud:1",Fintech,,Block A
+NEW0369,Kabir Pillai,kabir.pillai.new0369@example.edu,B.Tech,Artificial Intelligence,CSE,2027,"Python:3; Cybersecurity:1",Healthtech,,Block A
+NEW0370,Aarav Reddy,aarav.reddy.new0370@example.edu,MCA,Computer Science,CSE,2029,Cloud:3,Robotics,,Block A
+NEW0371,Sneha Gupta,sneha.gupta.new0371@example.edu,MCA,Artificial Intelligence,CSE,2028,SQL:1,Hackathons,,Block A
+NEW0372,Zoya Banerjee,zoya.banerjee.new0372@example.edu,MCA,Data Science,CSE,2027,"Machine Learning:2; Cybersecurity:2",Robotics,,Block A
+NEW0373,Harsh Das,harsh.das.new0373@example.edu,M.Tech,Computer Science,CSE,2029,"SQL:3; React:3",Robotics,,Block A
+NEW0374,Varun Joshi,varun.joshi.new0374@example.edu,B.Tech,Artificial Intelligence,CSE,2027,"Java:2; C++:3; Python:2",Healthtech,,Block A
+NEW0375,Aarav Joshi,aarav.joshi.new0375@example.edu,B.Tech,Data Science,CSE,2029,"Cybersecurity:3; Machine Learning:1; Android:3",Healthtech,,Block A
+ERR0034,Vivaan Khan,vivaan.khan.err0034@example.edu,Diploma,Artificial Intelligence,CSE,2028,React:3,Open Source,,Block A
+NEW0376,Rahul Joshi,rahul.joshi.new0376@example.edu,B.Tech,Data Science,CSE,2027,SQL:2,Fintech,,Block A
+NEW0377,Aditi Patel,aditi.patel.new0377@example.edu,M.Tech,Artificial Intelligence,CSE,2029,"SQL:1; Python:3",Hackathons,,Block A
+NEW0378,Vivaan Sharma,vivaan.sharma.new0378@example.edu,M.Tech,Artificial Intelligence,CSE,2027,"Java:1; React:2",CTF,,Block A
+NEW0379,Arjun Reddy,arjun.reddy.new0379@example.edu,M.Tech,Artificial Intelligence,CSE,2028,Cloud:3,Healthtech,,Block A
+NEW0380,Pooja Patel,pooja.patel.new0380@example.edu,M.Tech,Artificial Intelligence,CSE,2026,"C++:2; Java:3",Open Source,,Block A
+NEW0381,Diya Menon,diya.menon.new0381@example.edu,B.Tech,Data Science,CSE,2029,Java:1,CTF,,Block A
+NEW0382,Rohan Khan,rohan.khan.new0382@example.edu,M.Tech,Computer Science,CSE,2029,"Cloud:3; Android:1; C++:2",Hackathons,,Block A
+NEW0383,Pooja Rao,pooja.rao.new0383@example.edu,M.Tech,Data Science,CSE,2026,"Figma:2; SQL:3",Hackathons,,Block A
+NEW0384,Diya Khan,diya.khan.new0384@example.edu,MCA,Computer Science,CSE,2027,Machine Learning:3,Hackathons,,Block A
+NEW0385,Nikhil Kulkarni,nikhil.kulkarni.new0385@example.edu,B.Tech,Computer Science,CSE,2026,"SQL:1; Figma:2; Cloud:3",Hackathons,,Block A
+NEW0386,Pooja Nair,pooja.nair.new0386@example.edu,B.Tech,Data Science,CSE,2029,SQL:3,Hackathons,,Block A
+ERR0035,Pooja Singh,pooja.singh.err0035@example.edu,M.Tech,Artificial Intelligence,CSE,twenty,"C++:1; Python:3; Cybersecurity:3",Hackathons,,Block A
+NEW0387,Zoya Joshi,zoya.joshi.new0387@example.edu,B.Tech,Computer Science,CSE,2029,Python:1,Healthtech,,Block A
+NEW0388,Zoya Das,zoya.das.new0388@example.edu,B.Tech,Data Science,CSE,2028,"SQL:2; Java:1; Machine Learning:1",Robotics,,Block A
+NEW0389,Nikhil Iyer,nikhil.iyer.new0389@example.edu,B.Tech,Artificial Intelligence,CSE,2027,"Figma:3; C++:3; Java:1",CTF,,Block A
+NEW0390,Harsh Iyer,harsh.iyer.new0390@example.edu,M.Tech,Artificial Intelligence,CSE,2027,"C++:1; Machine Learning:3",Open Source,,Block A
+NEW0391,Kavya Menon,kavya.menon.new0391@example.edu,B.Tech,Data Science,CSE,2028,"C++:1; Python:2",CTF,,Block A
+NEW0392,Ananya Pillai,ananya.pillai.new0392@example.edu,M.Tech,Computer Science,CSE,2029,"Python:1; Machine Learning:1; Cybersecurity:3",Fintech,,Block A
+NEW0393,Aditi Iyer,aditi.iyer.new0393@example.edu,B.Tech,Computer Science,CSE,2027,"SQL:1; Python:3; Android:2",Healthtech,,Block A
+NEW0394,Zoya Pillai,zoya.pillai.new0394@example.edu,B.Tech,Data Science,CSE,2026,"Cloud:3; Machine Learning:2",CTF,,Block A
+NEW0395,Rahul Iyer,rahul.iyer.new0395@example.edu,MCA,Data Science,CSE,2027,"Java:1; Cybersecurity:1; React:1",Hackathons,,Block A
+NEW0396,Ishaan Joshi,ishaan.joshi.new0396@example.edu,B.Tech,Computer Science,CSE,2026,"SQL:1; Android:1; Java:2",Fintech,,Block A
+NEW0397,Zoya Kulkarni,zoya.kulkarni.new0397@example.edu,B.Tech,Artificial Intelligence,CSE,2026,"Machine Learning:1; React:2; Cloud:3",Open Source,,Block A
+ERR0036,Meera Joshi,meera.joshi.err0036@example.edu,B.Tech,Computer Science,MECH,2028,Machine Learning:3,Open Source,,Block A
+NEW0398,Ananya Joshi,ananya.joshi.new0398@example.edu,B.Tech,Computer Science,CSE,2027,"Figma:2; SQL:1",Hackathons,,Block A
+NEW0399,Sneha Das,sneha.das.new0399@example.edu,MCA,Computer Science,CSE,2028,Java:1,Fintech,,Block A
+NEW0400,Meera Banerjee,meera.banerjee.new0400@example.edu,MCA,Computer Science,CSE,2029,Python:1,Open Source,,Block A
+DEMO0001,Pooja Reddy,pooja.reddy.demo0001@example.edu,B.Tech,Information Technology,CSE,2028,"Java:1; Android:1",Fintech,,Block A
+DEMO0002,Rohan Nair,rohan.nair.demo0002@example.edu,B.Tech,Information Technology,CSE,2028,Cybersecurity:3,Fintech,,Block A
+DEMO0003,Kavya Singh,kavya.singh.demo0003@example.edu,B.Tech,Information Technology,CSE,2028,"Machine Learning:1; Python:3",Robotics,,Block A
+DEMO0004,Aarav Nair,aarav.nair.demo0004@example.edu,B.Tech,Information Technology,CSE,2026,"Java:3; React:1; Android:1",Fintech,,Block A
+DEMO0005,Kabir Pillai,kabir.pillai.demo0005@example.edu,B.Tech,Information Technology,CSE,2029,"React:1; C++:3; Cloud:3",Robotics,,Block A
+DEMO0006,Tanvi Iyer,tanvi.iyer.demo0006@example.edu,M.Tech,Information Technology,CSE,2028,"SQL:1; Python:3; Java:2",Fintech,,Block A
+DEMO0007,Tanvi Joshi,tanvi.joshi.demo0007@example.edu,B.Tech,Information Technology,CSE,2026,"Python:2; Cloud:2",Robotics,,Block A
+DEMO0008,Ishaan Gupta,ishaan.gupta.demo0008@example.edu,B.Tech,Information Technology,CSE,2029,"Cloud:1; Machine Learning:3",Open Source,,Block A
+ERR0037,Harsh Singh,harsh.singh.err0037@example.edu,M.Tech,Computer Science,CSE,2029,Python:5,CTF,,Block A
+DEMO0009,Zoya Gupta,zoya.gupta.demo0009@example.edu,B.Tech,Information Technology,CSE,2029,Cloud:1,Open Source,,Block A
+DEMO0010,Arjun Khan,arjun.khan.demo0010@example.edu,B.Tech,Information Technology,CSE,2028,"C++:3; Machine Learning:3",CTF,,Block A
+DEMO0011,Tanvi Patel,tanvi.patel.demo0011@example.edu,M.Tech,Information Technology,CSE,2028,"React:1; Java:2",Hackathons,,Block A
+DEMO0012,Kabir Reddy,kabir.reddy.demo0012@example.edu,M.Tech,Information Technology,CSE,2026,"Cloud:3; Java:1",Healthtech,,Block A
+DEMO0013,Arjun Singh,arjun.singh.demo0013@example.edu,B.Tech,Information Technology,CSE,2027,SQL:1,Robotics,,Block A
+DEMO0014,Ishaan Kulkarni,ishaan.kulkarni.demo0014@example.edu,B.Tech,Information Technology,CSE,2026,"Cybersecurity:2; C++:2; React:1",Hackathons,,Block A
+DEMO0015,Kavya Gupta,kavya.gupta.demo0015@example.edu,B.Tech,Information Technology,CSE,2027,"Figma:3; Cloud:3",Healthtech,,Block A
+DEMO0016,Diya Rao,diya.rao.demo0016@example.edu,B.Tech,Information Technology,CSE,2026,"C++:1; Machine Learning:1",Robotics,,Block A
+DEMO0017,Varun Nair,varun.nair.demo0017@example.edu,B.Tech,Information Technology,CSE,2027,React:3,Hackathons,,Block A
+DEMO0018,Sneha Kulkarni,sneha.kulkarni.demo0018@example.edu,B.Tech,Information Technology,CSE,2029,Python:3,Fintech,,Block A
+DEMO0019,Ishaan Iyer,ishaan.iyer.demo0019@example.edu,B.Tech,Information Technology,CSE,2027,"C++:3; Java:3; React:3",Hackathons,,Block A
+ERR0038,XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX,ishaan.patel.err0038@example.edu,M.Tech,Data Science,CSE,2028,Python:1,Robotics,,Block A
+DEMO0020,Vivaan Das,vivaan.das.demo0020@example.edu,B.Tech,Information Technology,CSE,2027,Cybersecurity:1,Hackathons,,Block A
+DEMO0021,Ananya Patel,ananya.patel.demo0021@example.edu,M.Tech,Information Technology,CSE,2028,"Java:2; C++:3; Python:2",Open Source,,Block A
+DEMO0022,Tanvi Sharma,tanvi.sharma.demo0022@example.edu,M.Tech,Information Technology,CSE,2028,"Android:2; Cloud:1; Cybersecurity:3",Robotics,,Block A
+DEMO0023,Saanvi Banerjee,saanvi.banerjee.demo0023@example.edu,M.Tech,Information Technology,CSE,2028,Java:2,CTF,,Block A
+DEMO0024,Aditi Reddy,aditi.reddy.demo0024@example.edu,M.Tech,Information Technology,CSE,2029,"SQL:1; Java:1; React:3",Fintech,,Block A
+DEMO0025,Ishaan Banerjee,ishaan.banerjee.demo0025@example.edu,M.Tech,Information Technology,CSE,2028,Figma:1,Open Source,,Block A
+DEMO0026,Rahul Nair,rahul.nair.demo0026@example.edu,B.Tech,Information Technology,CSE,2026,"SQL:1; React:3",CTF,,Block A
+DEMO0027,Kavya Rao,kavya.rao.demo0027@example.edu,B.Tech,Information Technology,CSE,2028,"Cloud:3; Machine Learning:1; Android:2",Robotics,,Block A
+DEMO0028,Ananya Gupta,ananya.gupta.demo0028@example.edu,MCA,Information Technology,CSE,2029,"Cloud:3; Cybersecurity:3",Healthtech,,Block A
+DEMO0029,Ishaan Gupta,ishaan.gupta.demo0029@example.edu,B.Tech,Information Technology,CSE,2029,"SQL:3; Cloud:3; Java:2",Robotics,,Block A
+DEMO0030,Sneha Pillai,sneha.pillai.demo0030@example.edu,MCA,Information Technology,CSE,2027,Android:2,Open Source,,Block A
+ERR0039,,rohan.nair.err0039@example.edu,MCA,Data Science,CSE,2028,Machine Learning:2,Hackathons,,Block A
+DEMO0031,Varun Banerjee,varun.banerjee.demo0031@example.edu,M.Tech,Information Technology,CSE,2027,"Figma:2; SQL:3",Hackathons,,Block A
+DEMO0032,Meera Sharma,meera.sharma.demo0032@example.edu,MCA,Information Technology,CSE,2026,"Cybersecurity:1; Android:1; Java:1",CTF,,Block A
+DEMO0033,Kabir Das,kabir.das.demo0033@example.edu,M.Tech,Information Technology,CSE,2027,"Java:1; Python:3; Android:1",Open Source,,Block A
+DEMO0034,Rahul Rao,rahul.rao.demo0034@example.edu,M.Tech,Information Technology,CSE,2027,"Machine Learning:1; Figma:2; SQL:2",Robotics,,Block A
+DEMO0035,Pooja Gupta,pooja.gupta.demo0035@example.edu,B.Tech,Information Technology,CSE,2026,"Java:2; Android:1; Figma:3",Healthtech,,Block A
+DEMO0036,Harsh Nair,harsh.nair.demo0036@example.edu,B.Tech,Information Technology,CSE,2028,"SQL:2; Cybersecurity:1",Healthtech,,Block A
+DEMO0037,Diya Pillai,diya.pillai.demo0037@example.edu,B.Tech,Information Technology,CSE,2027,SQL:3,Robotics,,Block A
+DEMO0038,Diya Nair,diya.nair.demo0038@example.edu,MCA,Information Technology,CSE,2026,"Android:2; Python:3",Hackathons,,Block A
+DEMO0039,Harsh Banerjee,harsh.banerjee.demo0039@example.edu,MCA,Information Technology,CSE,2029,Cybersecurity:1,Fintech,,Block A
+DEMO0040,Varun Kulkarni,varun.kulkarni.demo0040@example.edu,MCA,Information Technology,CSE,2027,"Cybersecurity:2; React:2",Open Source,,Block A
+DEMO0041,Harsh Khan,harsh.khan.demo0041@example.edu,B.Tech,Information Technology,CSE,2026,"Machine Learning:2; C++:3; Cybersecurity:2",Fintech,,Block A
+ERR0040,Harsh Rao,harsh.rao.err0040@example.edu,,Computer Science,CSE,2027,"SQL:3; C++:2; Cloud:2",CTF,,Block A
+DEMO0042,Aditi Das,aditi.das.demo0042@example.edu,M.Tech,Information Technology,CSE,2029,"C++:1; React:2; SQL:3",Healthtech,,Block A
+DEMO0043,Meera Reddy,meera.reddy.demo0043@example.edu,B.Tech,Information Technology,CSE,2029,"Android:2; Java:2",Healthtech,,Block A
+DEMO0044,Vivaan Joshi,vivaan.joshi.demo0044@example.edu,B.Tech,Information Technology,CSE,2029,"SQL:2; Python:3",Hackathons,,Block A
+DEMO0045,Nikhil Nair,nikhil.nair.demo0045@example.edu,B.Tech,Information Technology,CSE,2029,"Java:3; Figma:3; Android:2",Hackathons,,Block A
+DEMO0046,Aarav Singh,aarav.singh.demo0046@example.edu,MCA,Information Technology,CSE,2029,Machine Learning:3,Hackathons,,Block A
+DEMO0047,Aditi Nair,aditi.nair.demo0047@example.edu,B.Tech,Information Technology,CSE,2026,"Python:2; SQL:1; React:3",Healthtech,,Block A
+DEMO0048,Aarav Kulkarni,aarav.kulkarni.demo0048@example.edu,B.Tech,Information Technology,CSE,2028,"Cloud:1; Cybersecurity:2; SQL:3",Robotics,,Block A
+DEMO0049,Varun Singh,varun.singh.demo0049@example.edu,B.Tech,Information Technology,CSE,2028,"React:2; Machine Learning:2",Healthtech,,Block A
+DEMO0050,Ishaan Menon,ishaan.menon.demo0050@example.edu,B.Tech,Information Technology,CSE,2028,"Python:2; Android:1; Java:1",Hackathons,,Block A
+DEMO0051,Tanvi Pillai,tanvi.pillai.demo0051@example.edu,M.Tech,Data Science,CSE,2027,SQL:2,Open Source,,Block A
+DEMO0052,Arjun Iyer,arjun.iyer.demo0052@example.edu,B.Tech,Computer Science,CSE,2029,"Figma:1; SQL:1",Fintech,,Block A
+DEMO0053,Ananya Kulkarni,ananya.kulkarni.demo0053@example.edu,M.Tech,Data Science,CSE,2029,"Figma:1; Python:2; Cloud:2",CTF,,Block A
+DEMO0054,Ananya Gupta,ananya.gupta.demo0054@example.edu,B.Tech,Computer Science,CSE,2026,Cybersecurity:2,Robotics,,Block A
+DEMO0055,Meera Joshi,meera.joshi.demo0055@example.edu,B.Tech,Data Science,CSE,2026,Figma:2,Fintech,,Block A
+DEMO0056,Tanvi Pillai,tanvi.pillai.demo0056@example.edu,M.Tech,Data Science,CSE,2028,"Machine Learning:3; Android:2; Python:2",Hackathons,,Block A
+DEMO0057,Arjun Joshi,arjun.joshi.demo0057@example.edu,B.Tech,Artificial Intelligence,CSE,2028,"Cloud:3; SQL:2; Cybersecurity:3",Hackathons,,Block A
+DEMO0058,Sneha Khan,sneha.khan.demo0058@example.edu,B.Tech,Artificial Intelligence,CSE,2028,"SQL:2; Machine Learning:1; Cloud:3",Fintech,,Block A
+DEMO0059,Kabir Sharma,kabir.sharma.demo0059@example.edu,B.Tech,Artificial Intelligence,CSE,2027,"Figma:3; Cybersecurity:1",Hackathons,,Block A
+DEMO0060,Nikhil Menon,nikhil.menon.demo0060@example.edu,M.Tech,Data Science,CSE,2027,Android:1,Robotics,,Block A

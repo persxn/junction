@@ -15,6 +15,7 @@ import {
   ProblemDetails,
   ProblemFieldError,
   SEARCH_ERROR_CODES,
+  STUDENT_ERROR_CODES,
   SETUP_ERROR_CODES,
   SOURCE_ERROR_CODES,
   problemType,
@@ -108,6 +109,17 @@ describe('ErrorCode', () => {
       'IMPORT_EXTRACTION_FAILED',
       'IMPORT_UNSUPPORTED_CONTENT',
       'IMPORT_RATE_LIMITED',
+      'STUDENT_NOT_FOUND',
+      'STUDENT_UNIVERSITY_ID_TAKEN',
+      'STUDENT_PHONE_DISABLED',
+      'STUDENT_EXTERNAL_DISABLED',
+      'STUDENT_ERASED',
+      'STUDENT_VERSION_CONFLICT',
+      'STUDENT_ALREADY_MENTORED',
+      'STUDENT_MENTORSHIP_NOT_FOUND',
+      'STUDENT_IMPORT_PREVIEW_EXPIRED',
+      'STUDENT_IMPORT_FILE_INVALID',
+      'STUDENT_IMPORT_TOO_LARGE',
       'DB_UNAVAILABLE',
       'DB_CONSTRAINT_VIOLATED',
     ]);
@@ -124,6 +136,7 @@ describe('ErrorCode', () => {
       ...SEARCH_ERROR_CODES,
       ...CATEGORY_ERROR_CODES,
       ...IMPORT_ERROR_CODES,
+      ...STUDENT_ERROR_CODES,
       ...DB_ERROR_CODES,
     ]);
   });
@@ -136,6 +149,7 @@ describe('ErrorCode', () => {
     ['AUTH_', AUTH_ERROR_CODES],
     ['SETUP_', SETUP_ERROR_CODES],
     ['SOURCE_', SOURCE_ERROR_CODES],
+    ['STUDENT_', STUDENT_ERROR_CODES],
     ['DB_', DB_ERROR_CODES],
   ])('prefixes every %s domain code', (prefix, codes) => {
     for (const code of codes) {

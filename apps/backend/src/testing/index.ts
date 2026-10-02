@@ -5,3 +5,5 @@
  * it.
  */
 export { seedScenario, type SeedScenarioResult } from './conflicts.js';
+export { demoStudents, seedDemoStudents, type DemoStudent } from './students-demo.js';
+export { createStudentsModule, type StudentsModule } from '../modules/students/wiring.js';
