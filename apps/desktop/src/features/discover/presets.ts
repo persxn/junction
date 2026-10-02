@@ -56,14 +56,9 @@ export function presetOf(tab: DiscoverTab, view: FeaturedView): Preset {
     case 'all':
       return { sort: 'DEADLINE', filters: {}, groupBy: 'eventType' };
     case 'calendar':
-      // D-08: rated rounds live here, not in the feed. The contract has no
-      // "recurring only" filter, so the tab admits them (`includeRecurring`)
-      // and keeps to the contest types they come from, by start date.
-      return {
-        sort: 'START',
-        filters: { includeRecurring: true, eventTypes: ['CODING_CONTEST', 'CTF'] },
-        groupBy: 'week',
-      };
+      // D-08: rated rounds live here, not in the feed — exactly the recurring
+      // ones (`recurringOnly`, pre-M2b), by start date.
+      return { sort: 'START', filters: { recurringOnly: true }, groupBy: 'week' };
   }
 }
 

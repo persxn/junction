@@ -241,6 +241,17 @@ describe('defaults: recurring rounds and ended events', () => {
       'Upcoming',
     ]);
   });
+
+  it('recurringOnly keeps the rounds alone — of any type — and facets count only them', () => {
+    h.add({ title: 'Weekly Ideathon', eventType: 'IDEATHON', isRecurringRound: true });
+    expect(sorted(h.titles({ recurringOnly: true }))).toEqual(['Round 901', 'Weekly Ideathon']);
+    // It implies includeRecurring, whatever that flag says.
+    expect(h.titles({ recurringOnly: true, includeRecurring: false })).toHaveLength(2);
+    const response = h.query({ recurringOnly: true, facets: true });
+    const counted = response.facets?.eventType.reduce((sum, entry) => sum + entry.count, 0);
+    expect(counted).toBe(2);
+    expect(response.facets?.eventType.find((entry) => entry.value === 'HACKATHON')?.count).toBe(0);
+  });
 });
 
 describe('per-user state', () => {

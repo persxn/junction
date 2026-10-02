@@ -146,6 +146,11 @@ export const EventQuery = z
     teamSizeFits: z.int().min(1).max(1000).optional(),
     includeUnknown: IncludeUnknown.optional(),
     includeRecurring: z.boolean().optional(),
+    /**
+     * Only recurring rounds (D-08's rated rounds) — the Contest Calendar's
+     * filter (WP-16a Q1, pre-M2b). Implies `includeRecurring`.
+     */
+    recurringOnly: z.boolean().optional(),
     includeEnded: z.boolean().optional(),
     watchlistedOnly: z.boolean().optional(),
     excludeHidden: z.boolean().optional(),

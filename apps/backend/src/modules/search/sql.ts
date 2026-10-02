@@ -128,7 +128,8 @@ export function filterParts(plan: QueryPlan, userId: string): FilterParts {
   };
   push(inList('e.organizer_kind', plan.organizerKinds));
   push(inList('e.host_institution_id', plan.institutionIds));
-  if (!plan.includeRecurring) base.push(clause('e.is_recurring_round = 0'));
+  if (plan.recurringOnly) base.push(clause('e.is_recurring_round = 1'));
+  else if (!plan.includeRecurring) base.push(clause('e.is_recurring_round = 0'));
   if (!plan.includeEnded) {
     base.push(
       clause(

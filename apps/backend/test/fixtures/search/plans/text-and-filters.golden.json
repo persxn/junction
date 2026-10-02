@@ -23,6 +23,7 @@
     "HYBRID"
   ],
   "now": 1790058600000,
+  "recurringOnly": false,
   "sort": {
     "basis": "SCORE",
     "direction": "DESC",

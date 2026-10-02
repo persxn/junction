@@ -65,6 +65,8 @@ export interface QueryPlan {
   readonly categories?: readonly string[];
   readonly tags?: readonly string[];
   readonly includeRecurring: boolean;
+  /** Only recurring rounds — the Contest Calendar (pre-M2b). */
+  readonly recurringOnly: boolean;
   readonly includeEnded: boolean;
   readonly fee?: {
     readonly freeOnly: boolean;
@@ -198,7 +200,8 @@ export function planQuery(query: EventQuery, context: PlanContext): QueryPlan {
     ...(institutionIds === undefined ? {} : { institutionIds }),
     ...(categories === undefined ? {} : { categories }),
     ...(tags === undefined ? {} : { tags }),
-    includeRecurring: query.includeRecurring === true,
+    includeRecurring: query.includeRecurring === true || query.recurringOnly === true,
+    recurringOnly: query.recurringOnly === true,
     includeEnded: query.includeEnded === true,
     ...(feeActive
       ? {

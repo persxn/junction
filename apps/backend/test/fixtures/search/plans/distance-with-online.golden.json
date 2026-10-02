@@ -31,6 +31,7 @@
     "ONLINE"
   ],
   "now": 1790058600000,
+  "recurringOnly": false,
   "sort": {
     "basis": "DISTANCE",
     "direction": "ASC",

@@ -138,9 +138,11 @@ describe('tab presets', () => {
       expect(EventQuery.safeParse(effectiveQuery(tab, view, {}, 25)).success).toBe(true);
     }
     expect(effectiveQuery('calendar', 'recommended', {}, 25)).toMatchObject({
-      includeRecurring: true,
+      recurringOnly: true,
       sort: 'START',
     });
+    // The contest-types approximation is gone: a recurring hackathon belongs too.
+    expect(effectiveQuery('calendar', 'recommended', {}, 25).eventTypes).toBeUndefined();
     expect(effectiveQuery('featured', 'recommended', {}, 25).sort).toBe('RELEVANCE');
   });
 });

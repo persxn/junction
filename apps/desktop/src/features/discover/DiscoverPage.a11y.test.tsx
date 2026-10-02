@@ -54,7 +54,7 @@ describe('accessibility', () => {
 
     for (const tab of ['All events', 'Contest Calendar'] as const) {
       await user.click(screen.getByRole('tab', { name: tab }));
-      // The calendar's preset admits contest types only, so it may render its empty state.
+      // The calendar's preset admits recurring rounds only, so it may render its empty state.
       await screen.findByRole('heading', { name: /^(Event 1|Nothing yet)$/ });
       await expect(document.body).toBeAccessible();
     }

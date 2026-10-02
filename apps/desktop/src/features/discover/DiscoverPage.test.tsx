@@ -216,7 +216,7 @@ describe('tabs', () => {
     });
     await user.keyboard('{ArrowRight}');
     await waitFor(() => {
-      expect(api.searches().at(-1)).toMatchObject({ sort: 'START', includeRecurring: true });
+      expect(api.searches().at(-1)).toMatchObject({ sort: 'START', recurringOnly: true });
     });
     expect(screen.getByRole('tab', { name: 'Contest Calendar' })).toHaveFocus();
   });

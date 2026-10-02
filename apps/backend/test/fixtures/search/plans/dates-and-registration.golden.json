@@ -12,6 +12,7 @@
   "includeRecurring": true,
   "limit": 25,
   "now": 1790058600000,
+  "recurringOnly": false,
   "registration": {
     "closingSoonUntil": 1790663400000,
     "includeUnknown": false,
