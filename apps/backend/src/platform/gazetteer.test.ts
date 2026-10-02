@@ -39,6 +39,29 @@ describe('the committed mini fixture (R54)', () => {
     expect(readFileSync(miniGazetteerFile()).byteLength).toBeLessThanOrEqual(200 * 1024);
   });
 
+  it('keeps only Indian places that can be told apart (R82)', async () => {
+    const { default: Sqlite } = await import('better-sqlite3');
+    const raw = new Sqlite(miniGazetteerFile(), { readonly: true });
+    try {
+      const unpopulated = raw
+        .prepare(
+          `select count(*) as n from places where country_code = 'IN' and population <= 0
+             and feature_code not in ('PPLA', 'PPLA2', 'PPLA3', 'PPLA4', 'PPLC')`,
+        )
+        .get() as { n: number };
+      expect(unpopulated.n).toBe(0);
+    } finally {
+      raw.close();
+    }
+    const manifest = JSON.parse(
+      readFileSync(
+        path.resolve(import.meta.dirname, '../../../../resources/gazetteer/manifest.json'),
+        'utf8',
+      ),
+    ) as { sources: { entry: string; filter: string }[] };
+    expect(manifest.sources.find((source) => source.entry === 'IN.txt')?.filter).toBe('IN_TOWNS');
+  });
+
   it('is opened read-only: a write is refused', () => {
     gazetteer = openMiniGazetteer();
     // The handle is genuinely read-only, so reference data cannot be mutated by

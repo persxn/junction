@@ -10,7 +10,7 @@ import Sqlite from 'better-sqlite3';
 import { readEntry } from './zip.js';
 
 /**
- * Builds `gazetteer.db` from GeoNames (§4.17, ADR-0012, ruling R53).
+ * Builds `gazetteer.db` from GeoNames (§4.17, ADR-0012, rulings R53 and R82).
  *
  * **The output is not committed.** R53: anything over 2 MB never is, and a
  * gazetteer is tens of megabytes. What *is* committed is this script, the
@@ -33,9 +33,13 @@ const GEONAMES_BASE = 'https://download.geonames.org/export/dump';
 /**
  * What we take, and what we leave.
  *
- * `IN.zip` filtered to **feature class P** — populated places. The full Indian
- * dump is ~150k rows including every stream, ridge and forest block; a product
- * that resolves "Pune, Maharashtra" needs the towns and nothing else.
+ * `IN.zip` filtered to **towns that can be told apart** (ruling R82, which
+ * supersedes R53's "feature class P"): a populated place is kept when GeoNames
+ * gives it a population, or when it is an administrative seat (PPLA–PPLA4,
+ * PPLC) whatever its population. Class P alone kept 558 000 rows, 95 % of them
+ * hamlets with population 0 — eight times the file, and worse matching, since
+ * R55's population tie-break cannot separate two zeros. §4.17 said "India
+ * towns/cities", and this is that.
  * `cities15000.zip` covers the rest of the world at 15 000 inhabitants and up,
  * which is enough to recognise "Seoul" or "Berlin" without carrying the planet.
  */
@@ -43,8 +47,8 @@ const SOURCES = [
   {
     file: 'IN.zip',
     entry: 'IN.txt',
-    filter: 'FEATURE_CLASS_P' as const,
-    note: 'India, populated places only',
+    filter: 'IN_TOWNS' as const,
+    note: 'India, populated places with population > 0 or an administrative seat (PPLA-PPLA4, PPLC) — R82',
   },
   {
     file: 'cities15000.zip',
@@ -132,7 +136,12 @@ interface Place {
   readonly population: number;
 }
 
-function parsePlaces(tsv: string, filter: 'FEATURE_CLASS_P' | 'NONE'): Place[] {
+/** R82: administrative seats are kept whatever GeoNames says their population is. */
+const ADMIN_SEATS = new Set(['PPLA', 'PPLA2', 'PPLA3', 'PPLA4', 'PPLC']);
+
+type PlaceFilter = 'IN_TOWNS' | 'NONE';
+
+function parsePlaces(tsv: string, filter: PlaceFilter): Place[] {
   const places: Place[] = [];
   for (const line of tsv.split('\n')) {
     if (line.length === 0) {
@@ -142,8 +151,12 @@ function parsePlaces(tsv: string, filter: 'FEATURE_CLASS_P' | 'NONE'): Place[] {
     if (cells.length < 15) {
       continue;
     }
-    if (filter === 'FEATURE_CLASS_P' && cells[COL.featureClass] !== 'P') {
-      continue;
+    if (filter === 'IN_TOWNS') {
+      const population = Number(cells[COL.population] ?? '0') || 0;
+      const seat = ADMIN_SEATS.has(cells[COL.featureCode] ?? '');
+      if (cells[COL.featureClass] !== 'P' || (population <= 0 && !seat)) {
+        continue;
+      }
     }
     const lat = Number(cells[COL.latitude]);
     const lon = Number(cells[COL.longitude]);

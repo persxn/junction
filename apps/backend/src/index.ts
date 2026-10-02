@@ -96,6 +96,8 @@ export {
   type PolicyDecision,
   type PolicyFacts,
 } from './domain/policy/index.js';
+export { Geocoder, type GeocodeResult } from './modules/geo/geocoder.js';
+export { openGazetteer, type Gazetteer } from './platform/gazetteer.js';
 export { acquireDataDirLock, lockPath, LOCK_FILE, type DataDirLock } from './platform/lock.js';
 export { createLogger, LOG_RETENTION_FILES, type LoggerHandle } from './platform/logger.js';
 export {
