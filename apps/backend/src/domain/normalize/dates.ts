@@ -43,7 +43,7 @@ export type TimezoneSource = 'EXPLICIT' | 'VENUE' | 'SOURCE_DEFAULT' | 'ASSUMED_
 export interface TimezoneResolution {
   readonly timezone: string;
   readonly from: TimezoneSource;
-  /** True when UTC was assumed, which lowers every date's precision (§7.3). */
+  /** True when UTC was assumed: a date read through that zone drops a step (§7.3, R85). */
   readonly lowerPrecision: boolean;
 }
 
@@ -58,7 +58,7 @@ export interface TimezoneInputs {
 
 /**
  * §7.3's precedence, in order: explicit in the source > venue location (India →
- * Asia/Kolkata) > source default > UTC with the precision lowered.
+ * Asia/Kolkata) > source default > UTC, lowering what was read through it (R85).
  *
  * An unusable IANA name is **rejected and falls through**, never silently
  * treated as UTC: the time layer refuses bare abbreviations because ICU resolves
@@ -88,7 +88,7 @@ export function resolveTimezone(
   }
   warnings?.add(
     'TIMEZONE_ASSUMED',
-    'No usable time zone was found; UTC was assumed and the precision lowered.',
+    'No usable time zone was found; UTC was assumed and dates without their own offset lowered in precision.',
     'timezone',
   );
   return { timezone: 'UTC', from: 'ASSUMED_UTC', lowerPrecision: true };
@@ -153,7 +153,7 @@ export function fromStructured(
       return undefined;
     }
     const at = Math.abs(value) < 1e11 ? Math.round(value * 1000) : Math.round(value);
-    return finish(at, 'DATETIME', String(value), 1, options);
+    return finish(at, 'DATETIME', String(value), 1, options, true);
   }
 
   const text = value.trim();
@@ -217,8 +217,11 @@ export function fromStructured(
     warnings?.add('DATE_UNPARSEABLE', `Could not read "${text.slice(0, 60)}" as a date.`, field);
     return undefined;
   }
-  return finish(parsed, 'DATETIME', text, 1, options);
+  // R85: an explicit offset or `Z` is exact whatever zone was assumed.
+  return finish(parsed, 'DATETIME', text, 1, options, EXPLICIT_OFFSET.test(text));
 }
+
+const EXPLICIT_OFFSET = /(?:z|[+-]\d{2}(?::?\d{2})?)$/i; // R85: Z or ±HH[:MM] at the end
 
 /** `YYYY-MM-DDTHH:MM[:SS[.sss]]` with no zone or offset. */
 const NAIVE_DATETIME = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?(?:\.(\d{1,3}))?$/;
@@ -306,13 +309,17 @@ function referenceFor(options: ParseDateOptions): Date {
   return new Date(now.getTime() + offsetMinutesAt(options.timezone, now) * 60_000);
 }
 
-/** Applies the plausibility window and the assumed-UTC precision drop. */
+/**
+ * Applies the plausibility window and the assumed-UTC precision drop — which
+ * R85 confines to readings that needed the zone: an `exact` instant keeps it.
+ */
 function finish(
   at: number,
   precision: DatePrecision,
   raw: string,
   confidence: number,
   options: ParseDateOptions,
+  exact = false,
 ): CandidateDate | undefined {
   if (!Number.isFinite(at)) {
     return undefined;
@@ -326,7 +333,8 @@ function finish(
     );
     return undefined;
   }
-  const finalPrecision = options.lowerPrecision === true ? lowerPrecision(precision) : precision;
+  const finalPrecision =
+    options.lowerPrecision === true && !exact ? lowerPrecision(precision) : precision;
   return { at, precision: finalPrecision, raw, confidence };
 }
 

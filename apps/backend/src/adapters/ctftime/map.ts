@@ -110,9 +110,10 @@ export function mapCtftimeEvent(event: CtftimeEvent, ctx: CtftimeMapContext): Ev
   };
 
   // CTFtime's timestamps carry their own offset, so they are exact instants
-  // whatever zone is assumed; UTC is passed only so the library does not lower
-  // their precision. The *event's* zone is still unknown and is recorded as
-  // such below rather than claimed.
+  // whatever zone is assumed (R85 — the library keeps their precision either
+  // way). UTC is passed so the library's generic "zone assumed" warning is not
+  // added on top of the CTFtime-specific one below. The *event's* zone is still
+  // unknown and is recorded as such rather than claimed.
   const { candidate } = normalizeCandidate(raw, {
     clock: ctx.clock,
     sourceTimezone: venueZone === undefined ? 'UTC' : undefined,
