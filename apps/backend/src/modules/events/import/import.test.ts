@@ -242,22 +242,73 @@ describe('samples 4 and 5: a campus page through the generic reader', () => {
     expect(pages.map((call) => call.url)).toEqual([CAMPUS_OG]);
   });
 
+  /**
+   * The form exactly as the desktop sends it (`form-state.ts`): prefilled from
+   * the preview - a start box is a minute in the display zone with no offset, a
+   * deadline box is a day - with only the title corrected.
+   */
+  function reviewedForm(preview: Awaited<ReturnType<typeof harness.service.preview>>) {
+    const read = preview.candidate!;
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    }).formatToParts(new Date(read.startsAt!.at));
+    const part = (type: string): string => parts.find((entry) => entry.type === type)!.value;
+    const day = `${part('year')}-${part('month')}-${part('day')}`;
+    const deadline = read.registrationDeadlineAt;
+    const deadlineDay = (at: number): string =>
+      new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date(at));
+    return {
+      title: 'TechFest 2026 (corrected)',
+      eventType: read.eventType.value,
+      startsAt: { at: `${day}T${part('hour')}:${part('minute')}` },
+      ...(deadline === undefined
+        ? {}
+        : { registrationDeadlineAt: { at: deadlineDay(deadline.at) } }),
+      ...(read.descriptionMd === undefined ? {} : { description: read.descriptionMd }),
+      officialUrl: CAMPUS_OG,
+    };
+  }
+
   it('saves under url-import, with the professor’s corrections as overrides', async () => {
     const preview = await harness.service.preview(context, { url: CAMPUS_OG });
     const saved = await harness.service.commit(context, {
       url: preview.url,
       disposition: 'GENERIC',
-      fields: {
-        title: 'TechFest 2026 (corrected)',
-        startsAt: { at: '2026-12-12' },
-        officialUrl: CAMPUS_OG,
-      },
+      fields: reviewedForm(preview),
       edited: ['title'],
     });
     expect(saved.sourceKey).toBe('url-import');
     expect(saved.overriddenFields).toEqual(['title']);
     const event = harness.events.events.getById(saved.eventId);
     expect(event?.title).toBe('TechFest 2026 (corrected)');
+  });
+
+  it('decides what was edited by diffing the preview, not by the request’s list (WP-14 Q4)', async () => {
+    const preview = await harness.service.preview(context, { url: CAMPUS_OG });
+    const saved = await harness.service.commit(context, {
+      url: preview.url,
+      disposition: 'GENERIC',
+      fields: reviewedForm(preview),
+      // A body claiming everything was edited pins only what really changed.
+      edited: ['title', 'eventType', 'startsAt', 'officialUrl', 'mode', 'city'],
+    });
+    expect(saved.overriddenFields).toEqual(['title']);
+
+    // …and one claiming nothing was edited still pins the real correction.
+    const again = await harness.service.preview(context, { url: CAMPUS_OG });
+    const quiet = await harness.service.commit(context, {
+      url: again.url,
+      disposition: 'GENERIC',
+      fields: { ...reviewedForm(again), title: 'TechFest 2026 (again)' },
+      edited: [],
+    });
+    expect(quiet.overriddenFields).toEqual(['title']);
   });
 });
 
@@ -366,6 +417,27 @@ describe('manual entry (§10.2)', () => {
     expect(rows.every((row) => row.reason === 'manual entry')).toBe(true);
     expect(rows.every((row) => row.setBy === ADMIN.id)).toBe(true);
     expect([...saved.overriddenFields].sort()).toEqual(fields);
+  });
+
+  it('reads a typed time in the display zone, at full precision (§8.1, R85)', () => {
+    const saved = harness.service.createManual(context, {
+      ...MANUAL,
+      // What the form's boxes send: a wall-clock minute and a day, no offset.
+      startsAt: { at: '2026-10-20T10:00' },
+      registrationDeadlineAt: { at: '2026-10-10' },
+    });
+    const event = harness.events.events.getById(saved.eventId);
+    expect(event?.startsAt).toBe(Date.parse('2026-10-20T10:00:00+05:30'));
+    expect(event?.datePrecision).toBe('DATETIME');
+    // A date-only deadline is the end of that day in Asia/Kolkata (§7.3), a DATE.
+    expect(event?.registrationDeadlineAt).toBe(Date.parse('2026-10-10T23:59:59.999+05:30'));
+    // The record keeps the precision; the event column says DATETIME because the
+    // resolver labels every override so (WP-10) — a known issue, not this test's.
+    const record = harness.database.db.raw
+      .prepare(`SELECT payload_json AS p FROM source_records WHERE event_id = ?`)
+      .get(saved.eventId) as { p: string };
+    const payload = JSON.parse(record.p) as { registrationDeadlineAt?: { precision: string } };
+    expect(payload.registrationDeadlineAt?.precision).toBe('DATE');
   });
 
   it('redacts the contact details a professor pasted into the description (D-29)', () => {

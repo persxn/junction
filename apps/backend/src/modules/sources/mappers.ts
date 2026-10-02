@@ -47,6 +47,7 @@ export function toRunSummary(run: ScrapeRunRow, sourceKey: string): ScrapeRunSum
   return {
     id: run.id,
     sourceKey,
+    kind: run.kind,
     trigger: run.trigger,
     startedAt: new Date(run.startedAt).toISOString(),
     finishedAt: isoOrNull(run.finishedAt),

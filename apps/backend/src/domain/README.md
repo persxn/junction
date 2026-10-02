@@ -32,9 +32,5 @@ unit-tested. Tests for this directory need no database, no temp directory, no se
   this job due", "has this lease expired".
 - `lockout.ts` — ruling R34's lockout ladder, derived from the failure counter rather than stored.
 
-## What deliberately does not
-
-`jobs/schedule.ts` keeps `firstDueAt` and `nextDueAfterRun`. They need a `RegisteredJob`, whose
-`nextDueAt` callback is typed against the Drizzle row — so moving them would mean the job-state
-shape being defined here and `db/schema` conforming to it. That is worth doing and it is not an
-import fix; see the pre-M1 report.
+- `jobs/schedule.ts` — `firstDueAt` and `nextDueAfterRun` (moved from `src/jobs/` in pre-M2b),
+  typed against `JobStateShape`, which the Drizzle `job_state` row conforms to.

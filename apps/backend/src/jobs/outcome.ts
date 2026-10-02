@@ -2,7 +2,7 @@ import { FAILING_JOB_OUTCOMES, type JobOutcome } from '@compintel/contracts';
 
 import type { JobStateRow } from '../db/schema/index.js';
 import { applyJitter, backoffDelayMs } from '../domain/scheduling.js';
-import { nextDueAfterRun } from './schedule.js';
+import { nextDueAfterRun } from '../domain/jobs/schedule.js';
 import type { RegisteredJob } from './types.js';
 
 /** The columns a finished run rewrites. `runningSince` always goes back to NULL. */

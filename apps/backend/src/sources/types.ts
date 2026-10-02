@@ -104,6 +104,13 @@ export interface SourceAdapter {
   listing(context: AdapterContext): ListingWalk;
   detail?(context: AdapterContext, item: ListingItem): Promise<RawDetail>;
   /**
+   * Whether a scheduled run fetches the detail page of a changed item (WP-09b
+   * Q2). `'never'`: the listing already carries every field, so a run is its
+   * listing and nothing else and `detail-refresh` owes nothing; `detail()`
+   * stays for URL import's one-page read. Absent means `'on-change'`.
+   */
+  readonly detailPolicy?: 'on-change' | 'never';
+  /**
    * WP-14: the listing item one pasted URL stands for, or `undefined` when the
    * URL is on this source's domain but is not one of its event pages.
    *
@@ -124,4 +131,9 @@ export interface NormalizeContext {
   readonly sourceKey: string;
   /** Default timezone for a source that states local times without a zone. */
   readonly defaultTimeZone: string;
+}
+
+/** The detail step a *scheduled* run may use — none under `detailPolicy: 'never'`. */
+export function scheduledDetail(adapter: SourceAdapter): SourceAdapter['detail'] {
+  return adapter.detailPolicy === 'never' ? undefined : adapter.detail?.bind(adapter);
 }

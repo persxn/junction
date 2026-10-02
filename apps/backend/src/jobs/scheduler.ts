@@ -6,7 +6,7 @@ import type { ShutdownRegistry } from '../platform/shutdown.js';
 import { applyOutcome } from './outcome.js';
 import { executeRun } from './run.js';
 import { isLeaseExpired } from '../domain/scheduling.js';
-import { firstDueAt } from './schedule.js';
+import { firstDueAt } from '../domain/jobs/schedule.js';
 import { JobStore } from './store.js';
 import {
   DEFAULT_CONCURRENCY_LIMITS,

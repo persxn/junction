@@ -7,7 +7,7 @@ export {
   isLeaseExpired,
   type JobSchedulingState,
 } from '../domain/scheduling.js';
-export { firstDueAt, nextDueAfterRun } from './schedule.js';
+export { firstDueAt, nextDueAfterRun } from '../domain/jobs/schedule.js';
 export { executeRun, type ExecuteRunOptions } from './run.js';
 export { Scheduler, type SchedulerOptions } from './scheduler.js';
 export { JobStore } from './store.js';

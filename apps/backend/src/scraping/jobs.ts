@@ -4,6 +4,7 @@ import type { SourcesService } from '../modules/sources/service.js';
 import type { Scheduler } from '../jobs/scheduler.js';
 import type { JobDefinition } from '../jobs/types.js';
 import type { AdapterRegistry } from '../sources/registry.js';
+import { scheduledDetail } from '../sources/types.js';
 import { refreshDetails, type DetailRefreshDependencies } from './detail-refresh.js';
 
 /**
@@ -93,7 +94,7 @@ export function detailRefreshJob(deps: ScrapeJobsDependencies): JobDefinition {
       const totals = { attempted: 0, refreshed: 0, invalid: 0, failed: 0 };
       for (const source of deps.sources.runnable()) {
         const adapter = deps.registry.get(source.key);
-        if (adapter?.detail === undefined) {
+        if (adapter === undefined || scheduledDetail(adapter) === undefined) {
           continue;
         }
         const result = await refreshDetails(

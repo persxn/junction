@@ -91,7 +91,8 @@ describe('filling the form from a preview', () => {
   });
 
   it('turns an instant into something a date box can show', () => {
-    expect(fromPreview(PREVIEW).form.startsAt).toBe('2026-12-12T09:00');
+    // 09:00 UTC is 14:30 in the display zone, which is how the box is read back.
+    expect(fromPreview(PREVIEW).form.startsAt).toBe('2026-12-12T14:30');
   });
 
   it('keeps prose the professor will have to correct, rather than dropping it', () => {

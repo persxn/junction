@@ -7,6 +7,8 @@ import type {
   UrlImportResult,
 } from '@compintel/contracts';
 
+import { DISPLAY_ZONE } from '../../discover/format.js';
+
 /**
  * The event form, as data (WP-14 step 8).
  *
@@ -207,9 +209,24 @@ function forInput(field: EventFormField, value: string): string {
     // showing what was found rather than only what could be parsed.
     return value;
   }
-  const iso = new Date(parsed).toISOString();
-  return field === 'registrationDeadlineAt' ? iso.slice(0, 10) : iso.slice(0, 16);
+  // The boxes are wall-clock time in the display zone, which is how the backend
+  // reads them back; a UTC slice here showed 09:00 IST as 03:30 (pre-M2b).
+  const local = LOCAL_MINUTE.formatToParts(new Date(parsed));
+  const part = (type: Intl.DateTimeFormatPartTypes): string =>
+    local.find((entry) => entry.type === type)?.value ?? '';
+  const day = `${part('year')}-${part('month')}-${part('day')}`;
+  return field === 'registrationDeadlineAt' ? day : `${day}T${part('hour')}:${part('minute')}`;
 }
+
+const LOCAL_MINUTE = new Intl.DateTimeFormat('en-CA', {
+  timeZone: DISPLAY_ZONE,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+});
 
 /**
  * The form as a preview fills it, plus which boxes carry a low-confidence

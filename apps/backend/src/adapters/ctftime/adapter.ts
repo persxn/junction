@@ -196,6 +196,9 @@ export function createCtftimeAdapter(deps: CtftimeAdapterDependencies): SourceAd
     kind: 'CTFTIME_API',
     needsBrowser: false,
     defaultCadenceMinutes: 30,
+    // WP-09b Q2 / M1 review: the listing returns full event objects, so a run
+    // is one listing request and nothing else. `detail()` stays for URL import.
+    detailPolicy: 'never',
 
     listing: (context): ListingWalk =>
       (async function* walk(): ListingWalk {

@@ -2,7 +2,7 @@ import type { ScrapeTrigger } from '@compintel/contracts';
 
 import type { ScrapeRunRow, SourceRow } from '../db/schema/index.js';
 import { nowMs } from '../platform/time.js';
-import type { SourceAdapter } from '../sources/types.js';
+import { scheduledDetail, type SourceAdapter } from '../sources/types.js';
 import { AdapterFormatError, toRunFailure, type RunFailure } from './errors.js';
 import {
   closeImmediately,
@@ -156,7 +156,9 @@ export async function runScrape(
     linker: deps.linker,
   };
 
-  let detailsLeft = adapter.detail === undefined ? 0 : config.detailCap;
+  // WP-09b Q2: an adapter whose listing carries everything fetches no detail.
+  const detailStep = scheduledDetail(adapter);
+  let detailsLeft = detailStep === undefined ? 0 : config.detailCap;
   // WP-12: a detail owed but not fetched this run — the cap, or a subdomain's
   // robots.txt — leaves the listing complete but the run PARTIAL.
   let degraded = false;
@@ -179,7 +181,7 @@ export async function runScrape(
       const canFetchDetail = detailsLeft > 0 && client.requestsRemaining > 0;
       const listed = processItem(item, {
         ...itemOptions,
-        detailPending: (changed) => changed && adapter.detail !== undefined && !canFetchDetail,
+        detailPending: (changed) => changed && detailStep !== undefined && !canFetchDetail,
       });
       if (listed.outcome === 'INVALID') {
         counters.itemsInvalid += 1;
@@ -187,7 +189,7 @@ export async function runScrape(
       }
       count(counters, listed.outcome);
 
-      if (!listed.changed || adapter.detail === undefined) {
+      if (!listed.changed || detailStep === undefined) {
         continue;
       }
       if (!canFetchDetail) {
@@ -198,7 +200,7 @@ export async function runScrape(
       // R75: a stored event's detail page may be read signed in, if the adapter
       // asks; a new one's may not, and nothing may in a catch-up burst.
       const targeted = listed.outcome !== 'NEW' && trigger !== 'STARTUP_CATCHUP';
-      const detail = await adapter.detail(
+      const detail = await detailStep(
         { ...itemOptions.context, http: client.signedInView(targeted) },
         item,
       );

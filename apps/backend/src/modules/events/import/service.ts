@@ -14,7 +14,7 @@ import { manualRecordUrl, rawFromManual, statedFields } from '../../../domain/im
 import { normalizeCandidate } from '../../../domain/normalize/index.js';
 import type { AuditLog } from '../../../platform/audit.js';
 import { uuid7 } from '../../../platform/ids.js';
-import { nowMs, systemClock, type Clock } from '../../../platform/time.js';
+import { APP_TIMEZONE, nowMs, systemClock, type Clock } from '../../../platform/time.js';
 import type { ScrapingHttp, SourceCredential } from '../../../scraping/http/index.js';
 import type { SnapshotStore } from '../../../scraping/snapshots.js';
 import type { AdapterRegistry } from '../../../sources/registry.js';
@@ -30,7 +30,7 @@ import type { EventResolver } from '../resolver.js';
 import { importDomainManualOnly, importRateLimited } from './errors.js';
 import { previewImport, type PreviewedImport } from './preview.js';
 import { PreviewCache } from './preview-cache.js';
-import { writeImportedEvent } from './write.js';
+import { editedAgainstPreview, writeImportedEvent } from './write.js';
 
 /**
  * Manual event creation and URL import (§10.2 "add manual events; URL import",
@@ -138,7 +138,12 @@ export class EventImportService {
       externalKey: previewed.candidate.externalKey,
       url: previewed.candidate.url,
     });
-    const edited = request.edited.filter((field) => field.length > 0);
+    // WP-14 Q4: what changed is diffed against the preview, never taken from
+    // `request.edited` — that list is accepted for compatibility and ignored.
+    const stated = new Set(statedFields(request.fields));
+    const edited = editedAgainstPreview(this.#deps.geocoder, previewed.candidate, reviewed).filter(
+      (field) => stated.has(field),
+    );
     return this.#write({
       context,
       source,
@@ -223,7 +228,11 @@ export class EventImportService {
     const raw = rawFromManual(identity, fields, this.#clock);
     const { candidate } = normalizeCandidate(raw, {
       clock: this.#clock,
-      ...(fields.timezone === undefined ? {} : { sourceTimezone: fields.timezone }),
+      // A form is read in the zone it was typed in — the stated one, else the
+      // display zone (§8.1, A7). Before pre-M2b no zone was passed, so UTC was
+      // *assumed*: "10:00" meant 10:00 UTC and every typed date lost a step of
+      // precision (R85: precision drops only when a zone is inferred).
+      sourceTimezone: fields.timezone ?? APP_TIMEZONE,
       ...(fields.eventType === undefined ? {} : { sourceEventType: fields.eventType }),
     });
     return EventCandidate.parse(candidate);

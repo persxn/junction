@@ -54,6 +54,16 @@ export const ScrapeTrigger = z.enum(SCRAPE_TRIGGERS);
 export type ScrapeTrigger = z.infer<typeof ScrapeTrigger>;
 
 /**
+ * `scrape_runs.kind` (pre-M2b, WP-09a Q2). A LISTING run walks the source's
+ * listing and is what §7.6 and Source status count; a DETAIL_REFRESH row is
+ * the overflow lane's pass over owed detail pages, recorded so its work is
+ * visible (WP-30) without ever counting as a listing run.
+ */
+export const SCRAPE_RUN_KINDS = ['LISTING', 'DETAIL_REFRESH'] as const;
+export const ScrapeRunKind = z.enum(SCRAPE_RUN_KINDS);
+export type ScrapeRunKind = z.infer<typeof ScrapeRunKind>;
+
+/**
  * `scrape_runs.outcome` (§6.2). Three of these are deliberately *not* failures:
  * `SKIPPED_OFFLINE` is D-23 ("offline is not a failure"), `SKIPPED_BACKOFF` is
  * the politeness ladder doing its job, and `BLOCKED_BY_POLICY` is us refusing to
@@ -152,6 +162,7 @@ export const ScrapeRunSummary = z
   .object({
     id: Uuid7,
     sourceKey: z.string().min(1),
+    kind: ScrapeRunKind,
     trigger: ScrapeTrigger,
     startedAt: z.iso.datetime(),
     finishedAt: z.iso.datetime().nullable(),

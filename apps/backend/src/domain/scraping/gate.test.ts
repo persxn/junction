@@ -286,3 +286,28 @@ describe('the reviewed robots exemption (R77)', () => {
     expect(assessRequest(clist({ robots: 'ALLOWED' }))).toEqual({ allowed: true });
   });
 });
+
+describe('the trailing $ anchor (WP-09b Q1)', () => {
+  const anchored = ['ctftime.org/api/v1/events/{id}/$'];
+
+  it('/api/v1/events/{id}/$ refuses /api/v1/events/1/extra', () => {
+    expect(isPathAllowed(new URL('https://ctftime.org/api/v1/events/1/extra'), anchored)).toBe(
+      false,
+    );
+    expect(isPathAllowed(new URL('https://ctftime.org/api/v1/events/1/extra/'), anchored)).toBe(
+      false,
+    );
+  });
+
+  it('allows exactly that path, with or without a query string', () => {
+    expect(isPathAllowed(new URL('https://ctftime.org/api/v1/events/1/'), anchored)).toBe(true);
+    expect(isPathAllowed(new URL('https://ctftime.org/api/v1/events/1/?x=1'), anchored)).toBe(true);
+  });
+
+  it('is literal text anywhere but the end, and changes nothing for an unanchored entry', () => {
+    expect(isPathAllowed(new URL('https://ctftime.org/api/v1/events/1/extra'), CTFTIME_PATHS)).toBe(
+      true,
+    );
+    expect(isPathAllowed(new URL('https://example.test/a$b'), ['example.test/a$b'])).toBe(true);
+  });
+});

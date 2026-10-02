@@ -71,6 +71,7 @@ function deps(sources = service()): Parameters<typeof scrapeJobs>[0] {
       }),
       clock,
       logger: silentLogger,
+      runs: new SourcesRepository(database.db),
     },
     logger: silentLogger,
   };
@@ -240,7 +241,7 @@ describe('detail-refresh (§7.2)', () => {
     expect(result).toMatchObject({ outcome: 'SUCCESS', detail: 'nothing owed' });
   });
 
-  it('writes no scrape_runs row: it is not a listing run (§7.6)', async () => {
+  it('records its pass as a DETAIL_REFRESH row that no listing count sees (WP-09a Q2, §7.6)', async () => {
     const source = insertSource(database.db, {
       key: 'demo',
       configJson: JSON.stringify({ maxDetailsPerRun: 0 }),
@@ -255,7 +256,10 @@ describe('detail-refresh (§7.2)', () => {
     );
     const sources = service();
     await sources.run(source, 'SCHEDULE');
-    const runsBefore = new SourcesRepository(database.db).runs(source.id).length;
+    const repo = new SourcesRepository(database.db);
+    const listing = repo.latestRun(source.id);
+    const stateBefore = repo.state(source.id, clock.now().getTime());
+    const completeBefore = repo.countCompleteRunsSince(source.id, 0);
 
     clock.advance(20 * 60_000);
     await detailRefreshJob(deps(sources)).run({
@@ -279,6 +283,20 @@ describe('detail-refresh (§7.2)', () => {
         lastErrorMessage: null,
       },
     });
-    expect(new SourcesRepository(database.db).runs(source.id)).toHaveLength(runsBefore);
+    const [pass, ...earlier] = repo.runs(source.id);
+    expect(pass).toMatchObject({
+      kind: 'DETAIL_REFRESH',
+      outcome: 'SUCCESS',
+      listingComplete: false,
+      itemsSeen: 1,
+      itemsUpdated: 1,
+      // This test adapter's detail step answers without a request.
+      requestsMade: 0,
+    });
+    expect(earlier.map((run) => run.kind)).toEqual(['LISTING']);
+    // Source status still reads the listing run, and nothing §7.6 counts moved.
+    expect(repo.latestRun(source.id)?.id).toBe(listing?.id);
+    expect(repo.countCompleteRunsSince(source.id, 0)).toBe(completeBefore);
+    expect(repo.state(source.id, clock.now().getTime())).toEqual(stateBefore);
   });
 });

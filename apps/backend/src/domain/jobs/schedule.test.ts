@@ -1,13 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import type { JobStateRow } from '../db/schema/index.js';
-import { firstDueAt, nextDueAfterRun } from './schedule.js';
+import { firstDueAt, nextDueAfterRun, type JobStateShape } from './schedule.js';
 import {
   DEFAULT_BACKOFF_BASE_MS,
   DEFAULT_BACKOFF_MAX_MS,
   registerable,
   type JobDefinition,
-} from './types.js';
+} from '../../jobs/types.js';
 
 const T0 = Date.UTC(2026, 8, 20, 12, 0, 0);
 const MINUTE = 60_000;
@@ -15,7 +14,7 @@ const MINUTE = 60_000;
 /** `Math.random` is injected everywhere, so a fixed value pins the jitter. */
 const mid = (): number => 0.5;
 
-function row(overrides: Partial<JobStateRow> = {}): JobStateRow {
+function row(overrides: Partial<JobStateShape> = {}): JobStateShape {
   return {
     jobKey: 'test',
     kind: 'GENERAL',

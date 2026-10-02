@@ -2,6 +2,7 @@ import type {
   CredentialState,
   ScrapeErrorKind,
   ScrapeOutcome,
+  ScrapeRunKind,
   ScrapeTrigger,
 } from '@compintel/contracts';
 import { and, desc, eq, gt, sql } from 'drizzle-orm';
@@ -289,10 +290,16 @@ export class SourcesRepository {
    * offline, or still in backoff — must leave the streak, the backoff and
    * `last_run_at` alone, or "last tried" would come to mean "last woke up".
    */
-  openRun(sourceId: string, trigger: ScrapeTrigger, startedAt: number): ScrapeRunRow {
+  openRun(
+    sourceId: string,
+    trigger: ScrapeTrigger,
+    startedAt: number,
+    kind: ScrapeRunKind = 'LISTING',
+  ): ScrapeRunRow {
     const row = {
       id: uuid7(),
       sourceId,
+      kind,
       trigger,
       startedAt,
       finishedAt: null,
@@ -340,12 +347,12 @@ export class SourcesRepository {
     return row;
   }
 
-  /** The newest run for a source; Source status reads its outcome and message. */
+  /** The newest *listing* run for a source; Source status reads its outcome and message. */
   latestRun(sourceId: string): ScrapeRunRow | undefined {
     return this.#db.drizzle
       .select()
       .from(scrapeRuns)
-      .where(eq(scrapeRuns.sourceId, sourceId))
+      .where(and(eq(scrapeRuns.sourceId, sourceId), eq(scrapeRuns.kind, 'LISTING')))
       .orderBy(desc(scrapeRuns.startedAt))
       .limit(1)
       .get();

@@ -3,9 +3,15 @@ import type { Logger } from 'pino';
 
 import type { SourceRow } from '../db/schema/index.js';
 import type { SourceRecordsRepository } from '../modules/sources/records.js';
+import type { SourcesRepository } from '../modules/sources/repository.js';
 import { APP_TIMEZONE, nowMs, type Clock } from '../platform/time.js';
-import type { AdapterContext, ListingItem, SourceAdapter } from '../sources/types.js';
-import { toRunFailure } from './errors.js';
+import {
+  scheduledDetail,
+  type AdapterContext,
+  type ListingItem,
+  type SourceAdapter,
+} from '../sources/types.js';
+import { toRunFailure, type RunFailure } from './errors.js';
 import type { ScrapingHttp, SourceCredential } from './http/index.js';
 import { processItem, type RecordLinker } from './items.js';
 import type { SnapshotStore } from './snapshots.js';
@@ -20,12 +26,11 @@ import { sourceRequestContext } from './source-row.js';
  * oldest first, through the same politeness queue and the same compliance gate —
  * it is a different job, not a different set of rules.
  *
- * It deliberately writes **no `scrape_runs` row** and touches **no
- * `source_state`**. Those describe listing runs: §7.6 counts them to decide what
- * has gone missing, and Source status reads them to say how fresh a source is. A
- * detail pass answers neither question, and rows that look like listing runs but
- * are not would corrupt both. Its own health is the `detail-refresh` row in
- * `job_state`.
+ * It touches **no `source_state`** and writes no *listing* run: §7.6 counts
+ * those to decide what has gone missing, and Source status reads them to say
+ * how fresh a source is. Since pre-M2b it does leave a `scrape_runs` row of
+ * kind DETAIL_REFRESH per pass (WP-09a Q2), which claims no complete listing
+ * and so is invisible to both.
  */
 
 export interface DetailRefreshDependencies {
@@ -42,6 +47,8 @@ export interface DetailRefreshDependencies {
    * detail page be read signed in.
    */
   readonly credentials?: (source: SourceRow) => SourceCredential | undefined;
+  /** Where the pass records its DETAIL_REFRESH row (WP-09a Q2). */
+  readonly runs?: Pick<SourcesRepository, 'openRun' | 'closeRun'>;
 }
 
 export interface DetailRefreshResult {
@@ -60,7 +67,8 @@ export async function refreshDetails(
   signal: AbortSignal,
   trigger: ScrapeTrigger = 'SCHEDULE',
 ): Promise<DetailRefreshResult> {
-  if (adapter.detail === undefined) {
+  const detailStep = scheduledDetail(adapter);
+  if (detailStep === undefined) {
     return { attempted: 0, refreshed: 0, invalid: 0, failed: 0 };
   }
   const owed = deps.records.awaitingDetail(source.id, limit);
@@ -86,6 +94,7 @@ export async function refreshDetails(
   let refreshed = 0;
   let invalid = 0;
   let failed = 0;
+  let failure: RunFailure | undefined;
   for (const record of owed) {
     if (client.requestsRemaining <= 0) {
       break;
@@ -99,7 +108,7 @@ export async function refreshDetails(
       payload: safeJson(record.payloadJson),
     };
     try {
-      const detail = await adapter.detail(context, item);
+      const detail = await detailStep(context, item);
       const applied = processItem(
         item,
         {
@@ -130,14 +139,57 @@ export async function refreshDetails(
       }
     } catch (error) {
       failed += 1;
+      failure = toRunFailure(error);
       deps.logger.warn(
-        { source: source.key, externalKey: record.externalKey, kind: toRunFailure(error).kind },
+        { source: source.key, externalKey: record.externalKey, kind: failure.kind },
         'a detail fetch failed and will be retried next pass',
       );
       break;
     }
   }
+  recordPass(
+    deps,
+    source,
+    trigger,
+    at,
+    client.requestsMade,
+    { refreshed, invalid, failed },
+    failure,
+  );
   return { attempted: owed.length, refreshed, invalid, failed };
+}
+
+/**
+ * The pass's `scrape_runs` row, kind DETAIL_REFRESH (WP-09a Q2): what it did,
+ * visible next to the listing runs, and never one of them — it claims no
+ * complete listing, so §7.6 and Source status pass it by.
+ */
+function recordPass(
+  deps: DetailRefreshDependencies,
+  source: SourceRow,
+  trigger: ScrapeTrigger,
+  startedAt: number,
+  requestsMade: number,
+  done: { refreshed: number; invalid: number; failed: number },
+  failure: RunFailure | undefined,
+): void {
+  if (deps.runs === undefined) {
+    return;
+  }
+  const run = deps.runs.openRun(source.id, trigger, startedAt, 'DETAIL_REFRESH');
+  const worked = done.refreshed + done.invalid > 0;
+  deps.runs.closeRun(run.id, nowMs(deps.clock), startedAt, {
+    outcome: failure === undefined ? 'SUCCESS' : worked ? 'PARTIAL' : 'FAILED',
+    errorKind: failure?.kind ?? null,
+    errorDetail: failure?.message ?? null,
+    listingComplete: false,
+    requestsMade,
+    itemsSeen: done.refreshed + done.invalid + done.failed,
+    itemsNew: 0,
+    itemsUpdated: done.refreshed,
+    itemsUnchanged: 0,
+    itemsInvalid: done.invalid,
+  });
 }
 
 function safeJson(text: string): unknown {

@@ -6,6 +6,7 @@ import {
   PRESENCES,
   SCRAPE_ERROR_KINDS,
   SCRAPE_OUTCOMES,
+  SCRAPE_RUN_KINDS,
   SCRAPE_TRIGGERS,
   type AdapterKind,
   type ComplianceStatus,
@@ -14,6 +15,7 @@ import {
   type Presence,
   type ScrapeErrorKind,
   type ScrapeOutcome,
+  type ScrapeRunKind,
   type ScrapeTrigger,
 } from '@compintel/contracts';
 import { sql } from 'drizzle-orm';
@@ -178,6 +180,8 @@ export const scrapeRuns = sqliteTable(
     sourceId: text('source_id')
       .notNull()
       .references(() => sources.id),
+    /** LISTING or DETAIL_REFRESH; only LISTING runs are §7.6's and Source status's. */
+    kind: text('kind').$type<ScrapeRunKind>().notNull().default('LISTING'),
     trigger: text('trigger').$type<ScrapeTrigger>().notNull(),
     startedAt: integer('started_at').notNull(),
     finishedAt: integer('finished_at'),
@@ -203,6 +207,7 @@ export const scrapeRuns = sqliteTable(
     // Source status reads "the newest run for this source"; §7.6 counts complete
     // runs since a timestamp. Both are this index.
     index('scrape_runs_source_started_idx').on(table.sourceId, table.startedAt),
+    check('scrape_runs_kind_check', sql.raw(`"kind" in (${quoted(SCRAPE_RUN_KINDS)})`)),
     check('scrape_runs_trigger_check', sql.raw(`"trigger" in (${quoted(SCRAPE_TRIGGERS)})`)),
     check('scrape_runs_outcome_check', sql.raw(`"outcome" in (${quoted(SCRAPE_OUTCOMES)})`)),
     check(

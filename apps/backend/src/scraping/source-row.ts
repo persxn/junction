@@ -119,7 +119,11 @@ export function representativeUrl(source: SourceRow): string {
     return 'https://unconfigured.invalid/';
   }
   const withoutWildcard = entry.startsWith('*.') ? entry.slice(2) : entry;
-  return `https://${withoutWildcard}`;
+  // An end anchor is grammar, not path.
+  const withoutAnchor = withoutWildcard.endsWith('$')
+    ? withoutWildcard.slice(0, -1)
+    : withoutWildcard;
+  return `https://${withoutAnchor}`;
 }
 
 /** How many detail fetches one run may make when the source does not say. */

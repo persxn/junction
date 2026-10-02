@@ -207,6 +207,11 @@ export const UrlImportCommitRequest = z
     disposition: ImportDisposition,
     sourceKey: z.string().min(1).max(64).optional(),
     fields: ManualEventInput,
+    /**
+     * Ignored since pre-M2b (WP-14 Q4): the backend diffs `fields` against the
+     * cached preview to decide what was edited. Still accepted, so an older
+     * client's request does not fail validation.
+     */
     edited: z.array(OverrideField).max(60).default([]),
   })
   .strict();

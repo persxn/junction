@@ -148,6 +148,20 @@
       "when": 1790901802890,
       "tag": "0020_top_trust_rank",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "6",
+      "when": 1790902901929,
+      "tag": "0021_ctftime_anchored_paths",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "6",
+      "when": 1790903069783,
+      "tag": "0022_scrape_run_kind",
+      "breakpoints": true
     }
   ]
 }

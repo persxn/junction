@@ -1,4 +1,5 @@
 import type {
+  CandidateDate,
   EventCandidate,
   EventImportResult,
   OverrideField,
@@ -6,8 +7,9 @@ import type {
 } from '@compintel/contracts';
 
 import type { SourceRow } from '../../../db/schema/index.js';
-import { claimValues } from '../../../domain/events/claims.js';
+import { CLAIMED_FIELDS, claimValues } from '../../../domain/events/claims.js';
 import { withAudit, type AuditLog } from '../../../platform/audit.js';
+import { APP_TIMEZONE, formatDay } from '../../../platform/time.js';
 import type { Geocoder } from '../../geo/geocoder.js';
 import { payloadHash, type SourceRecordsRepository } from '../../sources/records.js';
 import type { EventLinker } from '../link.js';
@@ -79,6 +81,57 @@ export function statedOverrides(
     const valueJson = values[field];
     return valueJson === null || valueJson === undefined ? [] : [{ field, valueJson }];
   });
+}
+
+/**
+ * Which fields the professor changed, judged against what the preview read
+ * (WP-14 Q4) rather than taken from the request. A body claiming "I edited
+ * everything" would otherwise pin every field and stop the event tracking its
+ * source. A field left blank pins nothing either way (`statedOverrides`).
+ */
+export function editedAgainstPreview(
+  geocoder: Pick<Geocoder, 'resolve'>,
+  previewed: EventCandidate,
+  reviewed: EventCandidate,
+): OverrideField[] {
+  const before = claimValues(previewed, geocoder.resolve(previewed.place));
+  const after = claimValues(reviewed, geocoder.resolve(reviewed.place));
+  const zone = reviewed.timezone ?? APP_TIMEZONE;
+  return CLAIMED_FIELDS.filter((field) => {
+    if (after[field] === null) return false;
+    if (isDateField(field)) return !sameDate(previewed[field], reviewed[field], zone);
+    return after[field] !== before[field];
+  });
+}
+
+const DATE_FIELDS = [
+  'registrationOpensAt',
+  'registrationDeadlineAt',
+  'startsAt',
+  'endsAt',
+  'submissionDeadlineAt',
+] as const;
+type DateField = (typeof DATE_FIELDS)[number];
+
+function isDateField(field: string): field is DateField {
+  return (DATE_FIELDS as readonly string[]).includes(field);
+}
+
+/**
+ * The form states a date at its own precision — a deadline box is a day, a
+ * start box is a minute — so an untouched box equals the preview when it names
+ * the same day or the same minute, not the same millisecond.
+ */
+function sameDate(
+  read: CandidateDate | undefined,
+  stated: CandidateDate | undefined,
+  zone: string,
+): boolean {
+  if (read === undefined || stated === undefined) return read === stated;
+  const day = (at: number): string => formatDay(zone, new Date(at));
+  if (stated.precision === 'MONTH') return day(read.at).slice(0, 7) === day(stated.at).slice(0, 7);
+  if (stated.precision !== 'DATETIME') return day(read.at) === day(stated.at);
+  return Math.floor(read.at / 60_000) === Math.floor(stated.at / 60_000);
 }
 
 /** Writes the record, links it to an event, and pins the professor's values. */

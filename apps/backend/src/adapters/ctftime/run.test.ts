@@ -54,9 +54,8 @@ describe('the seeded ctftime row agrees with what the run uses (D-26, D-27, D-32
       attributionText: 'Event data from CTFtime (ctftime.org)',
     });
     expect(JSON.parse(h.source.allowedPathsJson)).toEqual([
-      'ctftime.org/api/v1/events/',
-      'ctftime.org/api/v1/events/{id}/',
-      '!ctftime.org/api/v1/events/{id}/{below}',
+      'ctftime.org/api/v1/events/$',
+      'ctftime.org/api/v1/events/{id}/$',
     ]);
     expect(h.adapter.defaultCadenceMinutes).toBe(h.source.cadenceMinutes);
     expect(h.adapter.key).toBe(h.source.key);
@@ -81,11 +80,14 @@ describe('a whole run, end to end', () => {
       itemsInvalid: 0,
       errorKind: null,
     });
-    // One listing request, then details until the six-request cap.
-    expect(row.requestsMade).toBe(6);
+    // `detailPolicy: 'never'` (pre-M2b): the listing carries every field, so
+    // the run is that one request — it was six, five of them redundant details.
+    expect(row.requestsMade).toBe(1);
 
     const records = h.deps(transport).records.list(h.source.id);
     expect(records).toHaveLength(5);
+    // …and `detail-refresh` owes it nothing afterwards.
+    expect(h.deps(transport).records.awaitingDetail(h.source.id, 10)).toEqual([]);
     const monthDir = path.join(h.snapshots.root, 'ctftime', '2026-09');
     const files = readdirSync(monthDir).filter((name) => name.endsWith('.json.gz'));
     for (const record of records) {
@@ -163,11 +165,13 @@ describe('the delay comes from robots.txt (A9, D-28)', () => {
     expect(delay).toBe(expected);
     expect(delay).toBeGreaterThanOrEqual(10_000);
 
-    // And the run really waited it: the clock is frozen, so every request after
-    // the first on the host sleeps the whole delay.
+    // And the runs really waited it: the clock is frozen, so every request after
+    // the first on the host sleeps the whole delay — robots.txt, then the
+    // listing, once per run (a run is one request since `detailPolicy: 'never'`).
+    await run(recordedTransport(clock));
     await run(recordedTransport(clock));
     const politeWaits = h.sleep.waits.filter((ms) => ms > 0);
-    expect(politeWaits.length).toBeGreaterThanOrEqual(5);
+    expect(politeWaits.length).toBeGreaterThanOrEqual(2);
     for (const wait of politeWaits) {
       expect(wait).toBe(expected);
     }

@@ -11,7 +11,8 @@
  * ```text
  * entry   := ["!"] host [ "/" prefix ]
  * host    := "*." domain | domain
- * prefix  := path text, with "{...}" matching exactly one segment
+ * prefix  := path text, with "{...}" matching exactly one segment, and an
+ *            optional trailing "$" that ends the path (a query may follow)
  * ```
  *
  * - `ctftime.org/api/v1/events/` — that host, paths starting with that prefix.
@@ -48,8 +49,12 @@ function escapeRegExp(text: string): string {
  * match, so `/api/v1/events/` also authorizes `/api/v1/events/123/`.
  */
 function compilePath(prefix: string): RegExp {
-  const parts = prefix.split(SEGMENT_PLACEHOLDER).map(escapeRegExp);
-  return new RegExp(`^${parts.join('[^/]+')}`);
+  // A trailing `$` ends the path there (WP-09b Q1): a query string may follow,
+  // another segment may not.
+  const anchored = prefix.endsWith('$');
+  const body = anchored ? prefix.slice(0, -1) : prefix;
+  const parts = body.split(SEGMENT_PLACEHOLDER).map(escapeRegExp);
+  return new RegExp(`^${parts.join('[^/]+')}${anchored ? '(?:\\?.*)?$' : ''}`);
 }
 
 function parseEntry(entry: string): AllowedPath | undefined {
