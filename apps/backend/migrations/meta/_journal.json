@@ -141,6 +141,13 @@
       "when": 1790901237201,
       "tag": "0019_event_tags_text",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1790901802890,
+      "tag": "0020_top_trust_rank",
+      "breakpoints": true
     }
   ]
 }

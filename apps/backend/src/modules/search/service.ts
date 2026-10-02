@@ -109,9 +109,7 @@ export class SearchService {
       userId: context.actor.id,
       after,
       interests: interests.ids,
-      trustedSourceIds: [...sourceTrust]
-        .filter(([, source]) => source.trustRank >= trustedMinRank)
-        .map(([id]) => id),
+      trustedMinRank,
       ...(text === undefined ? {} : { text: text.match }),
     };
     const rankContext: RankContext = {

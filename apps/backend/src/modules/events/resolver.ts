@@ -176,6 +176,8 @@ export class EventResolver {
 
     const next = { ...current, ...patch } as EventRow;
     patch.hasConflicts = resolution.hasConflicts;
+    // R88: link, merge and unmerge all end here, so trust is kept current here.
+    patch.topTrustRank = this.#events.topTrustRank(eventId);
     patch.qualityScore = qualityScoreOf(next);
     const rowChanged =
       changedFields.length > 0 ||

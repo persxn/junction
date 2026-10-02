@@ -68,8 +68,8 @@ export interface SearchExecution {
   readonly userId: string;
   readonly after?: CursorPosition | undefined;
   readonly interests?: InterestIds;
-  /** Sources whose trust rank clears `trustedSourceMinRank`. */
-  readonly trustedSourceIds?: readonly string[];
+  /** `trustedSourceMinRank`: TRUSTED_SOURCE fires at or above it (R88). */
+  readonly trustedMinRank?: number;
 }
 
 /** The structured sorts' keys over `e`; DISTANCE sorts by the computed `distance_km`. */
@@ -112,17 +112,13 @@ export function rankerColumns(execution: SearchExecution): Clause {
 }
 
 /**
- * Whether a trusted source lists the event: a non-correlated `IN`, which SQLite
- * evaluates once into an ephemeral index.
+ * Whether a trusted source lists the event (R88): one column the resolver keeps,
+ * where WP-15b had a lookup over `source_records` for every matching row.
  */
 export function trustedColumn(execution: SearchExecution): Clause {
-  const ids = execution.trustedSourceIds ?? [];
-  return ids.length === 0
+  return execution.trustedMinRank === undefined
     ? clause('0')
-    : clause(
-        `(e.id IN (SELECT sr.event_id FROM source_records sr WHERE sr.source_id IN (${placeholders(ids)})))`,
-        ...ids,
-      );
+    : clause('(e.top_trust_rank >= ?)', execution.trustedMinRank);
 }
 
 export function distanceColumn(plan: QueryPlan): Clause {

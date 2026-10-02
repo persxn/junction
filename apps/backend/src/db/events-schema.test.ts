@@ -190,6 +190,8 @@ describe('the events table matches §6.2 column for column', () => {
     // Quality
     'quality_score',
     'has_conflicts',
+    // R88 (pre-M2b, migration 0020): denormalized trust for RELEVANCE.
+    'top_trust_rank',
     'last_verified_at',
     'last_changed_at',
     'first_seen_at',

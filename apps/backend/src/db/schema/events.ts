@@ -165,6 +165,12 @@ export const events = sqliteTable(
     // ---- Quality -----------------------------------------------------------
     qualityScore: integer('quality_score').notNull().default(0),
     hasConflicts: integer('has_conflicts', { mode: 'boolean' }).notNull().default(false),
+    /**
+     * R88: the highest `trust_rank` among the sources that list the event (0
+     * when none). Kept by the resolver on every link, merge and unmerge, so
+     * RELEVANCE reads a column instead of a per-row subquery.
+     */
+    topTrustRank: integer('top_trust_rank').notNull().default(0),
     lastVerifiedAt: integer('last_verified_at'),
     lastChangedAt: integer('last_changed_at').notNull(),
     firstSeenAt: integer('first_seen_at').notNull(),

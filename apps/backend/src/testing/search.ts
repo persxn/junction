@@ -238,6 +238,8 @@ export function openSearchHarness(options: { cursors?: CursorCodec } = {}): Sear
           originEventId: eventId,
         })
         .run();
+      // R88: what the resolver does after every link.
+      events.update(eventId, { topTrustRank: events.topTrustRank(eventId) });
     },
     query,
     titles: (input, actor) => query(input, actor).items.map((item) => item.title),

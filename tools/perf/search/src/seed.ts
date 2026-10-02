@@ -94,6 +94,11 @@ export function seed(
       }
     }
   })();
+  // R88: the column the resolver keeps on every link, set the way migration
+  // 0020 backfills it — the corpus links records directly, not through a run.
+  db.raw.exec(`UPDATE events SET top_trust_rank = coalesce((
+    SELECT max(s.trust_rank) FROM source_records sr JOIN sources s ON s.id = sr.source_id
+    WHERE sr.event_id = events.id), 0)`);
   return visible;
 }
 

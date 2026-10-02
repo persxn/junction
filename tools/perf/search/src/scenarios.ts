@@ -122,7 +122,17 @@ export function scenarios(
       },
     },
     {
-      // What the Discover screen waits for on first load — reported, not budgeted.
+      // R88: the unfiltered first Discover page *with facets* — exactly what the
+      // screen asks for on first load — is a named §8.3 scenario: 100 ms at 20 k
+      // events, halved here.
+      name: 'first page (R88)',
+      budgetMs: QUERY_BUDGET_MS,
+      run: () => {
+        search.service.search(context, {});
+      },
+    },
+    {
+      // A first page with random filters and text — reported, not budgeted.
       name: 'first page+facets',
       budgetMs: undefined,
       run: (rng) => {

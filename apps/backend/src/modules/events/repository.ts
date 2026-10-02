@@ -274,6 +274,20 @@ export class EventsRepository {
       .all();
   }
 
+  /**
+   * R88: the highest `trust_rank` among the sources that list the event, or 0
+   * when none does — what `events.top_trust_rank` holds.
+   */
+  topTrustRank(id: string): number {
+    const row = this.#db.raw
+      .prepare(
+        `SELECT coalesce(max(s.trust_rank), 0) AS rank FROM source_records sr
+         JOIN sources s ON s.id = sr.source_id WHERE sr.event_id = ?`,
+      )
+      .get(id) as { rank: number };
+    return row.rank;
+  }
+
   /** Writes resolved columns; the caller has already decided they changed. */
   update(id: string, patch: Partial<Omit<EventRow, 'id'>>): void {
     this.#db.drizzle.update(events).set(patch).where(eq(events.id, id)).run();
