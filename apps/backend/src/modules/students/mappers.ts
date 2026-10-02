@@ -1,4 +1,4 @@
-import type { StudentDetail, StudentListItem } from '@compintel/contracts';
+import type { StudentDetail, StudentListItem, StudentTeam } from '@compintel/contracts';
 
 import type { StudentRow } from '../../db/schema/index.js';
 import type { AuditLog } from '../../platform/audit.js';
@@ -12,11 +12,14 @@ import type {
   StudentTagRef,
 } from './relations-repo.js';
 import type { ListCursor, ListRow, StudentsRepository } from './repository.js';
+import type { TeamLinksRepository } from './team-links-repo.js';
 
 /** What every students service holds. */
 export interface StudentsDependencies {
   readonly students: StudentsRepository;
   readonly relations: RelationsRepository;
+  /** WP-18: the student's teams and their mentors. */
+  readonly teamLinks: TeamLinksRepository;
   readonly audit: AuditLog;
   readonly settings: SettingsStore;
   readonly clock?: Clock;
@@ -80,6 +83,7 @@ export interface DetailParts {
   readonly tags: readonly StudentTagRef[];
   readonly mentors: readonly MentorshipRef[];
   readonly achievements: readonly AchievementRow[];
+  readonly teams: readonly StudentTeam[];
   readonly phoneEnabled: boolean;
   readonly canDeactivate: boolean;
   readonly canErase: boolean;
@@ -129,6 +133,7 @@ export function toDetail(parts: DetailParts): StudentDetail {
       url: achievement.url,
       notes: achievement.notes,
     })),
+    teams: [...parts.teams],
     canDeactivate: parts.canDeactivate,
     canErase: parts.canErase,
     version: row.version,

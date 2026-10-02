@@ -8,7 +8,7 @@ import { toDetail, type StudentsDependencies } from './mappers.js';
 import { STUDENTS_PHONE_ENABLED } from './settings.js';
 
 /**
- * Loading a student and the facts the permission matrix needs about him. Every
+ * Loading a student and the facts the permission matrix needs about them. Every
  * students service goes through this, so "not found", "erased" and "may this
  * user deactivate him" are decided one way.
  */
@@ -40,15 +40,12 @@ export class StudentReader {
     return row;
   }
 
-  /**
-   * §10.2's deactivate facts. `teamMentorUserIds` is empty until WP-18 gives
-   * teams their mentors.
-   */
+  /** §10.2's deactivate facts: a direct mentor, or a mentor of an active team the student is in. */
   deactivateFacts(actor: Principal, studentId: string): { isStudentMentor: boolean } {
     return {
       isStudentMentor: canDeactivateStudent(actor, {
         mentorUserIds: this.#deps.relations.openMentorUserIds(studentId),
-        teamMentorUserIds: [],
+        teamMentorUserIds: this.#deps.teamLinks.teamMentorUserIds(studentId),
       }),
     };
   }
@@ -65,6 +62,7 @@ export class StudentReader {
       tags: this.#deps.relations.tagsByStudent([id])[0]?.[1] ?? [],
       mentors: this.#deps.relations.mentorshipsOf([id]),
       achievements: this.#deps.relations.achievementsOf(id),
+      teams: this.#deps.teamLinks.teamsOf(id),
       phoneEnabled: this.#deps.settings.get(STUDENTS_PHONE_ENABLED),
       canDeactivate:
         row.erasedAt === null && can(actor, 'student.deactivate', this.deactivateFacts(actor, id)),

@@ -9,6 +9,7 @@ import { RelationsRepository } from './relations-repo.js';
 import { StudentsRepository } from './repository.js';
 import { StudentRelationsService } from './relations.js';
 import { StudentsService } from './service.js';
+import { TeamLinksRepository } from './team-links-repo.js';
 
 /**
  * The students module (WP-17), wired once from `main.ts` and the test servers.
@@ -36,6 +37,7 @@ export function createStudentsModule(options: StudentsModuleOptions): StudentsMo
   const deps: StudentsDependencies = {
     students: repository,
     relations: new RelationsRepository(options.db),
+    teamLinks: new TeamLinksRepository(options.db),
     audit: options.audit,
     settings: options.settings,
     ...(options.clock === undefined ? {} : { clock: options.clock }),

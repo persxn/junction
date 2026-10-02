@@ -37,6 +37,7 @@ import {
   registerReclassifyJob,
 } from './modules/categories/wiring.js';
 import { createStudentsModule } from './modules/students/wiring.js';
+import { createTeamsModule } from './modules/teams/wiring.js';
 import { EventUserStateService } from './modules/events/user-state.js';
 import { createEventsModule } from './modules/events/wiring.js';
 import { createSearchModule } from './modules/search/wiring.js';
@@ -212,6 +213,8 @@ async function main(): Promise<void> {
     const userState = new EventUserStateService({ db, events: eventsModule.events });
     // WP-17: students, mentorships and the import.
     const studentsModule = createStudentsModule({ db, audit, settings });
+    // WP-18: teams, members and mentors.
+    const teamsModule = createTeamsModule({ db, audit });
     const refreshVocabulary = (): void => {
       try {
         searchModule.vocabulary.refresh();
@@ -288,6 +291,7 @@ async function main(): Promise<void> {
       eventDetail: () => eventsModule.detail,
       eventCategories: () => eventsModule.categoryOverrides,
       students: () => studentsModule,
+      teams: () => teamsModule,
       onShutdownRequested: () => {
         lifecycle.start('api');
       },

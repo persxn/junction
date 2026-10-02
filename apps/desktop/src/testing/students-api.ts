@@ -43,6 +43,7 @@ export function makeStudent(n: number, patch: Partial<StudentDetail> = {}): Stud
     tags: [],
     mentors: [],
     achievements: [],
+    teams: [],
     canDeactivate: true,
     canErase: false,
     version: 1,

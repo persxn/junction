@@ -16,6 +16,7 @@ import {
   ProblemFieldError,
   SEARCH_ERROR_CODES,
   STUDENT_ERROR_CODES,
+  TEAM_ERROR_CODES,
   SETUP_ERROR_CODES,
   SOURCE_ERROR_CODES,
   problemType,
@@ -120,6 +121,17 @@ describe('ErrorCode', () => {
       'STUDENT_IMPORT_PREVIEW_EXPIRED',
       'STUDENT_IMPORT_FILE_INVALID',
       'STUDENT_IMPORT_TOO_LARGE',
+      'TEAM_NOT_FOUND',
+      'TEAM_NAME_TAKEN',
+      'TEAM_ARCHIVED',
+      'TEAM_VERSION_CONFLICT',
+      'TEAM_MEMBER_EXISTS',
+      'TEAM_MEMBER_NOT_FOUND',
+      'TEAM_STUDENT_NOT_ACTIVE',
+      'TEAM_MENTOR_NOT_PROFESSOR',
+      'TEAM_MENTOR_EXISTS',
+      'TEAM_MENTOR_NOT_FOUND',
+      'TEAM_LEAD_NOT_MEMBER',
       'DB_UNAVAILABLE',
       'DB_CONSTRAINT_VIOLATED',
     ]);
@@ -137,6 +149,7 @@ describe('ErrorCode', () => {
       ...CATEGORY_ERROR_CODES,
       ...IMPORT_ERROR_CODES,
       ...STUDENT_ERROR_CODES,
+      ...TEAM_ERROR_CODES,
       ...DB_ERROR_CODES,
     ]);
   });
@@ -150,6 +163,7 @@ describe('ErrorCode', () => {
     ['SETUP_', SETUP_ERROR_CODES],
     ['SOURCE_', SOURCE_ERROR_CODES],
     ['STUDENT_', STUDENT_ERROR_CODES],
+    ['TEAM_', TEAM_ERROR_CODES],
     ['DB_', DB_ERROR_CODES],
   ])('prefixes every %s domain code', (prefix, codes) => {
     for (const code of codes) {

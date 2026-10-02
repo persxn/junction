@@ -12,6 +12,8 @@ import {
   ruleSatisfied,
   canDeactivateStudent,
   isSelf,
+  isTeamMentor,
+  isTeamPrimaryMentor,
   type Action,
   type OwnershipFacts,
   type OwnershipRule,
@@ -105,11 +107,33 @@ describe('the §10.2 rows that are not a plain yes or no', () => {
   });
 
   it('reserves archiving and mentor changes for the primary mentor', () => {
-    for (const action of ['team.archive', 'team.manage_mentors'] as const) {
+    for (const action of [
+      'team.archive',
+      'team.manage_mentors',
+      'team.transfer_primary',
+    ] as const) {
       expect(decide(['PROFESSOR'], action, { isTeamPrimaryMentor: true })).toBe(true);
       // A co-mentor is a mentor but not the primary one.
       expect(decide(['PROFESSOR'], action, { isTeamMentor: true })).toBe(false);
     }
+  });
+
+  it('derives the team facts from the open mentor rows (R95)', () => {
+    const team = { primaryUserId: 'p-1', coMentorUserIds: ['c-1'] };
+    const facts = (id: string) => ({
+      isTeamMentor: isTeamMentor({ id }, team),
+      isTeamPrimaryMentor: isTeamPrimaryMentor({ id }, team),
+    });
+    // The primary does everything; a co-mentor edits only; anyone else views.
+    expect(decide(['PROFESSOR'], 'team.transfer_primary', facts('p-1'))).toBe(true);
+    expect(decide(['PROFESSOR'], 'team.edit', facts('c-1'))).toBe(true);
+    expect(decide(['PROFESSOR'], 'team.manage_mentors', facts('c-1'))).toBe(false);
+    expect(decide(['PROFESSOR'], 'team.archive', facts('c-1'))).toBe(false);
+    expect(decide(['PROFESSOR'], 'team.edit', facts('x-1'))).toBe(false);
+    expect(decide(['PROFESSOR'], 'team.view', facts('x-1'))).toBe(true);
+    expect(decide(['PROFESSOR'], 'team.create', facts('x-1'))).toBe(true);
+    expect(decide(['ADMINISTRATOR'], 'team.transfer_primary', facts('x-1'))).toBe(true);
+    expect(isTeamMentor({ id: 'x' }, { primaryUserId: null, coMentorUserIds: [] })).toBe(false);
   });
 
   it('lets a professor deactivate only a student they mentor', () => {
@@ -117,7 +141,7 @@ describe('the §10.2 rows that are not a plain yes or no', () => {
     expect(decide(['PROFESSOR'], 'student.deactivate', { isTeamMentor: true })).toBe(false);
   });
 
-  it('lets a professor manage only his own mentorships (R91), an admin any mentorship', () => {
+  it('lets a professor manage only their own mentorships (R91), an admin any mentorship', () => {
     const me = { id: 'u-1' };
     expect(decide(['PROFESSOR'], 'mentorship.manage', { isOwner: isSelf(me, 'u-1') })).toBe(true);
     expect(decide(['PROFESSOR'], 'mentorship.manage', { isOwner: isSelf(me, 'u-2') })).toBe(false);

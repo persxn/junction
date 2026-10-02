@@ -186,6 +186,21 @@ export const STUDENT_ERROR_CODES = [
   'STUDENT_IMPORT_TOO_LARGE',
 ] as const;
 
+/** Teams (WP-18, R94–R95). */
+export const TEAM_ERROR_CODES = [
+  'TEAM_NOT_FOUND',
+  'TEAM_NAME_TAKEN',
+  'TEAM_ARCHIVED',
+  'TEAM_VERSION_CONFLICT',
+  'TEAM_MEMBER_EXISTS',
+  'TEAM_MEMBER_NOT_FOUND',
+  'TEAM_STUDENT_NOT_ACTIVE',
+  'TEAM_MENTOR_NOT_PROFESSOR',
+  'TEAM_MENTOR_EXISTS',
+  'TEAM_MENTOR_NOT_FOUND',
+  'TEAM_LEAD_NOT_MEMBER',
+] as const;
+
 /** Database failures the API may surface at request time (WP-04b). */
 export const DB_ERROR_CODES = ['DB_UNAVAILABLE', 'DB_CONSTRAINT_VIOLATED'] as const;
 
@@ -204,6 +219,7 @@ export const ERROR_CODES = [
   ...CATEGORY_ERROR_CODES,
   ...IMPORT_ERROR_CODES,
   ...STUDENT_ERROR_CODES,
+  ...TEAM_ERROR_CODES,
   ...DB_ERROR_CODES,
 ] as const;
 
@@ -222,6 +238,7 @@ export const ERROR_CODE_DOMAINS = [
   'CATEGORY',
   'IMPORT',
   'STUDENT',
+  'TEAM',
   'DB',
 ] as const;
 export type ErrorCodeDomain = (typeof ERROR_CODE_DOMAINS)[number];

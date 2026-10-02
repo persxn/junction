@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
 import { Uuid7 } from './ids.js';
+import { StudentStatus } from './student-status.js';
+import { StudentTeam } from './teams.js';
 
 /**
  * Students, their skills and interests, mentorships and achievements (§6.2
@@ -37,16 +39,9 @@ export const PROGRAM_LABELS: Readonly<Record<StudentProgram, string>> = {
   OTHER: 'Other',
 };
 
-/** `students.status` (§6.2). An import never changes it (R93). */
-export const STUDENT_STATUSES = ['ACTIVE', 'INACTIVE', 'ALUMNI'] as const;
-export const StudentStatus = z.enum(STUDENT_STATUSES);
-export type StudentStatus = z.infer<typeof StudentStatus>;
-
-export const STUDENT_STATUS_LABELS: Readonly<Record<StudentStatus, string>> = {
-  ACTIVE: 'Active',
-  INACTIVE: 'Inactive',
-  ALUMNI: 'Alumni',
-};
+// `StudentStatus` lives in its own module so `teams.ts` can use it without an
+// import cycle (StudentDetail lists the student's teams).
+export { STUDENT_STATUSES, STUDENT_STATUS_LABELS, StudentStatus } from './student-status.js';
 
 /** `student_tags.relation` (§6.2). */
 export const TAG_RELATIONS = ['SKILL', 'INTEREST'] as const;
@@ -184,6 +179,8 @@ export const StudentDetail = z
     tags: z.array(StudentTag),
     mentors: z.array(StudentMentor),
     achievements: z.array(StudentAchievement),
+    /** Open memberships first, then past ones (WP-18). */
+    teams: z.array(StudentTeam),
     /** What the caller may do here — cosmetic, the server decides again (§10.1). */
     canDeactivate: z.boolean(),
     canErase: z.boolean(),

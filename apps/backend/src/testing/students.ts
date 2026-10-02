@@ -6,6 +6,7 @@ import type { AuthService } from '../modules/auth/service.js';
 import type { ActiveSession, Principal } from '../modules/auth/types.js';
 import type { StudentsContext } from '../modules/students/mappers.js';
 import { createStudentsModule, type StudentsModule } from '../modules/students/wiring.js';
+import { createTeamsModule, type TeamsModule } from '../modules/teams/wiring.js';
 import { AuditLog } from '../platform/audit.js';
 import { sessionExpired } from '../modules/auth/errors.js';
 import { uuid7 } from '../platform/ids.js';
@@ -28,6 +29,8 @@ import { silentLogger } from './scraping.js';
 export interface StudentsHarness {
   readonly database: MigratedDatabase;
   readonly module: StudentsModule;
+  /** WP-18: teams over the same database. */
+  readonly teams: TeamsModule;
   readonly audit: AuditLog;
   readonly settings: SettingsStore;
   readonly clock: { now: () => Date; advance(ms: number): void };
@@ -106,9 +109,11 @@ export function openStudentsHarness(startIso = '2026-10-01T04:30:00.000Z'): Stud
   const audit = new AuditLog(db, { clock });
   const settings = new SettingsStore(db, { clock });
   const module = createStudentsModule({ db, audit, settings, clock });
+  const teams = createTeamsModule({ db, audit, clock });
   return {
     database,
     module,
+    teams,
     audit,
     settings,
     clock,
@@ -148,6 +153,7 @@ export async function startStudentsServer(h: StudentsHarness): Promise<TestServe
   return startTestServer({
     auth: principalAuth([h.admin, h.alice, h.bob]),
     students: () => h.module,
+    teams: () => h.teams,
   });
 }
 

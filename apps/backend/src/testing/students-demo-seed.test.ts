@@ -46,6 +46,36 @@ describe('seedDemoStudentsInto', () => {
     expect(await verifyPassword(professor.hash, 'seed-demo:no-password')).toBe(false);
   });
 
+  it('adds 12 teams: one student in three, co-mentors, and all three coverage states (WP-18)', () => {
+    harness = openStudentsHarness();
+    const { db } = harness.database;
+    const seeded = seedDemoStudentsInto(db);
+    expect(seeded.teams).toBe(12);
+    const shared = db.raw
+      .prepare(
+        `SELECT max(n) AS n FROM (SELECT count(*) AS n FROM team_members WHERE left_at IS NULL GROUP BY student_id)`,
+      )
+      .get() as { n: number };
+    expect(shared.n).toBe(3);
+    const coMentors = db.raw
+      .prepare("SELECT count(*) AS n FROM team_mentors WHERE role = 'CO_MENTOR' AND to_at IS NULL")
+      .get() as { n: number };
+    expect(coMentors.n).toBe(6);
+    const professor = { ...harness.alice, id: seeded.professorId };
+    const list = harness.teams.records.list({ actor: professor }, {});
+    const totals = list.items.reduce(
+      (sum, team) => ({
+        covered: sum.covered + team.coverage.covered,
+        thin: sum.thin + team.coverage.thin,
+        missing: sum.missing + team.coverage.missing,
+      }),
+      { covered: 0, thin: 0, missing: 0 },
+    );
+    expect(totals.covered).toBeGreaterThan(0);
+    expect(totals.thin).toBeGreaterThan(0);
+    expect(totals.missing).toBe(12);
+  });
+
   it('refuses a database that already holds students', () => {
     harness = openStudentsHarness();
     seedDemoStudentsInto(harness.database.db);

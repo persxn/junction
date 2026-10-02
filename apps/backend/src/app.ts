@@ -39,7 +39,9 @@ import { sourcesRoutes } from './routes/sources.js';
 import { streamRoutes } from './routes/stream.js';
 import { systemRoutes } from './routes/system.js';
 import { studentsRoutes } from './routes/students.js';
+import { teamsRoutes } from './routes/teams.js';
 import type { StudentsModule } from './modules/students/wiring.js';
+import type { TeamsModule } from './modules/teams/wiring.js';
 import { systemClock, type Clock } from './platform/time.js';
 
 /** Request bodies larger than this are rejected before they are parsed. */
@@ -93,6 +95,8 @@ export interface BuildAppOptions {
   readonly eventCategories?: () => EventCategoriesService | undefined;
   /** WP-17's students, mentorships and import. */
   readonly students?: () => StudentsModule | undefined;
+  /** WP-18's teams, members and mentors. */
+  readonly teams?: () => TeamsModule | undefined;
   /** Shared so jobs and services can publish; one hub per process (R36). */
   readonly streamHub?: StreamHub;
   /** Injected in tests so a heartbeat does not take fifteen real seconds. */
@@ -186,6 +190,9 @@ export function buildApp(
   void server.register(categoryRoutes({ categories }), { prefix: API_PREFIX });
   void server.register(userStateRoutes({ userState }), { prefix: API_PREFIX });
   void server.register(studentsRoutes({ students: options.students ?? (() => undefined) }), {
+    prefix: API_PREFIX,
+  });
+  void server.register(teamsRoutes({ teams: options.teams ?? (() => undefined) }), {
     prefix: API_PREFIX,
   });
   void server.register(

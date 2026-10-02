@@ -52,7 +52,7 @@ export const ACTIONS = [
   'student.deactivate',
   'student.erase',
   'student.import',
-  /** R91: a professor starts and ends only his own mentorships; an admin anyone's. */
+  /** R91: a professor starts and ends only their own mentorships; an admin anyone's. */
   'mentorship.manage',
 
   // Teams
@@ -61,6 +61,8 @@ export const ACTIONS = [
   'team.archive',
   'team.manage_mentors',
   'team.transfer_ownership',
+  /** R95: hand the team's PRIMARY role to another professor, from inside the team. */
+  'team.transfer_primary',
 
   // Competitions, workflows and saved searches
   'competition.edit',
@@ -159,6 +161,7 @@ export const ROLE_ACTIONS: Matrix = {
     'team.archive': 'ALWAYS',
     'team.manage_mentors': 'ALWAYS',
     'team.transfer_ownership': 'ALWAYS',
+    'team.transfer_primary': 'ALWAYS',
 
     'competition.edit': 'ALWAYS',
     'workflow_template.manage_own': 'ALWAYS',
@@ -208,6 +211,7 @@ export const ROLE_ACTIONS: Matrix = {
     'team.archive': 'TEAM_PRIMARY_MENTOR',
     'team.manage_mentors': 'TEAM_PRIMARY_MENTOR',
     'team.transfer_ownership': 'NEVER',
+    'team.transfer_primary': 'TEAM_PRIMARY_MENTOR',
 
     'competition.edit': 'TEAM_MENTOR',
     'workflow_template.manage_own': 'OWN',
@@ -308,7 +312,7 @@ export interface PredicateSubject {
 
 /**
  * R91's mentorship rule: a professor's own mentorship is the one whose mentor
- * is him. Feeds `OwnershipFacts.isOwner` for `mentorship.manage`.
+ * is that professor. Feeds `OwnershipFacts.isOwner` for `mentorship.manage`.
  */
 export function isSelf(user: PredicateSubject, userId: string): boolean {
   return user.id === userId;
@@ -328,4 +332,20 @@ export function canDeactivateStudent(
   },
 ): boolean {
   return relation.mentorUserIds.includes(user.id) || relation.teamMentorUserIds.includes(user.id);
+}
+
+/** A team's open mentor rows, as the team predicates read them. */
+export interface TeamMentorship {
+  readonly primaryUserId: string | null;
+  readonly coMentorUserIds: readonly string[];
+}
+
+/** §10.2 "Edit a team": its primary mentor or a co-mentor. Feeds `isTeamMentor`. */
+export function isTeamMentor(user: PredicateSubject, team: TeamMentorship): boolean {
+  return team.primaryUserId === user.id || team.coMentorUserIds.includes(user.id);
+}
+
+/** §10.2 "Archive team, add/remove mentors" and R95's transfer: the primary only. */
+export function isTeamPrimaryMentor(user: PredicateSubject, team: TeamMentorship): boolean {
+  return team.primaryUserId === user.id;
 }

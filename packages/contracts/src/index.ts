@@ -18,6 +18,7 @@ export * from './setup.js';
 export * from './shell.js';
 export * from './source-status.js';
 export * from './student-import.js';
+export * from './teams.js';
 export * from './students.js';
 export * from './sources.js';
 export * from './system.js';
