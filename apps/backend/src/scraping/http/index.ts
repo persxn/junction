@@ -13,11 +13,15 @@ export {
 export { DEFAULT_MAX_WAIT_MS, ScrapingHttp, type ScrapingHttpOptions } from './client.js';
 export { PoliteHttpClient, type HttpEnvironment, type RequestBudget } from './polite-client.js';
 export { HostQueue, hostKey } from './queue.js';
+export { newRunLedger, type RunLedger } from './run-ledger.js';
 export { decode, readCapped } from './read.js';
 export { parseRobots, RobotsCache, ROBOTS_USER_AGENT, type RobotsLookup } from './robots.js';
 export { closeTransport, undiciFetcher } from './undici-fetcher.js';
 export {
   CONNECT_TIMEOUT_MS,
+  DEFAULT_SIGNED_IN_BUDGET,
+  SIGNED_IN_MAX_PER_RUN,
+  SIGNED_IN_MIN_INTERVAL_MS,
   MAX_RESPONSE_BYTES,
   MAX_RETRIES,
   REACHABILITY_TTL_MS,
@@ -30,7 +34,9 @@ export {
   realSleeper,
   type Fetcher,
   type PoliteResponse,
+  type RequestAccess,
   type RequestOptions,
+  type SignedInBudget,
   type Sleeper,
   type SourceCredential,
   type SourceRequestContext,

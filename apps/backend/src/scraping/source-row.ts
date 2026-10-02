@@ -77,11 +77,19 @@ export function missingCredentialDetail(source: SourceRow): string | undefined {
     : `${source.name} API credential not set`;
 }
 
-/** Everything the compliance gate needs to know about a source. */
+/**
+ * Everything the compliance gate needs to know about a source.
+ *
+ * `credential` is whichever one the source holds. R75 is why its kind matters
+ * here: an API key goes into `credential` and rides on every request, while the
+ * professor's session goes into `session` and rides only on a request granted
+ * `signed-in`.
+ */
 export function sourceRequestContext(
   source: SourceRow,
   credential?: SourceCredential,
 ): SourceRequestContext {
+  const isSession = credential?.kind === 'SESSION';
   return {
     key: source.key,
     name: source.name,
@@ -90,7 +98,8 @@ export function sourceRequestContext(
     allowedPaths: allowedPathsOf(source),
     minDelayMs: source.minDelayMs,
     maxRequestsPerRun: source.maxRequestsPerRun,
-    credential,
+    credential: isSession ? undefined : credential,
+    session: isSession ? credential : undefined,
     robotsExemption: robotsExemptionOf(source),
   };
 }

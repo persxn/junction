@@ -102,6 +102,7 @@ export function detailRefreshJob(deps: ScrapeJobsDependencies): JobDefinition {
           adapter,
           DETAIL_REFRESH_BATCH,
           context.signal,
+          context.trigger,
         );
         totals.attempted += result.attempted;
         totals.refreshed += result.refreshed;

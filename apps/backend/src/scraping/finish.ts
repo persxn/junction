@@ -140,6 +140,10 @@ export interface FinishInput {
   readonly degraded: boolean;
   readonly failure: RunFailure | undefined;
   readonly requestsMade: number;
+  /** R75: requests that carried the professor's session. */
+  readonly signedInRequests: number;
+  /** R80: the site refused the session during the run. */
+  readonly sessionRejected: boolean;
   readonly robotsFetches: number;
 }
 
@@ -182,7 +186,7 @@ export function finish(deps: RunCloseDependencies, input: FinishInput): ScrapeRu
   // is what stopped working. It is marked expired, the run says so in §7.7's
   // words, and the failure streak and backoff are left exactly as they were.
   const sessions = deps.sessions;
-  if (failure?.kind === 'BLOCKED' && sessions?.isActive(source) === true) {
+  if (failure !== undefined && input.sessionRejected && sessions !== undefined) {
     recordSessionExpiry(
       { sources: deps.sources, sessions, logger: deps.logger },
       source,
@@ -201,7 +205,8 @@ export function finish(deps: RunCloseDependencies, input: FinishInput): ScrapeRu
       failures,
     );
   } else {
-    if (deps.sessions?.isActive(source) === true) {
+    // R75: "the session last worked" is only true of a run that used it.
+    if (input.signedInRequests > 0 && deps.sessions?.isActive(source) === true) {
       deps.sessions.verify(source, finishedAt);
     }
     const nextDueAt = finishedAt + source.cadenceMinutes * 60_000;

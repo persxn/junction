@@ -3,21 +3,20 @@ import type { Logger } from 'pino';
 
 import { assessRequest, effectiveDelayMs, refusalErrorKind } from '../../domain/scraping/gate.js';
 import type { RobotsVerdict } from '../../domain/scraping/gate.js';
-import { applyJitter } from '../../domain/scheduling.js';
 import type { Clock } from '../../platform/time.js';
+import { grantSignedIn, retryDelay, statusError } from './attempt-rules.js';
 import type { ValidatorStore } from './cache.js';
-import { asTransportError, classifyStatus, isLoginRedirect, parseRetryAfter } from './classify.js';
+import { asTransportError, isLoginRedirect } from './classify.js';
 import { hostKey } from './queue.js';
 import type { HostQueue } from './queue.js';
+import { probeReachability } from './reachability.js';
 import { frozen, header, readCapped, requestHeaders } from './read.js';
 import type { RobotsCache } from './robots.js';
+import { newRunLedger, type RunLedger } from './run-ledger.js';
 import {
   CONNECT_TIMEOUT_MS,
   MAX_RESPONSE_BYTES,
   MAX_RETRIES,
-  REACHABILITY_TTL_MS,
-  RETRY_BASE_MS,
-  RETRYABLE_ERROR_KINDS,
   ScrapeRequestError,
   TOTAL_TIMEOUT_MS,
   type Fetcher,
@@ -43,6 +42,11 @@ import {
  * failure is answered once and never worked around. A 429 or 503 is obeyed:
  * `Retry-After` is honoured when it fits in the run, and reported as
  * `RATE_LIMITED` when it does not.
+ *
+ * R75 is enforced here rather than trusted to the adapter: each request is
+ * `anonymous` unless it asks to be `signed-in` *and* the client it was made on
+ * is a view the orchestrator opened for targeted reading (see
+ * {@link PoliteHttpClient.signedInView}). A listing walk's client never is.
  */
 
 /** What the client is allowed to spend on one run. */
@@ -77,31 +81,62 @@ export class PoliteHttpClient {
   readonly #source: SourceRequestContext;
   readonly #budget: RequestBudget;
   readonly #signal: AbortSignal;
-  /** The exemption line is logged once per run, not once per request. */
-  #exemptionLogged = false;
-  /** Hosts whose robots.txt could not be read; skipped for the rest of the run. */
-  readonly #unreadableHosts = new Set<string>();
-  #requestsMade = 0;
+  readonly #ledger: RunLedger;
+  /** R75: whether a `signed-in` request made on this view may carry the session. */
+  readonly #signedInScope: boolean;
 
   constructor(
     env: HttpEnvironment,
     source: SourceRequestContext,
     budget: RequestBudget,
     signal: AbortSignal,
+    ledger: RunLedger = newRunLedger(),
+    signedInScope = false,
   ) {
     this.#env = env;
     this.#source = source;
     this.#budget = budget;
     this.#signal = signal;
+    this.#ledger = ledger;
+    this.#signedInScope = signedInScope;
+  }
+
+  /**
+   * The same run, seen through a view that may read signed in (R75) — or, with
+   * `false`, one that may not. It shares this client's budget, its signed-in
+   * count and its robots answers; only the scope differs.
+   *
+   * The orchestrator opens one for the detail page of an event already stored,
+   * outside a catch-up burst, and for nothing else.
+   */
+  signedInView(allowed = true): PoliteHttpClient {
+    return new PoliteHttpClient(
+      this.#env,
+      this.#source,
+      this.#budget,
+      this.#signal,
+      this.#ledger,
+      allowed,
+    );
   }
 
   /** Requests the adapter has made; this is what `scrape_runs.requests_made` records. */
   get requestsMade(): number {
-    return this.#requestsMade;
+    return this.#ledger.requestsMade;
+  }
+
+  /** R75: requests that carried the professor's session. */
+  get signedInRequestsMade(): number {
+    return this.#ledger.signedInMade;
+  }
+
+  /** R80: the site refused the session during this run. */
+  get sessionRejected(): boolean {
+    return this.#ledger.sessionRejected;
   }
 
   get requestsRemaining(): number {
-    return Math.max(0, this.#budget.maxRequests - this.#requestsMade);
+    return Math.max(0, this.#budget.maxRequests - this.#ledger.requestsMade);
   }
 
   get(url: string, options: RequestOptions = {}): Promise<PoliteResponse> {
@@ -121,37 +156,9 @@ export class PoliteHttpClient {
     return this.#env.hasNetworkInterface();
   }
 
-  /**
-   * R61's confirming probe: a HEAD to the source's own host, through the gate
-   * and the politeness queue like any other request, cached for five minutes so
-   * a run costs at most one. Offline is not a failure, so a probe that fails
-   * answers `false` rather than throwing.
-   */
-  async isReachable(url: string): Promise<boolean> {
-    if (!this.isOnline()) {
-      return false;
-    }
-    let key: string;
-    try {
-      key = hostKey(new URL(url));
-    } catch {
-      return false;
-    }
-    const now = this.#env.clock.now().getTime();
-    const cached = this.#env.reachability.get(key);
-    if (cached !== undefined && now - cached.at < REACHABILITY_TTL_MS) {
-      return cached.reachable;
-    }
-    let reachable: boolean;
-    try {
-      const response = await this.head(url);
-      reachable = response.status < 500;
-    } catch (error) {
-      reachable = error instanceof ScrapeRequestError && error.kind === 'BLOCKED';
-      this.#env.logger.debug({ host: key }, 'reachability probe failed');
-    }
-    this.#env.reachability.set(key, { at: this.#env.clock.now().getTime(), reachable });
-    return reachable;
+  /** R61's confirming probe; see `reachability.ts`. */
+  isReachable(url: string): Promise<boolean> {
+    return probeReachability(this.#env, url, this.isOnline(), (target) => this.head(target));
   }
 
   async #request(
@@ -166,7 +173,7 @@ export class PoliteHttpClient {
     const key = hostKey(url);
     const preDelay = effectiveDelayMs(this.#source.minDelayMs, undefined);
 
-    if (this.#unreadableHosts.has(key)) {
+    if (this.#ledger.unreadableHosts.has(key)) {
       throw new ScrapeRequestError({
         kind: 'ROBOTS_DISALLOWED',
         refusal: 'ROBOTS_DISALLOWED',
@@ -175,7 +182,7 @@ export class PoliteHttpClient {
     }
     const robots = await this.#env.robots.lookup(url, preDelay, options.signal ?? this.#signal);
     if (robots.unreachable) {
-      this.#unreadableHosts.add(key);
+      this.#ledger.unreadableHosts.add(key);
     }
     this.#assert(rawUrl, method, robots.verdict);
 
@@ -198,14 +205,14 @@ export class PoliteHttpClient {
       url,
       method,
       setupComplete: this.#env.setupComplete(),
-      requestsMade: this.#requestsMade,
+      requestsMade: this.#ledger.requestsMade,
       cap: this.#budget.maxRequests,
       robotsExemption: this.#source.robotsExemption,
-      credentialPresent: this.#source.credential !== undefined,
+      credentialPresent: this.#source.credential !== undefined && !this.#ledger.credentialRejected,
     });
-    if (decision.allowed && decision.robotsExempted === true && !this.#exemptionLogged) {
-      // WP-11: said once per run, so an administrator can see the exemption is in use.
-      this.#exemptionLogged = true;
+    if (decision.allowed && decision.robotsExempted === true && !this.#ledger.exemptionLogged) {
+      // R77: said once per run, so an administrator can see the exemption is in use.
+      this.#ledger.exemptionLogged = true;
       this.#env.logger.info(
         {
           source: this.#source.key,
@@ -237,7 +244,7 @@ export class PoliteHttpClient {
   ): Promise<PoliteResponse> {
     let lastError: ScrapeRequestError | undefined;
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
-      if (this.#requestsMade >= this.#budget.maxRequests) {
+      if (this.#ledger.requestsMade >= this.#budget.maxRequests) {
         throw (
           lastError ??
           new ScrapeRequestError({
@@ -247,15 +254,21 @@ export class PoliteHttpClient {
           })
         );
       }
-      this.#requestsMade += 1;
+      const signedIn = await grantSignedIn(
+        { env: this.#env, source: this.#source, ledger: this.#ledger, scope: this.#signedInScope },
+        url,
+        options,
+        options.signal ?? this.#signal,
+      );
+      this.#ledger.requestsMade += 1;
       try {
-        return await this.#once(url, method, options);
+        return await this.#once(url, method, options, signedIn);
       } catch (error) {
         if (!(error instanceof ScrapeRequestError)) {
           throw error;
         }
         lastError = error;
-        const wait = this.#retryDelay(error, attempt, delayMs);
+        const wait = retryDelay(error, attempt, delayMs, this.#budget.maxWaitMs, this.#env.random);
         if (wait === undefined) {
           throw error;
         }
@@ -269,47 +282,37 @@ export class PoliteHttpClient {
     throw lastError ?? new ScrapeRequestError({ kind: 'UNKNOWN', message: 'No attempt was made.' });
   }
 
-  /**
-   * How long to wait before trying again, or `undefined` for "do not".
-   *
-   * `Retry-After` wins where the server sent one, and a wait the run cannot
-   * afford ends the request as `RATE_LIMITED` rather than being silently
-   * shortened — asking again sooner than we were told to is the opposite of
-   * honouring it.
-   *
-   * Every other retry waits the larger of the exponential step and the host's
-   * effective delay. A retry is another request, so the crawl-delay applies to
-   * it exactly as it does to a first attempt; with §7.2's 3-second floor that
-   * makes the first step 3 s rather than 2 s.
-   */
-  #retryDelay(error: ScrapeRequestError, attempt: number, delayMs: number): number | undefined {
-    if (attempt >= MAX_RETRIES) {
-      return undefined;
-    }
-    if (error.kind === 'RATE_LIMITED') {
-      const asked = error.retryAfterMs;
-      if (asked === undefined) {
-        return undefined;
-      }
-      return asked <= this.#budget.maxWaitMs ? Math.max(asked, delayMs) : undefined;
-    }
-    if (!RETRYABLE_ERROR_KINDS.includes(error.kind)) {
-      return undefined;
-    }
-    return Math.max(applyJitter(RETRY_BASE_MS * 2 ** attempt, 0.25, this.#env.random), delayMs);
-  }
-
   /** One request, one response, no retrying. */
-  async #once(url: URL, method: ScrapeMethod, options: RequestOptions): Promise<PoliteResponse> {
+  async #once(
+    url: URL,
+    method: ScrapeMethod,
+    options: RequestOptions,
+    signedIn: boolean,
+  ): Promise<PoliteResponse> {
     const target = url.toString();
     const conditional = options.conditional === true ? this.#env.cache?.get(target) : undefined;
-    const { headers, sentCredentialHosts: sentSession } = requestHeaders({
+    const { headers, sentSession } = requestHeaders({
       host: url.hostname,
       userAgent: this.#env.userAgent(),
       accept: options.accept,
-      credential: this.#source.credential,
+      credential: this.#ledger.credentialRejected ? undefined : this.#source.credential,
+      session: signedIn ? this.#source.session : undefined,
       conditional,
     });
+    if (sentSession) {
+      this.#ledger.signedInMade += 1;
+      this.#ledger.lastSignedInAt = this.#env.clock.now().getTime();
+    }
+    // R75: every request is tagged, so the log answers "was the session used?".
+    this.#env.logger.debug(
+      {
+        source: this.#source.key,
+        method,
+        url: target,
+        access: sentSession ? 'signed-in' : 'anonymous',
+      },
+      'request',
+    );
 
     let response: TransportResponse;
     try {
@@ -343,9 +346,13 @@ export class PoliteHttpClient {
       });
     }
     if (response.status >= 400) {
-      throw this.#statusError(response, target, method);
+      if (sentSession && (response.status === 401 || response.status === 403)) {
+        this.#ledger.sessionRejected = true;
+      }
+      throw statusError(response, target, method, this.#env.clock.now());
     }
     if (sentSession && isLoginRedirect(target, response.url)) {
+      this.#ledger.sessionRejected = true;
       // R74: the site answered a signed-in read by sending us to its sign-in
       // page, which is a 200 and would otherwise be parsed as an empty listing.
       // It means the same thing a 401 does, so it is reported the same way and
@@ -380,21 +387,6 @@ export class PoliteHttpClient {
       body,
       notModified: false,
       contentHash,
-    });
-  }
-
-  #statusError(
-    response: TransportResponse,
-    target: string,
-    method: ScrapeMethod,
-  ): ScrapeRequestError {
-    const kind = classifyStatus(response.status);
-    const retryAfterMs = parseRetryAfter(header(response, 'retry-after'), this.#env.clock.now());
-    return new ScrapeRequestError({
-      kind,
-      status: response.status,
-      message: `${method} ${target} answered ${response.status}.`,
-      ...(retryAfterMs === undefined ? {} : { retryAfterMs }),
     });
   }
 }

@@ -40,6 +40,8 @@ export const GATE_REFUSALS = [
   'ROBOTS_DISALLOWED',
   /** `max_requests_per_run` is spent; the rest continues next run (§7.2). */
   'REQUEST_CAP_REACHED',
+  /** R75: the run's signed-in allowance is spent; the client says no, not the adapter. */
+  'SIGNED_IN_BUDGET_SPENT',
 ] as const;
 export type GateRefusal = (typeof GATE_REFUSALS)[number];
 

@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import type { ScrapeRunRow, SourceRow } from '../../db/schema/index.js';
 import { runScrape } from '../../scraping/run.js';
+import type { SourceAdapter } from '../../sources/types.js';
+import { listingItem, minimalCandidate, testAdapter } from '../../testing/scraping.js';
 import { createSessionHooks } from '../../scraping/sessions.js';
 import {
   devfolioHtml,
@@ -50,6 +53,55 @@ function signIn(at = harness.clock.now().getTime()): void {
   storeSession(harness.source, harness.vault, COOKIE, 'admin-1', at);
 }
 
+const DETAIL = 'https://recursiveacm.devfolio.co/';
+
+/**
+ * A Devfolio-keyed adapter whose detail step asks for the session (R75's
+ * targeted read). The listing is fetched plainly, as every listing walk is.
+ * `revision` moves the candidate, so a second run updates a stored event.
+ */
+function targetedAdapter(revision: number): SourceAdapter {
+  return testAdapter({
+    key: 'devfolio',
+    fetches: [LISTING],
+    items: [listingItem('recursiveacm', revision)],
+    normalize: (item) =>
+      minimalCandidate({
+        sourceKey: 'devfolio',
+        externalKey: item.externalKey,
+        url: DETAIL,
+        title: `Recursive ${revision}`,
+        titleRaw: `Recursive ${revision}`,
+      }),
+    detail: async (context, item) => {
+      await context.http.get(DETAIL, { access: 'signed-in' });
+      return { item, payload: item.payload };
+    },
+  });
+}
+
+/** Two runs: the first stores the event, the second reads its page signed in. */
+async function runTargeted(
+  transport: ReturnType<typeof fakeTransport>,
+  vault: SessionVault = harness.vault,
+): Promise<ScrapeRunRow> {
+  const deps = {
+    credentials: (source: SourceRow) => resolveSessionCredential(source, vault),
+    sessions: createSessionHooks(vault),
+  };
+  await runScrape(harness.deps(transportForOneHackathon(), undefined, deps), {
+    source: harness.source,
+    adapter: targetedAdapter(1),
+    trigger: 'SCHEDULE',
+  });
+  harness.clock.advance(3_600_000);
+  return runScrape(harness.deps(transport, undefined, deps), {
+    source: harness.source,
+    adapter: targetedAdapter(2),
+    trigger: 'SCHEDULE',
+  });
+}
+
 function transportForOneHackathon(): ReturnType<typeof fakeTransport> {
   return fakeTransport(
     devfolioRoutes(devfolioHtml('listing.html'), {
@@ -74,7 +126,7 @@ describe('where the cookie goes', () => {
     expect(config?.loginUrl).toBe('https://devfolio.co/login');
   });
 
-  it('is sent to the source’s own pages and to nothing else — not even robots.txt', async () => {
+  it('is never sent on a listing walk, nor for a new event’s page (R75)', async () => {
     signIn();
     const transport = transportForOneHackathon();
     await runScrape(
@@ -84,17 +136,21 @@ describe('where the cookie goes', () => {
       }),
       { source: harness.source, adapter: harness.adapter, trigger: 'MANUAL' },
     );
+    expect(transport.calls.map((call) => call.url)).toContain(LISTING);
+    expect(transport.calls.every((call) => call.headers.cookie === undefined)).toBe(true);
+  });
 
+  it('is sent on a stored event’s page when asked, and nowhere else — not even robots.txt', async () => {
+    signIn();
+    const transport = transportForOneHackathon();
+    await runTargeted(transport);
     const withCookie = transport.calls.filter((call) => call.headers.cookie !== undefined);
-    const without = transport.calls.filter((call) => call.headers.cookie === undefined);
-    expect(withCookie.map((call) => call.url)).toEqual([
-      LISTING,
-      'https://recursiveacm.devfolio.co/',
-    ]);
+    expect(withCookie.map((call) => call.url)).toEqual([DETAIL]);
+    expect(withCookie.every((call) => call.headers.cookie === COOKIE)).toBe(true);
     // Every robots.txt is fetched without it: robots is a request about the
     // site's rules, not about the professor's account.
-    expect(without.map((call) => call.url).every((url) => url.endsWith('/robots.txt'))).toBe(true);
-    expect(withCookie.every((call) => call.headers.cookie === COOKIE)).toBe(true);
+    const robots = transport.calls.filter((call) => call.url.endsWith('/robots.txt'));
+    expect(robots.every((call) => call.headers.cookie === undefined)).toBe(true);
   });
 
   it('is never sent to another host, even one the run happens to touch', async () => {
@@ -251,28 +307,21 @@ describe('a session is sealed at rest (R76)', () => {
   });
 });
 
-describe('an expired session is a source state, not a failure (R74)', () => {
-  /** A site that answers a signed-in read with 401. */
+describe('an expired session is a source state, not a failure (R74, R80)', () => {
+  /** A site that answers the signed-in read of a stored event with 401. */
   function refusing(): ReturnType<typeof fakeTransport> {
     return fakeTransport({
-      [robotsUrl('devfolio.co')]: { body: 'User-agent: *\nDisallow:\n' },
-      [LISTING]: { status: 401, body: 'no' },
+      ...devfolioRoutes(devfolioHtml('listing.html'), {}),
+      [robotsUrl('recursiveacm.devfolio.co')]: { body: 'User-agent: *\nDisallow:\n' },
+      [DETAIL]: { status: 401, body: 'no' },
     });
   }
 
   it('marks the session expired, records §7.7’s sentence, and does not back the site off', async () => {
     signIn();
     const before = harness.sources.state(harness.source.id, harness.clock.now().getTime());
-    const transport = refusing();
-    const row = await runScrape(
-      harness.deps(transport, undefined, {
-        credentials: (source) => resolveSessionCredential(source, harness.vault),
-        sessions: createSessionHooks(harness.vault),
-      }),
-      { source: harness.source, adapter: harness.adapter, trigger: 'SCHEDULE' },
-    );
+    await runTargeted(refusing());
 
-    expect(row.errorKind).toBe('BLOCKED');
     const status = sessionStatus(harness.source, harness.vault);
     expect(status.state).toBe('EXPIRED');
     expect(status.isSet).toBe(true);
@@ -286,13 +335,7 @@ describe('an expired session is a source state, not a failure (R74)', () => {
 
   it('stops sending it, so the next run reads the public pages', async () => {
     signIn();
-    await runScrape(
-      harness.deps(refusing(), undefined, {
-        credentials: (source) => resolveSessionCredential(source, harness.vault),
-        sessions: createSessionHooks(harness.vault),
-      }),
-      { source: harness.source, adapter: harness.adapter, trigger: 'SCHEDULE' },
-    );
+    await runTargeted(refusing());
     expect(resolveSessionCredential(harness.source, harness.vault)).toBeUndefined();
 
     const transport = transportForOneHackathon();
@@ -302,23 +345,28 @@ describe('an expired session is a source state, not a failure (R74)', () => {
         credentials: (source) => resolveSessionCredential(source, harness.vault),
         sessions: createSessionHooks(harness.vault),
       }),
-      { source: harness.source, adapter: harness.adapter, trigger: 'SCHEDULE' },
+      { source: harness.source, adapter: targetedAdapter(3), trigger: 'SCHEDULE' },
     );
     expect(transport.calls.every((call) => call.headers.cookie === undefined)).toBe(true);
-    expect(transport.calls.map((call) => call.url)).toContain(LISTING);
+    expect(transport.calls.map((call) => call.url)).toContain(DETAIL);
   });
 
-  it('a run that was not refused records when the session last worked', async () => {
+  it('a run that used it and was not refused records when the session last worked', async () => {
     signIn();
-    const transport = transportForOneHackathon();
+    await runTargeted(transportForOneHackathon());
+    expect(sessionStatus(harness.source, harness.vault).lastVerifiedAt).not.toBeNull();
+  });
+
+  it('a run that never used it does not claim it worked', async () => {
+    signIn();
     await runScrape(
-      harness.deps(transport, undefined, {
+      harness.deps(transportForOneHackathon(), undefined, {
         credentials: (source) => resolveSessionCredential(source, harness.vault),
         sessions: createSessionHooks(harness.vault),
       }),
       { source: harness.source, adapter: harness.adapter, trigger: 'SCHEDULE' },
     );
-    expect(sessionStatus(harness.source, harness.vault).lastVerifiedAt).not.toBeNull();
+    expect(sessionStatus(harness.source, harness.vault).lastVerifiedAt).toBeNull();
   });
 });
 

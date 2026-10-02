@@ -67,6 +67,7 @@ export interface SourcesModule {
     readonly http: ScrapingHttp;
     readonly snapshots: SnapshotStore;
     readonly linker: EventsModule['linker'];
+    readonly credentials: ReturnType<typeof sourceCredentials>;
   };
 }
 
@@ -145,6 +146,6 @@ export function createSourcesModule(deps: SourcesModuleDependencies): SourcesMod
     service,
     imports,
     connectPrompt: new ConnectPromptService({ settings, sources, audit }),
-    scrapeRuntime: { records, http, snapshots, linker: deps.events.linker },
+    scrapeRuntime: { records, http, snapshots, linker: deps.events.linker, credentials },
   };
 }

@@ -1,3 +1,4 @@
+import type { ScrapeTrigger } from '@compintel/contracts';
 import type { Logger } from 'pino';
 
 import type { SourceRow } from '../db/schema/index.js';
@@ -5,7 +6,7 @@ import type { SourceRecordsRepository } from '../modules/sources/records.js';
 import { APP_TIMEZONE, nowMs, type Clock } from '../platform/time.js';
 import type { AdapterContext, ListingItem, SourceAdapter } from '../sources/types.js';
 import { toRunFailure } from './errors.js';
-import type { ScrapingHttp } from './http/index.js';
+import type { ScrapingHttp, SourceCredential } from './http/index.js';
 import { processItem, type RecordLinker } from './items.js';
 import type { SnapshotStore } from './snapshots.js';
 import { sourceRequestContext } from './source-row.js';
@@ -35,6 +36,12 @@ export interface DetailRefreshDependencies {
   readonly logger: Logger;
   /** WP-10's linker, so a detail fetch updates the event too. */
   readonly linker?: RecordLinker;
+  /**
+   * The source's credential: its API key, or the professor's session (R74).
+   * Every record here is a stored event, which is the one place R75 lets a
+   * detail page be read signed in.
+   */
+  readonly credentials?: (source: SourceRow) => SourceCredential | undefined;
 }
 
 export interface DetailRefreshResult {
@@ -51,6 +58,7 @@ export async function refreshDetails(
   adapter: SourceAdapter,
   limit: number,
   signal: AbortSignal,
+  trigger: ScrapeTrigger = 'SCHEDULE',
 ): Promise<DetailRefreshResult> {
   if (adapter.detail === undefined) {
     return { attempted: 0, refreshed: 0, invalid: 0, failed: 0 };
@@ -60,7 +68,11 @@ export async function refreshDetails(
     return { attempted: 0, refreshed: 0, invalid: 0, failed: 0 };
   }
 
-  const client = deps.http.clientFor(sourceRequestContext(source), signal);
+  // R75: stored events only, so signed-in reading may be asked for — except in
+  // the burst after the machine wakes, when nothing is read signed in.
+  const client = deps.http
+    .clientFor(sourceRequestContext(source, deps.credentials?.(source)), signal)
+    .signedInView(trigger !== 'STARTUP_CATCHUP');
   const context: AdapterContext = {
     http: client,
     log: deps.logger.child({ source: source.key, job: 'detail-refresh' }),

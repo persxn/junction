@@ -35,6 +35,7 @@ describe('resolveCredential', () => {
     expect(resolveCredential(clist(), settings)).toBeUndefined();
     storeCredential(clist(), settings, { username: 'dept', apiKey: 'k3y' }, 'admin');
     expect(resolveCredential(clist(), settings)).toEqual({
+      kind: 'API_KEY',
       header: 'Authorization',
       value: 'ApiKey dept:k3y',
     });

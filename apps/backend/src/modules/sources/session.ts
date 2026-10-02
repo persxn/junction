@@ -7,7 +7,7 @@ import {
   type SettingDefinition,
   type SettingsStore,
 } from '../../platform/settings.js';
-import type { SourceCredential } from '../../scraping/http/index.js';
+import { DEFAULT_SIGNED_IN_BUDGET, type SourceCredential } from '../../scraping/http/index.js';
 import { isSealed, seal, unseal, type SessionKey } from './seal.js';
 import { conflict } from '../../platform/errors.js';
 
@@ -52,6 +52,18 @@ const SessionConfig = z
     loginUrl: z.url(),
     /** Host patterns the cookie may be sent to, and the window may navigate to. */
     hosts: z.array(z.string().min(1)).min(1),
+    /**
+     * R75's allowance for this source: how many signed-in requests one run may
+     * make, and how far apart. Absent means R75's own numbers (5, 10 s); a
+     * migration that widens them is the recorded decision R75 asks for.
+     */
+    signedIn: z
+      .object({
+        maxRequestsPerRun: z.int().min(0).max(50),
+        minIntervalMs: z.int().min(1_000),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 export type SessionConfig = z.infer<typeof SessionConfig>;
@@ -191,7 +203,19 @@ export function resolveSessionCredential(
   if (cookie === undefined) {
     return undefined;
   }
-  return { header: config.header, value: cookie, hosts: config.hosts };
+  return {
+    kind: 'SESSION',
+    header: config.header,
+    value: cookie,
+    hosts: config.hosts,
+    budget:
+      config.signedIn === undefined
+        ? DEFAULT_SIGNED_IN_BUDGET
+        : {
+            maxRequests: config.signedIn.maxRequestsPerRun,
+            minIntervalMs: config.signedIn.minIntervalMs,
+          },
+  };
 }
 
 /** Whether a session is set at all, expired or not — what the UI shows. */

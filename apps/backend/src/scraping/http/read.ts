@@ -87,14 +87,27 @@ export interface RequestHeaderInput {
   readonly host: string;
   readonly userAgent: string;
   readonly accept?: string | undefined;
+  /** The source's documented API key (WP-11); sent on every request to it. */
   readonly credential?: SourceCredential | undefined;
+  /** The professor's session, only when R75 granted this request `signed-in`. */
+  readonly session?: SourceCredential | undefined;
   readonly conditional?: { etag?: string | null; lastModified?: string | null } | undefined;
 }
 
 export interface RequestHeaders {
   readonly headers: Record<string, string>;
-  /** True when a host-restricted credential — a session (R74) — was attached. */
-  readonly sentCredentialHosts: boolean;
+  /** True when the professor's session (R74) was attached. */
+  readonly sentSession: boolean;
+  /** True when the source's API key was attached (R80 needs to know). */
+  readonly sentCredential: boolean;
+}
+
+/** Whether a credential may go to this host: its own hosts, or any when it names none. */
+function mayCarry(credential: SourceCredential | undefined, host: string): boolean {
+  if (credential === undefined) {
+    return false;
+  }
+  return credential.hosts === undefined || hostAllowed(host, credential.hosts);
 }
 
 /**
@@ -105,7 +118,8 @@ export interface RequestHeaders {
  * which the robots cache fetches with no source context — and is never logged.
  * A credential that names its hosts (the professor's session, R74) is sent to
  * those and to nothing else, even where the path allowlist would have permitted
- * the request without one.
+ * the request without one. The session is additionally only ever passed in for
+ * a request R75 granted `signed-in`; an anonymous request never sees it.
  */
 export function requestHeaders(input: RequestHeaderInput): RequestHeaders {
   const headers: Record<string, string> = {
@@ -113,11 +127,13 @@ export function requestHeaders(input: RequestHeaderInput): RequestHeaders {
     accept: input.accept ?? 'application/json, text/html;q=0.9, */*;q=0.5',
     'accept-encoding': 'gzip, deflate',
   };
-  const credential = input.credential;
-  const hostRestricted =
-    credential?.hosts !== undefined && hostAllowed(input.host, credential.hosts);
-  if (credential !== undefined && (credential.hosts === undefined || hostRestricted)) {
-    headers[credential.header.toLowerCase()] = credential.value;
+  const sentCredential = mayCarry(input.credential, input.host);
+  if (sentCredential && input.credential !== undefined) {
+    headers[input.credential.header.toLowerCase()] = input.credential.value;
+  }
+  const sentSession = input.session?.hosts !== undefined && mayCarry(input.session, input.host);
+  if (sentSession && input.session !== undefined) {
+    headers[input.session.header.toLowerCase()] = input.session.value;
   }
   if (input.conditional?.etag != null) {
     headers['if-none-match'] = input.conditional.etag;
@@ -125,5 +141,5 @@ export function requestHeaders(input: RequestHeaderInput): RequestHeaders {
   if (input.conditional?.lastModified != null) {
     headers['if-modified-since'] = input.conditional.lastModified;
   }
-  return { headers, sentCredentialHosts: hostRestricted };
+  return { headers, sentSession, sentCredential };
 }

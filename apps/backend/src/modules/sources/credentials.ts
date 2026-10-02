@@ -73,6 +73,7 @@ export function resolveCredential(
     return undefined;
   }
   return {
+    kind: 'API_KEY',
     header: auth.header,
     value: auth.valueTemplate.replace('{username}', user).replace('{key}', secret),
   };

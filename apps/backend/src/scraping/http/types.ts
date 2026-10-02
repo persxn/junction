@@ -133,6 +133,13 @@ export interface PoliteResponse {
  * never on robots.txt — and never logged.
  */
 export interface SourceCredential {
+  /**
+   * R75: which of the two credentials this is. A documented API key (WP-11) is
+   * the source's own way in and goes on every request to it; the professor's
+   * session (R74) is a person's account and goes only on a request tagged
+   * `signed-in`. Absent means an API key, which is what WP-11 wrote.
+   */
+  readonly kind?: 'API_KEY' | 'SESSION';
   readonly header: string;
   readonly value: string;
   /**
@@ -147,7 +154,31 @@ export interface SourceCredential {
    * is allowed to fetch.
    */
   readonly hosts?: readonly string[];
+  /** R75: a session's per-run allowance, from `config_json.session.signedIn`. */
+  readonly budget?: SignedInBudget;
 }
+
+/** R75's defaults: at most five signed-in requests a run, ten seconds apart. */
+export const SIGNED_IN_MAX_PER_RUN = 5;
+export const SIGNED_IN_MIN_INTERVAL_MS = 10_000;
+
+/** How much signed-in reading one run may do (R75). */
+export interface SignedInBudget {
+  readonly maxRequests: number;
+  readonly minIntervalMs: number;
+}
+
+export const DEFAULT_SIGNED_IN_BUDGET: SignedInBudget = {
+  maxRequests: SIGNED_IN_MAX_PER_RUN,
+  minIntervalMs: SIGNED_IN_MIN_INTERVAL_MS,
+};
+
+/**
+ * R75: every request is one or the other. `anonymous` is the default and is
+ * what a listing walk always is; `signed-in` asks for the professor's session
+ * and is granted only inside a scope that allows it, within the run's budget.
+ */
+export type RequestAccess = 'anonymous' | 'signed-in';
 
 /** Everything the gate needs to know about the source making the request. */
 export interface SourceRequestContext {
@@ -158,8 +189,10 @@ export interface SourceRequestContext {
   readonly allowedPaths: readonly string[];
   readonly minDelayMs: number;
   readonly maxRequestsPerRun: number;
-  /** Present when the source has one and it is set (WP-11). */
+  /** The source's documented API key, when it has one and it is set (WP-11). */
   readonly credential?: SourceCredential | undefined;
+  /** The professor's own session (R74), sent only on a `signed-in` request (R75). */
+  readonly session?: SourceCredential | undefined;
   /** A reviewed, seed-only robots exemption (WP-11, proposed ruling). */
   readonly robotsExemption?: RobotsExemption | undefined;
 }
@@ -169,6 +202,12 @@ export interface RequestOptions {
   readonly conditional?: boolean;
   readonly method?: ScrapeMethod;
   readonly accept?: string;
+  /**
+   * R75: `signed-in` asks for the professor's session. Without one — none
+   * stored, expired, refused earlier in this run — the request is made
+   * anonymously, which is the public reading R74 falls back to.
+   */
+  readonly access?: RequestAccess;
   /** Aborted when the backend shuts down; every wait honours it. */
   readonly signal?: AbortSignal;
 }

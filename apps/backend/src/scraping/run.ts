@@ -185,7 +185,13 @@ export async function runScrape(
         continue;
       }
       detailsLeft -= 1;
-      const detail = await adapter.detail(itemOptions.context, item);
+      // R75: a stored event's detail page may be read signed in, if the adapter
+      // asks; a new one's may not, and nothing may in a catch-up burst.
+      const targeted = listed.outcome !== 'NEW' && trigger !== 'STARTUP_CATCHUP';
+      const detail = await adapter.detail(
+        { ...itemOptions.context, http: client.signedInView(targeted) },
+        item,
+      );
       degraded ||= detail.degraded === true;
       // A detail that does not validate is counted invalid, but the listing row
       // it would have replaced stays: half an event is better than none, and the
@@ -221,6 +227,8 @@ export async function runScrape(
     degraded,
     failure,
     requestsMade: client.requestsMade,
+    signedInRequests: client.signedInRequestsMade,
+    sessionRejected: client.sessionRejected,
     robotsFetches: deps.http.robotsFetches,
   });
 }
