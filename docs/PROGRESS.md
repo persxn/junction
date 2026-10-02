@@ -15,11 +15,12 @@
   (`picked.rs`). Admin → Campus & settings is a real page (Students card). `seed:demo --students`. Migration 0023.
   New dep papaparse@5.7.0. e2e 3/3, a11y 28/28, Rust 86. **Unmet:** verify **150 s vs 120** (pre-M2a Q1).
   WP-18 must feed `teamMentorUserIds` to `canDeactivateStudent`.
-- **Next: `prompts/M2/WP-18.md`**; then WP-19 · 20a · 20b · 21 (M2), WP-22 · 23 · 24 (M3). Every M2/M3 WP
+- **WP-18 STEP 0, 2 Oct 2026:** spec v1.1.16, rulings R94 (skill targets, coverage states) and R95 (team lifecycle).
+- **Next: WP-19** (after WP-18's build); then WP-20a · 20b · 21 (M2), WP-22 · 23 · 24 (M3). Every M2/M3 WP
   ends with a **UI fault sweep** and carries an in-app guide on each new screen. Send `docs/` back when M3 closes.
 - **Owed live runs:** CTFtime / Devfolio smokes and `unstop:capture` wait on `scraper.contactEmail` (the
   owner's own address, R74); `clist:smoke` waits on U4.
-- Spec: docs/ARCHITECTURE.md **v1.1.15 - ACCEPTED** · roadmap §19 = **50 WPs, 29 done, 21 remaining** ·
+- Spec: docs/ARCHITECTURE.md **v1.1.16 - ACCEPTED** · roadmap §19 = **50 WPs, 30 done, 20 remaining** ·
   ADR-0001...0019 · decisions register docs/DECISIONS.md.
 
 ## Environment facts
