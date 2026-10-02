@@ -2,10 +2,12 @@ import type { Logger } from 'pino';
 
 import { nowMs, systemClock, type Clock } from '../../platform/time.js';
 import { classify, prepareRules, type PreparedRule } from './domain/classify.js';
+import { deriveTags } from './domain/tags.js';
 import type { CategoriesRepository, ClassificationInput } from './repo.js';
+import { replaceSourceTags } from './tags-repo.js';
 
 /**
- * Applying the rules (WP-15b step 4).
+ * Applying the rules (WP-15b step 4), and deriving source tags (R87).
  *
  * - **On ingest:** the resolver calls {@link classifyEvent} after every
  *   resolution — scrape, auto-merge, manual entry, URL import, merge and
@@ -67,7 +69,10 @@ export class CategoryClassifier {
 
   #apply(input: ClassificationInput, at: number): boolean {
     const computed = classify(input, input.sourceTags, this.rules());
-    return this.#deps.repo.replaceAutomatic(input.id, computed, at);
+    const categories = this.#deps.repo.replaceAutomatic(input.id, computed, at);
+    // R87: the same pass gives the event its source tags.
+    const tags = replaceSourceTags(this.#deps.repo.raw, input.id, deriveTags(input.sourceTags), at);
+    return categories || tags;
   }
 
   requestReclassification(reason: string, userId: string | null): string {

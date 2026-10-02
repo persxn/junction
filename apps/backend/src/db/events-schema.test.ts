@@ -144,6 +144,8 @@ describe('the events table matches §6.2 column for column', () => {
     // Content
     'summary',
     'description_md',
+    // R87 (pre-M2b, migration 0019): tag names for the FTS `tags` column.
+    'tags_text',
     'prize_text',
     'prize_total_minor',
     'prize_currency',

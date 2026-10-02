@@ -205,9 +205,24 @@ describe('from the previous release (0012) with events already stored', () => {
     expect(matches(db, 'event_fts_trigram', '"bomba"')).toBe(1);
     insertEvent(db, 'Fresh Ideathon');
     expect(matches(db, 'event_fts', '"ideathon"')).toBe(1);
+    // R87 (0019): events that predate tags get theirs from one queued run of
+    // the resumable re-classification job.
+    expect(pendingRuns(db)).toEqual(['R87: event tags from source tags (pre-M2b backfill)']);
     integrityOk(db);
   });
+
+  it('an empty database queues no tag backfill (R87)', () => {
+    expect(pendingRuns(open().db)).toEqual([]);
+  });
 });
+
+function pendingRuns(db: DatabaseHandle): string[] {
+  return (
+    db.raw
+      .prepare('SELECT reason FROM category_reclassify_runs WHERE finished_at IS NULL')
+      .all() as { reason: string }[]
+  ).map((row) => row.reason);
+}
 
 describe('the migration journal', () => {
   it('is strictly increasing in `when`, or the migrator silently skips a migration', () => {

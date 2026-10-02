@@ -222,14 +222,21 @@ export class SearchRepository {
       .all() as { id: string; name: string; slug: string }[];
   }
 
-  /** The user's interest tags (§6.2 `user_interest_tags`). */
+  /**
+   * The user's interest tags (§6.2 `user_interest_tags`), each widened to every
+   * tag row with the same normalized name. R87's event tags are TECHNOLOGY or
+   * THEME rows; an interest is usually an INTEREST row; "AI" is the same word in
+   * both, and the boost compares ids. The name is the professor's own spelling.
+   */
   interestTags(
     userId: string,
   ): { id: string; name: string; normalized: string; aliasesJson: string }[] {
     return this.#db.raw
       .prepare(
-        `SELECT t.id, t.name, t.normalized, t.aliases_json AS aliasesJson FROM user_interest_tags u
-         JOIN tags t ON t.id = u.tag_id WHERE u.user_id = ? ORDER BY t.id`,
+        `SELECT DISTINCT t.id, i.name, t.normalized, i.aliases_json AS aliasesJson
+         FROM user_interest_tags u JOIN tags i ON i.id = u.tag_id
+         JOIN tags t ON t.normalized = i.normalized
+         WHERE u.user_id = ? ORDER BY t.id`,
       )
       .all(userId) as { id: string; name: string; normalized: string; aliasesJson: string }[];
   }

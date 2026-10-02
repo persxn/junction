@@ -134,6 +134,13 @@
       "when": 1790900022499,
       "tag": "0018_clist_exemption_reviewer",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1790901237201,
+      "tag": "0019_event_tags_text",
+      "breakpoints": true
     }
   ]
 }

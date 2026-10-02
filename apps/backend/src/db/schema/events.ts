@@ -101,6 +101,13 @@ export const events = sqliteTable(
     summary: text('summary'),
     /** Sanitized Markdown. Raw HTML is never stored (§7.3). */
     descriptionMd: text('description_md'),
+    /**
+     * R87: the event's tag names, one per line — what the FTS `tags` column
+     * indexes. Written together with `event_tags` and never by hand; the
+     * external-content index needs the exact old text to delete a posting,
+     * which a subquery over `event_tags` could not give it.
+     */
+    tagsText: text('tags_text').notNull().default(''),
     prizeText: text('prize_text'),
     prizeTotalMinor: integer('prize_total_minor'),
     prizeCurrency: text('prize_currency'),
