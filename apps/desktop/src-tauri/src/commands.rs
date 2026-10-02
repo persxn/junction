@@ -14,6 +14,7 @@ use crate::actions;
 use crate::external;
 use crate::files::{self, WriteRefusal};
 use crate::loopback::{self, LoopbackResponse, OutgoingRequest, ProxyRequest};
+use crate::picked::{self, ReadRefusal};
 use crate::settings::{SettingsStore, ShellSettings};
 use crate::signin::{self, SignInRequest, SignInResult};
 use crate::supervisor::{BackendConnection, BackendStatus, Supervisor};
@@ -31,6 +32,9 @@ pub struct ShellState {
     /// Folders the user picked in a native dialog during this run (ruling R43).
     /// The only places `save_text_file` will write. Empty until a dialog is used.
     pub picked_folders: Mutex<Vec<PathBuf>>,
+    /// The last file picked in a native dialog this run (WP-17): the only file
+    /// `read_picked_file` will read.
+    pub picked_file: Mutex<Option<PathBuf>>,
 }
 
 impl ShellState {
@@ -223,6 +227,68 @@ pub fn save_text_file(
     std::fs::write(&target, contents)
         .map_err(|cause| format!("could not write the file: {cause}"))?;
     Ok(target.to_string_lossy().into_owned())
+}
+
+/// What `pick_file` hands the page: the path to read back, and a name to show.
+#[derive(serde::Serialize)]
+pub struct PickedFileInfo {
+    pub path: String,
+    pub name: String,
+}
+
+/// Opens the native file picker for a student list (WP-17) and remembers the
+/// answer. Only `.csv` and `.xlsx` are offered; `None` means the user cancelled.
+#[tauri::command]
+pub async fn pick_file(app: AppHandle, title: String) -> Result<Option<PickedFileInfo>, String> {
+    let (sender, receiver) = std::sync::mpsc::channel();
+    app.dialog()
+        .file()
+        .set_title(&title)
+        .add_filter("Student list (CSV or Excel)", &picked::IMPORT_EXTENSIONS)
+        .pick_file(move |chosen| {
+            let _ = sender.send(chosen);
+        });
+    let chosen = receiver
+        .recv()
+        .map_err(|cause| format!("the file dialog closed unexpectedly: {cause}"))?;
+    let Some(chosen) = chosen else {
+        return Ok(None);
+    };
+    let path = chosen
+        .into_path()
+        .map_err(|cause| format!("that file has no usable path: {cause}"))?;
+    let state = app
+        .try_state::<ShellState>()
+        .ok_or_else(|| "the shell is not ready".to_owned())?;
+    *state
+        .picked_file
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(path.clone());
+    Ok(Some(PickedFileInfo {
+        name: picked::display_name(&path),
+        path: path.to_string_lossy().into_owned(),
+    }))
+}
+
+/// Reads the file `pick_file` returned, as base64, and nothing else (WP-17).
+#[tauri::command]
+pub fn read_picked_file(state: State<'_, ShellState>, path: String) -> Result<String, String> {
+    let chosen = state
+        .picked_file
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .clone();
+    let target = std::path::Path::new(&path);
+    let size = std::fs::metadata(target)
+        .map_err(|cause| format!("could not read the file: {cause}"))?
+        .len();
+    picked::authorise_read(target, chosen.as_deref(), size).map_err(ReadRefusal::message)?;
+    let bytes =
+        std::fs::read(target).map_err(|cause| format!("could not read the file: {cause}"))?;
+    if bytes.len() as u64 > picked::MAX_IMPORT_BYTES {
+        return Err(ReadRefusal::TooLarge.message().to_owned());
+    }
+    Ok(picked::base64_encode(&bytes))
 }
 
 /// Opens the packaged sign-in window for one source (R74/D-34, WP-14).

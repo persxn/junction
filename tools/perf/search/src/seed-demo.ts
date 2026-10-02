@@ -13,7 +13,7 @@ import {
   openDatabase,
   runMigrations,
 } from '@compintel/backend';
-import { seedScenario } from '@compintel/backend/testing';
+import { seedDemoStudentsInto, seedScenario } from '@compintel/backend/testing';
 import { pino } from 'pino';
 
 import { CORPUS_EPOCH, generateCorpus, type CorpusEvent } from './corpus.js';
@@ -24,6 +24,7 @@ import { seed } from './seed.js';
  * and for looking at Discover by hand.
  *
  *   pnpm seed:demo [--data-dir <dir>] [--events 300]
+ *   pnpm seed:demo --students --data-dir <dir>     (WP-17, after setup)
  *
  * It reuses WP-15a's corpus generator (the first N events of the same seeded
  * sequence), shifted so "today" in the corpus is today on the clock, and
@@ -61,7 +62,11 @@ async function main(): Promise<number> {
   const { values } = parseArgs({
     // pnpm forwards a literal `--` between script and arguments.
     args: process.argv.slice(2).filter((arg) => arg !== '--'),
-    options: { 'data-dir': { type: 'string' }, events: { type: 'string' } },
+    options: {
+      'data-dir': { type: 'string' },
+      events: { type: 'string' },
+      students: { type: 'boolean' },
+    },
   });
   const root = devRoot();
   const dataDir = path.resolve(values['data-dir'] ?? path.join(root, 'e2e', 'demo'));
@@ -69,6 +74,7 @@ async function main(): Promise<number> {
     console.error(`seed:demo writes only under ${root}; refusing ${dataDir}.`);
     return 2;
   }
+  if (values.students === true) return seedStudents(dataDir);
   if (existsSync(path.join(dataDir, 'data', 'app.db'))) {
     console.error(`${dataDir} already holds a database; pass a fresh --data-dir.`);
     return 2;
@@ -125,6 +131,34 @@ async function main(): Promise<number> {
       }),
     );
     return 0;
+  } finally {
+    db.close();
+  }
+}
+
+/**
+ * `--students`: the 60 synthetic students (D-33) on a database that has been
+ * through setup — the organization they belong to exists only after it.
+ */
+function seedStudents(dataDir: string): number {
+  if (!existsSync(path.join(dataDir, 'data', 'app.db'))) {
+    console.error(`${dataDir} holds no database; seed events and finish setup first.`);
+    return 2;
+  }
+  const config = loadConfig({
+    argv: ['--data-dir', dataDir],
+    env: { COMPINTEL_CLIENT_SECRET: '0'.repeat(32) },
+  });
+  const db = openDatabase(config, { logger: silent });
+  try {
+    const seeded = seedDemoStudentsInto(db);
+    console.log(JSON.stringify({ dataDir, ...seeded }));
+    return 0;
+  } catch (cause) {
+    console.error(
+      `seed:demo --students: ${cause instanceof Error ? cause.message : String(cause)}`,
+    );
+    return 2;
   } finally {
     db.close();
   }

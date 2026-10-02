@@ -115,10 +115,47 @@ const teamsRoute = createRoute({
   component: () => <PlaceholderPage item={navItem('teams')} />,
 });
 
+// WP-17: siblings, not children — each is a full page, not a drawer over the list.
 const studentsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/students',
-  component: () => <PlaceholderPage item={navItem('students')} />,
+  component: lazyRouteComponent(
+    () => import('../features/students/StudentsPage.js'),
+    'StudentsPage',
+  ),
+});
+
+const newStudentRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/students/new',
+  component: lazyRouteComponent(
+    () => import('../features/students/StudentFormPage.js'),
+    'NewStudentPage',
+  ),
+});
+
+const importStudentsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/students/import',
+  component: lazyRouteComponent(
+    () => import('../features/students/import/ImportPage.js'),
+    'ImportPage',
+  ),
+});
+
+const studentRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/students/$studentId',
+  component: lazyRouteComponent(() => import('../features/students/StudentPage.js'), 'StudentPage'),
+});
+
+const editStudentRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/students/$studentId/edit',
+  component: lazyRouteComponent(
+    () => import('../features/students/StudentFormPage.js'),
+    'EditStudentPage',
+  ),
 });
 
 const assistantRoute = createRoute({
@@ -180,7 +217,10 @@ const adminSettingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/admin/settings',
   beforeLoad: adminGuard('settings.manage'),
-  component: () => <PlaceholderPage item={navItem('admin-campus')} />,
+  component: lazyRouteComponent(
+    () => import('../features/admin/settings/SettingsPage.js'),
+    'SettingsPage',
+  ),
 });
 
 const adminBackupsRoute = createRoute({
@@ -211,6 +251,10 @@ const routeTree = rootRoute.addChildren([
   competitionsRoute,
   teamsRoute,
   studentsRoute,
+  newStudentRoute,
+  importStudentsRoute,
+  studentRoute,
+  editStudentRoute,
   assistantRoute,
   notificationsRoute,
   adminUsersRoute,

@@ -1455,10 +1455,10 @@ milestone. Letter suffixes (03a/03b…) are splits recommended by the WP-01 revi
 ### M2 — People & work · *assign an event to a team and track it*
 | WP | Scope | Acceptance criteria | Prompt (`docs/prompts/`) |
 |---|---|---|---|
-| pre-M2a | UI & shell fault fixes: writes through the F9 fallback (R78), `open_external`, one-button sign-in, sealed sessions (R76), "Connect your sources", live freshness (R86), landmark/`.invalid`/`mailto:`/bundle fixes, verify < 2 min (R89) | Save, Hide and an override work in the built exe with the LNA flags; verify < 120 s; Rust checks reported | **NEXT** · `M2/pre-M2a.md` |
-| pre-M2b | Ingestion & search corrections: R75, R77, R79–R82, R85, R87, R88, `recurringOnly`, small corrections, owed live runs | Every correction has a named test; perf scenario within budget; owed runs run or listed | released · `M2/pre-M2b.md` |
-| WP-17 | Students: CRUD, tags, mentorships, deactivate, CSV/XLSX import with validation preview | Import 500 rows with per-row errors | released · `M2/WP-17.md` |
-| WP-18 | Teams: members (roles, lead), mentors (primary/co), skill coverage | Student in 3 teams works | released · `M2/WP-18.md` |
+| pre-M2a | UI & shell fault fixes: writes through the F9 fallback (R78), `open_external`, one-button sign-in, sealed sessions (R76), "Connect your sources", live freshness (R86), landmark/`.invalid`/`mailto:`/bundle fixes, verify < 2 min (R89) | Save, Hide and an override work in the built exe with the LNA flags; verify < 120 s; Rust checks reported | done · `M2/pre-M2a.md` |
+| pre-M2b | Ingestion & search corrections: R75, R77, R79–R82, R85, R87, R88, `recurringOnly`, small corrections, owed live runs | Every correction has a named test; perf scenario within budget; owed runs run or listed | done (PARTIAL) · `M2/pre-M2b.md` |
+| WP-17 | Students: CRUD, tags, mentorships, deactivate, CSV/XLSX import with validation preview | Import 500 rows with per-row errors | done · `M2/WP-17.md` |
+| WP-18 | Teams: members (roles, lead), mentors (primary/co), skill coverage | Student in 3 teams works | **NEXT** · `M2/WP-18.md` |
 | WP-19 | Competitions: statuses + history, roster, assign flow, pipeline board | Invalid transitions rejected; one active participation per student per event | released · `M2/WP-19.md` |
 | WP-20a | Workflows: seeded templates, copy-on-assign, stages CRUD/reorder, tasks, progress & schedule health | Progress precedence tests (§11) | released · `M2/WP-20a.md` |
 | WP-20b | Resources + open allowlist (shell-side path checks) | Executables can't be opened | released · `M2/WP-20b.md` |

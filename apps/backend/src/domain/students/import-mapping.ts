@@ -1,5 +1,6 @@
 import {
   STUDENT_IMPORT_FIELD_LABELS,
+  STUDENT_IMPORT_HEADER_ALIASES,
   STUDENT_IMPORT_REQUIRED_FIELDS,
   type StudentImportColumn,
   type StudentImportField,
@@ -26,44 +27,8 @@ export function normalizeHeader(header: string): string {
     .trim();
 }
 
-/** The aliases, already in `normalizeHeader` form. */
-export const HEADER_ALIASES: Readonly<Record<StudentImportField, readonly string[]>> = {
-  universityId: [
-    'roll no',
-    'roll number',
-    'rollno',
-    'roll',
-    'enrolment',
-    'enrolment no',
-    'enrolment number',
-    'enrollment',
-    'enrollment no',
-    'enrollment number',
-    'reg no',
-    'registration no',
-    'registration number',
-    'university id',
-    'student id',
-  ],
-  fullName: ['name', 'full name', 'student name'],
-  preferredName: ['preferred name', 'nickname'],
-  institutionalEmail: [
-    'email',
-    'e mail',
-    'email id',
-    'college email',
-    'college e mail',
-    'institutional email',
-  ],
-  phone: ['phone', 'phone no', 'phone number', 'mobile', 'mobile no', 'mobile number'],
-  program: ['programme', 'program', 'degree', 'course'],
-  branch: ['branch', 'specialisation', 'specialization', 'stream'],
-  homeDepartment: ['dept', 'department', 'home department'],
-  graduationYear: ['batch', 'passing year', 'year of passing', 'graduation year', 'grad year'],
-  skills: ['skills', 'skill'],
-  interests: ['interests', 'interest'],
-  notes: ['notes', 'note', 'remarks'],
-};
+/** The accepted headings live in the contracts, so the in-app guide lists exactly these. */
+export const HEADER_ALIASES = STUDENT_IMPORT_HEADER_ALIASES;
 
 /** The field a header names, or `undefined` when it names none. */
 export function fieldForHeader(header: string): StudentImportField | undefined {

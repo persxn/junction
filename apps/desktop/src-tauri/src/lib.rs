@@ -12,6 +12,7 @@ pub mod files;
 pub mod job;
 pub mod loopback;
 pub mod paths;
+pub mod picked;
 pub mod ready;
 pub mod secret;
 pub mod session_key;
@@ -82,6 +83,8 @@ pub fn run() {
             commands::open_external,
             commands::pick_folder,
             commands::save_text_file,
+            commands::pick_file,
+            commands::read_picked_file,
             commands::open_source_signin,
             commands::capture_source_session,
             commands::close_source_signin,
@@ -129,6 +132,7 @@ pub fn run() {
                 settings: Arc::clone(&store),
                 tray: Mutex::new(None),
                 picked_folders: Mutex::new(Vec::new()),
+                picked_file: Mutex::new(None),
             });
 
             // The registry and the saved preference can disagree - the user may

@@ -8,15 +8,18 @@
   `top_trust_rank` · `recurringOnly` · `$` anchor, CTFtime `detailPolicy: never`, `scrape_runs.kind`,
   `domain/jobs/schedule.ts`, URL-import diff. Migrations 0016-0022. **Unmet:** R88's first page **94 ms vs
   50** (handoff Q1), verify **~137 s vs 120** (pre-M2a Q1), live runs **still owed** (no contactEmail).
-- **WP-17 BLOCKED, 2 Oct 2026** (`docs/handoff/WP-17.md`): STEP 0 done (spec v1.1.15, R91-R93); the
-  dependency gate stopped the build — `exceljs@4.4.0 > uuid <11.1.1` is a moderate advisory and no exceljs
-  release fixes it. Install reverted, audit clean. **Needs the architect's answer to WP-17 Q1** (in-house XLSX
-  reader recommended).
-- **Next: `prompts/M2/WP-17.md`** once Q1 is answered; then WP-18 · WP-19 · 19 · 20a · 20b · 21
-  (M2), WP-22 · 23 · 24 (M3). Every M2/M3 WP ends with a **UI fault sweep**. Send `docs/` back when M3 closes.
+- **WP-17 done, 2 Oct 2026** (`docs/handoff/WP-17.md`): students, tags with levels in words, mentorships (R91),
+  erasure with no PII in audit (R92), CSV/XLSX preview-then-commit import (R93) — 500-row AC exact 400/50/10/40.
+  **Owner decision:** in-house XLSX reader (exceljs failed the audit); **in-app guides** on every new screen
+  (`components/Guide.tsx`; accepted columns from the contracts' alias list). Shell `pick_file`/`read_picked_file`
+  (`picked.rs`). Admin → Campus & settings is a real page (Students card). `seed:demo --students`. Migration 0023.
+  New dep papaparse@5.7.0. e2e 3/3, a11y 28/28, Rust 86. **Unmet:** verify **150 s vs 120** (pre-M2a Q1).
+  WP-18 must feed `teamMentorUserIds` to `canDeactivateStudent`.
+- **Next: `prompts/M2/WP-18.md`**; then WP-19 · 20a · 20b · 21 (M2), WP-22 · 23 · 24 (M3). Every M2/M3 WP
+  ends with a **UI fault sweep** and carries an in-app guide on each new screen. Send `docs/` back when M3 closes.
 - **Owed live runs:** CTFtime / Devfolio smokes and `unstop:capture` wait on `scraper.contactEmail` (the
   owner's own address, R74); `clist:smoke` waits on U4.
-- Spec: docs/ARCHITECTURE.md **v1.1.15 - ACCEPTED** · roadmap §19 = **50 WPs, 28 done, 22 remaining** (WP-17 blocked) ·
+- Spec: docs/ARCHITECTURE.md **v1.1.15 - ACCEPTED** · roadmap §19 = **50 WPs, 29 done, 21 remaining** ·
   ADR-0001...0019 · decisions register docs/DECISIONS.md.
 
 ## Environment facts

@@ -50,6 +50,47 @@ export const STUDENT_IMPORT_FIELD_LABELS: Readonly<Record<StudentImportField, st
   notes: 'Notes',
 };
 
+/** The aliases, already in `normalizeHeader` form. */
+export const STUDENT_IMPORT_HEADER_ALIASES: Readonly<
+  Record<StudentImportField, readonly string[]>
+> = {
+  universityId: [
+    'roll no',
+    'roll number',
+    'rollno',
+    'roll',
+    'enrolment',
+    'enrolment no',
+    'enrolment number',
+    'enrollment',
+    'enrollment no',
+    'enrollment number',
+    'reg no',
+    'registration no',
+    'registration number',
+    'university id',
+    'student id',
+  ],
+  fullName: ['name', 'full name', 'student name'],
+  preferredName: ['preferred name', 'nickname'],
+  institutionalEmail: [
+    'email',
+    'e mail',
+    'email id',
+    'college email',
+    'college e mail',
+    'institutional email',
+  ],
+  phone: ['phone', 'phone no', 'phone number', 'mobile', 'mobile no', 'mobile number'],
+  program: ['programme', 'program', 'degree', 'course'],
+  branch: ['branch', 'specialisation', 'specialization', 'stream'],
+  homeDepartment: ['dept', 'department', 'home department'],
+  graduationYear: ['batch', 'passing year', 'year of passing', 'graduation year', 'grad year'],
+  skills: ['skills', 'skill'],
+  interests: ['interests', 'interest'],
+  notes: ['notes', 'note', 'remarks'],
+};
+
 /** Rows that need these mapped cannot be imported at all. */
 export const STUDENT_IMPORT_REQUIRED_FIELDS: readonly StudentImportField[] = [
   'universityId',
