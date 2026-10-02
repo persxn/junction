@@ -8,11 +8,11 @@
   `top_trust_rank` · `recurringOnly` · `$` anchor, CTFtime `detailPolicy: never`, `scrape_runs.kind`,
   `domain/jobs/schedule.ts`, URL-import diff. Migrations 0016-0022. **Unmet:** R88's first page **94 ms vs
   50** (handoff Q1), verify **~137 s vs 120** (pre-M2a Q1), live runs **still owed** (no contactEmail).
-- **Next: `prompts/M2/WP-17.md`** after the architect answers pre-M2b Q1-Q2; then WP-18 · 19 · 20a · 20b · 21
+- **Next: `prompts/M2/WP-18.md`** (WP-17 in progress); then WP-19 · 19 · 20a · 20b · 21
   (M2), WP-22 · 23 · 24 (M3). Every M2/M3 WP ends with a **UI fault sweep**. Send `docs/` back when M3 closes.
 - **Owed live runs:** CTFtime / Devfolio smokes and `unstop:capture` wait on `scraper.contactEmail` (the
   owner's own address, R74); `clist:smoke` waits on U4.
-- Spec: docs/ARCHITECTURE.md **v1.1.14 - ACCEPTED** · roadmap §19 = **50 WPs, 28 done, 22 remaining** ·
+- Spec: docs/ARCHITECTURE.md **v1.1.15 - ACCEPTED** · roadmap §19 = **50 WPs, 29 done, 21 remaining** ·
   ADR-0001...0019 · decisions register docs/DECISIONS.md.
 
 ## Environment facts
