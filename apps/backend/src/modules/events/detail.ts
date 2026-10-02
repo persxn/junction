@@ -16,7 +16,7 @@ import {
   type ResolvableClaim,
   type Resolution,
 } from '../../domain/events/resolve.js';
-import { haversineKm } from '../../domain/geo/distance.js';
+import { hasMeasurableLocation, haversineKm } from '../../domain/geo/distance.js';
 import { assertCan } from '../auth/policy.js';
 import type { Principal } from '../auth/types.js';
 import { toCore } from '../search/mapping.js';
@@ -76,15 +76,11 @@ export class EventDetailService {
     const sources = this.#deps.detail.sourcesOf(eventId);
     const names = new Map(sources.map((source) => [source.key, source.name]));
     const campus = this.#deps.detail.primaryCampus();
-    const precise = ['EXACT', 'INSTITUTION', 'CITY'].includes(event.geoPrecision);
 
     const core = toCore(event, {
+      // R81: a state or country centroid is not a place to measure from.
       distanceKm:
-        campus === undefined ||
-        event.mode === 'ONLINE' ||
-        !precise ||
-        event.lat === null ||
-        event.lon === null
+        campus === undefined || !hasMeasurableLocation(event)
           ? null
           : haversineKm(campus, { lat: event.lat, lon: event.lon }),
       deadlines: this.#deps.events.deadlinesOf(eventId).map((deadline) => ({

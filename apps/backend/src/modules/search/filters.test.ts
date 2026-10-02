@@ -131,6 +131,28 @@ describe('A6 + D-06 — location and distance', () => {
     ]);
   });
 
+  it('R81: a STATE-precision event is unknown location, even when its centroid is near', () => {
+    // Tamil Nadu's centroid is ~35 km from Trichy — a figure that would look
+    // exact on a card and is not.
+    h.add({
+      title: 'Somewhere in Tamil Nadu',
+      mode: 'OFFLINE',
+      lat: 11.13,
+      lon: 78.66,
+      geoPrecision: 'STATE',
+    });
+    expect(h.titles({ maxDistanceKm: 100 })).not.toContain('Somewhere in Tamil Nadu');
+    const widened = h.query({ maxDistanceKm: 100, includeUnknown: { location: true } });
+    const item = widened.items.find((entry) => entry.title === 'Somewhere in Tamil Nadu');
+    expect(item).toBeDefined();
+    // No distance on the card, and so no "~35 km" reason under RELEVANCE.
+    expect(item?.distanceKm).toBeNull();
+    const ranked = h.query({ sort: 'RELEVANCE', includeUnknown: { location: true } });
+    const reasons = ranked.items.find((entry) => entry.title === 'Somewhere in Tamil Nadu');
+    expect(reasons?.distanceKm).toBeNull();
+    expect(JSON.stringify(reasons)).not.toContain('WITHIN_RADIUS');
+  });
+
   it('distance is the one haversine, straight line, sortable', () => {
     const response = h.query({ sort: 'DISTANCE', modes: ['OFFLINE', 'HYBRID'] });
     expect(response.items.map((item) => item.title).slice(0, 3)).toEqual([

@@ -1,7 +1,7 @@
 import type { EventCore, RankedEventListItem } from '@compintel/contracts';
 
 import type { EventRow } from '../../db/schema/index.js';
-import { haversineKm } from '../../domain/geo/distance.js';
+import { hasMeasurableLocation, haversineKm } from '../../domain/geo/distance.js';
 import type { Ranked, RankRow } from './domain/rank.js';
 import type { SearchRow } from './repo.js';
 
@@ -83,11 +83,9 @@ export function toRankRow(row: SearchRow, lookups: RankLookups): RankRow {
 }
 
 export function distanceOf(event: EventRow, campus: { lat: number; lon: number }): number | null {
-  const precise = ['EXACT', 'INSTITUTION', 'CITY'].includes(event.geoPrecision);
-  if (event.mode === 'ONLINE' || !precise || event.lat === null || event.lon === null) {
-    return null;
-  }
-  return haversineKm(campus, { lat: event.lat, lon: event.lon });
+  return hasMeasurableLocation(event)
+    ? haversineKm(campus, { lat: event.lat, lon: event.lon })
+    : null;
 }
 
 export function toCore(

@@ -1,3 +1,4 @@
+import { DISTANCE_PRECISIONS as PRECISE } from '../../domain/geo/distance.js';
 import type { QueryPlan } from './domain/normalize.js';
 
 /**
@@ -7,8 +8,8 @@ import type { QueryPlan } from './domain/normalize.js';
  * removed and every other one applied (WP-15b step 6). Values are always bound.
  */
 
-/** Only a coordinate at least this precise is a place a distance can be measured from. */
-export const DISTANCE_PRECISIONS = `('EXACT', 'INSTITUTION', 'CITY')`;
+/** R81: only a coordinate at least this precise is a place a distance can be measured from. */
+export const DISTANCE_PRECISIONS = `(${PRECISE.map((value) => `'${value}'`).join(', ')})`;
 
 export const VISIBLE = `e.visibility = 'VISIBLE' AND e.merged_into_event_id IS NULL`;
 

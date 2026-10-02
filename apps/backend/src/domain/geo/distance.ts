@@ -170,3 +170,27 @@ export function formatDistanceKm(km: number): string {
 export function distanceBucketKm(km: number, buckets: readonly number[]): number | undefined {
   return [...buckets].sort((a, b) => a - b).find((bucket) => km <= bucket);
 }
+
+/**
+ * Ruling R81: the precisions a distance may be measured from. A STATE or
+ * COUNTRY coordinate is a centroid, and a figure measured from it looks exact
+ * and is not — so for distance filters, WITHIN_RADIUS, Nearby and the card,
+ * such an event is **unknown location** and `includeUnknown.location` decides.
+ * One list, read by the SQL predicate and by both TypeScript paths.
+ */
+export const DISTANCE_PRECISIONS = ['EXACT', 'INSTITUTION', 'CITY'] as const;
+
+/** Whether an event's location can carry a distance (R81). Online events never do. */
+export function hasMeasurableLocation(event: {
+  readonly mode: string;
+  readonly geoPrecision: string;
+  readonly lat: number | null;
+  readonly lon: number | null;
+}): event is { mode: string; geoPrecision: string; lat: number; lon: number } {
+  return (
+    event.mode !== 'ONLINE' &&
+    (DISTANCE_PRECISIONS as readonly string[]).includes(event.geoPrecision) &&
+    event.lat !== null &&
+    event.lon !== null
+  );
+}
