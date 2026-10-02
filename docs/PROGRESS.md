@@ -1,21 +1,17 @@
 # Progress — newest first, keep < 150 lines
 
 ## Current
-- **pre-M2a done (PARTIAL), 27 Sep 2026** (`docs/handoff/pre-M2a.md`): all eight items built — writes and
-  links through the F9 fallback, one-button sign-in, sealed sessions (items 1-4, earlier session), plus
-  **Connect your sources** (R74, once, below sign-in — handoff §4.1), **live freshness** (R86, pill poll
-  60 s → 5 min), the four small UI faults (landmark · `.invalid` URL · `mailto:` as text · lazy routes,
-  683 kB → 428 kB largest chunk) and R89's `pnpm test:a11y` split. **Two acceptance lines unmet:** verify
-  is **134 s** against 120 s (its test half fell 113 → 101 s; the rest is Argon2id at R17's cost in six
-  suites — handoff question 1), and the **built exe is not click-tested** (needs a person, handoff §7).
-  Three faults the sweep found and fixed: two screens rendered a second `<main>`, the credential screens
-  sat in no landmark, and `cargo clippy --all-targets` was already failing on a stray tab in
-  `session_key.rs`.
-- **Next: `prompts/M2/pre-M2b.md`** (ingestion/search corrections), then WP-17 · 18 · 19 · 20a · 20b · 21
-  (M2) and WP-22 · 23 · 24 (M3). All released; R91-R113 reserved for their STEP 0 blocks
-  (spec 1.1.15-1.1.23). Every M2/M3 WP ends with a **UI fault sweep**. Send `docs/` back when M3 closes.
+- **pre-M2b done (PARTIAL), 2 Oct 2026** (`docs/handoff/pre-M2b.md`, commits 1/10-10/10): R75 targeted
+  signed-in reads (client-enforced, 5/run, 10 s) · R79/R80 credential states + three-strikes BLOCKED with a
+  standing Source-status sentence · R77 tests + reviewer · R81 one precision list · R82 gazetteer 68.5 MB ->
+  9.48 MB (37 538 places) · R85 offsets exact · R87 `event_tags` + FTS tags + backfill · R88
+  `top_trust_rank` · `recurringOnly` · `$` anchor, CTFtime `detailPolicy: never`, `scrape_runs.kind`,
+  `domain/jobs/schedule.ts`, URL-import diff. Migrations 0016-0022. **Unmet:** R88's first page **94 ms vs
+  50** (handoff Q1), verify **~137 s vs 120** (pre-M2a Q1), live runs **still owed** (no contactEmail).
+- **Next: `prompts/M2/WP-17.md`** after the architect answers pre-M2b Q1-Q2; then WP-18 · 19 · 20a · 20b · 21
+  (M2), WP-22 · 23 · 24 (M3). Every M2/M3 WP ends with a **UI fault sweep**. Send `docs/` back when M3 closes.
 - **Owed live runs:** CTFtime / Devfolio smokes and `unstop:capture` wait on `scraper.contactEmail` (the
-  owner's own address, R74); `clist:smoke` waits on U4. pre-M2b runs them if the address is set.
+  owner's own address, R74); `clist:smoke` waits on U4.
 - Spec: docs/ARCHITECTURE.md **v1.1.14 - ACCEPTED** · roadmap §19 = **50 WPs, 28 done, 22 remaining** ·
   ADR-0001...0019 · decisions register docs/DECISIONS.md.
 
@@ -39,7 +35,7 @@
 
 ## Standard commands
 - `pnpm install --frozen-lockfile` · **`pnpm verify`** = `format:check && lint && typecheck && test`
-  (**134 s** here with 3137 tests: format 7 s, lint 26 s, typecheck ~1 s warm, test 101 s; budget is
+  (**~137 s** here with 3197 tests: format 7 s, lint 26 s, typecheck ~1 s warm, test 102 s; budget is
   < 2 min per §4.15/R89 — **over**, see pre-M2a §3). **`pnpm test:a11y`** = R89's axe project
   (`*.a11y.test.tsx`, 23 tests, 9 s) — every WP touching `apps/desktop` runs and reports it, like R19's
   Rust checks. `pnpm test` runs the `node` and `desktop` projects only. **`vitest.config.ts` caps
@@ -58,8 +54,8 @@
   **`drizzle-kit push` is banned** and `scripts.test.ts` fails if any manifest adds it.
   **Run `pnpm typecheck` first** whenever a schema file imports `@compintel/contracts`: drizzle-kit
   loads the package's built `dist`, so a stale build makes CHECK helpers read `undefined`.
-- **`pnpm gazetteer:build`** writes `%LOCALAPPDATA%\CompIntel-dev\gazetteer\gazetteer.db` (68 MB, not
-  committed, needs network). `--mini` rebuilds the committed 53 KB test fixture with no network.
+- **`pnpm gazetteer:build`** writes `%LOCALAPPDATA%\CompIntel-dev\gazetteer\gazetteer.db` (9.5 MB since
+  R82, not committed, sources cached in `gazetteer-src`). `tools/gazetteer/src/probe.ts` diffs two builds. `--mini` rebuilds the committed 53 KB test fixture with no network.
 - **Windows has no POSIX signals**: `child.kill('SIGTERM')` hard-terminates; the shell's lifeline is
   stdin EOF (`--stdin-lifeline`) plus the Job Object. `fetch()` silently drops a caller-set `Host`
   header, so Host-allowlist tests must use `node:http`.
@@ -76,6 +72,8 @@
 - **PATH caveat:** rustup added `%USERPROFILE%\.cargo\bin` to the *user* PATH; already-open terminals must be restarted, otherwise `cargo`/`rustc` are not found. **NodeNext:** relative imports need a `.js` extension even in `.ts` sources.
 
 ## Completed
+- **pre-M2a — UI & shell faults (PARTIAL, 27 Sep).** R78 writes/links through the F9 fallback, one-button
+  sign-in, R76 sealed sessions, Connect your sources, R86 live freshness, R89 a11y split; exe not click-tested.
 - **WP-07b — first-run wizard + user administration** (closes M0). R39 gate = 409 `SETUP_REQUIRED` before the session
   hook; `modules/setup/` writes the whole organization in **one transaction** (R40); backup keys = `age-encryption`
   0.3.1 wrapped to a scrypt passphrase + recovery file and code (R41/R42); `modules/users/` = admin CRUD (R43).
