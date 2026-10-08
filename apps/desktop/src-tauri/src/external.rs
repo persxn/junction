@@ -65,13 +65,14 @@ pub fn authorise(url: &str) -> Result<Url, OpenRefusal> {
     Ok(parsed)
 }
 
-/// Opens an authorised URL with whatever Windows has registered for it.
+/// Hands a target to whatever Windows has registered for it.
 ///
 /// `ShellExecuteW` with a verb of `open` is what the Explorer address bar does.
 /// It is reached through the `windows` crate the Job Object already uses, so
-/// §13's one sentence costs no new dependency.
+/// §13's one sentence costs no new dependency. Callers decide what may reach
+/// it: `authorise` for a link here, `open::openable` for a path (R102).
 #[cfg(windows)]
-fn launch(url: &Url) -> Result<(), String> {
+pub(crate) fn shell_open(target: &str) -> Result<(), String> {
     use std::os::windows::ffi::OsStrExt;
 
     use windows::Win32::UI::Shell::ShellExecuteW;
@@ -86,7 +87,7 @@ fn launch(url: &Url) -> Result<(), String> {
     }
 
     let verb = wide("open");
-    let target = wide(url.as_str());
+    let target = wide(target);
     // SAFETY: both strings are NUL-terminated and outlive the call, and every
     // other argument is null, which ShellExecuteW documents as "no value".
     let result = unsafe {
@@ -104,15 +105,19 @@ fn launch(url: &Url) -> Result<(), String> {
         Ok(())
     } else {
         Err(format!(
-            "Windows would not open that link (error {}).",
+            "Windows would not open that (error {}).",
             result.0 as isize
         ))
     }
 }
 
 #[cfg(not(windows))]
-fn launch(_url: &Url) -> Result<(), String> {
-    Err("Opening a link is only implemented on Windows.".to_owned())
+pub(crate) fn shell_open(_target: &str) -> Result<(), String> {
+    Err("Opening is only implemented on Windows.".to_owned())
+}
+
+fn launch(url: &Url) -> Result<(), String> {
+    shell_open(url.as_str())
 }
 
 /// §13's "URLs open in the default browser", with the rules above applied first.

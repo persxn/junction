@@ -236,18 +236,29 @@ pub struct PickedFileInfo {
     pub name: String,
 }
 
-/// Opens the native file picker for a student list (WP-17) and remembers the
-/// answer. Only `.csv` and `.xlsx` are offered; `None` means the user cancelled.
+/// Opens the native file picker (WP-17, WP-20b). For a student list only
+/// `.csv` and `.xlsx` are offered and the answer is remembered for
+/// `read_picked_file`; for a resource (`filter: "ANY"`) any file may be chosen
+/// and only its path comes back. `None` means the user cancelled.
 #[tauri::command]
-pub async fn pick_file(app: AppHandle, title: String) -> Result<Option<PickedFileInfo>, String> {
+pub async fn pick_file(
+    app: AppHandle,
+    title: String,
+    filter: Option<String>,
+) -> Result<Option<PickedFileInfo>, String> {
+    // WP-20b: "ANY" for a resource, which only stores the path; the student
+    // list's CSV/XLSX filter otherwise.
+    let any = filter.as_deref() == Some("ANY");
     let (sender, receiver) = std::sync::mpsc::channel();
-    app.dialog()
-        .file()
-        .set_title(&title)
-        .add_filter("Student list (CSV or Excel)", &picked::IMPORT_EXTENSIONS)
-        .pick_file(move |chosen| {
-            let _ = sender.send(chosen);
-        });
+    let dialog = app.dialog().file().set_title(&title);
+    let dialog = if any {
+        dialog
+    } else {
+        dialog.add_filter("Student list (CSV or Excel)", &picked::IMPORT_EXTENSIONS)
+    };
+    dialog.pick_file(move |chosen| {
+        let _ = sender.send(chosen);
+    });
     let chosen = receiver
         .recv()
         .map_err(|cause| format!("the file dialog closed unexpectedly: {cause}"))?;
@@ -257,13 +268,17 @@ pub async fn pick_file(app: AppHandle, title: String) -> Result<Option<PickedFil
     let path = chosen
         .into_path()
         .map_err(|cause| format!("that file has no usable path: {cause}"))?;
-    let state = app
-        .try_state::<ShellState>()
-        .ok_or_else(|| "the shell is not ready".to_owned())?;
-    *state
-        .picked_file
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(path.clone());
+    // A resource's file is never read (D-12), so it is not remembered for
+    // `read_picked_file`: only the student list's pick is.
+    if !any {
+        let state = app
+            .try_state::<ShellState>()
+            .ok_or_else(|| "the shell is not ready".to_owned())?;
+        *state
+            .picked_file
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(path.clone());
+    }
     Ok(Some(PickedFileInfo {
         name: picked::display_name(&path),
         path: path.to_string_lossy().into_owned(),

@@ -11,6 +11,8 @@ pub mod external;
 pub mod files;
 pub mod job;
 pub mod loopback;
+pub mod open;
+pub mod open_commands;
 pub mod paths;
 pub mod picked;
 pub mod ready;
@@ -88,6 +90,10 @@ pub fn run() {
             commands::open_source_signin,
             commands::capture_source_session,
             commands::close_source_signin,
+            open_commands::open_local_path,
+            open_commands::reveal_path,
+            open_commands::stat_paths,
+            open_commands::machine_label,
         ])
         .setup(|app| {
             let resource_dir = app.path().resource_dir().ok();
