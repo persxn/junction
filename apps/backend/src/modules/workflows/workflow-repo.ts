@@ -192,7 +192,14 @@ export class WorkflowRepository {
       .run(...args, id);
   }
 
+  /** Its tasks go by CASCADE; their resources and its own go here, in the caller's transaction (R103). */
   deleteStage(id: string): void {
+    this.#db.raw
+      .prepare(
+        `DELETE FROM resources WHERE (owner_kind = 'STAGE' AND owner_id = ?)
+           OR (owner_kind = 'TASK' AND owner_id IN (SELECT id FROM tasks WHERE stage_id = ?))`,
+      )
+      .run(id, id);
     this.#db.raw.prepare('DELETE FROM workflow_stages WHERE id = ?').run(id);
   }
 
@@ -276,7 +283,11 @@ export class WorkflowRepository {
       .run(at, by, stageId).changes;
   }
 
+  /** With its resources, in the caller's transaction (R103). */
   deleteTask(id: string): void {
+    this.#db.raw
+      .prepare("DELETE FROM resources WHERE owner_kind = 'TASK' AND owner_id = ?")
+      .run(id);
     this.#db.raw.prepare('DELETE FROM tasks WHERE id = ?').run(id);
   }
 
