@@ -91,6 +91,12 @@ describe('when (R104)', () => {
       ),
     ).toBe(historyBefore + 1);
     expect(after.outcome?.result).toBe('WINNER');
+    // Closed for edits, still open for its outcome (the e2e found this missing).
+    expect(after.can).toMatchObject({ edit: false, recordOutcome: true });
+    const resources = (
+      await call(server, 'GET', `/api/v1/competitions/${competition.id}/resources`, { as: h.alice })
+    ).body;
+    expect(resources).toMatchObject({ canEdit: false, canEditOutcome: true });
   });
 
   it('from COMPLETED it records without another move', async () => {

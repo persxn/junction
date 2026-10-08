@@ -77,7 +77,11 @@ export function makeCompetition(
     healthReason: null,
     result: null,
     outcome: null,
-    can: { edit: true, manageMentors: true },
+    can: {
+      edit: true,
+      manageMentors: true,
+      recordOutcome: status === 'PARTICIPATING' || status === 'COMPLETED',
+    },
     version: 1,
     roster: [],
     pastRoster: [],

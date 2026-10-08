@@ -116,7 +116,12 @@ describe('the competition page', () => {
   it('a closed competition is read-only and says why', async () => {
     installCompetitionsApi({
       competitions: [
-        { ...ROCKET, status: 'COMPLETED', allowed: [], can: { edit: false, manageMentors: false } },
+        {
+          ...ROCKET,
+          status: 'COMPLETED',
+          allowed: [],
+          can: { edit: false, manageMentors: false, recordOutcome: false },
+        },
       ],
     });
     await openPage();

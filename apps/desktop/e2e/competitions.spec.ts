@@ -24,7 +24,7 @@ async function addStudent(page: Page, roll: string, name: string): Promise<void>
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible();
 }
 
-test('Discover → A → team → Hackathon template → dates → confirm → tick → board → Applied', async ({
+test('Discover → assign with a template → tick → board → Applied → outcome → Student page', async ({
   page,
 }) => {
   await stubShell(page);
@@ -115,4 +115,27 @@ test('Discover → A → team → Hackathon template → dates → confirm → t
   const competitions = page.getByRole('list', { name: 'Competitions' });
   await expect(competitions.getByRole('link', { name: title })).toBeVisible();
   await expect(competitions).toContainText('Applied');
+
+  // WP-21: Participating, then record the outcome; the Student page shows it.
+  await competitions.getByRole('link', { name: title }).click();
+  await page.getByRole('button', { name: 'Move E2E Pipeliners to…' }).click();
+  await page.getByRole('menuitem', { name: 'Move to Participating' }).click();
+  await page.getByRole('button', { name: 'Record outcome' }).click();
+  const outcome = page.getByRole('dialog', { name: 'Record the outcome' });
+  await outcome.getByRole('combobox', { name: 'Result', exact: true }).selectOption('WINNER');
+  await outcome.getByLabel('Rank (optional)').fill('1');
+  await outcome.getByLabel('Prize amount (optional)').fill('50000');
+  await outcome.getByLabel('Currency').fill('INR');
+  await outcome.getByRole('button', { name: 'Record outcome' }).click();
+  await expect(page.getByRole('button', { name: 'Edit outcome' })).toBeVisible();
+  await expect(page.getByText('₹50,000.00')).toBeVisible();
+
+  await page
+    .getByRole('navigation', { name: 'Main' })
+    .getByRole('link', { name: 'Students' })
+    .click();
+  await page.getByRole('row', { name: /Lena Pipeline/ }).click();
+  const history = page.getByRole('list', { name: 'Competitions and outcomes' });
+  await expect(history.getByRole('link', { name: title })).toBeVisible();
+  await expect(history.getByText('Winner')).toBeVisible();
 });

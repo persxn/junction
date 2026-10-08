@@ -16,8 +16,9 @@ export function recordBlockedReason(status: EngagementStatus): string | undefine
   return 'Record the result once the competition is underway.';
 }
 
-export function canRecordOutcome(competition: Pick<CompetitionDetail, 'status' | 'can'>): boolean {
-  return recordBlockedReason(competition.status) === undefined && competition.can.edit;
+/** The server's answer (R104): `can.edit` is false once COMPLETED, this is not. */
+export function canRecordOutcome(competition: Pick<CompetitionDetail, 'can'>): boolean {
+  return competition.can.recordOutcome;
 }
 
 /** How many minor units a currency's major unit has (INR 2, JPY 0); 2 when unknown. */

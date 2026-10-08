@@ -92,7 +92,12 @@ export function installResourcesApi(
       };
       groups.set(key, { ...group, resources: [...group.resources, resource] });
     }
-    return { competitionId, groups: [...groups.values()], canEdit: options.canEdit ?? true };
+    return {
+      competitionId,
+      groups: [...groups.values()],
+      canEdit: options.canEdit ?? true,
+      canEditOutcome: options.canEdit ?? true,
+    };
   };
 
   const route = (method: string, path: string, body: Record<string, unknown>) => {

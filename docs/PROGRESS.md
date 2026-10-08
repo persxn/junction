@@ -5,12 +5,8 @@
   **Unmet:** R88 first page 94 ms vs 50; live runs owed (no contactEmail).
 - **WP-17 done, 2 Oct 2026** (`docs/handoff/WP-17.md`): students, tags, mentorships, erasure, CSV/XLSX import (R91–R93);
   in-house XLSX reader; in-app guides on every new screen (`components/Guide.tsx`); migration 0023; papaparse@5.7.0.
-- **WP-18 done, 8 Oct 2026** (`docs/handoff/WP-18.md`): teams with role labels and one lead, primary +
-  co-mentors, R94 coverage (Covered/Thin/Missing) with targets, R95 lifecycle (rows closed never deleted,
-  archive = read-only, transfer with Step away). Migration 0024; `GET /professors`; Student page Teams
-  section; `teamMentorUserIds` feeds deactivate. UI: Teams list, Team page (member menu, Undo, typeahead,
-  hand-over dialog), form; disabled controls state their reason. `lib/roving-rows.ts` shared J/K.
-  e2e 4/4, a11y 33/33. **Unmet:** verify **161 s vs 120** (pre-M2a Q1).
+- **WP-18 done, 8 Oct 2026** (`docs/handoff/WP-18.md`): teams, role labels, one lead, primary + co-mentors, R94
+  coverage, R95 lifecycle; migration 0024; `GET /professors`.
 - **WP-19 done, 8 Oct 2026** (`docs/handoff/WP-19.md`, 8 step commits): R96–R98. Contracts `engagements.ts` +
   `engagement-status.ts`; migration 0025; `domain/engagements`; `/api/v1/competitions` (assign preview/assign,
   transitions with history + audit, roster, mentors, notes, `onAssigned` hook seam for WP-20a); team archive refuses
@@ -31,11 +27,17 @@
   judged, no new crate, `core:default` kept; 20 `open::` tests (§19 "executables can't be opened"), cargo 106.
   UI: Resources per competition/stage/task, Open / Show in Explorer / Copy, status lines, web build Copy only.
   e2e 5/5, a11y 44/44. **Unmet:** manual built-app run **owed** (handoff lists steps); verify **176 s vs 120**.
-- **Next: WP-21** (M2), WP-22 · 23 · 24 (M3). Every M2/M3 WP
+- **WP-21 done, 8 Oct 2026 — M2 CLOSED** (`docs/handoff/WP-21.md`, 9 step commits, ends with the M2 demo script):
+  R104–R105 (v1.1.20), Q7 applied. Migration 0028 `engagement_outcomes`; `PUT|DELETE /competitions/:id/outcome`
+  (from PARTICIPATING it completes the competition in the same unit of work); admin ownership transfer preview/commit
+  (token, one transaction, audit per entity + summary) — §19 snapshot test green; `GET /students/:id/history`. UI:
+  outcome panel, results on board/list, Transfer ownership dialog, Student page Competitions & outcomes; seed outcomes
+  + second professor. e2e 5/5, a11y 47/47. **Unmet:** verify **186 s vs 120**.
+- **Next: WP-22**, then WP-23 · 24 (M3). Every M3 WP
   ends with a **UI fault sweep** and carries an in-app guide on each new screen. Send `docs/` back when M3 closes.
 - **Owed live runs:** CTFtime / Devfolio smokes and `unstop:capture` wait on `scraper.contactEmail` (the
   owner's own address, R74); `clist:smoke` waits on U4.
-- Spec: docs/ARCHITECTURE.md **v1.1.19 - ACCEPTED** · roadmap §19 = **50 WPs, 34 done, 16 remaining** ·
+- Spec: docs/ARCHITECTURE.md **v1.1.20 - ACCEPTED** · roadmap §19 = **50 WPs, 35 done, 15 remaining** · **M2 closed** ·
   ADR-0001...0019 · decisions register docs/DECISIONS.md.
 
 ## Environment facts

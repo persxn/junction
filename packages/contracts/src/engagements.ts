@@ -129,7 +129,15 @@ export type StatusChange = z.infer<typeof StatusChange>;
 
 /** What the caller may do — cosmetic, the server decides again (§10.1). */
 export const CompetitionAbilities = z
-  .object({ edit: z.boolean(), manageMentors: z.boolean() })
+  .object({
+    edit: z.boolean(),
+    manageMentors: z.boolean(),
+    /**
+     * WP-21 (R104): record, edit or remove the outcome — allowed while
+     * PARTICIPATING and after COMPLETED, when `edit` is already false.
+     */
+    recordOutcome: z.boolean(),
+  })
   .strict();
 export type CompetitionAbilities = z.infer<typeof CompetitionAbilities>;
 

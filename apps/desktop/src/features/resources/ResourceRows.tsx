@@ -55,6 +55,7 @@ export function ResourceRows({
   ownerId,
   ownerName,
   title,
+  headingLevel = 4,
   variant = 'section',
 }: {
   readonly ownerKind: ResourceOwnerKind;
@@ -63,6 +64,8 @@ export function ResourceRows({
   readonly ownerName: string;
   /** A heading above the rows. */
   readonly title?: string;
+  /** Its level: 4 inside a stage card (under its h3), 3 directly under a section's h2. */
+  readonly headingLevel?: 3 | 4;
   /** `compact` (a task's): only the rows, nothing when there are none, no Add button. */
   readonly variant?: 'section' | 'compact';
 }): React.JSX.Element | null {
@@ -74,7 +77,8 @@ export function ResourceRows({
   const [removing, setRemoving] = useState<Resource | undefined>(undefined);
   if (scope === undefined) return null;
   const rows = scope.of(ownerKind, ownerId);
-  const canEdit = scope.list?.canEdit === true;
+  const canEdit =
+    (ownerKind === 'OUTCOME' ? scope.list?.canEditOutcome : scope.list?.canEdit) === true;
   const compact = variant === 'compact';
   if (compact && rows.length === 0) return null;
 
@@ -125,7 +129,12 @@ export function ResourceRows({
 
   return (
     <div className="flex flex-col gap-1">
-      {title !== undefined && <h4 className="text-sm font-medium">{title}</h4>}
+      {title !== undefined &&
+        (headingLevel === 3 ? (
+          <h3 className="text-sm font-medium">{title}</h3>
+        ) : (
+          <h4 className="text-sm font-medium">{title}</h4>
+        ))}
       {rows.length === 0 && <p className="text-xs text-fg-muted">No links or files yet.</p>}
       {rows.length > 0 && (
         <ul aria-label={`Resources of ${ownerName}`} className="flex flex-col gap-1">

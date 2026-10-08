@@ -85,7 +85,7 @@ export function OutcomePanel({
             <span className="text-md font-medium">
               <OutcomeBadge result={outcome.result} rank={outcome.rank} />
             </span>
-            {competition.can.edit && (
+            {allowed && (
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -142,6 +142,7 @@ export function OutcomePanel({
             ownerId={competition.id}
             ownerName="the outcome"
             title="Certificate and files"
+            headingLevel={3}
           />
           <p className="text-xs text-fg-muted">
             Recorded by {outcome.recordedBy} on {dayText(outcome.recordedAt)}

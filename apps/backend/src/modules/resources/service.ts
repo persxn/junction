@@ -129,12 +129,14 @@ export class ResourcesService {
       };
       groups.set(key, { ...group, resources: [...group.resources, toResource(row)] });
     }
+    const allowed = can(actor, 'resource.edit', this.#facts(actor, competitionId));
     return {
       competitionId,
       groups: [...groups.values()],
-      canEdit:
-        !isTerminal(competition.status) &&
-        can(actor, 'resource.edit', this.#facts(actor, competitionId)),
+      canEdit: !isTerminal(competition.status) && allowed,
+      // Mirrors #writable: an outcome's files stay editable once COMPLETED.
+      canEditOutcome:
+        allowed && (!isTerminal(competition.status) || competition.status === 'COMPLETED'),
     };
   }
 

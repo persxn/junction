@@ -17,6 +17,7 @@ import {
 } from '@compintel/contracts';
 
 import { allowedFrom, isTerminal } from '../../domain/engagements/status.js';
+import { canRecord } from '../../domain/outcomes/validate.js';
 import type { AuditLog } from '../../platform/audit.js';
 import { nowMs, systemClock, type Clock } from '../../platform/time.js';
 import { can } from '../auth/policy.js';
@@ -226,6 +227,7 @@ export class EngagementReader {
           can: {
             edit: editable && can(actor, 'competition.edit', facts),
             manageMentors: editable && can(actor, 'competition.manage_mentors', facts),
+            recordOutcome: canRecord(row.status) && can(actor, 'outcome.record', facts),
           },
           version: row.version,
         },

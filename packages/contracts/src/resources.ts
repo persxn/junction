@@ -92,6 +92,8 @@ export const ResourceList = z
     groups: z.array(ResourceGroup),
     /** The caller may add, edit and remove (R96's mentors, or an admin) — cosmetic. */
     canEdit: z.boolean(),
+    /** The same for the outcome's files, which stay editable once COMPLETED (R104). */
+    canEditOutcome: z.boolean(),
   })
   .strict();
 export type ResourceList = z.infer<typeof ResourceList>;
