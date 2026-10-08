@@ -3,12 +3,14 @@ import type { Principal } from '../modules/auth/types.js';
 import { createStudentsModule } from '../modules/students/wiring.js';
 import { createEngagementsModule } from '../modules/engagements/wiring.js';
 import { createTeamsModule } from '../modules/teams/wiring.js';
+import { createWorkflowsModule } from '../modules/workflows/wiring.js';
 import { seedDemoCompetitions } from './competitions-demo.js';
 import { AuditLog } from '../platform/audit.js';
 import type { DatabaseHandle } from '../platform/db.js';
 import { SettingsStore } from '../platform/settings.js';
 import { seedDemoStudents } from './students-demo.js';
 import { seedDemoTeams } from './teams-demo.js';
+import { shapeDemoWorkflows } from './workflows-demo.js';
 
 /**
  * `pnpm seed:demo --students` (WP-17 step 7): the 60 synthetic students, on a
@@ -17,6 +19,8 @@ import { seedDemoTeams } from './teams-demo.js';
  * before it.
  *
  * WP-18 adds 12 teams over them (`teams-demo.ts`), with a demo co-mentor.
+ * WP-20a copies a workflow into every competition that reaches ASSIGNED, and
+ * shapes five open ones into the five schedule healths (`workflows-demo.ts`).
  *
  * They are mentored by a demo professor created here with a placeholder in
  * place of a password hash: no password verifies against it, so the account
@@ -32,6 +36,8 @@ export interface DemoStudentsSeed {
   readonly teams: number;
   /** WP-19: 20 competitions over the teams, students and events (none without events). */
   readonly competitions: number;
+  /** WP-20a: open competitions whose workflow was shaped into one of the five healths. */
+  readonly shapedWorkflows: number;
   readonly professorId: string;
 }
 
@@ -76,13 +82,29 @@ export function seedDemoStudentsInto(db: DatabaseHandle): DemoStudentsSeed {
       )
       .all() as { id: string }[]
   ).map((event) => event.id);
-  const competitions = seedDemoCompetitions(createEngagementsModule({ db, audit }), {
+  const workflows = createWorkflowsModule({ db, audit });
+  workflows.templatesRepository.ensureSeeded(Date.now());
+  const engagements = createEngagementsModule({
+    db,
+    audit,
+    onAssigned: [workflows.copier.onAssigned],
+  });
+  const competitions = seedDemoCompetitions(engagements, {
     teamIds,
     loneStudentIds,
     eventIds,
     professor,
   });
-  return { students, teams, competitions, professorId: professor.id };
+  const open = (
+    db.raw
+      .prepare(
+        `SELECT id FROM engagements WHERE status IN ('ASSIGNED', 'APPLIED', 'PARTICIPATING')
+         ORDER BY created_at, id`,
+      )
+      .all() as { id: string }[]
+  ).map((row) => row.id);
+  const shapedWorkflows = shapeDemoWorkflows(workflows, open, professor, Date.now());
+  return { students, teams, competitions, shapedWorkflows, professorId: professor.id };
 }
 
 /** A professor nobody can sign in as: no password verifies against the placeholder. */

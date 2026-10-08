@@ -1,6 +1,8 @@
+import type { EngagementStatus } from '@compintel/contracts';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { verifyPassword } from '../modules/auth/password.js';
+import { createWorkflowsModule } from '../modules/workflows/wiring.js';
 import { openMigratedDatabase, type MigratedDatabase } from './database.js';
 import { makeEvent } from './competitions.js';
 import { DEMO_PROFESSOR_EMAIL, seedDemoStudentsInto } from './students-demo-seed.js';
@@ -101,6 +103,35 @@ describe('seedDemoStudentsInto', () => {
     expect(kinds).toEqual([
       { kind: 'INDIVIDUAL', n: 8 },
       { kind: 'TEAM', n: 12 },
+    ]);
+  });
+
+  it('copies a workflow into every assigned competition and shows all five healths (WP-20a)', () => {
+    harness = openStudentsHarness();
+    const h = harness;
+    for (let n = 0; n < 12; n += 1) makeEvent(h);
+    const seeded = seedDemoStudentsInto(h.database.db);
+    expect(seeded.shapedWorkflows).toBe(5);
+    const missing = h.database.db.raw
+      .prepare(
+        `SELECT count(*) AS n FROM engagements e WHERE e.status <> 'CONSIDERING'
+           AND NOT EXISTS (SELECT 1 FROM workflows w WHERE w.engagement_id = e.id)`,
+      )
+      .get() as { n: number };
+    expect(missing.n).toBe(0);
+    const rows = h.database.db.raw.prepare('SELECT id, status FROM engagements').all() as {
+      id: string;
+      status: EngagementStatus;
+    }[];
+    // The seed dates stages from the real clock, so read them with it.
+    const reader = createWorkflowsModule({ db: h.database.db, audit: h.audit }).reader;
+    const healths = new Set([...reader.summaries(rows).values()].map((row) => row.health));
+    expect([...healths].filter((health) => health !== null).sort()).toEqual([
+      'AT_RISK',
+      'BLOCKED',
+      'NO_DATES',
+      'ON_TRACK',
+      'OVERDUE',
     ]);
   });
 

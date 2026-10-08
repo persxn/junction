@@ -41,12 +41,16 @@ export function TaskList({
   const addId = useId();
   const [title, setTitle] = useState('');
   const [removing, setRemoving] = useState<WorkflowStage['tasks'][number] | undefined>();
+  // The value just clicked, shown at once: the cache's optimistic copy renders a
+  // tick later, and in between a controlled box would flip back (sweep fault).
+  const [pending, setPending] = useState<Readonly<Record<string, boolean>>>({});
   const editable = view.canEdit;
 
   const tick = async (current: WorkflowView, taskId: string, done: boolean, undo = false) => {
     const own = current.stages.find((s) => s.id === stage.id);
     const task = own?.tasks.find((t) => t.id === taskId);
     if (own === undefined || task === undefined) return;
+    setPending((current) => ({ ...current, [taskId]: done }));
     const saved = await run({
       view: current,
       path: `tasks/${taskId}/done`,
@@ -54,6 +58,7 @@ export function TaskList({
       failure: 'The task was not updated',
       optimistic: withTaskDone(current, stage.id, taskId, done),
     });
+    setPending(({ [taskId]: _settled, ...rest }) => rest);
     if (saved === undefined || undo) return;
     toast.show({
       tone: 'success',
@@ -108,7 +113,7 @@ export function TaskList({
               <input
                 id={taskInputId(task.id)}
                 type="checkbox"
-                checked={task.isDone}
+                checked={pending[task.id] ?? task.isDone}
                 disabled={!editable}
                 aria-keyshortcuts={editable ? 'Alt+ArrowUp Alt+ArrowDown' : undefined}
                 onChange={(event) => {

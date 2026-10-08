@@ -27,15 +27,18 @@
   open competitions; Team/Student pages list them; seed adds 20. UI: assign dialog from `assign/steps.ts` (card, A,
   drawer), pipeline board (drag, M menu, arrows, Undo only Considering ↔ Assigned), list, Competition page. Both
   §19 ACs green; e2e 5/5; a11y 37/37. **Unmet:** verify **186 s vs 120** (pre-M2a Q1).
-- **WP-20a PAUSED, 8 Oct 2026 — about 50% done, mid step 5 of 9.** Resume from `docs/handoff/WP-20a.md` (steps,
-  commits, what is left, decisions). Done: rulings R99–R101 (v1.1.18), contracts, migration 0026, domain
-  (105 tests), seeded templates and templates API. Step 5 (workflow API, copy-on-assign) is written and typechecks
-  but has no tests yet. Steps 6–9 are UI, seed, sweep and docs.
-- **Next: finish WP-20a**, then WP-20b · 21 (M2), WP-22 · 23 · 24 (M3). Every M2/M3 WP
+- **WP-20a done, 8 Oct 2026** (`docs/handoff/WP-20a.md`, 9 step commits): R99–R101 (v1.1.18). Contracts
+  `workflow-enums/-templates/workflows.ts`; migration 0026 (+ `workflows.version`); `domain/workflows` (80-case §11
+  precedence table, health reasons, due rules, R101 order); 5 seeded templates + templates API; workflow API under
+  `/api/v1/competitions/:id/workflow`; copy-on-assign via `onAssigned`. UI: assign flow gains "Workflow template"
+  + stage dates (board's Considering → Assigned asks too); Competition page stages/tasks/Alt+↑↓/dialogs/R100 banner;
+  progress + health on board and list; Competitions → Templates. Seed shows all 5 healths. e2e 5/5, a11y 42/42.
+  **Unmet:** verify **183 s vs 120** (pre-M2a Q1).
+- **Next: WP-20b**, then WP-21 (M2), WP-22 · 23 · 24 (M3). Every M2/M3 WP
   ends with a **UI fault sweep** and carries an in-app guide on each new screen. Send `docs/` back when M3 closes.
 - **Owed live runs:** CTFtime / Devfolio smokes and `unstop:capture` wait on `scraper.contactEmail` (the
   owner's own address, R74); `clist:smoke` waits on U4.
-- Spec: docs/ARCHITECTURE.md **v1.1.16 - ACCEPTED** · roadmap §19 = **50 WPs, 32 done, 18 remaining** ·
+- Spec: docs/ARCHITECTURE.md **v1.1.18 - ACCEPTED** · roadmap §19 = **50 WPs, 33 done, 17 remaining** ·
   ADR-0001...0019 · decisions register docs/DECISIONS.md.
 
 ## Environment facts

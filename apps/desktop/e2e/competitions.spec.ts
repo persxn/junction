@@ -3,8 +3,10 @@ import { expect, test, type Page } from '@playwright/test';
 import { signIn, stubShell } from './session.js';
 
 /**
- * The competitions smoke (WP-19): Discover → A → team → review → confirm →
- * board (Assigned) → "Move to…" Applied → the Team page lists it — on the web
+ * The competitions smoke (WP-19, WP-20a): Discover → A → team → the Hackathon
+ * template → review dates → confirm → the competition's page, where ticking a
+ * task moves progress → board (Assigned) → "Move to…" Applied → the Team page
+ * lists it — on the web
  * build against the real backend. The team and its two students are made by
  * hand first, so the spec stands on its own; everyone is synthetic (D-33).
  */
@@ -22,7 +24,7 @@ async function addStudent(page: Page, roll: string, name: string): Promise<void>
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible();
 }
 
-test('Discover → A → team → review → confirm → board → Move to Applied → Team page', async ({
+test('Discover → A → team → Hackathon template → dates → confirm → tick → board → Applied', async ({
   page,
 }) => {
   await stubShell(page);
@@ -51,14 +53,29 @@ test('Discover → A → team → review → confirm → board → Move to Appli
   await first.focus();
   await page.keyboard.press('a');
   const dialog = page.getByRole('dialog', { name: `Assign “${title}”` });
-  await expect(dialog.getByText('Step 1 of 3')).toBeVisible();
+  await expect(dialog.getByText('Step 1 of 4')).toBeVisible();
   await dialog.getByRole('radio', { name: /E2E Pipeliners/ }).check();
   await dialog.getByRole('button', { name: 'Next' }).click();
+  // WP-20a: the Hackathon template, whatever the event's type.
+  await dialog.getByRole('radio', { name: /^Hackathon/ }).check();
+  await dialog.getByRole('button', { name: 'Next' }).click();
   await expect(dialog.getByText('Registration closes')).toBeVisible();
+  await expect(dialog.getByText(/Stage dates — Hackathon/)).toBeVisible();
   await dialog.getByRole('button', { name: 'Next' }).click();
   await expect(dialog.getByText(/Taking part: Lena Pipeline, Omar Pipeline/)).toBeVisible();
   await dialog.getByRole('button', { name: 'Assign', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Open competition' })).toBeVisible();
+  await page.getByRole('button', { name: 'Open competition' }).click();
+
+  // The copied workflow: tick a task and the progress moves off 0%.
+  const progress = page.getByRole('progressbar', { name: 'Workflow progress' });
+  await expect(progress).toHaveAttribute('aria-valuetext', '0%');
+  await page
+    .getByRole('list', { name: 'Tasks of Team & registration' })
+    .getByRole('checkbox')
+    .first()
+    .check();
+  await expect(progress).not.toHaveAttribute('aria-valuetext', '0%');
+  await expect(page.getByRole('button', { name: 'Undo' })).toBeVisible();
 
   // The board: Assigned, then Move to… Applied.
   await page
