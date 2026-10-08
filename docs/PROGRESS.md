@@ -1,20 +1,10 @@
 # Progress — newest first, keep < 150 lines
 
 ## Current
-- **pre-M2b done (PARTIAL), 2 Oct 2026** (`docs/handoff/pre-M2b.md`, commits 1/10-10/10): R75 targeted
-  signed-in reads (client-enforced, 5/run, 10 s) · R79/R80 credential states + three-strikes BLOCKED with a
-  standing Source-status sentence · R77 tests + reviewer · R81 one precision list · R82 gazetteer 68.5 MB ->
-  9.48 MB (37 538 places) · R85 offsets exact · R87 `event_tags` + FTS tags + backfill · R88
-  `top_trust_rank` · `recurringOnly` · `$` anchor, CTFtime `detailPolicy: never`, `scrape_runs.kind`,
-  `domain/jobs/schedule.ts`, URL-import diff. Migrations 0016-0022. **Unmet:** R88's first page **94 ms vs
-  50** (handoff Q1), verify **~137 s vs 120** (pre-M2a Q1), live runs **still owed** (no contactEmail).
-- **WP-17 done, 2 Oct 2026** (`docs/handoff/WP-17.md`): students, tags with levels in words, mentorships (R91),
-  erasure with no PII in audit (R92), CSV/XLSX preview-then-commit import (R93) — 500-row AC exact 400/50/10/40.
-  **Owner decision:** in-house XLSX reader (exceljs failed the audit); **in-app guides** on every new screen
-  (`components/Guide.tsx`; accepted columns from the contracts' alias list). Shell `pick_file`/`read_picked_file`
-  (`picked.rs`). Admin → Campus & settings is a real page (Students card). `seed:demo --students`. Migration 0023.
-  New dep papaparse@5.7.0. e2e 3/3, a11y 28/28, Rust 86. **Unmet:** verify **150 s vs 120** (pre-M2a Q1).
-  WP-18 fed `teamMentorUserIds` to `canDeactivateStudent`.
+- **pre-M2b done (PARTIAL), 2 Oct 2026** (`docs/handoff/pre-M2b.md`): R75–R88 fixes, migrations 0016–0022.
+  **Unmet:** R88 first page 94 ms vs 50; live runs owed (no contactEmail).
+- **WP-17 done, 2 Oct 2026** (`docs/handoff/WP-17.md`): students, tags, mentorships, erasure, CSV/XLSX import (R91–R93);
+  in-house XLSX reader; in-app guides on every new screen (`components/Guide.tsx`); migration 0023; papaparse@5.7.0.
 - **WP-18 done, 8 Oct 2026** (`docs/handoff/WP-18.md`): teams with role labels and one lead, primary +
   co-mentors, R94 coverage (Covered/Thin/Missing) with targets, R95 lifecycle (rows closed never deleted,
   archive = read-only, transfer with Step away). Migration 0024; `GET /professors`; Student page Teams
@@ -34,11 +24,18 @@
   + stage dates (board's Considering → Assigned asks too); Competition page stages/tasks/Alt+↑↓/dialogs/R100 banner;
   progress + health on board and list; Competitions → Templates. Seed shows all 5 healths. e2e 5/5, a11y 42/42.
   **Unmet:** verify **183 s vs 120** (pre-M2a Q1).
-- **Next: WP-20b**, then WP-21 (M2), WP-22 · 23 · 24 (M3). Every M2/M3 WP
+- **WP-20b PARTIAL, 8 Oct 2026** (`docs/handoff/WP-20b.md`, 7 step commits): R102–R103 (v1.1.19). Contracts
+  `resources.ts` + shell `OpenRefusal`/`StatPathsResult`; migration 0027 (`resources` + version; stage/task deletes
+  take their resources); `domain/resources/classify.ts`; API `/competitions/:id/resources`, `/resources…`, unaudited
+  check results. Shell `open.rs` + `open_commands.rs`: open/reveal/stat_paths/machine_label, canonical target
+  judged, no new crate, `core:default` kept; 20 `open::` tests (§19 "executables can't be opened"), cargo 106.
+  UI: Resources per competition/stage/task, Open / Show in Explorer / Copy, status lines, web build Copy only.
+  e2e 5/5, a11y 44/44. **Unmet:** manual built-app run **owed** (handoff lists steps); verify **176 s vs 120**.
+- **Next: WP-21** (M2), WP-22 · 23 · 24 (M3). Every M2/M3 WP
   ends with a **UI fault sweep** and carries an in-app guide on each new screen. Send `docs/` back when M3 closes.
 - **Owed live runs:** CTFtime / Devfolio smokes and `unstop:capture` wait on `scraper.contactEmail` (the
   owner's own address, R74); `clist:smoke` waits on U4.
-- Spec: docs/ARCHITECTURE.md **v1.1.18 - ACCEPTED** · roadmap §19 = **50 WPs, 33 done, 17 remaining** ·
+- Spec: docs/ARCHITECTURE.md **v1.1.19 - ACCEPTED** · roadmap §19 = **50 WPs, 34 done, 16 remaining** ·
   ADR-0001...0019 · decisions register docs/DECISIONS.md.
 
 ## Environment facts

@@ -5,7 +5,7 @@ import { signIn, stubShell } from './session.js';
 /**
  * The competitions smoke (WP-19, WP-20a): Discover → A → team → the Hackathon
  * template → review dates → confirm → the competition's page, where ticking a
- * task moves progress → board (Assigned) → "Move to…" Applied → the Team page
+ * task moves progress, a link and a path are attached (WP-20b) → board (Assigned) → "Move to…" Applied → the Team page
  * lists it — on the web
  * build against the real backend. The team and its two students are made by
  * hand first, so the spec stands on its own; everyone is synthetic (D-33).
@@ -76,6 +76,22 @@ test('Discover → A → team → Hackathon template → dates → confirm → t
     .check();
   await expect(progress).not.toHaveAttribute('aria-valuetext', '0%');
   await expect(page.getByRole('button', { name: 'Undo' })).toBeVisible();
+
+  // WP-20b: a link and a path, against the real backend; outside the shell a path is Copy only.
+  const addResource = async (text: string): Promise<void> => {
+    await page.getByRole('button', { name: 'Add a resource to this competition' }).click();
+    const add = page.getByRole('dialog', { name: 'Add a resource to this competition' });
+    await add.getByLabel('Link or path').fill(text);
+    await add.getByRole('button', { name: 'Add', exact: true }).click();
+    await expect(add).toBeHidden();
+  };
+  await addResource('https://github.com/e2e/pipeline.git');
+  const links = page.getByRole('list', { name: 'Resources of this competition' });
+  await expect(links.getByText('e2e/pipeline')).toBeVisible();
+  await expect(links.getByRole('button', { name: 'Open e2e/pipeline' })).toBeVisible();
+  await addResource('C:\\Team\\deck.pdf');
+  await expect(links.getByText(/Opening files needs the CompIntel desktop app/)).toBeVisible();
+  await expect(links.getByRole('button', { name: 'Open deck.pdf' })).toHaveCount(0);
 
   // The board: Assigned, then Move to… Applied.
   await page
