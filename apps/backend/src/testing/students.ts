@@ -15,6 +15,7 @@ import {
   createOutcomesModule,
   type OutcomesModule,
 } from '../modules/outcomes/wiring.js';
+import { createTransferModule, type TransferModule } from '../modules/transfer/wiring.js';
 import { AuditLog } from '../platform/audit.js';
 import { sessionExpired } from '../modules/auth/errors.js';
 import { uuid7 } from '../platform/ids.js';
@@ -47,6 +48,8 @@ export interface StudentsHarness {
   readonly resources: ResourcesModule;
   /** WP-21: outcomes. */
   readonly outcomes: OutcomesModule;
+  /** WP-21: ownership transfer. */
+  readonly transfer: TransferModule;
   readonly audit: AuditLog;
   readonly settings: SettingsStore;
   readonly clock: { now: () => Date; advance(ms: number): void };
@@ -152,6 +155,7 @@ export function openStudentsHarness(startIso = '2026-10-01T04:30:00.000Z'): Stud
       audit,
       clock,
     }),
+    transfer: createTransferModule({ db, audit, clock }),
     audit,
     settings,
     clock,
@@ -199,6 +203,7 @@ export async function startStudentsServer(
     workflows: () => h.workflows,
     resources: () => h.resources,
     outcomes: () => h.outcomes,
+    transfer: () => h.transfer,
   });
 }
 

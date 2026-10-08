@@ -43,6 +43,7 @@ import { TemplatesRepository } from './modules/workflows/templates-repo.js';
 import { createWorkflowsModule } from './modules/workflows/wiring.js';
 import { createResourcesModule } from './modules/resources/wiring.js';
 import { createOutcomeLookup, createOutcomesModule } from './modules/outcomes/wiring.js';
+import { createTransferModule } from './modules/transfer/wiring.js';
 import { EventUserStateService } from './modules/events/user-state.js';
 import { createEventsModule } from './modules/events/wiring.js';
 import { createSearchModule } from './modules/search/wiring.js';
@@ -246,6 +247,8 @@ async function main(): Promise<void> {
       resources: resourcesModule,
       audit,
     });
+    // WP-21: an admin's ownership transfer (R105).
+    const transferModule = createTransferModule({ db, audit });
     const refreshVocabulary = (): void => {
       try {
         searchModule.vocabulary.refresh();
@@ -327,6 +330,7 @@ async function main(): Promise<void> {
       workflows: () => workflowsModule,
       resources: () => resourcesModule,
       outcomes: () => outcomesModule,
+      transfer: () => transferModule,
       onShutdownRequested: () => {
         lifecycle.start('api');
       },
