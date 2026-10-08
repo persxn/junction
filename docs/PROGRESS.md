@@ -21,7 +21,9 @@
   section; `teamMentorUserIds` feeds deactivate. UI: Teams list, Team page (member menu, Undo, typeahead,
   hand-over dialog), form; disabled controls state their reason. `lib/roving-rows.ts` shared J/K.
   e2e 4/4, a11y 33/33. **Unmet:** verify **161 s vs 120** (pre-M2a Q1).
-- **Next: WP-19** (Competitions); then WP-20a · 20b · 21 (M2), WP-22 · 23 · 24 (M3). Every M2/M3 WP
+- **WP-19 STEP 0, 8 Oct 2026:** spec v1.1.17, rulings R96 (competition owns its mentors), R97 (active means
+  open), R98 (assign flow). WP-19 runs in 8 committed steps ("WP-19 (n/8)").
+- **Next: WP-20a** (after WP-19's build); then WP-20b · 21 (M2), WP-22 · 23 · 24 (M3). Every M2/M3 WP
   ends with a **UI fault sweep** and carries an in-app guide on each new screen. Send `docs/` back when M3 closes.
 - **Owed live runs:** CTFtime / Devfolio smokes and `unstop:capture` wait on `scraper.contactEmail` (the
   owner's own address, R74); `clist:smoke` waits on U4.
