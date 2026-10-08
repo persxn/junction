@@ -235,6 +235,15 @@ export const WORKFLOW_ERROR_CODES = [
   'WORKFLOW_ASSIGNEE_NOT_ON_ROSTER',
 ] as const;
 
+/** Resources (WP-20b, R102–R103). */
+export const RESOURCE_ERROR_CODES = [
+  'RESOURCE_NOT_FOUND',
+  /** Not a link or path of the kind given: `javascript:`, `file:`, relative, … */
+  'RESOURCE_INVALID_URI',
+  'RESOURCE_OWNER_NOT_FOUND',
+  'RESOURCE_VERSION_CONFLICT',
+] as const;
+
 /** Database failures the API may surface at request time (WP-04b). */
 export const DB_ERROR_CODES = ['DB_UNAVAILABLE', 'DB_CONSTRAINT_VIOLATED'] as const;
 
@@ -256,6 +265,7 @@ export const ERROR_CODES = [
   ...TEAM_ERROR_CODES,
   ...ENGAGEMENT_ERROR_CODES,
   ...WORKFLOW_ERROR_CODES,
+  ...RESOURCE_ERROR_CODES,
   ...DB_ERROR_CODES,
 ] as const;
 
@@ -277,6 +287,7 @@ export const ERROR_CODE_DOMAINS = [
   'TEAM',
   'ENGAGEMENT',
   'WORKFLOW',
+  'RESOURCE',
   'DB',
 ] as const;
 export type ErrorCodeDomain = (typeof ERROR_CODE_DOMAINS)[number];

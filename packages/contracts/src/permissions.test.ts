@@ -172,6 +172,10 @@ describe('the §10.2 rows that are not a plain yes or no', () => {
     expect(decide(['PROFESSOR'], 'workflow.edit', { isCompetitionMentor: true })).toBe(true);
     expect(decide(['PROFESSOR'], 'workflow.edit', { isTeamMentor: true })).toBe(false);
     expect(decide(['ADMINISTRATOR'], 'workflow.edit', {})).toBe(true);
+    // WP-20b: a competition's resources follow the same rule.
+    expect(decide(['PROFESSOR'], 'resource.edit', { isCompetitionMentor: true })).toBe(true);
+    expect(decide(['PROFESSOR'], 'resource.edit', { isTeamMentor: true })).toBe(false);
+    expect(decide(['ADMINISTRATOR'], 'resource.edit', {})).toBe(true);
     expect(decide(['PROFESSOR'], 'workflow_template.clone')).toBe(true);
     expect(decide(['PROFESSOR'], 'workflow_template.manage_own', { isOwner: true })).toBe(true);
     expect(decide(['PROFESSOR'], 'workflow_template.manage_own', { isOwner: false })).toBe(false);

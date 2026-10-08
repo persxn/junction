@@ -19,6 +19,7 @@ import {
   TEAM_ERROR_CODES,
   ENGAGEMENT_ERROR_CODES,
   WORKFLOW_ERROR_CODES,
+  RESOURCE_ERROR_CODES,
   SETUP_ERROR_CODES,
   SOURCE_ERROR_CODES,
   problemType,
@@ -155,6 +156,10 @@ describe('ErrorCode', () => {
       'WORKFLOW_BLOCKED_REASON_REQUIRED',
       'WORKFLOW_TEMPLATE_READ_ONLY',
       'WORKFLOW_ASSIGNEE_NOT_ON_ROSTER',
+      'RESOURCE_NOT_FOUND',
+      'RESOURCE_INVALID_URI',
+      'RESOURCE_OWNER_NOT_FOUND',
+      'RESOURCE_VERSION_CONFLICT',
       'DB_UNAVAILABLE',
       'DB_CONSTRAINT_VIOLATED',
     ]);
@@ -175,6 +180,7 @@ describe('ErrorCode', () => {
       ...TEAM_ERROR_CODES,
       ...ENGAGEMENT_ERROR_CODES,
       ...WORKFLOW_ERROR_CODES,
+      ...RESOURCE_ERROR_CODES,
       ...DB_ERROR_CODES,
     ]);
   });
@@ -191,6 +197,7 @@ describe('ErrorCode', () => {
     ['TEAM_', TEAM_ERROR_CODES],
     ['ENGAGEMENT_', ENGAGEMENT_ERROR_CODES],
     ['WORKFLOW_', WORKFLOW_ERROR_CODES],
+    ['RESOURCE_', RESOURCE_ERROR_CODES],
     ['DB_', DB_ERROR_CODES],
   ])('prefixes every %s domain code', (prefix, codes) => {
     for (const code of codes) {

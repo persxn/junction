@@ -114,3 +114,64 @@ export const LoopbackResponse = z.object({
   body: z.string(),
 });
 export type LoopbackResponse = z.infer<typeof LoopbackResponse>;
+
+/**
+ * Why the shell will not open a stored path (ruling R102). The shell decides;
+ * these are its reasons, each with the sentence the page shows beside the
+ * path. A refusal that still lets the item be selected in its folder says so.
+ */
+export const OPEN_REFUSALS = [
+  'NOT_ABSOLUTE',
+  'TRAVERSAL',
+  'DEVICE_PATH',
+  'ALTERNATE_STREAM',
+  'TRAILING_DOT_OR_SPACE',
+  'RESERVED_NAME',
+  'NOT_FOUND',
+  'IS_DIRECTORY',
+  'BLOCKED_TYPE',
+  'UNKNOWN_TYPE',
+] as const;
+export const OpenRefusal = z.enum(OPEN_REFUSALS);
+export type OpenRefusal = z.infer<typeof OpenRefusal>;
+
+export const OPEN_REFUSAL_TEXT: Readonly<Record<OpenRefusal, string>> = {
+  NOT_ABSOLUTE: 'Only a full path — a drive letter or a \\\\server\\share — can be opened.',
+  TRAVERSAL: 'A path that steps up with “..” can’t be opened from CompIntel.',
+  DEVICE_PATH: 'Device paths can’t be opened from CompIntel.',
+  ALTERNATE_STREAM: 'That path names a hidden part of a file, so it isn’t opened.',
+  TRAILING_DOT_OR_SPACE: 'A name ending in a dot or a space can’t be opened from CompIntel.',
+  RESERVED_NAME: 'That name is reserved by Windows, so it isn’t opened.',
+  NOT_FOUND: 'Not found on this PC.',
+  IS_DIRECTORY: 'That is a folder — use Show in Explorer.',
+  BLOCKED_TYPE: 'Programs and scripts can’t be opened from CompIntel — use Show in Explorer.',
+  UNKNOWN_TYPE: 'CompIntel opens documents, images and archives only — use Show in Explorer.',
+};
+
+/** What `stat_paths` found for one path, on this PC. */
+export const PATH_STATUSES = ['OK', 'MISSING', 'UNREACHABLE'] as const;
+export const PathStatus = z.enum(PATH_STATUSES);
+export type PathStatus = z.infer<typeof PathStatus>;
+
+/** `stat_paths(paths)` (R102/R103): each probe with the 3 s network timeout. */
+export const StatPathsResult = z.object({
+  /** This PC's name, compared with each resource's `machineLabel`. */
+  machineLabel: z.string().min(1),
+  results: z.array(
+    z.object({
+      path: z.string(),
+      status: PathStatus,
+      /** `open_local_path` would open it; otherwise Show in Explorer only. */
+      openable: z.boolean(),
+      reason: OpenRefusal.nullable(),
+    }),
+  ),
+});
+export type StatPathsResult = z.infer<typeof StatPathsResult>;
+
+/** `open_local_path(path)` and `reveal_path(path)`: done, or why not. */
+export const PathActionResult = z.discriminatedUnion('done', [
+  z.object({ done: z.literal(true) }),
+  z.object({ done: z.literal(false), reason: OpenRefusal }),
+]);
+export type PathActionResult = z.infer<typeof PathActionResult>;

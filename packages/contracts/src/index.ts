@@ -24,6 +24,7 @@ export * from './engagements.js';
 export * from './workflow-enums.js';
 export * from './workflow-templates.js';
 export * from './workflows.js';
+export * from './resources.js';
 export * from './students.js';
 export * from './sources.js';
 export * from './system.js';
