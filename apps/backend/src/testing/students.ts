@@ -10,6 +10,11 @@ import { createTeamsModule, type TeamsModule } from '../modules/teams/wiring.js'
 import { createEngagementsModule, type EngagementsModule } from '../modules/engagements/wiring.js';
 import { createWorkflowsModule, type WorkflowsModule } from '../modules/workflows/wiring.js';
 import { createResourcesModule, type ResourcesModule } from '../modules/resources/wiring.js';
+import {
+  createOutcomeLookup,
+  createOutcomesModule,
+  type OutcomesModule,
+} from '../modules/outcomes/wiring.js';
 import { AuditLog } from '../platform/audit.js';
 import { sessionExpired } from '../modules/auth/errors.js';
 import { uuid7 } from '../platform/ids.js';
@@ -40,6 +45,8 @@ export interface StudentsHarness {
   readonly workflows: WorkflowsModule;
   /** WP-20b: resources. */
   readonly resources: ResourcesModule;
+  /** WP-21: outcomes. */
+  readonly outcomes: OutcomesModule;
   readonly audit: AuditLog;
   readonly settings: SettingsStore;
   readonly clock: { now: () => Date; advance(ms: number): void };
@@ -121,12 +128,15 @@ export function openStudentsHarness(startIso = '2026-10-01T04:30:00.000Z'): Stud
   const teams = createTeamsModule({ db, audit, clock });
   const workflows = createWorkflowsModule({ db, audit, clock });
   workflows.templatesRepository.ensureSeeded(at);
+  const resources = createResourcesModule({ db, audit, clock });
+  const outcomes = createOutcomeLookup(db, resources);
   const competitions = createEngagementsModule({
     db,
     audit,
     clock,
     onAssigned: [workflows.copier.onAssigned],
     summaries: (rows) => workflows.reader.summaries(rows),
+    outcomes: outcomes.lookup,
   });
   return {
     database,
@@ -134,7 +144,14 @@ export function openStudentsHarness(startIso = '2026-10-01T04:30:00.000Z'): Stud
     teams,
     competitions,
     workflows,
-    resources: createResourcesModule({ db, audit, clock }),
+    resources,
+    outcomes: createOutcomesModule({
+      repository: outcomes.repository,
+      competitions,
+      resources,
+      audit,
+      clock,
+    }),
     audit,
     settings,
     clock,
@@ -181,6 +198,7 @@ export async function startStudentsServer(
     competitions: () => h.competitions,
     workflows: () => h.workflows,
     resources: () => h.resources,
+    outcomes: () => h.outcomes,
   });
 }
 

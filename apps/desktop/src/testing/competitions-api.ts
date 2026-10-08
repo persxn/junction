@@ -74,6 +74,8 @@ export function makeCompetition(
     progress: null,
     health: null,
     healthReason: null,
+    result: null,
+    outcome: null,
     can: { edit: true, manageMentors: true },
     version: 1,
     roster: [],
@@ -148,6 +150,7 @@ const problem = (status: number, code: string, detail: string, extra: object = {
   });
 
 const listItem = ({
+  outcome: _o,
   roster: _r,
   pastRoster: _p,
   mentors: _m,

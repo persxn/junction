@@ -42,6 +42,7 @@ import { createEngagementsModule } from './modules/engagements/wiring.js';
 import { TemplatesRepository } from './modules/workflows/templates-repo.js';
 import { createWorkflowsModule } from './modules/workflows/wiring.js';
 import { createResourcesModule } from './modules/resources/wiring.js';
+import { createOutcomeLookup, createOutcomesModule } from './modules/outcomes/wiring.js';
 import { EventUserStateService } from './modules/events/user-state.js';
 import { createEventsModule } from './modules/events/wiring.js';
 import { createSearchModule } from './modules/search/wiring.js';
@@ -227,15 +228,24 @@ async function main(): Promise<void> {
     // and the workflow copied in as a competition enters ASSIGNED.
     const workflowsModule = createWorkflowsModule({ db, audit });
     workflowsModule.templatesRepository.ensureSeeded(Date.now());
+    // WP-20b: references attached to a competition, its stages, tasks and outcome.
+    const resourcesModule = createResourcesModule({ db, audit });
+    // WP-21: outcomes — read by the competitions module, written through it.
+    const outcomes = createOutcomeLookup(db, resourcesModule);
     // WP-19: competitions, with WP-20a's copy-on-assign and progress/health.
     const competitionsModule = createEngagementsModule({
       db,
       audit,
       onAssigned: [workflowsModule.copier.onAssigned],
       summaries: (rows) => workflowsModule.reader.summaries(rows),
+      outcomes: outcomes.lookup,
     });
-    // WP-20b: references attached to a competition, its stages, tasks and outcome.
-    const resourcesModule = createResourcesModule({ db, audit });
+    const outcomesModule = createOutcomesModule({
+      repository: outcomes.repository,
+      competitions: competitionsModule,
+      resources: resourcesModule,
+      audit,
+    });
     const refreshVocabulary = (): void => {
       try {
         searchModule.vocabulary.refresh();
@@ -316,6 +326,7 @@ async function main(): Promise<void> {
       competitions: () => competitionsModule,
       workflows: () => workflowsModule,
       resources: () => resourcesModule,
+      outcomes: () => outcomesModule,
       onShutdownRequested: () => {
         lifecycle.start('api');
       },

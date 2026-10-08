@@ -5,6 +5,7 @@ import { Cancellation, DeadlineKind } from './events.js';
 import { EngagementStatus, ParticipantKind } from './engagement-status.js';
 import { Uuid7 } from './ids.js';
 import { StudentStatus } from './student-status.js';
+import { OutcomeResult, OutcomeView } from './outcomes.js';
 import { MentorRole, TeamPerson } from './teams.js';
 import { ScheduleHealth, WorkflowChoice } from './workflow-enums.js';
 
@@ -154,6 +155,8 @@ export const CompetitionListItem = z
     /** WP-20a: R99's schedule health; null while Considering and once closed. */
     health: ScheduleHealth.nullable(),
     healthReason: z.string().nullable(),
+    /** WP-21: the recorded result, for the board's Completed cards (R104). */
+    result: OutcomeResult.nullable(),
     can: CompetitionAbilities,
     version: Version,
   })
@@ -161,6 +164,8 @@ export const CompetitionListItem = z
 export type CompetitionListItem = z.infer<typeof CompetitionListItem>;
 
 export const CompetitionDetail = CompetitionListItem.extend({
+  /** WP-21: the outcome, once recorded (R104). */
+  outcome: OutcomeView.nullable(),
   roster: z.array(CompetitionParticipant),
   pastRoster: z.array(CompetitionParticipant),
   mentors: z.array(CompetitionMentor),

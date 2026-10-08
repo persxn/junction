@@ -8,6 +8,8 @@ import {
   type CompetitionMentor,
   type CompetitionParticipant,
   type EngagementStatus,
+  type OutcomeResult,
+  type OutcomeView,
   type OwnershipFacts,
   type ScheduleHealth,
   type WorkflowChoice,
@@ -51,6 +53,12 @@ export type WorkflowSummaries = (
   competitions: readonly { readonly id: string; readonly status: EngagementStatus }[],
 ) => ReadonlyMap<string, WorkflowSummary>;
 
+/** WP-21: the outcomes module's answers, for the list's result and the page's panel. */
+export interface OutcomeLookup {
+  readonly results: (ids: readonly string[]) => ReadonlyMap<string, OutcomeResult>;
+  readonly view: (id: string) => OutcomeView | null;
+}
+
 /** What every competitions service holds. */
 export interface EngagementsDependencies {
   readonly engagements: EngagementsRepository;
@@ -59,6 +67,7 @@ export interface EngagementsDependencies {
   readonly audit: AuditLog;
   readonly onAssigned: readonly OnAssignedHook[];
   readonly summaries?: WorkflowSummaries;
+  readonly outcomes?: OutcomeLookup;
   readonly clock?: Clock;
 }
 
@@ -177,6 +186,8 @@ export class EngagementReader {
       nowMs(this.#clock),
     );
     const summaries = this.#deps.summaries?.(rows) ?? new Map<string, WorkflowSummary>();
+    const results =
+      this.#deps.outcomes?.results(rows.map((row) => row.id)) ?? new Map<string, OutcomeResult>();
     return rows.flatMap((row) => {
       const event = events.get(row.eventId);
       if (event === undefined) return [];
@@ -211,6 +222,7 @@ export class EngagementReader {
           progress: summaries.get(row.id)?.progress ?? null,
           health: summaries.get(row.id)?.health ?? null,
           healthReason: summaries.get(row.id)?.healthReason ?? null,
+          result: results.get(row.id) ?? null,
           can: {
             edit: editable && can(actor, 'competition.edit', facts),
             manageMentors: editable && can(actor, 'competition.manage_mentors', facts),
@@ -229,6 +241,7 @@ export class EngagementReader {
     const mentors = this.#deps.engagements.mentors([id]);
     return {
       ...item,
+      outcome: this.#deps.outcomes?.view(id) ?? null,
       roster: participants.filter((p) => p.removedAt === null).map(toParticipant),
       pastRoster: participants.filter((p) => p.removedAt !== null).map(toParticipant),
       mentors: mentors.filter((m) => m.toAt === null).map(toMentor),
