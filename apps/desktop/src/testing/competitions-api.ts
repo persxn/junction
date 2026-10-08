@@ -13,6 +13,7 @@ import { vi } from 'vitest';
 
 import { TEST_USER } from './auth.js';
 import { PROFESSORS } from './teams-api.js';
+import { installOutcomesApi, type OutcomesApi } from './outcomes-api.js';
 import { installResourcesApi, type ResourcesApi } from './resources-api.js';
 import { installWorkflowsApi, type WorkflowsApi } from './workflows-api.js';
 
@@ -128,6 +129,8 @@ export interface CompetitionsApi {
   readonly workflows: WorkflowsApi;
   /** WP-20b's resources, answered in front of both. */
   readonly resources: ResourcesApi;
+  /** WP-21's outcomes and student histories. */
+  readonly outcomes: OutcomesApi;
 }
 
 function respond(status: number, body: unknown): Response {
@@ -384,5 +387,6 @@ export function installCompetitionsApi(options: CompetitionsApiOptions = {}): Co
     }),
   );
   const workflows = installWorkflowsApi({ competitions });
-  return { competitions, calls, workflows, resources: installResourcesApi() };
+  const outcomes = installOutcomesApi(competitions);
+  return { competitions, calls, workflows, outcomes, resources: installResourcesApi() };
 }

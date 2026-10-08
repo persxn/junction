@@ -4,6 +4,7 @@ import { useRovingRows } from '../../lib/roving-rows.js';
 import { EVENT_TYPE_LABELS } from '../discover/labels.js';
 import { whoOf } from './board-model.js';
 import { CompetitionStatus, KIND_LABELS } from './labels.js';
+import { OutcomeBadge } from '../outcomes/OutcomeBadge.js';
 import { ProgressHealth } from '../workflows/ProgressHealth.js';
 import { NextDeadline } from './NextDeadline.js';
 
@@ -65,6 +66,11 @@ export function CompetitionTable({ items, now, onOpen }: CompetitionTableProps):
             </td>
             <td className="py-2">
               <CompetitionStatus status={item.status} />
+              {item.result !== null && (
+                <span className="block text-xs">
+                  <OutcomeBadge result={item.result} />
+                </span>
+              )}
             </td>
           </tr>
         ))}

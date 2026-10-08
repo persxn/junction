@@ -1,7 +1,7 @@
 import { ENGAGEMENT_STATUS_LABELS, type CompetitionDetail } from '@compintel/contracts';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from '@tanstack/react-router';
-import { ArrowLeft, CircleAlert, Medal, Trophy } from 'lucide-react';
+import { ArrowLeft, CircleAlert, Trophy } from 'lucide-react';
 import { useState } from 'react';
 
 import { getCompetition, updateCompetitionNotes } from '../../api/competitions.js';
@@ -12,6 +12,7 @@ import { Skeleton } from '../../components/Skeleton.js';
 import { useNow } from '../../lib/use-now.js';
 import { useBackendConnection } from '../../shell/connection-context.js';
 import { DEFAULT_SEARCH } from '../discover/search-state.js';
+import { OutcomePanel } from '../outcomes/OutcomePanel.js';
 import { CompetitionResources } from '../resources/CompetitionResources.js';
 import { ResourcesScope } from '../resources/ResourcesScope.js';
 import { WorkflowSection } from '../workflows/WorkflowSection.js';
@@ -29,29 +30,9 @@ import { useCompetitionWrites } from './use-competition-writes.js';
 /**
  * The Competition page (§16.2, WP-19 step 6): who is taking part in which
  * event, the status with "Move to…", the history in words, the roster, the
- * mentors and notes; WP-20a's stages, tasks, progress and health. Outcome is
- * WP-21's; until then its panel says what will fill it.
+ * mentors and notes; WP-20a's stages, tasks, progress and health; WP-20b's
+ * resources; WP-21's outcome.
  */
-
-function Later(props: {
-  readonly id: string;
-  readonly title: string;
-  readonly text: string;
-  readonly icon: typeof Trophy;
-}): React.JSX.Element {
-  const Icon = props.icon;
-  return (
-    <section aria-labelledby={props.id} className="flex flex-col gap-2">
-      <h2 id={props.id} className="text-md">
-        {props.title}
-      </h2>
-      <p className="flex items-start gap-2 rounded-md border border-dashed border-line p-3 text-sm text-fg-muted">
-        <Icon aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-        {props.text}
-      </p>
-    </section>
-  );
-}
 
 function History({ competition }: { readonly competition: CompetitionDetail }): React.JSX.Element {
   return (
@@ -253,13 +234,8 @@ export function CompetitionPage(): React.JSX.Element {
       <ResourcesScope competitionId={data.id}>
         <WorkflowSection competitionId={data.id} status={data.status} />
         <CompetitionResources competitionId={data.id} />
+        <OutcomePanel competition={data} />
       </ResourcesScope>
-      <Later
-        id="outcome-heading"
-        title="Outcome"
-        icon={Medal}
-        text="No outcome recorded. Once the competition is completed, its result is recorded here."
-      />
       {actions.dialog}
     </article>
   );
