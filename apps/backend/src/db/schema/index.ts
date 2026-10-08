@@ -13,3 +13,4 @@ export * from './search.js';
 export * from './sources.js';
 export * from './students.js';
 export * from './teams.js';
+export * from './workflows.js';
