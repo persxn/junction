@@ -17,6 +17,9 @@ import {
 } from '../modules/outcomes/wiring.js';
 import { createTransferModule, type TransferModule } from '../modules/transfer/wiring.js';
 import { createDeadlinesModule, type DeadlinesModule } from '../modules/deadlines/wiring.js';
+import { KpiService } from '../modules/dashboard/kpis.js';
+import { EventsRepository } from '../modules/events/repository.js';
+import { createSearchModule, type SearchModule } from '../modules/search/wiring.js';
 import { AuditLog } from '../platform/audit.js';
 import { sessionExpired } from '../modules/auth/errors.js';
 import { uuid7 } from '../platform/ids.js';
@@ -53,6 +56,9 @@ export interface StudentsHarness {
   readonly transfer: TransferModule;
   /** WP-22: deadlines. */
   readonly deadlines: DeadlinesModule;
+  /** WP-22: search (for the Discover KPIs) and the KPI strip. */
+  readonly search: SearchModule;
+  readonly kpis: KpiService;
   readonly audit: AuditLog;
   readonly settings: SettingsStore;
   readonly clock: { now: () => Date; advance(ms: number): void };
@@ -135,6 +141,14 @@ export function openStudentsHarness(startIso = '2026-10-01T04:30:00.000Z'): Stud
   const workflows = createWorkflowsModule({ db, audit, clock });
   workflows.templatesRepository.ensureSeeded(at);
   const resources = createResourcesModule({ db, audit, clock });
+  const deadlines = createDeadlinesModule({ db, clock });
+  const search = createSearchModule({
+    db,
+    audit,
+    events: new EventsRepository(db),
+    clock,
+    settings,
+  });
   const outcomes = createOutcomeLookup(db, resources);
   const competitions = createEngagementsModule({
     db,
@@ -159,7 +173,14 @@ export function openStudentsHarness(startIso = '2026-10-01T04:30:00.000Z'): Stud
       clock,
     }),
     transfer: createTransferModule({ db, audit, clock }),
-    deadlines: createDeadlinesModule({ db, clock }),
+    deadlines,
+    search,
+    kpis: new KpiService({
+      search: () => search,
+      competitions: () => competitions,
+      deadlines: () => deadlines,
+      clock,
+    }),
     audit,
     settings,
     clock,
@@ -209,6 +230,8 @@ export async function startStudentsServer(
     outcomes: () => h.outcomes,
     transfer: () => h.transfer,
     deadlines: () => h.deadlines,
+    search: () => h.search,
+    kpis: () => h.kpis,
   });
 }
 

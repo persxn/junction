@@ -47,6 +47,7 @@ import { resourcesRoutes } from './routes/resources.js';
 import { outcomesRoutes } from './routes/outcomes.js';
 import { transferRoutes } from './routes/transfer.js';
 import { deadlinesRoutes } from './routes/deadlines.js';
+import { dashboardRoutes } from './routes/dashboard.js';
 import type { StudentsModule } from './modules/students/wiring.js';
 import type { TeamsModule } from './modules/teams/wiring.js';
 import type { EngagementsModule } from './modules/engagements/wiring.js';
@@ -55,6 +56,7 @@ import type { ResourcesModule } from './modules/resources/wiring.js';
 import type { OutcomesModule } from './modules/outcomes/wiring.js';
 import type { TransferModule } from './modules/transfer/wiring.js';
 import type { DeadlinesModule } from './modules/deadlines/wiring.js';
+import type { KpiService } from './modules/dashboard/kpis.js';
 import { systemClock, type Clock } from './platform/time.js';
 
 /** Request bodies larger than this are rejected before they are parsed. */
@@ -122,6 +124,8 @@ export interface BuildAppOptions {
   readonly transfer?: () => TransferModule | undefined;
   /** WP-22's deadline read model. */
   readonly deadlines?: () => DeadlinesModule | undefined;
+  /** WP-22's KPI strip. */
+  readonly kpis?: () => KpiService | undefined;
   /** Shared so jobs and services can publish; one hub per process (R36). */
   readonly streamHub?: StreamHub;
   /** Injected in tests so a heartbeat does not take fifteen real seconds. */
@@ -241,6 +245,9 @@ export function buildApp(
     prefix: API_PREFIX,
   });
   void server.register(deadlinesRoutes({ deadlines: options.deadlines ?? (() => undefined) }), {
+    prefix: API_PREFIX,
+  });
+  void server.register(dashboardRoutes({ kpis: options.kpis ?? (() => undefined) }), {
     prefix: API_PREFIX,
   });
   void server.register(

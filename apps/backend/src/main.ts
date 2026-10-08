@@ -45,6 +45,7 @@ import { createResourcesModule } from './modules/resources/wiring.js';
 import { createOutcomeLookup, createOutcomesModule } from './modules/outcomes/wiring.js';
 import { createTransferModule } from './modules/transfer/wiring.js';
 import { createDeadlinesModule } from './modules/deadlines/wiring.js';
+import { KpiService } from './modules/dashboard/kpis.js';
 import { EventUserStateService } from './modules/events/user-state.js';
 import { createEventsModule } from './modules/events/wiring.js';
 import { createSearchModule } from './modules/search/wiring.js';
@@ -252,6 +253,12 @@ async function main(): Promise<void> {
     const transferModule = createTransferModule({ db, audit });
     // WP-22: the deadline read model (v_deadlines) for the Radar, KPIs and evaluator.
     const deadlinesModule = createDeadlinesModule({ db });
+    // WP-22: each KPI is its list's own total (R107).
+    const kpis = new KpiService({
+      search: () => searchModule,
+      competitions: () => competitionsModule,
+      deadlines: () => deadlinesModule,
+    });
     const refreshVocabulary = (): void => {
       try {
         searchModule.vocabulary.refresh();
@@ -335,6 +342,7 @@ async function main(): Promise<void> {
       outcomes: () => outcomesModule,
       transfer: () => transferModule,
       deadlines: () => deadlinesModule,
+      kpis: () => kpis,
       onShutdownRequested: () => {
         lifecycle.start('api');
       },
