@@ -1,7 +1,9 @@
 import { AuthRepository } from '../modules/auth/repository.js';
 import type { Principal } from '../modules/auth/types.js';
 import { createStudentsModule } from '../modules/students/wiring.js';
+import { createEngagementsModule } from '../modules/engagements/wiring.js';
 import { createTeamsModule } from '../modules/teams/wiring.js';
+import { seedDemoCompetitions } from './competitions-demo.js';
 import { AuditLog } from '../platform/audit.js';
 import type { DatabaseHandle } from '../platform/db.js';
 import { SettingsStore } from '../platform/settings.js';
@@ -28,6 +30,8 @@ export interface DemoStudentsSeed {
   readonly students: number;
   /** WP-18: 12 teams over them. */
   readonly teams: number;
+  /** WP-19: 20 competitions over the teams, students and events (none without events). */
+  readonly competitions: number;
   readonly professorId: string;
 }
 
@@ -52,7 +56,33 @@ export function seedDemoStudentsInto(db: DatabaseHandle): DemoStudentsSeed {
     db.raw.prepare('SELECT id FROM students ORDER BY university_id_key').all() as { id: string }[]
   ).map((student) => student.id);
   const teams = seedDemoTeams(createTeamsModule({ db, audit }), ids, professor, coMentor);
-  return { students, teams, professorId: professor.id };
+  const teamIds = (
+    db.raw.prepare('SELECT id FROM teams ORDER BY name_key').all() as { id: string }[]
+  ).map((team) => team.id);
+  const loneStudentIds = (
+    db.raw
+      .prepare(
+        `SELECT s.id FROM students s WHERE s.status = 'ACTIVE' AND NOT EXISTS
+           (SELECT 1 FROM team_members m WHERE m.student_id = s.id AND m.left_at IS NULL)
+         ORDER BY s.university_id_key`,
+      )
+      .all() as { id: string }[]
+  ).map((student) => student.id);
+  const eventIds = (
+    db.raw
+      .prepare(
+        `SELECT id FROM events WHERE visibility = 'VISIBLE' AND cancellation = 'NONE'
+         ORDER BY coalesce(registration_deadline_at, starts_at, 0) DESC, id LIMIT 20`,
+      )
+      .all() as { id: string }[]
+  ).map((event) => event.id);
+  const competitions = seedDemoCompetitions(createEngagementsModule({ db, audit }), {
+    teamIds,
+    loneStudentIds,
+    eventIds,
+    professor,
+  });
+  return { students, teams, competitions, professorId: professor.id };
 }
 
 /** A professor nobody can sign in as: no password verifies against the placeholder. */

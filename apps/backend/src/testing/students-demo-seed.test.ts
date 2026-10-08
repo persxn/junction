@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { verifyPassword } from '../modules/auth/password.js';
 import { openMigratedDatabase, type MigratedDatabase } from './database.js';
+import { makeEvent } from './competitions.js';
 import { DEMO_PROFESSOR_EMAIL, seedDemoStudentsInto } from './students-demo-seed.js';
 import { openStudentsHarness, type StudentsHarness } from './students.js';
 
@@ -74,6 +75,38 @@ describe('seedDemoStudentsInto', () => {
     expect(totals.covered).toBeGreaterThan(0);
     expect(totals.thin).toBeGreaterThan(0);
     expect(totals.missing).toBe(12);
+  });
+
+  it('adds 20 competitions with every status, once events exist (WP-19)', () => {
+    harness = openStudentsHarness();
+    const h = harness;
+    for (let n = 0; n < 12; n += 1) makeEvent(h);
+    const seeded = seedDemoStudentsInto(h.database.db);
+    expect(seeded.competitions).toBe(20);
+    const statuses = h.database.db.raw
+      .prepare('SELECT DISTINCT status FROM engagements ORDER BY status')
+      .all() as { status: string }[];
+    expect(statuses.map((row) => row.status)).toEqual([
+      'APPLIED',
+      'ASSIGNED',
+      'COMPLETED',
+      'CONSIDERING',
+      'NOT_SELECTED',
+      'PARTICIPATING',
+      'WITHDRAWN',
+    ]);
+    const kinds = h.database.db.raw
+      .prepare('SELECT participant_kind AS kind, count(*) AS n FROM engagements GROUP BY kind')
+      .all() as { kind: string; n: number }[];
+    expect(kinds).toEqual([
+      { kind: 'INDIVIDUAL', n: 8 },
+      { kind: 'TEAM', n: 12 },
+    ]);
+  });
+
+  it('adds no competitions to a database without events', () => {
+    harness = openStudentsHarness();
+    expect(seedDemoStudentsInto(harness.database.db).competitions).toBe(0);
   });
 
   it('refuses a database that already holds students', () => {
