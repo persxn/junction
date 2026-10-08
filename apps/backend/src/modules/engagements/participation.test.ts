@@ -4,7 +4,7 @@ import type {
   StudentDetail,
   TeamDetail,
 } from '@compintel/contracts';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
   assign,
@@ -33,11 +33,13 @@ import { getTeam } from '../../testing/teams.js';
 
 let h: StudentsHarness;
 let server: TestServer;
-beforeEach(async () => {
+// One database and server per file: every test makes its own events, students
+// and uniquely named teams, so they cannot see each other (R89's time budget).
+beforeAll(async () => {
   h = openStudentsHarness();
   server = await startStudentsServer(h);
 });
-afterEach(async () => {
+afterAll(async () => {
   await server.close();
   h.close();
 });

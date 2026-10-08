@@ -64,9 +64,14 @@ test('add a student → import a CSV with one bad row → commit', async ({ page
   await expect(page.getByRole('heading', { name: 'Import finished' })).toBeVisible();
   await expect(page.getByText('2 new students added')).toBeVisible();
 
+  // The specs share one backend and run in file order, so other specs' students
+  // may be here too (WP-19's competitions spec adds two): look for ours by name.
   await page.getByRole('link', { name: 'See the students' }).click();
-  await expect(page.getByText('3 students.')).toBeVisible();
-  await expect(page.getByRole('cell', { name: /Kavya E2E/ })).toBeVisible();
+  await expect(page.getByText(/^\d+ students\.$/)).toBeVisible();
+  for (const name of [/Kavya E2E/, /Rohan E2E/, /Manual E2E/]) {
+    await expect(page.getByRole('cell', { name })).toBeVisible();
+  }
   await page.getByRole('button', { name: 'My students' }).click();
-  await expect(page.getByText('3 students match these filters.')).toBeVisible();
+  await expect(page.getByText(/^\d+ students match these filters\.$/)).toBeVisible();
+  await expect(page.getByRole('cell', { name: /Kavya E2E/ })).toBeVisible();
 });

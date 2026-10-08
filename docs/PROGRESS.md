@@ -21,13 +21,17 @@
   section; `teamMentorUserIds` feeds deactivate. UI: Teams list, Team page (member menu, Undo, typeahead,
   hand-over dialog), form; disabled controls state their reason. `lib/roving-rows.ts` shared J/K.
   e2e 4/4, a11y 33/33. **Unmet:** verify **161 s vs 120** (pre-M2a Q1).
-- **WP-19 STEP 0, 8 Oct 2026:** spec v1.1.17, rulings R96 (competition owns its mentors), R97 (active means
-  open), R98 (assign flow). WP-19 runs in 8 committed steps ("WP-19 (n/8)").
-- **Next: WP-20a** (after WP-19's build); then WP-20b · 21 (M2), WP-22 · 23 · 24 (M3). Every M2/M3 WP
+- **WP-19 done, 8 Oct 2026** (`docs/handoff/WP-19.md`, 8 step commits): R96–R98. Contracts `engagements.ts` +
+  `engagement-status.ts`; migration 0025; `domain/engagements`; `/api/v1/competitions` (assign preview/assign,
+  transitions with history + audit, roster, mentors, notes, `onAssigned` hook seam for WP-20a); team archive refuses
+  open competitions; Team/Student pages list them; seed adds 20. UI: assign dialog from `assign/steps.ts` (card, A,
+  drawer), pipeline board (drag, M menu, arrows, Undo only Considering ↔ Assigned), list, Competition page. Both
+  §19 ACs green; e2e 5/5; a11y 37/37. **Unmet:** verify **186 s vs 120** (pre-M2a Q1).
+- **Next: WP-20a**; then WP-20b · 21 (M2), WP-22 · 23 · 24 (M3). Every M2/M3 WP
   ends with a **UI fault sweep** and carries an in-app guide on each new screen. Send `docs/` back when M3 closes.
 - **Owed live runs:** CTFtime / Devfolio smokes and `unstop:capture` wait on `scraper.contactEmail` (the
   owner's own address, R74); `clist:smoke` waits on U4.
-- Spec: docs/ARCHITECTURE.md **v1.1.16 - ACCEPTED** · roadmap §19 = **50 WPs, 31 done, 19 remaining** ·
+- Spec: docs/ARCHITECTURE.md **v1.1.16 - ACCEPTED** · roadmap §19 = **50 WPs, 32 done, 18 remaining** ·
   ADR-0001...0019 · decisions register docs/DECISIONS.md.
 
 ## Environment facts

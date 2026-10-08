@@ -78,6 +78,10 @@ describe('the pipeline board', () => {
     await user.keyboard('{ArrowDown}{Enter}');
     expect(await screen.findByText('Team Rocket moved to Considering.')).toBeInTheDocument();
     expect(within(column(/^Considering/)).getByText('Alpha Hack')).toBeInTheDocument();
+    // Focus follows the card into its new column (sweep fault 2).
+    await waitFor(() => {
+      expect(card('Alpha Hack')).toHaveFocus();
+    });
     await user.click(await screen.findByRole('button', { name: 'Undo' }));
     await waitFor(() => {
       expect(api.competitions.get(ASSIGNED.id)?.status).toBe('ASSIGNED');

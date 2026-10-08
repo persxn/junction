@@ -4,7 +4,7 @@ import {
   type CompetitionDetail,
   type EngagementStatus,
 } from '@compintel/contracts';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import {
   assigned,
@@ -30,12 +30,16 @@ import {
 
 let h: StudentsHarness;
 let server: TestServer;
-beforeEach(async () => {
+// One database and server per file: every test makes its own events, students
+// and uniquely named teams, so they cannot see each other (R89's time budget).
+beforeAll(async () => {
   h = openStudentsHarness();
   server = await startStudentsServer(h);
 });
-afterEach(async () => {
+afterEach(() => {
   vi.restoreAllMocks();
+});
+afterAll(async () => {
   await server.close();
   h.close();
 });

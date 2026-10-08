@@ -2,7 +2,7 @@ import type { InitialStatus } from '@compintel/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { ArrowLeft, ArrowRight, Lightbulb, UserPlus } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { assignCompetition } from '../../../api/competitions.js';
 import { isApiProblem } from '../../../api/problem.js';
@@ -44,6 +44,15 @@ export function AssignDialog({
   const [draft, setDraft] = useState<AssignDraft>(() => emptyDraft(event.id, event.title));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
+  // The button that moved the user on is gone on the next step (Next becomes
+  // Assign), so focus goes to the new step's heading — inside the dialog,
+  // where Tab can find the rest. Not on the first step: the dialog focuses that.
+  const heading = useRef<HTMLHeadingElement>(null);
+  const moved = useRef(false);
+  useEffect(() => {
+    if (moved.current) heading.current?.focus();
+    moved.current = true;
+  }, [index]);
   const step = steps[index];
   if (step === undefined) throw new Error('the assign flow has no steps');
   const last = index === steps.length - 1;
@@ -93,9 +102,9 @@ export function AssignDialog({
   return (
     <Dialog title={`Assign “${event.title}”`} onClose={onClose} width="max-w-xl">
       <div className="flex flex-col gap-4">
-        <p className="text-sm text-fg-muted">
+        <h3 ref={heading} tabIndex={-1} className="text-sm font-normal text-fg-muted outline-none">
           <span className="font-medium text-fg">{stepLabel(index, steps)}</span> — {step.title}
-        </p>
+        </h3>
         <ol aria-label="Steps" className="flex gap-2 text-xs text-fg-muted">
           {steps.map((item, position) => (
             <li

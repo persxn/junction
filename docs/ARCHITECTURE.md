@@ -1461,8 +1461,8 @@ milestone. Letter suffixes (03a/03b…) are splits recommended by the WP-01 revi
 | pre-M2b | Ingestion & search corrections: R75, R77, R79–R82, R85, R87, R88, `recurringOnly`, small corrections, owed live runs | Every correction has a named test; perf scenario within budget; owed runs run or listed | done (PARTIAL) · `M2/pre-M2b.md` |
 | WP-17 | Students: CRUD, tags, mentorships, deactivate, CSV/XLSX import with validation preview | Import 500 rows with per-row errors | done · `M2/WP-17.md` |
 | WP-18 | Teams: members (roles, lead), mentors (primary/co), skill coverage | Student in 3 teams works | done · `M2/WP-18.md` |
-| WP-19 | Competitions: statuses + history, roster, assign flow, pipeline board | Invalid transitions rejected; one active participation per student per event | **NEXT** · `M2/WP-19.md` |
-| WP-20a | Workflows: seeded templates, copy-on-assign, stages CRUD/reorder, tasks, progress & schedule health | Progress precedence tests (§11) | released · `M2/WP-20a.md` |
+| WP-19 | Competitions: statuses + history, roster, assign flow, pipeline board | Invalid transitions rejected; one active participation per student per event | done · `M2/WP-19.md` |
+| WP-20a | Workflows: seeded templates, copy-on-assign, stages CRUD/reorder, tasks, progress & schedule health | Progress precedence tests (§11) | **NEXT** · `M2/WP-20a.md` |
 | WP-20b | Resources + open allowlist (shell-side path checks) | Executables can't be opened | released · `M2/WP-20b.md` |
 | WP-21 | Outcomes, ownership transfer, student history | Transfer preserves history; audit complete | released · `M2/WP-21.md` |
 

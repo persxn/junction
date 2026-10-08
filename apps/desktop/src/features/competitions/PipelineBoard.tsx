@@ -4,7 +4,7 @@ import {
   type EngagementStatus,
 } from '@compintel/contracts';
 import { Ban, CircleAlert } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { canDrop, columnsOf, movedText, whoOf } from './board-model.js';
 import { statusIcon } from './labels.js';
@@ -41,6 +41,17 @@ export function PipelineBoard({
   const [announcement, setAnnouncement] = useState('');
   const cards = useRef(new Map<string, HTMLElement>());
   const menus = useRef(new Map<string, MoveMenuHandle>());
+  // A moved card is a new element in another column; focus follows it there.
+  const refocus = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const id = refocus.current;
+    if (id === undefined) return;
+    const element = cards.current.get(id);
+    if (element !== undefined && document.activeElement !== element) {
+      element.focus();
+      refocus.current = undefined;
+    }
+  }, [items]);
   const tabStop = focusedId ?? columns.find((column) => column.items.length > 0)?.items[0]?.id;
 
   const focus = (id: string | undefined): void => {
@@ -200,8 +211,8 @@ export function PipelineBoard({
                           status={item.status}
                           disabled={!item.can.edit}
                           onMove={(to) => {
+                            refocus.current = item.id;
                             move(item, to);
-                            cards.current.get(item.id)?.focus();
                           }}
                         />
                       </div>
