@@ -12,6 +12,8 @@ import {
   ruleSatisfied,
   canDeactivateStudent,
   isSelf,
+  isEngagementMentor,
+  isEngagementPrimaryMentor,
   isTeamMentor,
   isTeamPrimaryMentor,
   type Action,
@@ -36,7 +38,16 @@ const FACT_SETS: readonly (OwnershipFacts | undefined)[] = [
   { isTeamMentor: true },
   { isTeamPrimaryMentor: true },
   { isStudentMentor: true },
-  { isOwner: true, isTeamMentor: true, isTeamPrimaryMentor: true, isStudentMentor: true },
+  { isCompetitionMentor: true },
+  { isCompetitionPrimaryMentor: true },
+  {
+    isOwner: true,
+    isTeamMentor: true,
+    isTeamPrimaryMentor: true,
+    isStudentMentor: true,
+    isCompetitionMentor: true,
+    isCompetitionPrimaryMentor: true,
+  },
 ];
 
 /** What each rule is meant to answer for a given set of facts. */
@@ -54,6 +65,10 @@ function expectedFor(rule: OwnershipRule, facts: OwnershipFacts | undefined): bo
       return facts?.isTeamPrimaryMentor === true;
     case 'STUDENT_MENTOR':
       return facts?.isStudentMentor === true;
+    case 'COMPETITION_MENTOR':
+      return facts?.isCompetitionMentor === true || facts?.isCompetitionPrimaryMentor === true;
+    case 'COMPETITION_PRIMARY_MENTOR':
+      return facts?.isCompetitionPrimaryMentor === true;
   }
 }
 
@@ -134,6 +149,30 @@ describe('the §10.2 rows that are not a plain yes or no', () => {
     expect(decide(['PROFESSOR'], 'team.create', facts('x-1'))).toBe(true);
     expect(decide(['ADMINISTRATOR'], 'team.transfer_primary', facts('x-1'))).toBe(true);
     expect(isTeamMentor({ id: 'x' }, { primaryUserId: null, coMentorUserIds: [] })).toBe(false);
+  });
+
+  it('reads competition rights from the competition’s own mentors (R96)', () => {
+    const competition = { primaryUserId: 'p-1', coMentorUserIds: ['c-1'] };
+    const facts = (id: string) => ({
+      isCompetitionMentor: isEngagementMentor({ id }, competition),
+      isCompetitionPrimaryMentor: isEngagementPrimaryMentor({ id }, competition),
+      // Mentoring the team is not mentoring the competition: the roster and
+      // mentors were frozen at assignment.
+      isTeamMentor: true,
+    });
+    expect(decide(['PROFESSOR'], 'competition.edit', facts('c-1'))).toBe(true);
+    expect(decide(['PROFESSOR'], 'competition.manage_mentors', facts('c-1'))).toBe(false);
+    expect(decide(['PROFESSOR'], 'competition.transfer_primary', facts('p-1'))).toBe(true);
+    expect(decide(['PROFESSOR'], 'competition.edit', facts('x-1'))).toBe(false);
+    expect(decide(['PROFESSOR'], 'competition.view', facts('x-1'))).toBe(true);
+    expect(decide(['ADMINISTRATOR'], 'competition.manage_mentors', facts('x-1'))).toBe(true);
+  });
+
+  it('assigns a team only for its mentors, students for any professor (R96)', () => {
+    expect(decide(['PROFESSOR'], 'competition.assign_team', { isTeamMentor: true })).toBe(true);
+    expect(decide(['PROFESSOR'], 'competition.assign_team', {})).toBe(false);
+    expect(decide(['PROFESSOR'], 'competition.assign_individual')).toBe(true);
+    expect(decide(['ADMINISTRATOR'], 'competition.assign_team', {})).toBe(true);
   });
 
   it('lets a professor deactivate only a student they mentor', () => {
@@ -224,13 +263,17 @@ describe('no roles at all', () => {
 });
 
 describe('a missing resource is a denial, never an allow', () => {
-  it.each(['OWN', 'TEAM_MENTOR', 'TEAM_PRIMARY_MENTOR', 'STUDENT_MENTOR'] as const)(
-    '%s refuses when nothing is known about the resource',
-    (rule) => {
-      expect(ruleSatisfied(rule, undefined)).toBe(false);
-      expect(ruleSatisfied(rule, {})).toBe(false);
-    },
-  );
+  it.each([
+    'OWN',
+    'TEAM_MENTOR',
+    'TEAM_PRIMARY_MENTOR',
+    'STUDENT_MENTOR',
+    'COMPETITION_MENTOR',
+    'COMPETITION_PRIMARY_MENTOR',
+  ] as const)('%s refuses when nothing is known about the resource', (rule) => {
+    expect(ruleSatisfied(rule, undefined)).toBe(false);
+    expect(ruleSatisfied(rule, {})).toBe(false);
+  });
 });
 
 describe('permissionsFor (what /me/permissions returns)', () => {

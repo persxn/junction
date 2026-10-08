@@ -64,8 +64,17 @@ export const ACTIONS = [
   /** R95: hand the team's PRIMARY role to another professor, from inside the team. */
   'team.transfer_primary',
 
-  // Competitions, workflows and saved searches
+  // Competitions (R96), workflows and saved searches
+  /** Status, roster and notes: the competition's open mentors. */
   'competition.edit',
+  /** Assign a team to an event: that team's primary or co-mentor. */
+  'competition.assign_team',
+  /** Assign students individually: any professor, who becomes the primary. */
+  'competition.assign_individual',
+  /** Add or end a competition's co-mentors: its primary. */
+  'competition.manage_mentors',
+  /** Hand a competition's PRIMARY role to another professor: its primary. */
+  'competition.transfer_primary',
   'workflow_template.manage_own',
   'workflow_template.manage_all',
   'saved_search.manage',
@@ -111,6 +120,10 @@ export const OWNERSHIP_RULES = [
    * or the primary/co-mentor of an active team the student belongs to.
    */
   'STUDENT_MENTOR',
+  /** An open mentor of the competition, primary or co-mentor (R96). */
+  'COMPETITION_MENTOR',
+  /** The competition's open primary mentor (R96). */
+  'COMPETITION_PRIMARY_MENTOR',
 ] as const;
 export const OwnershipRule = z.enum(OWNERSHIP_RULES);
 export type OwnershipRule = z.infer<typeof OwnershipRule>;
@@ -124,6 +137,9 @@ export interface OwnershipFacts {
   readonly isTeamPrimaryMentor?: boolean;
   /** The actor mentors this student, directly or through an active team. */
   readonly isStudentMentor?: boolean;
+  /** The actor is an open mentor of the competition (R96). */
+  readonly isCompetitionMentor?: boolean;
+  readonly isCompetitionPrimaryMentor?: boolean;
 }
 
 type Matrix = Readonly<Record<RoleKey, Readonly<Record<Action, OwnershipRule>>>>;
@@ -164,6 +180,10 @@ export const ROLE_ACTIONS: Matrix = {
     'team.transfer_primary': 'ALWAYS',
 
     'competition.edit': 'ALWAYS',
+    'competition.assign_team': 'ALWAYS',
+    'competition.assign_individual': 'ALWAYS',
+    'competition.manage_mentors': 'ALWAYS',
+    'competition.transfer_primary': 'ALWAYS',
     'workflow_template.manage_own': 'ALWAYS',
     'workflow_template.manage_all': 'ALWAYS',
     'saved_search.manage': 'OWN',
@@ -213,7 +233,11 @@ export const ROLE_ACTIONS: Matrix = {
     'team.transfer_ownership': 'NEVER',
     'team.transfer_primary': 'TEAM_PRIMARY_MENTOR',
 
-    'competition.edit': 'TEAM_MENTOR',
+    'competition.edit': 'COMPETITION_MENTOR',
+    'competition.assign_team': 'TEAM_MENTOR',
+    'competition.assign_individual': 'ALWAYS',
+    'competition.manage_mentors': 'COMPETITION_PRIMARY_MENTOR',
+    'competition.transfer_primary': 'COMPETITION_PRIMARY_MENTOR',
     'workflow_template.manage_own': 'OWN',
     'workflow_template.manage_all': 'NEVER',
     'saved_search.manage': 'OWN',
@@ -249,6 +273,8 @@ const RULE_STRENGTH: Readonly<Record<OwnershipRule, number>> = {
   STUDENT_MENTOR: 1,
   TEAM_PRIMARY_MENTOR: 1,
   TEAM_MENTOR: 2,
+  COMPETITION_PRIMARY_MENTOR: 1,
+  COMPETITION_MENTOR: 2,
   ALWAYS: 3,
 };
 
@@ -280,6 +306,10 @@ export function ruleSatisfied(rule: OwnershipRule, facts: OwnershipFacts | undef
       return facts?.isTeamPrimaryMentor === true;
     case 'STUDENT_MENTOR':
       return facts?.isStudentMentor === true;
+    case 'COMPETITION_MENTOR':
+      return facts?.isCompetitionMentor === true || facts?.isCompetitionPrimaryMentor === true;
+    case 'COMPETITION_PRIMARY_MENTOR':
+      return facts?.isCompetitionPrimaryMentor === true;
   }
 }
 
@@ -348,4 +378,20 @@ export function isTeamMentor(user: PredicateSubject, team: TeamMentorship): bool
 /** §10.2 "Archive team, add/remove mentors" and R95's transfer: the primary only. */
 export function isTeamPrimaryMentor(user: PredicateSubject, team: TeamMentorship): boolean {
   return team.primaryUserId === user.id;
+}
+
+/**
+ * R96: a competition owns its mentors — the rows copied from the team at
+ * assignment, edited on the competition afterwards. Feeds `isCompetitionMentor`.
+ */
+export function isEngagementMentor(user: PredicateSubject, competition: TeamMentorship): boolean {
+  return competition.primaryUserId === user.id || competition.coMentorUserIds.includes(user.id);
+}
+
+/** R96: the competition's primary mentor. Feeds `isCompetitionPrimaryMentor`. */
+export function isEngagementPrimaryMentor(
+  user: PredicateSubject,
+  competition: TeamMentorship,
+): boolean {
+  return competition.primaryUserId === user.id;
 }

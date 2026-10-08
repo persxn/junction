@@ -199,6 +199,26 @@ export const TEAM_ERROR_CODES = [
   'TEAM_MENTOR_EXISTS',
   'TEAM_MENTOR_NOT_FOUND',
   'TEAM_LEAD_NOT_MEMBER',
+  /** WP-19: archiving a team that still has an open competition. */
+  'TEAM_HAS_ACTIVE_COMPETITIONS',
+] as const;
+
+/**
+ * Competitions (WP-19, R96–R98). The prefix is the table's name, `ENGAGEMENT_`;
+ * what a person reads says "competition".
+ */
+export const ENGAGEMENT_ERROR_CODES = [
+  'ENGAGEMENT_NOT_FOUND',
+  'ENGAGEMENT_INVALID_TRANSITION',
+  'ENGAGEMENT_STUDENT_ALREADY_ACTIVE',
+  'ENGAGEMENT_TEAM_ALREADY_ASSIGNED',
+  'ENGAGEMENT_EVENT_MERGED',
+  'ENGAGEMENT_CLOSED',
+  'ENGAGEMENT_EMPTY_ROSTER',
+  'ENGAGEMENT_MENTOR_EXISTS',
+  'ENGAGEMENT_MENTOR_NOT_FOUND',
+  'ENGAGEMENT_PARTICIPANT_NOT_FOUND',
+  'ENGAGEMENT_VERSION_CONFLICT',
 ] as const;
 
 /** Database failures the API may surface at request time (WP-04b). */
@@ -220,6 +240,7 @@ export const ERROR_CODES = [
   ...IMPORT_ERROR_CODES,
   ...STUDENT_ERROR_CODES,
   ...TEAM_ERROR_CODES,
+  ...ENGAGEMENT_ERROR_CODES,
   ...DB_ERROR_CODES,
 ] as const;
 
@@ -239,6 +260,7 @@ export const ERROR_CODE_DOMAINS = [
   'IMPORT',
   'STUDENT',
   'TEAM',
+  'ENGAGEMENT',
   'DB',
 ] as const;
 export type ErrorCodeDomain = (typeof ERROR_CODE_DOMAINS)[number];
@@ -290,5 +312,12 @@ export const ProblemDetails = z.object({
   retryable: z.boolean().optional(),
   /** Field-level complaints; only meaningful for `VALIDATION_FAILED`. */
   errors: z.array(ProblemFieldError).optional(),
+  /** `ENGAGEMENT_INVALID_TRANSITION`: the statuses the competition may move to (R97). */
+  allowed: z.array(z.string().min(1)).optional(),
+  /**
+   * The records the problem is about — the competition a student is already in,
+   * the merged event's survivor, a team's open competitions (WP-19).
+   */
+  related: z.array(z.object({ id: z.string().min(1), name: z.string().min(1) })).optional(),
 });
 export type ProblemDetails = z.infer<typeof ProblemDetails>;
