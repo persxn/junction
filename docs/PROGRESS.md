@@ -27,7 +27,9 @@
   open competitions; Team/Student pages list them; seed adds 20. UI: assign dialog from `assign/steps.ts` (card, A,
   drawer), pipeline board (drag, M menu, arrows, Undo only Considering ↔ Assigned), list, Competition page. Both
   §19 ACs green; e2e 5/5; a11y 37/37. **Unmet:** verify **186 s vs 120** (pre-M2a Q1).
-- **Next: WP-20a**; then WP-20b · 21 (M2), WP-22 · 23 · 24 (M3). Every M2/M3 WP
+- **WP-20a STEP 0, 8 Oct 2026:** spec v1.1.18, rulings R99 (progress and health), R100 (due rules), R101
+  (ordering, schema). WP-20a runs in 10 committed steps ("WP-20a (n/9)").
+- **Next: WP-20b**; then WP-21 (M2), WP-22 · 23 · 24 (M3). Every M2/M3 WP
   ends with a **UI fault sweep** and carries an in-app guide on each new screen. Send `docs/` back when M3 closes.
 - **Owed live runs:** CTFtime / Devfolio smokes and `unstop:capture` wait on `scraper.contactEmail` (the
   owner's own address, R74); `clist:smoke` waits on U4.
