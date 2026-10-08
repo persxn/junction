@@ -125,10 +125,9 @@ export default tseslint.config(
   // WP-20b (R103): a resource's link is never fetched and its path never read by
   // the backend, so the resources module may not reach the scraper's HTTP client.
   {
-    files: [
-      'apps/backend/src/modules/resources/**/*.ts',
-      'apps/backend/src/domain/resources/**/*.ts',
-    ],
+    // Only the module: `domain/resources` is already held to the domain block's
+    // rule, and a second block for the same files would replace it, not add to it.
+    files: ['apps/backend/src/modules/resources/**/*.ts'],
     rules: {
       'no-restricted-imports': [
         'error',

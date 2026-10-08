@@ -41,6 +41,7 @@ import { createTeamsModule } from './modules/teams/wiring.js';
 import { createEngagementsModule } from './modules/engagements/wiring.js';
 import { TemplatesRepository } from './modules/workflows/templates-repo.js';
 import { createWorkflowsModule } from './modules/workflows/wiring.js';
+import { createResourcesModule } from './modules/resources/wiring.js';
 import { EventUserStateService } from './modules/events/user-state.js';
 import { createEventsModule } from './modules/events/wiring.js';
 import { createSearchModule } from './modules/search/wiring.js';
@@ -233,6 +234,8 @@ async function main(): Promise<void> {
       onAssigned: [workflowsModule.copier.onAssigned],
       summaries: (rows) => workflowsModule.reader.summaries(rows),
     });
+    // WP-20b: references attached to a competition, its stages, tasks and outcome.
+    const resourcesModule = createResourcesModule({ db, audit });
     const refreshVocabulary = (): void => {
       try {
         searchModule.vocabulary.refresh();
@@ -312,6 +315,7 @@ async function main(): Promise<void> {
       teams: () => teamsModule,
       competitions: () => competitionsModule,
       workflows: () => workflowsModule,
+      resources: () => resourcesModule,
       onShutdownRequested: () => {
         lifecycle.start('api');
       },

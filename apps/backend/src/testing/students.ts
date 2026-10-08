@@ -9,6 +9,7 @@ import { createStudentsModule, type StudentsModule } from '../modules/students/w
 import { createTeamsModule, type TeamsModule } from '../modules/teams/wiring.js';
 import { createEngagementsModule, type EngagementsModule } from '../modules/engagements/wiring.js';
 import { createWorkflowsModule, type WorkflowsModule } from '../modules/workflows/wiring.js';
+import { createResourcesModule, type ResourcesModule } from '../modules/resources/wiring.js';
 import { AuditLog } from '../platform/audit.js';
 import { sessionExpired } from '../modules/auth/errors.js';
 import { uuid7 } from '../platform/ids.js';
@@ -37,6 +38,8 @@ export interface StudentsHarness {
   readonly competitions: EngagementsModule;
   /** WP-20a: workflow templates (seeded) and workflows. */
   readonly workflows: WorkflowsModule;
+  /** WP-20b: resources. */
+  readonly resources: ResourcesModule;
   readonly audit: AuditLog;
   readonly settings: SettingsStore;
   readonly clock: { now: () => Date; advance(ms: number): void };
@@ -131,6 +134,7 @@ export function openStudentsHarness(startIso = '2026-10-01T04:30:00.000Z'): Stud
     teams,
     competitions,
     workflows,
+    resources: createResourcesModule({ db, audit, clock }),
     audit,
     settings,
     clock,
@@ -176,6 +180,7 @@ export async function startStudentsServer(
     teams: () => h.teams,
     competitions: () => h.competitions,
     workflows: () => h.workflows,
+    resources: () => h.resources,
   });
 }
 
