@@ -9,6 +9,8 @@ import { RelationsRepository } from './relations-repo.js';
 import { StudentsRepository } from './repository.js';
 import { StudentRelationsService } from './relations.js';
 import { StudentsService } from './service.js';
+import { StudentHistoryRepository } from './history-repo.js';
+import { StudentHistoryService } from './history.js';
 import { CompetitionLinksRepository } from '../engagements/links-repo.js';
 import { TeamLinksRepository } from './team-links-repo.js';
 
@@ -23,6 +25,8 @@ export interface StudentsModule {
   readonly relations: StudentRelationsService;
   readonly lifecycle: StudentLifecycleService;
   readonly imports: StudentImportService;
+  /** WP-21: competitions, teams and achievements, newest first. */
+  readonly history: StudentHistoryService;
   readonly repository: StudentsRepository;
 }
 
@@ -49,6 +53,7 @@ export function createStudentsModule(options: StudentsModuleOptions): StudentsMo
     relations: new StudentRelationsService(deps),
     lifecycle: new StudentLifecycleService(deps),
     imports: new StudentImportService(deps),
+    history: new StudentHistoryService(new StudentHistoryRepository(options.db)),
     repository,
   };
 }

@@ -17,6 +17,7 @@ import {
   StudentVersionRequest,
   TagSuggestionQuery,
   TagSuggestions,
+  StudentHistory,
 } from '@compintel/contracts';
 import type { FastifyRequest } from 'fastify';
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod';
@@ -69,6 +70,11 @@ export const studentsRoutes =
     );
     app.get('/students/:id', { schema: { params: IdParams, response: reply } }, (request) =>
       module(options).records.get(contextOf(request), request.params.id),
+    );
+    app.get(
+      '/students/:id/history',
+      { schema: { params: IdParams, response: { 200: StudentHistory } } },
+      (request) => module(options).history.history(contextOf(request).actor, request.params.id),
     );
     app.patch(
       '/students/:id',
