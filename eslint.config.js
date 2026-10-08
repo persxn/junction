@@ -122,6 +122,34 @@ export default tseslint.config(
     },
   },
 
+  // WP-20b (R103): a resource's link is never fetched and its path never read by
+  // the backend, so the resources module may not reach the scraper's HTTP client.
+  {
+    files: [
+      'apps/backend/src/modules/resources/**/*.ts',
+      'apps/backend/src/domain/resources/**/*.ts',
+    ],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/scraping/**', '../scraping/*', '../../scraping/*'],
+              message:
+                'Resources are references: a link is never fetched and a path never read by the backend (R103). No PoliteHttpClient here.',
+            },
+            {
+              group: ['node:fs', 'node:fs/*', 'node:http', 'node:https', 'node:net', 'undici'],
+              message:
+                'Resources are references: the backend checks their shape only; the shell checks paths (R102–R103).',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
   // Contracts is the shared vocabulary both sides compile against. If it could
   // import an app, the app could not import it.
   {
