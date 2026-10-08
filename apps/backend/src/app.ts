@@ -46,6 +46,7 @@ import { workflowsRoutes } from './routes/workflows.js';
 import { resourcesRoutes } from './routes/resources.js';
 import { outcomesRoutes } from './routes/outcomes.js';
 import { transferRoutes } from './routes/transfer.js';
+import { deadlinesRoutes } from './routes/deadlines.js';
 import type { StudentsModule } from './modules/students/wiring.js';
 import type { TeamsModule } from './modules/teams/wiring.js';
 import type { EngagementsModule } from './modules/engagements/wiring.js';
@@ -53,6 +54,7 @@ import type { WorkflowsModule } from './modules/workflows/wiring.js';
 import type { ResourcesModule } from './modules/resources/wiring.js';
 import type { OutcomesModule } from './modules/outcomes/wiring.js';
 import type { TransferModule } from './modules/transfer/wiring.js';
+import type { DeadlinesModule } from './modules/deadlines/wiring.js';
 import { systemClock, type Clock } from './platform/time.js';
 
 /** Request bodies larger than this are rejected before they are parsed. */
@@ -118,6 +120,8 @@ export interface BuildAppOptions {
   readonly outcomes?: () => OutcomesModule | undefined;
   /** WP-21's ownership transfer. */
   readonly transfer?: () => TransferModule | undefined;
+  /** WP-22's deadline read model. */
+  readonly deadlines?: () => DeadlinesModule | undefined;
   /** Shared so jobs and services can publish; one hub per process (R36). */
   readonly streamHub?: StreamHub;
   /** Injected in tests so a heartbeat does not take fifteen real seconds. */
@@ -234,6 +238,9 @@ export function buildApp(
     prefix: API_PREFIX,
   });
   void server.register(transferRoutes({ transfer: options.transfer ?? (() => undefined) }), {
+    prefix: API_PREFIX,
+  });
+  void server.register(deadlinesRoutes({ deadlines: options.deadlines ?? (() => undefined) }), {
     prefix: API_PREFIX,
   });
   void server.register(

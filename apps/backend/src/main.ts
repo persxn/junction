@@ -44,6 +44,7 @@ import { createWorkflowsModule } from './modules/workflows/wiring.js';
 import { createResourcesModule } from './modules/resources/wiring.js';
 import { createOutcomeLookup, createOutcomesModule } from './modules/outcomes/wiring.js';
 import { createTransferModule } from './modules/transfer/wiring.js';
+import { createDeadlinesModule } from './modules/deadlines/wiring.js';
 import { EventUserStateService } from './modules/events/user-state.js';
 import { createEventsModule } from './modules/events/wiring.js';
 import { createSearchModule } from './modules/search/wiring.js';
@@ -249,6 +250,8 @@ async function main(): Promise<void> {
     });
     // WP-21: an admin's ownership transfer (R105).
     const transferModule = createTransferModule({ db, audit });
+    // WP-22: the deadline read model (v_deadlines) for the Radar, KPIs and evaluator.
+    const deadlinesModule = createDeadlinesModule({ db });
     const refreshVocabulary = (): void => {
       try {
         searchModule.vocabulary.refresh();
@@ -331,6 +334,7 @@ async function main(): Promise<void> {
       resources: () => resourcesModule,
       outcomes: () => outcomesModule,
       transfer: () => transferModule,
+      deadlines: () => deadlinesModule,
       onShutdownRequested: () => {
         lifecycle.start('api');
       },
