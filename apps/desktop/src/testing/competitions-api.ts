@@ -13,6 +13,7 @@ import { vi } from 'vitest';
 
 import { TEST_USER } from './auth.js';
 import { PROFESSORS } from './teams-api.js';
+import { installResourcesApi, type ResourcesApi } from './resources-api.js';
 import { installWorkflowsApi, type WorkflowsApi } from './workflows-api.js';
 
 /**
@@ -123,6 +124,8 @@ export interface CompetitionsApi {
   }[];
   /** WP-20a's templates and workflows, answered in front of this fake. */
   readonly workflows: WorkflowsApi;
+  /** WP-20b's resources, answered in front of both. */
+  readonly resources: ResourcesApi;
 }
 
 function respond(status: number, body: unknown): Response {
@@ -377,5 +380,6 @@ export function installCompetitionsApi(options: CompetitionsApiOptions = {}): Co
       return Promise.resolve(answer);
     }),
   );
-  return { competitions, calls, workflows: installWorkflowsApi({ competitions }) };
+  const workflows = installWorkflowsApi({ competitions });
+  return { competitions, calls, workflows, resources: installResourcesApi() };
 }

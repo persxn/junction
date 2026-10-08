@@ -10,6 +10,7 @@ import { ArrowDown, ArrowUp, CalendarX, Hand, ListChecks, Trash2 } from 'lucide-
 import { useId, useState } from 'react';
 
 import { useNow } from '../../lib/use-now.js';
+import { ResourceRows } from '../resources/ResourceRows.js';
 import { formatDue } from './format.js';
 import { ItemMenu } from './ItemMenu.js';
 import { StageStatusChip } from './labels.js';
@@ -185,6 +186,12 @@ export function StageCard({ view, stage, index, run, onMove }: StageCardProps): 
       {!collapsed && (
         <>
           <TaskList view={view} stage={stage} run={run} />
+          <ResourceRows
+            ownerKind="STAGE"
+            ownerId={stage.id}
+            ownerName={stage.name}
+            title="Resources"
+          />
           <StageDetails view={view} stage={stage} run={run} />
         </>
       )}

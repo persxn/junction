@@ -1,8 +1,11 @@
 import { TASK_TITLE_MAX, type WorkflowStage, type WorkflowView } from '@compintel/contracts';
-import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Paperclip, Plus, Trash2 } from 'lucide-react';
 import { useId, useState } from 'react';
 
 import { useToast } from '../../components/toast/ToastProvider.js';
+import { ResourceDialog } from '../resources/ResourceDialog.js';
+import { ResourceRows } from '../resources/ResourceRows.js';
+import { useResources } from '../resources/ResourcesScope.js';
 import { ItemMenu } from './ItemMenu.js';
 import { ConfirmRemoveDialog } from './StageDialogs.js';
 import type { RunWrite } from './use-workflow.js';
@@ -41,6 +44,8 @@ export function TaskList({
   const addId = useId();
   const [title, setTitle] = useState('');
   const [removing, setRemoving] = useState<WorkflowStage['tasks'][number] | undefined>();
+  const [attaching, setAttaching] = useState<WorkflowStage['tasks'][number] | undefined>();
+  const resources = useResources();
   // The value just clicked, shown at once: the cache's optimistic copy renders a
   // tick later, and in between a controlled box would flip back (sweep fault).
   const [pending, setPending] = useState<Readonly<Record<string, boolean>>>({});
@@ -101,7 +106,7 @@ export function TaskList({
           {stage.tasks.map((task, index) => (
             <li
               key={task.id}
-              className="flex items-center gap-2 rounded-md px-1 py-0.5 text-sm hover:bg-surface-hover"
+              className="flex flex-wrap items-center gap-2 rounded-md px-1 py-0.5 text-sm hover:bg-surface-hover"
               onKeyDown={(event) => {
                 if (!editable || !event.altKey) return;
                 if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
@@ -149,6 +154,17 @@ export function TaskList({
                         move(task.id, 'down');
                       },
                     },
+                    ...(resources?.list?.canEdit === true
+                      ? [
+                          {
+                            label: 'Add a resource',
+                            icon: Paperclip,
+                            onSelect: () => {
+                              setAttaching(task);
+                            },
+                          },
+                        ]
+                      : []),
                     {
                       label: 'Remove',
                       icon: Trash2,
@@ -159,6 +175,14 @@ export function TaskList({
                   ]}
                 />
               )}
+              <div className="basis-full pl-6">
+                <ResourceRows
+                  ownerKind="TASK"
+                  ownerId={task.id}
+                  ownerName={task.title}
+                  variant="compact"
+                />
+              </div>
             </li>
           ))}
         </ul>
@@ -201,6 +225,24 @@ export function TaskList({
             Add task
           </button>
         </form>
+      )}
+      {attaching !== undefined && resources !== undefined && (
+        <ResourceDialog
+          title={`Add a resource to “${attaching.title}”`}
+          shell={resources.shell}
+          onClose={() => {
+            setAttaching(undefined);
+          }}
+          onSubmit={(draft) =>
+            resources.add({
+              ownerKind: 'TASK',
+              ownerId: attaching.id,
+              uri: draft.uri,
+              ...(draft.kind === undefined ? {} : { kind: draft.kind }),
+              ...(draft.label === undefined ? {} : { label: draft.label }),
+            })
+          }
+        />
       )}
       {removing !== undefined && (
         <ConfirmRemoveDialog

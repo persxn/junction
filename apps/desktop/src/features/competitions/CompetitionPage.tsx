@@ -12,6 +12,8 @@ import { Skeleton } from '../../components/Skeleton.js';
 import { useNow } from '../../lib/use-now.js';
 import { useBackendConnection } from '../../shell/connection-context.js';
 import { DEFAULT_SEARCH } from '../discover/search-state.js';
+import { CompetitionResources } from '../resources/CompetitionResources.js';
+import { ResourcesScope } from '../resources/ResourcesScope.js';
 import { WorkflowSection } from '../workflows/WorkflowSection.js';
 import { dayText } from '../students/labels.js';
 import { whoOf } from './board-model.js';
@@ -248,7 +250,10 @@ export function CompetitionPage(): React.JSX.Element {
       <RosterSection competition={data} reason={editReason} />
       <CompetitionMentors competition={data} />
       <Notes key={data.version} competition={data} />
-      <WorkflowSection competitionId={data.id} status={data.status} />
+      <ResourcesScope competitionId={data.id}>
+        <WorkflowSection competitionId={data.id} status={data.status} />
+        <CompetitionResources competitionId={data.id} />
+      </ResourcesScope>
       <Later
         id="outcome-heading"
         title="Outcome"
