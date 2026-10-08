@@ -16,6 +16,8 @@ export interface EventListProps {
   readonly onOpen: (item: RankedEventListItem) => void;
   readonly onSave: (item: RankedEventListItem) => void;
   readonly onHide: (item: RankedEventListItem) => void;
+  /** WP-19: the card's Assign and the **A** key. */
+  readonly onAssign: (item: RankedEventListItem) => void;
   /** Keyboard shortcuts are off while something (the drawer) sits over the list. */
   readonly keysEnabled: boolean;
 }
@@ -36,6 +38,7 @@ export function EventList({
   onOpen,
   onSave,
   onHide,
+  onAssign,
   keysEnabled,
 }: EventListProps): React.JSX.Element {
   const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
@@ -74,8 +77,14 @@ export function EventList({
           if (selected !== undefined) onSave(selected);
         },
       },
+      {
+        key: 'a',
+        onPress: () => {
+          if (selected !== undefined) onAssign(selected);
+        },
+      },
     ];
-  }, [keysEnabled, ordered, selected, onSave, select]);
+  }, [keysEnabled, ordered, selected, onSave, onAssign, select]);
   useGlobalHotkeys(hotkeys);
 
   return (
@@ -113,6 +122,10 @@ export function EventList({
                   }}
                   onHide={() => {
                     onHide(item);
+                  }}
+                  onAssign={() => {
+                    setSelectedId(item.id);
+                    onAssign(item);
                   }}
                 />
               </li>

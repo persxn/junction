@@ -23,6 +23,10 @@ export class ApiProblem extends Error {
   readonly requestId: string | undefined;
   /** Field-level complaints; only meaningful for `VALIDATION_FAILED`. */
   readonly errors: readonly ProblemFieldError[];
+  /** R97: where a competition may move instead (`ENGAGEMENT_INVALID_TRANSITION`). */
+  readonly allowed: readonly string[];
+  /** WP-19: what the problem names — another competition, a merged event's survivor. */
+  readonly related: readonly { readonly id: string; readonly name: string }[];
   /** The request path, for diagnostics. */
   readonly path: string;
 
@@ -36,6 +40,8 @@ export class ApiProblem extends Error {
     retryable?: boolean | undefined;
     requestId?: string | undefined;
     errors?: readonly ProblemFieldError[] | undefined;
+    allowed?: readonly string[] | undefined;
+    related?: readonly { readonly id: string; readonly name: string }[] | undefined;
     cause?: unknown;
   }) {
     super(`${init.code} (${init.status.toString()}) on ${init.path}: ${init.title}`, {
@@ -51,6 +57,8 @@ export class ApiProblem extends Error {
     this.retryable = init.retryable ?? defaultRetryable(init.status);
     this.requestId = init.requestId;
     this.errors = init.errors ?? [];
+    this.allowed = init.allowed ?? [];
+    this.related = init.related ?? [];
   }
 }
 
@@ -91,6 +99,8 @@ export function problemFromBody(status: number, path: string, body: unknown): Ap
     retryable: problem.retryable,
     requestId: problem.requestId,
     errors: problem.errors,
+    allowed: problem.allowed,
+    related: problem.related,
   });
 }
 

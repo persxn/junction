@@ -1,4 +1,4 @@
-import type { TeamDetail, TeamPerson } from '@compintel/contracts';
+import type { MentorRole, TeamPerson } from '@compintel/contracts';
 import { useId, useState } from 'react';
 
 import { Dialog } from '../../components/Dialog.js';
@@ -10,7 +10,15 @@ import { Dialog } from '../../components/Dialog.js';
  */
 
 export interface TransferDialogProps {
-  readonly team: TeamDetail;
+  /** A team or a competition: its name and its open mentors (WP-19 reuses this dialog). */
+  readonly team: {
+    readonly name: string;
+    readonly mentors: readonly {
+      readonly userId: string;
+      readonly displayName: string;
+      readonly role: MentorRole;
+    }[];
+  };
   readonly professors: readonly TeamPerson[];
   readonly busy: boolean;
   readonly error: string | undefined;
@@ -42,7 +50,7 @@ export function TransferDialog({
         }}
       >
         <p className="text-sm text-fg-muted">
-          The new primary mentor manages the team’s mentors and can archive it.
+          The new primary mentor decides who else mentors it.
           {primary !== undefined && ` ${primary.displayName} is the primary mentor now.`}
         </p>
         <label htmlFor={selectId} className="text-sm font-medium">

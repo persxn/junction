@@ -17,6 +17,7 @@ function card(overrides: Parameters<typeof makeItem>[1]): HTMLElement {
       onFocusCard={noop}
       onOpen={noop}
       onSave={noop}
+      onAssign={() => undefined}
       onHide={noop}
     />,
   );

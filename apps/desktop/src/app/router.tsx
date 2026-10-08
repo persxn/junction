@@ -8,6 +8,7 @@ import {
   redirect,
 } from '@tanstack/react-router';
 
+import { parseCompetitionsSearch } from '../features/competitions/search-state.js';
 import { parseDiscoverSearch } from '../features/discover/search-state.js';
 import { AppShell } from './AppShell.js';
 import { ADMIN_NAV, MAIN_NAV, type NavItem } from './nav.js';
@@ -103,10 +104,24 @@ const createEventRoute = createRoute({
   ),
 });
 
-const competitionsRoute = createRoute({
+// WP-19: the pipeline board (or list, `view=list`) and each competition's page.
+export const competitionsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/competitions',
-  component: () => <PlaceholderPage item={navItem('competitions')} />,
+  validateSearch: parseCompetitionsSearch,
+  component: lazyRouteComponent(
+    () => import('../features/competitions/CompetitionsPage.js'),
+    'CompetitionsPage',
+  ),
+});
+
+const competitionRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/competitions/$competitionId',
+  component: lazyRouteComponent(
+    () => import('../features/competitions/CompetitionPage.js'),
+    'CompetitionPage',
+  ),
 });
 
 // WP-18: like the student pages, each is a full page.
@@ -268,6 +283,7 @@ const routeTree = rootRoute.addChildren([
   discoverRoute.addChildren([discoverEventRoute]),
   createEventRoute,
   competitionsRoute,
+  competitionRoute,
   teamsRoute,
   newTeamRoute,
   teamRoute,

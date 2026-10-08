@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from '@tanstack/react-router';
-import { Archive, ArchiveRestore, ArrowLeft, Pencil, Trophy, UsersRound } from 'lucide-react';
+import { Archive, ArchiveRestore, ArrowLeft, Pencil, UsersRound } from 'lucide-react';
 import { useId } from 'react';
 
 import { isApiProblem } from '../../api/problem.js';
@@ -10,6 +10,7 @@ import { Guide } from '../../components/Guide.js';
 import { Skeleton } from '../../components/Skeleton.js';
 import { useBackendConnection } from '../../shell/connection-context.js';
 import { dayText } from '../students/labels.js';
+import { CompetitionRefs } from '../competitions/CompetitionRefs.js';
 import { CoverageSection } from './CoverageSection.js';
 import { TeamStatusBadge } from './labels.js';
 import { MembersSection } from './MembersSection.js';
@@ -20,8 +21,7 @@ import { teamKey, useTeamActions } from './use-team-actions.js';
 /**
  * The Team page (§16.2: members, skill coverage, competitions, mentors). The
  * server decides every write again (§10.1); a control the viewer may not use is
- * disabled with its reason in words. Competitions are WP-19's — until then the
- * section says what will fill it.
+ * disabled with its reason in words.
  */
 
 const button =
@@ -156,16 +156,11 @@ export function TeamPage(): React.JSX.Element {
       <TeamGuide />
       <MembersSection team={data} />
       <CoverageSection team={data} />
-      <section aria-labelledby="team-competitions-heading" className="flex flex-col gap-2">
-        <h2 id="team-competitions-heading" className="text-md">
-          Competitions
-        </h2>
-        <p className="flex items-start gap-2 rounded-md border border-dashed border-line p-3 text-sm text-fg-muted">
-          <Trophy aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-          No competitions yet. Once this team is assigned to an event on the Competitions screen,
-          its competitions and their progress appear here.
-        </p>
-      </section>
+      <CompetitionRefs
+        refs={data.competitions}
+        showTeam={false}
+        empty="No competitions yet. Assign an event to this team from Discover — the Assign button or the A key."
+      />
       <TeamMentors team={data} />
     </article>
   );

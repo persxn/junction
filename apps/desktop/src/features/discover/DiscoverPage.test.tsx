@@ -94,16 +94,16 @@ describe('the keyboard (§16.3)', () => {
     expect(cards()[1]).toHaveFocus();
   });
 
-  it('S saves the selected card; A is present but disabled with its reason', async () => {
+  it('S saves the selected card; Assign is live (WP-19)', async () => {
     const user = await openDiscover();
     await user.keyboard('j');
     await user.keyboard('s');
     await waitFor(() => {
       expect(api.saved.has(ITEMS[1]?.id ?? '')).toBe(true);
     });
-    const assign = within(cards()[0]!).getByRole('button', { name: /Assign/ });
-    expect(assign).toBeDisabled();
-    expect(assign).toHaveAccessibleName('Assign — Assigning arrives with teams (M2)');
+    const assign = within(cards()[0]!).getByRole('button', { name: 'Assign' });
+    expect(assign).toBeEnabled();
+    expect(assign).toHaveAttribute('aria-keyshortcuts', 'A');
   });
 
   it('"/" focuses the search box, and Enter searches Discover', async () => {

@@ -12,7 +12,7 @@ import { openExternal } from '../../../lib/external.js';
 import { useGlobalHotkeys, type Hotkey } from '../../../lib/hotkeys.js';
 import { useNow } from '../../../lib/use-now.js';
 import { flatItems, type Pages } from '../cache.js';
-import { ASSIGN_LATER } from '../EventCard.js';
+import { useAssign } from '../../competitions/assign/assign-context.js';
 import { useEventActions } from '../use-event-actions.js';
 import { countdown } from '../urgency.js';
 import { CategoryChips } from './CategoryChips.js';
@@ -37,6 +37,7 @@ import { useCategoryOverride, useEventDetail } from './use-event-detail.js';
  */
 export function EventDrawer(): React.JSX.Element {
   const { eventId } = useParams({ from: '/discover/event/$eventId' });
+  const assign = useAssign();
   const navigate = useNavigate();
   const search = useSearch({ from: '/discover' });
   const client = useQueryClient();
@@ -195,11 +196,10 @@ export function EventDrawer(): React.JSX.Element {
         )}
         <button
           type="button"
-          disabled
-          aria-disabled="true"
-          aria-label={`Assign — ${ASSIGN_LATER}`}
-          title={ASSIGN_LATER}
-          className="flex cursor-not-allowed items-center gap-1 rounded-md px-2 py-1 text-sm text-fg-subtle"
+          onClick={() => {
+            assign.open({ id: eventId, title });
+          }}
+          className="flex items-center gap-1 rounded-md border border-line px-2 py-1 text-sm hover:bg-surface-hover"
         >
           <UserPlus aria-hidden="true" className="size-4" />
           Assign

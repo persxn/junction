@@ -25,10 +25,9 @@ export interface EventCardProps {
   readonly onOpen: () => void;
   readonly onSave: () => void;
   readonly onHide: () => void;
+  /** WP-19: opens the assign flow for this event. */
+  readonly onAssign: () => void;
 }
-
-/** "Assigning arrives with teams (M2)" — present, honest, and not faked (WP-16a step 7). */
-export const ASSIGN_LATER = 'Assigning arrives with teams (M2)';
 
 /**
  * One dense card (§16.2). Every status is an icon **and** words (§16.3): the
@@ -45,6 +44,7 @@ export function EventCard({
   onOpen,
   onSave,
   onHide,
+  onAssign,
 }: EventCardProps): React.JSX.Element {
   const [whyOpen, setWhyOpen] = useState(false);
   const whyId = useId();
@@ -169,12 +169,9 @@ export function EventCard({
         </button>
         <button
           type="button"
-          disabled
-          aria-disabled="true"
           aria-keyshortcuts="A"
-          aria-label={`Assign — ${ASSIGN_LATER}`}
-          title={ASSIGN_LATER}
-          className="flex cursor-not-allowed items-center gap-1 rounded-md px-2 py-1 text-sm text-fg-subtle"
+          onClick={onAssign}
+          className="flex items-center gap-1 rounded-md px-2 py-1 text-sm hover:bg-surface-hover"
         >
           <UserPlus aria-hidden="true" className="size-4" />
           Assign

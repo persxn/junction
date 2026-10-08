@@ -3,6 +3,7 @@ import { Outlet, useMatch, useNavigate, useSearch } from '@tanstack/react-router
 import { AlertTriangle, Compass, SearchX } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 
+import { AssignProvider, useAssign } from '../competitions/assign/assign-context.js';
 import { isApiProblem } from '../../api/problem.js';
 import { EmptyState } from '../../components/EmptyState.js';
 import { Skeleton } from '../../components/Skeleton.js';
@@ -27,7 +28,17 @@ const PANEL_ID = 'discover-panel';
  * next to it (`presets`, `query`, `urgency`, `cache`); this file only lays them
  * out and connects them to the router.
  */
+/** WP-19: the assign flow is opened from the cards, the **A** key and the drawer. */
 export function DiscoverPage(): React.JSX.Element {
+  return (
+    <AssignProvider>
+      <DiscoverScreen />
+    </AssignProvider>
+  );
+}
+
+function DiscoverScreen(): React.JSX.Element {
+  const assign = useAssign();
   const search = useSearch({ from: '/discover' });
   const navigate = useNavigate();
   const drawer = useMatch({ from: '/discover/event/$eventId', shouldThrow: false });
@@ -136,6 +147,9 @@ export function DiscoverPage(): React.JSX.Element {
             onOpen={open}
             onSave={actions.toggleSave}
             onHide={actions.hide}
+            onAssign={(item) => {
+              assign.open({ id: item.id, title: item.title });
+            }}
             keysEnabled={!drawerOpen}
           />
         )}

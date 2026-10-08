@@ -1,15 +1,7 @@
 import type { StudentDetail } from '@compintel/contracts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from '@tanstack/react-router';
-import {
-  ArrowLeft,
-  Pencil,
-  PauseCircle,
-  PlayCircle,
-  ShieldAlert,
-  Trophy,
-  UserX,
-} from 'lucide-react';
+import { ArrowLeft, Pencil, PauseCircle, PlayCircle, ShieldAlert, UserX } from 'lucide-react';
 import { useState } from 'react';
 
 import { isApiProblem } from '../../api/problem.js';
@@ -24,6 +16,7 @@ import { dayText, programLabel, StatusBadge } from './labels.js';
 import { MentorsSection } from './MentorsSection.js';
 import { TagEditor } from './TagEditor.js';
 import { TeamsSection } from './TeamsSection.js';
+import { CompetitionRefs } from '../competitions/CompetitionRefs.js';
 import { studentKey, useStudentActions } from './use-student-actions.js';
 
 /**
@@ -75,26 +68,6 @@ function Profile({ student }: { readonly student: StudentDetail }): React.JSX.El
           {student.notes}
         </p>
       )}
-    </section>
-  );
-}
-
-function Later(props: {
-  readonly id: string;
-  readonly title: string;
-  readonly text: string;
-  readonly icon: typeof Trophy;
-}): React.JSX.Element {
-  const Icon = props.icon;
-  return (
-    <section aria-labelledby={props.id} className="flex flex-col gap-2">
-      <h2 id={props.id} className="text-md">
-        {props.title}
-      </h2>
-      <p className="flex items-start gap-2 rounded-md border border-dashed border-line p-3 text-sm text-fg-muted">
-        <Icon aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-        {props.text}
-      </p>
     </section>
   );
 }
@@ -231,11 +204,10 @@ export function StudentPage(): React.JSX.Element {
       <MentorsSection student={data} />
       <AchievementsSection student={data} />
       <TeamsSection student={data} />
-      <Later
-        id="competitions-heading"
-        title="Competitions and outcomes"
-        icon={Trophy}
-        text="No competitions yet. Each competition this student takes part in — and its result — is listed here once it is assigned on the Competitions screen."
+      <CompetitionRefs
+        refs={data.competitions}
+        showTeam
+        empty="No competitions yet. Each competition this student takes part in — with a team or alone — is listed here once it is assigned."
       />
 
       {erasing && (

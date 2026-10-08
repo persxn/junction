@@ -34,18 +34,14 @@ export function parseDiscoverSearch(raw: Record<string, unknown>): DiscoverSearc
  * is, `''` clears it) — for the top bar and the palette, which navigate to
  * Discover from anywhere and so see only a partial previous state.
  */
-export function discoverSearch(
-  previous: Partial<DiscoverSearch>,
-  text: string | undefined,
-): DiscoverSearch {
-  const filters: FilterQuery = { ...(previous.filters ?? {}) };
+export function discoverSearch(previous: object, text: string | undefined): DiscoverSearch {
+  // `previous` is whatever screen the user was on — Competitions has a `view`
+  // of its own (WP-19) — so it is parsed, never trusted.
+  const base = parseDiscoverSearch(previous as Record<string, unknown>);
+  const filters: FilterQuery = { ...base.filters };
   if (text !== undefined) {
     if (text === '') delete filters.text;
     else filters.text = text.slice(0, 200);
   }
-  return {
-    tab: previous.tab ?? DEFAULT_SEARCH.tab,
-    view: previous.view ?? DEFAULT_SEARCH.view,
-    filters,
-  };
+  return { tab: base.tab, view: base.view, filters };
 }

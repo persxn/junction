@@ -8,7 +8,7 @@ export interface DeadlineTimelineProps {
   readonly now: number;
 }
 
-const KIND_LABELS: Readonly<Record<DeadlineKind, string>> = {
+export const DEADLINE_KIND_LABELS: Readonly<Record<DeadlineKind, string>> = {
   REGISTRATION: 'Registration',
   ABSTRACT: 'Abstract',
   IDEA_SUBMISSION: 'Idea submission',
@@ -45,7 +45,9 @@ export function DeadlineTimeline({
         {ordered.map((deadline) => (
           <li key={deadline.id} className="flex items-baseline gap-2">
             <CalendarClock aria-hidden="true" className="size-3.5 shrink-0 text-fg-muted" />
-            <span className="font-medium">{deadline.label || KIND_LABELS[deadline.kind]}</span>
+            <span className="font-medium">
+              {deadline.label || DEADLINE_KIND_LABELS[deadline.kind]}
+            </span>
             <span className="text-fg-muted">
               {formatDeadline(deadline.dueAt, deadline.precision, now)}
             </span>
