@@ -20,6 +20,8 @@ import {
   ENGAGEMENT_ERROR_CODES,
   WORKFLOW_ERROR_CODES,
   RESOURCE_ERROR_CODES,
+  OUTCOME_ERROR_CODES,
+  TRANSFER_ERROR_CODES,
   SETUP_ERROR_CODES,
   SOURCE_ERROR_CODES,
   problemType,
@@ -160,6 +162,15 @@ describe('ErrorCode', () => {
       'RESOURCE_INVALID_URI',
       'RESOURCE_OWNER_NOT_FOUND',
       'RESOURCE_VERSION_CONFLICT',
+      'OUTCOME_NOT_ALLOWED',
+      'OUTCOME_NOT_FOUND',
+      'OUTCOME_INVALID',
+      'OUTCOME_VERSION_CONFLICT',
+      'TRANSFER_PREVIEW_STALE',
+      'TRANSFER_TARGET_NOT_PROFESSOR',
+      'TRANSFER_SAME_USER',
+      'TRANSFER_NOTHING_TO_MOVE',
+      'TRANSFER_USER_NOT_FOUND',
       'DB_UNAVAILABLE',
       'DB_CONSTRAINT_VIOLATED',
     ]);
@@ -181,6 +192,8 @@ describe('ErrorCode', () => {
       ...ENGAGEMENT_ERROR_CODES,
       ...WORKFLOW_ERROR_CODES,
       ...RESOURCE_ERROR_CODES,
+      ...OUTCOME_ERROR_CODES,
+      ...TRANSFER_ERROR_CODES,
       ...DB_ERROR_CODES,
     ]);
   });
@@ -198,6 +211,8 @@ describe('ErrorCode', () => {
     ['ENGAGEMENT_', ENGAGEMENT_ERROR_CODES],
     ['WORKFLOW_', WORKFLOW_ERROR_CODES],
     ['RESOURCE_', RESOURCE_ERROR_CODES],
+    ['OUTCOME_', OUTCOME_ERROR_CODES],
+    ['TRANSFER_', TRANSFER_ERROR_CODES],
     ['DB_', DB_ERROR_CODES],
   ])('prefixes every %s domain code', (prefix, codes) => {
     for (const code of codes) {

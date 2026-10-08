@@ -176,6 +176,10 @@ describe('the §10.2 rows that are not a plain yes or no', () => {
     expect(decide(['PROFESSOR'], 'resource.edit', { isCompetitionMentor: true })).toBe(true);
     expect(decide(['PROFESSOR'], 'resource.edit', { isTeamMentor: true })).toBe(false);
     expect(decide(['ADMINISTRATOR'], 'resource.edit', {})).toBe(true);
+    // WP-21: an outcome is recorded by the competition's mentors; a transfer is the admin's.
+    expect(decide(['PROFESSOR'], 'outcome.record', { isCompetitionMentor: true })).toBe(true);
+    expect(decide(['PROFESSOR'], 'outcome.record', { isTeamMentor: true })).toBe(false);
+    expect(decide(['ADMINISTRATOR'], 'outcome.record', {})).toBe(true);
     expect(decide(['PROFESSOR'], 'workflow_template.clone')).toBe(true);
     expect(decide(['PROFESSOR'], 'workflow_template.manage_own', { isOwner: true })).toBe(true);
     expect(decide(['PROFESSOR'], 'workflow_template.manage_own', { isOwner: false })).toBe(false);
@@ -230,6 +234,7 @@ describe('the §10.2 rows that are not a plain yes or no', () => {
       'audit.view_all',
       'system.health.view',
       'workflow_template.manage_all',
+      'ownership.transfer',
     ];
     for (const action of adminOnly) {
       expect(ruleFor('PROFESSOR', action)).toBe('NEVER');

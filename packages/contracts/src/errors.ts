@@ -244,6 +244,25 @@ export const RESOURCE_ERROR_CODES = [
   'RESOURCE_VERSION_CONFLICT',
 ] as const;
 
+/** Outcomes (WP-21, R104). */
+export const OUTCOME_ERROR_CODES = [
+  /** Not PARTICIPATING or COMPLETED. */
+  'OUTCOME_NOT_ALLOWED',
+  'OUTCOME_NOT_FOUND',
+  /** A field rule of R104 broken; `detail` says which. */
+  'OUTCOME_INVALID',
+  'OUTCOME_VERSION_CONFLICT',
+] as const;
+
+/** Ownership transfer (WP-21, R105). */
+export const TRANSFER_ERROR_CODES = [
+  'TRANSFER_PREVIEW_STALE',
+  'TRANSFER_TARGET_NOT_PROFESSOR',
+  'TRANSFER_SAME_USER',
+  'TRANSFER_NOTHING_TO_MOVE',
+  'TRANSFER_USER_NOT_FOUND',
+] as const;
+
 /** Database failures the API may surface at request time (WP-04b). */
 export const DB_ERROR_CODES = ['DB_UNAVAILABLE', 'DB_CONSTRAINT_VIOLATED'] as const;
 
@@ -266,6 +285,8 @@ export const ERROR_CODES = [
   ...ENGAGEMENT_ERROR_CODES,
   ...WORKFLOW_ERROR_CODES,
   ...RESOURCE_ERROR_CODES,
+  ...OUTCOME_ERROR_CODES,
+  ...TRANSFER_ERROR_CODES,
   ...DB_ERROR_CODES,
 ] as const;
 
@@ -288,6 +309,8 @@ export const ERROR_CODE_DOMAINS = [
   'ENGAGEMENT',
   'WORKFLOW',
   'RESOURCE',
+  'OUTCOME',
+  'TRANSFER',
   'DB',
 ] as const;
 export type ErrorCodeDomain = (typeof ERROR_CODE_DOMAINS)[number];

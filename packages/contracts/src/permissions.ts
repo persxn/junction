@@ -79,6 +79,10 @@ export const ACTIONS = [
   'workflow.edit',
   /** WP-20b: add, edit and remove a competition's resources (R103). */
   'resource.edit',
+  /** WP-21: record, edit or remove a competition's outcome (R104). */
+  'outcome.record',
+  /** WP-21: move a professor's active mentor rows to another (R105). */
+  'ownership.transfer',
   /** WP-20a: copy any template into one of your own. */
   'workflow_template.clone',
   'workflow_template.manage_own',
@@ -192,6 +196,8 @@ export const ROLE_ACTIONS: Matrix = {
     'competition.transfer_primary': 'ALWAYS',
     'workflow.edit': 'ALWAYS',
     'resource.edit': 'ALWAYS',
+    'outcome.record': 'ALWAYS',
+    'ownership.transfer': 'ALWAYS',
     'workflow_template.clone': 'ALWAYS',
     'workflow_template.manage_own': 'ALWAYS',
     'workflow_template.manage_all': 'ALWAYS',
@@ -249,6 +255,8 @@ export const ROLE_ACTIONS: Matrix = {
     'competition.transfer_primary': 'COMPETITION_PRIMARY_MENTOR',
     'workflow.edit': 'COMPETITION_MENTOR',
     'resource.edit': 'COMPETITION_MENTOR',
+    'outcome.record': 'COMPETITION_MENTOR',
+    'ownership.transfer': 'NEVER',
     'workflow_template.clone': 'ALWAYS',
     'workflow_template.manage_own': 'OWN',
     'workflow_template.manage_all': 'NEVER',
