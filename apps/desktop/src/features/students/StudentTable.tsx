@@ -1,8 +1,7 @@
 import type { StudentListItem } from '@compintel/contracts';
 import { UserCheck } from 'lucide-react';
-import { useCallback, useMemo, useRef, useState } from 'react';
 
-import { useGlobalHotkeys, type Hotkey } from '../../lib/hotkeys.js';
+import { useRovingRows } from '../../lib/roving-rows.js';
 import { programLabel, StatusBadge } from './labels.js';
 
 /**
@@ -18,37 +17,7 @@ export interface StudentTableProps {
 }
 
 export function StudentTable({ items, onOpen, keysEnabled }: StudentTableProps): React.JSX.Element {
-  const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
-  const rows = useRef(new Map<string, HTMLTableRowElement>());
-  const selected = items.find((item) => item.id === selectedId) ?? items[0];
-
-  const select = useCallback((item: StudentListItem | undefined): void => {
-    if (item === undefined) return;
-    setSelectedId(item.id);
-    const row = rows.current.get(item.id);
-    row?.focus();
-    row?.scrollIntoView({ block: 'nearest' });
-  }, []);
-
-  const hotkeys = useMemo<readonly Hotkey[]>(() => {
-    if (!keysEnabled) return [];
-    const index = selected === undefined ? -1 : items.indexOf(selected);
-    return [
-      {
-        key: 'j',
-        onPress: () => {
-          select(items[Math.min(items.length - 1, index + 1)]);
-        },
-      },
-      {
-        key: 'k',
-        onPress: () => {
-          select(items[Math.max(0, index - 1)]);
-        },
-      },
-    ];
-  }, [keysEnabled, items, selected, select]);
-  useGlobalHotkeys(hotkeys);
+  const roving = useRovingRows(items, keysEnabled);
 
   return (
     <table className="w-full border-collapse text-left text-sm">
@@ -84,15 +53,7 @@ export function StudentTable({ items, onOpen, keysEnabled }: StudentTableProps):
         {items.map((item) => (
           <tr
             key={item.id}
-            ref={(element) => {
-              if (element === null) rows.current.delete(item.id);
-              else rows.current.set(item.id, element);
-            }}
-            tabIndex={item.id === selected?.id ? 0 : -1}
-            data-selected={item.id === selected?.id}
-            onFocus={() => {
-              setSelectedId(item.id);
-            }}
+            {...roving.rowProps(item)}
             onClick={() => {
               onOpen(item);
             }}

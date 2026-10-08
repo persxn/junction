@@ -84,6 +84,7 @@ export class StudentsService {
     const ids = page.map((row) => row.id);
     const tags = new Map(this.#deps.relations.tagsByStudent(ids));
     const mentors = this.#deps.relations.mentorshipsOf(ids);
+    const teamCounts = this.#deps.teamLinks.openTeamCounts(ids);
     const last = page.at(-1);
     return {
       items: page.map((row) =>
@@ -92,6 +93,7 @@ export class StudentsService {
           tags.get(row.id) ?? [],
           mentors.filter((mentor) => mentor.studentId === row.id),
           context.actor.id,
+          teamCounts.get(row.id) ?? 0,
         ),
       ),
       nextCursor:

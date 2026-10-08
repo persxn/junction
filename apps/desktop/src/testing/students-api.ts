@@ -165,6 +165,7 @@ function listItem(student: StudentDetail): StudentListItem {
     tags: student.tags.map((tag) => ({ name: tag.name, relation: tag.relation })),
     mentorNames: open.map((mentor) => mentor.displayName),
     isMine: open.some((mentor) => mentor.userId === TEST_USER.id),
+    teamCount: student.teams.filter((team) => team.leftAt === null).length,
     erased: student.erasedAt !== null,
     version: student.version,
   };

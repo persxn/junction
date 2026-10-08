@@ -9,7 +9,6 @@ import {
   ShieldAlert,
   Trophy,
   UserX,
-  Users,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -24,12 +23,13 @@ import { EraseDialog } from './EraseDialog.js';
 import { dayText, programLabel, StatusBadge } from './labels.js';
 import { MentorsSection } from './MentorsSection.js';
 import { TagEditor } from './TagEditor.js';
+import { TeamsSection } from './TeamsSection.js';
 import { studentKey, useStudentActions } from './use-student-actions.js';
 
 /**
  * The Student page (§16.2: profile · skills & interests · teams · competitions
- * & outcomes history). Teams and competitions are filled by WP-18 and WP-19;
- * until then their sections say what will fill them.
+ * & outcomes history). Teams are WP-18's; competitions are WP-19's, and until
+ * then that section says what will fill it.
  */
 
 function Profile({ student }: { readonly student: StudentDetail }): React.JSX.Element {
@@ -83,7 +83,7 @@ function Later(props: {
   readonly id: string;
   readonly title: string;
   readonly text: string;
-  readonly icon: typeof Users;
+  readonly icon: typeof Trophy;
 }): React.JSX.Element {
   const Icon = props.icon;
   return (
@@ -230,12 +230,7 @@ export function StudentPage(): React.JSX.Element {
       <TagEditor student={data} />
       <MentorsSection student={data} />
       <AchievementsSection student={data} />
-      <Later
-        id="teams-heading"
-        title="Teams"
-        icon={Users}
-        text="Not in a team yet. Teams this student joins on the Teams screen appear here, with their role and the team’s mentors."
-      />
+      <TeamsSection student={data} />
       <Later
         id="competitions-heading"
         title="Competitions and outcomes"

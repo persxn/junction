@@ -54,4 +54,17 @@ export class TeamLinksRepository {
         .all(studentId) as { id: string }[]
     ).map((row) => row.id);
   }
+
+  /** Open memberships per student, for the list. */
+  openTeamCounts(studentIds: readonly string[]): Map<string, number> {
+    if (studentIds.length === 0) return new Map();
+    const rows = this.#db.raw
+      .prepare(
+        `SELECT student_id AS id, count(*) AS n FROM team_members
+         WHERE left_at IS NULL AND student_id IN (${studentIds.map(() => '?').join(', ')})
+         GROUP BY student_id`,
+      )
+      .all(...studentIds) as { id: string; n: number }[];
+    return new Map(rows.map((row) => [row.id, row.n]));
+  }
 }

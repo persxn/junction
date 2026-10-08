@@ -109,10 +109,29 @@ const competitionsRoute = createRoute({
   component: () => <PlaceholderPage item={navItem('competitions')} />,
 });
 
+// WP-18: like the student pages, each is a full page.
 const teamsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/teams',
-  component: () => <PlaceholderPage item={navItem('teams')} />,
+  component: lazyRouteComponent(() => import('../features/teams/TeamsPage.js'), 'TeamsPage'),
+});
+
+const newTeamRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/teams/new',
+  component: lazyRouteComponent(() => import('../features/teams/TeamFormPage.js'), 'NewTeamPage'),
+});
+
+const teamRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/teams/$teamId',
+  component: lazyRouteComponent(() => import('../features/teams/TeamPage.js'), 'TeamPage'),
+});
+
+const editTeamRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/teams/$teamId/edit',
+  component: lazyRouteComponent(() => import('../features/teams/TeamFormPage.js'), 'EditTeamPage'),
 });
 
 // WP-17: siblings, not children — each is a full page, not a drawer over the list.
@@ -250,6 +269,9 @@ const routeTree = rootRoute.addChildren([
   createEventRoute,
   competitionsRoute,
   teamsRoute,
+  newTeamRoute,
+  teamRoute,
+  editTeamRoute,
   studentsRoute,
   newStudentRoute,
   importStudentsRoute,

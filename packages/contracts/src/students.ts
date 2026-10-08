@@ -148,6 +148,8 @@ export const StudentListItem = z
     mentorNames: z.array(z.string()),
     /** The caller is an active mentor (R91's "My students"). */
     isMine: z.boolean(),
+    /** Open team memberships (WP-18: "Also in 2 teams" in the add-member picker). */
+    teamCount: z.int().min(0),
     erased: z.boolean(),
     version: z.int().min(1),
   })

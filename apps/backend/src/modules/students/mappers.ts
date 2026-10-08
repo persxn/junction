@@ -55,6 +55,7 @@ export function toListItem(
   tags: readonly StudentTagRef[],
   mentors: readonly MentorshipRef[],
   actorId: string,
+  teamCount = 0,
 ): StudentListItem {
   const open = mentors.filter((mentor) => mentor.endedAt === null);
   return {
@@ -72,6 +73,7 @@ export function toListItem(
     tags: tags.map((tag) => ({ name: tag.name, relation: tag.relation })),
     mentorNames: open.map((mentor) => mentor.mentorName),
     isMine: open.some((mentor) => mentor.mentorUserId === actorId),
+    teamCount,
     erased: row.erasedAt !== null,
     version: row.version,
   };
