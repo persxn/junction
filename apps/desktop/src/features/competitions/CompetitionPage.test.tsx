@@ -154,7 +154,8 @@ describe('the team and student pages list competitions', () => {
   it('on the student page, with the team it was with', async () => {
     installStudentsApi({ students: [{ ...ASHA, competitions: [ref] }] });
     await renderApp(`/students/${ASHA.id}`);
-    const list = await screen.findByRole('list', { name: 'Competitions' });
-    expect(within(list).getByText('Team Rocket')).toBeInTheDocument();
+    // WP-21: the Student page's history lists it, with its team.
+    const list = await screen.findByRole('list', { name: 'Competitions and outcomes' });
+    expect(within(list).getByText(/Team Rocket/)).toBeInTheDocument();
   });
 });

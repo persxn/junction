@@ -43,16 +43,9 @@ export function installOutcomesApi(competitions: Map<string, CompetitionDetail>)
   const route = (method: string, path: string, body: Record<string, unknown>) => {
     const history = /^\/api\/v1\/students\/([^/]+)\/history$/.exec(path);
     if (history !== null) {
+      // Unknown here: the students fake builds one from the student's own competitions.
       const found = histories.get(history[1] ?? '');
-      return found === undefined
-        ? respond(200, {
-            studentId: history[1],
-            erased: false,
-            competitions: [],
-            teams: [],
-            achievements: [],
-          })
-        : respond(200, found);
+      return found === undefined ? undefined : respond(200, found);
     }
     const match = /^\/api\/v1\/competitions\/([^/]+)\/outcome$/.exec(path);
     if (match === null) return undefined;

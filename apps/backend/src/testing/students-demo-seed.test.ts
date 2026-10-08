@@ -112,6 +112,16 @@ describe('seedDemoStudentsInto', () => {
     for (let n = 0; n < 12; n += 1) makeEvent(h);
     const seeded = seedDemoStudentsInto(h.database.db);
     expect(seeded.shapedWorkflows).toBe(5);
+    // WP-21: an outcome on every COMPLETED competition, and a second professor.
+    const completed = h.database.db.raw
+      .prepare(
+        `SELECT count(*) AS n FROM engagements e WHERE e.status = 'COMPLETED'
+           AND EXISTS (SELECT 1 FROM engagement_outcomes o WHERE o.engagement_id = e.id)`,
+      )
+      .get() as { n: number };
+    expect(seeded.outcomes).toBeGreaterThan(0);
+    expect(completed.n).toBe(seeded.outcomes);
+    expect(seeded.secondProfessorId).not.toBe(seeded.professorId);
     const missing = h.database.db.raw
       .prepare(
         `SELECT count(*) AS n FROM engagements e WHERE e.status <> 'CONSIDERING'

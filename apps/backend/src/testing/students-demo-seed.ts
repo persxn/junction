@@ -2,6 +2,8 @@ import { AuthRepository } from '../modules/auth/repository.js';
 import type { Principal } from '../modules/auth/types.js';
 import { createStudentsModule } from '../modules/students/wiring.js';
 import { createEngagementsModule } from '../modules/engagements/wiring.js';
+import { createOutcomeLookup, createOutcomesModule } from '../modules/outcomes/wiring.js';
+import { createResourcesModule } from '../modules/resources/wiring.js';
 import { createTeamsModule } from '../modules/teams/wiring.js';
 import { createWorkflowsModule } from '../modules/workflows/wiring.js';
 import { seedDemoCompetitions } from './competitions-demo.js';
@@ -10,6 +12,7 @@ import type { DatabaseHandle } from '../platform/db.js';
 import { SettingsStore } from '../platform/settings.js';
 import { seedDemoStudents } from './students-demo.js';
 import { seedDemoTeams } from './teams-demo.js';
+import { seedDemoOutcomes } from './outcomes-demo.js';
 import { shapeDemoWorkflows } from './workflows-demo.js';
 
 /**
@@ -21,6 +24,8 @@ import { shapeDemoWorkflows } from './workflows-demo.js';
  * WP-18 adds 12 teams over them (`teams-demo.ts`), with a demo co-mentor.
  * WP-20a copies a workflow into every competition that reaches ASSIGNED, and
  * shapes five open ones into the five schedule healths (`workflows-demo.ts`).
+ * WP-21 records outcomes on the COMPLETED ones and adds a second professor to
+ * transfer ownership to (`outcomes-demo.ts`).
  *
  * They are mentored by a demo professor created here with a placeholder in
  * place of a password hash: no password verifies against it, so the account
@@ -29,6 +34,8 @@ import { shapeDemoWorkflows } from './workflows-demo.js';
 
 export const DEMO_PROFESSOR_EMAIL = 'demo.professor@example.edu';
 export const DEMO_CO_MENTOR_EMAIL = 'demo.co-mentor@example.edu';
+/** WP-21: the professor an ownership transfer can move things to. */
+export const DEMO_SECOND_PROFESSOR_EMAIL = 'demo.second-professor@example.edu';
 
 export interface DemoStudentsSeed {
   readonly students: number;
@@ -38,7 +45,10 @@ export interface DemoStudentsSeed {
   readonly competitions: number;
   /** WP-20a: open competitions whose workflow was shaped into one of the five healths. */
   readonly shapedWorkflows: number;
+  /** WP-21: outcomes recorded on the COMPLETED demo competitions. */
+  readonly outcomes: number;
   readonly professorId: string;
+  readonly secondProfessorId: string;
 }
 
 export function seedDemoStudentsInto(db: DatabaseHandle): DemoStudentsSeed {
@@ -55,6 +65,7 @@ export function seedDemoStudentsInto(db: DatabaseHandle): DemoStudentsSeed {
   const auth = new AuthRepository(db);
   const professor = demoProfessor(auth, DEMO_PROFESSOR_EMAIL, 'Demo Professor');
   const coMentor = demoProfessor(auth, DEMO_CO_MENTOR_EMAIL, 'Demo Co-mentor');
+  const second = demoProfessor(auth, DEMO_SECOND_PROFESSOR_EMAIL, 'Demo Second Professor');
   const audit = new AuditLog(db);
   const module = createStudentsModule({ db, audit, settings: new SettingsStore(db) });
   const students = seedDemoStudents(module, professor);
@@ -84,10 +95,13 @@ export function seedDemoStudentsInto(db: DatabaseHandle): DemoStudentsSeed {
   ).map((event) => event.id);
   const workflows = createWorkflowsModule({ db, audit });
   workflows.templatesRepository.ensureSeeded(Date.now());
+  const resources = createResourcesModule({ db, audit });
+  const lookup = createOutcomeLookup(db, resources);
   const engagements = createEngagementsModule({
     db,
     audit,
     onAssigned: [workflows.copier.onAssigned],
+    outcomes: lookup.lookup,
   });
   const competitions = seedDemoCompetitions(engagements, {
     teamIds,
@@ -104,7 +118,30 @@ export function seedDemoStudentsInto(db: DatabaseHandle): DemoStudentsSeed {
       .all() as { id: string }[]
   ).map((row) => row.id);
   const shapedWorkflows = shapeDemoWorkflows(workflows, open, professor, Date.now());
-  return { students, teams, competitions, shapedWorkflows, professorId: professor.id };
+  const completed = (
+    db.raw
+      .prepare("SELECT id FROM engagements WHERE status = 'COMPLETED' ORDER BY created_at, id")
+      .all() as { id: string }[]
+  ).map((row) => row.id);
+  const outcomes = seedDemoOutcomes(
+    createOutcomesModule({
+      repository: lookup.repository,
+      competitions: engagements,
+      resources,
+      audit,
+    }),
+    completed,
+    professor,
+  );
+  return {
+    students,
+    teams,
+    competitions,
+    shapedWorkflows,
+    outcomes,
+    professorId: professor.id,
+    secondProfessorId: second.id,
+  };
 }
 
 /** A professor nobody can sign in as: no password verifies against the placeholder. */

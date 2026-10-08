@@ -117,6 +117,6 @@ describe('sections still to come', () => {
   it('says what will fill Teams and Competitions', async () => {
     await open();
     expect(screen.getByText(/Not in a team yet/)).toBeInTheDocument();
-    expect(screen.getByText(/No competitions yet/)).toBeInTheDocument();
+    expect(await screen.findByText(/No competitions yet/)).toBeInTheDocument();
   });
 });

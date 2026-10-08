@@ -213,6 +213,30 @@ export function installStudentsApi(options: StudentsApiOptions = {}): StudentsAp
         facets: { branches: ['Computer Science and Engineering'], graduationYears: [2026, 2027] },
       });
     }
+    // WP-21: a student's history, built from the competitions the page already lists.
+    const history = /^\/api\/v1\/students\/([^/]+)\/history$/.exec(path);
+    if (history !== null) {
+      const student = students.get(history[1] ?? '');
+      return respond(200, {
+        studentId: history[1],
+        erased: student?.erasedAt !== null && student?.erasedAt !== undefined,
+        competitions: (student?.competitions ?? []).map((ref) => ({
+          competitionId: ref.id,
+          eventTitle: ref.eventTitle,
+          startsAt: null,
+          endsAt: null,
+          datePrecision: 'UNKNOWN',
+          teamName: ref.teamName,
+          status: ref.status,
+          outcomeState: 'NONE',
+          outcome: null,
+          addedAt: '2026-10-01T06:00:00.000Z',
+          removedAt: ref.onRoster ? null : '2026-10-05T06:00:00.000Z',
+        })),
+        teams: [],
+        achievements: [],
+      });
+    }
     if (path === '/api/v1/students/options') {
       return respond(200, {
         settings: settings.value,

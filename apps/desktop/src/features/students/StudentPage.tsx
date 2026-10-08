@@ -16,13 +16,13 @@ import { dayText, programLabel, StatusBadge } from './labels.js';
 import { MentorsSection } from './MentorsSection.js';
 import { TagEditor } from './TagEditor.js';
 import { TeamsSection } from './TeamsSection.js';
-import { CompetitionRefs } from '../competitions/CompetitionRefs.js';
+import { CompetitionHistory } from '../outcomes/CompetitionHistory.js';
 import { studentKey, useStudentActions } from './use-student-actions.js';
 
 /**
  * The Student page (§16.2: profile · skills & interests · teams · competitions
- * & outcomes history). Teams are WP-18's; competitions are WP-19's, and until
- * then that section says what will fill it.
+ * & outcomes history). Teams are WP-18's; competitions with their outcomes come
+ * from WP-21's history endpoint.
  */
 
 function Profile({ student }: { readonly student: StudentDetail }): React.JSX.Element {
@@ -204,11 +204,7 @@ export function StudentPage(): React.JSX.Element {
       <MentorsSection student={data} />
       <AchievementsSection student={data} />
       <TeamsSection student={data} />
-      <CompetitionRefs
-        refs={data.competitions}
-        showTeam
-        empty="No competitions yet. Each competition this student takes part in — with a team or alone — is listed here once it is assigned."
-      />
+      <CompetitionHistory studentId={data.id} />
 
       {erasing && (
         <EraseDialog

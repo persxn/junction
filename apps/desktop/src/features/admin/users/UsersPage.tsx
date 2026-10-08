@@ -1,6 +1,6 @@
 import type { RoleKey, UserSummary } from '@compintel/contracts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { KeyRound, Loader2, UserPlus, Users } from 'lucide-react';
+import { ArrowRightLeft, KeyRound, Loader2, UserPlus, Users } from 'lucide-react';
 import { useState } from 'react';
 
 import {
@@ -17,6 +17,7 @@ import { Skeleton } from '../../../components/Skeleton.js';
 import { useToast } from '../../../components/toast/ToastProvider.js';
 import { NewUserDialog } from './NewUserDialog.js';
 import { OneTimePassword } from './OneTimePassword.js';
+import { TransferDialog } from './TransferDialog.js';
 import { UserRow } from './UserRow.js';
 
 /**
@@ -34,6 +35,7 @@ export function UsersPage(): React.JSX.Element {
   const toast = useToast();
 
   const [creating, setCreating] = useState(false);
+  const [transferring, setTransferring] = useState(false);
   const [issued, setIssued] = useState<{ email: string; password: string } | undefined>(undefined);
 
   const users = useQuery({
@@ -99,16 +101,29 @@ export function UsersPage(): React.JSX.Element {
           <h1 className="font-display text-xl">Users</h1>
           <p className="text-fg-muted">Accounts, roles and password resets.</p>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            setCreating(true);
-          }}
-          className="flex items-center gap-2 rounded-md bg-accent px-3 py-2 font-medium text-on-accent hover:bg-accent-hover"
-        >
-          <UserPlus aria-hidden="true" className="size-4" />
-          Add a person
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            disabled={users.data === undefined}
+            onClick={() => {
+              setTransferring(true);
+            }}
+            className="flex items-center gap-2 rounded-md border border-line px-3 py-2 hover:bg-surface-hover disabled:opacity-50"
+          >
+            <ArrowRightLeft aria-hidden="true" className="size-4" />
+            Transfer ownership…
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setCreating(true);
+            }}
+            className="flex items-center gap-2 rounded-md bg-accent px-3 py-2 font-medium text-on-accent hover:bg-accent-hover"
+          >
+            <UserPlus aria-hidden="true" className="size-4" />
+            Add a person
+          </button>
+        </div>
       </header>
 
       {issued !== undefined && (
@@ -196,6 +211,16 @@ export function UsersPage(): React.JSX.Element {
             ))}
           </tbody>
         </table>
+      )}
+
+      {transferring && users.data !== undefined && (
+        <TransferDialog
+          users={users.data}
+          onClose={() => {
+            setTransferring(false);
+            void invalidate();
+          }}
+        />
       )}
 
       {creating && (
