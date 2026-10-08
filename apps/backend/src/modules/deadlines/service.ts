@@ -95,8 +95,8 @@ export class DeadlinesService {
     };
   }
 
-  /** For the evaluator: every live item, all scopes at once. */
-  everything(): DueItem[] {
-    return dueItems(this.#repo.allRows(), nowMs(this.#clock));
+  /** For the evaluator: every live item, all scopes at once, at the job's own `now`. */
+  everything(now: number = nowMs(this.#clock)): DueItem[] {
+    return dueItems(this.#repo.allRows(), now);
   }
 }

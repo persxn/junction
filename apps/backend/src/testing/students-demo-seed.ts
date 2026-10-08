@@ -12,6 +12,7 @@ import type { DatabaseHandle } from '../platform/db.js';
 import { SettingsStore } from '../platform/settings.js';
 import { seedDemoStudents } from './students-demo.js';
 import { seedDemoTeams } from './teams-demo.js';
+import { seedDemoDeadlines } from './deadlines-demo.js';
 import { seedDemoOutcomes } from './outcomes-demo.js';
 import { shapeDemoWorkflows } from './workflows-demo.js';
 
@@ -47,6 +48,8 @@ export interface DemoStudentsSeed {
   readonly shapedWorkflows: number;
   /** WP-21: outcomes recorded on the COMPLETED demo competitions. */
   readonly outcomes: number;
+  /** WP-22: stage and task dates in every bucket, event deadlines in every precision. */
+  readonly deadlines: { stages: number; tasks: number; eventDeadlines: number };
   readonly professorId: string;
   readonly secondProfessorId: string;
 }
@@ -133,12 +136,22 @@ export function seedDemoStudentsInto(db: DatabaseHandle): DemoStudentsSeed {
     completed,
     professor,
   );
+  const deadlines = seedDemoDeadlines({
+    db,
+    workflows,
+    // The first five carry the five healths; the rest get one date per bucket.
+    competitionIds: open.slice(5),
+    eventIds: eventIds.slice(-4),
+    professor,
+    now: Date.now(),
+  });
   return {
     students,
     teams,
     competitions,
     shapedWorkflows,
     outcomes,
+    deadlines,
     professorId: professor.id,
     secondProfessorId: second.id,
   };

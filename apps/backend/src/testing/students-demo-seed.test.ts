@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { verifyPassword } from '../modules/auth/password.js';
 import { createWorkflowsModule } from '../modules/workflows/wiring.js';
+import { createDeadlinesModule } from '../modules/deadlines/wiring.js';
 import { openMigratedDatabase, type MigratedDatabase } from './database.js';
 import { makeEvent } from './competitions.js';
 import { DEMO_PROFESSOR_EMAIL, seedDemoStudentsInto } from './students-demo-seed.js';
@@ -122,6 +123,15 @@ describe('seedDemoStudentsInto', () => {
     expect(seeded.outcomes).toBeGreaterThan(0);
     expect(completed.n).toBe(seeded.outcomes);
     expect(seeded.secondProfessorId).not.toBe(seeded.professorId);
+    // WP-22: every bucket has something on the professor's Radar.
+    expect(seeded.deadlines.stages).toBeGreaterThan(0);
+    const professor = { ...h.alice, id: seeded.professorId, roles: ['PROFESSOR' as const] };
+    const buckets = new Set(
+      createDeadlinesModule({ db: h.database.db })
+        .service.items(professor, { scope: 'MINE' })
+        .map((item) => item.bucket),
+    );
+    expect([...buckets].sort()).toEqual(['DAYS_3', 'DAYS_7', 'LATER', 'OVERDUE', 'TODAY']);
     const missing = h.database.db.raw
       .prepare(
         `SELECT count(*) AS n FROM engagements e WHERE e.status <> 'CONSIDERING'
