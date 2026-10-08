@@ -122,7 +122,13 @@ export class EngagementsService {
         if (closesRoster(request.to)) repo.closeRoster(id, at);
         if (request.to === 'ASSIGNED') {
           for (const hook of this.#deps.onAssigned) {
-            hook({ engagementId: id, eventId: row.eventId, actorId: context.actor.id, at });
+            hook({
+              engagementId: id,
+              eventId: row.eventId,
+              actorId: context.actor.id,
+              at,
+              workflow: request.workflow,
+            });
           }
         }
       },

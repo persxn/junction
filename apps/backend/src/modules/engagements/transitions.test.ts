@@ -75,7 +75,12 @@ const count = (sql: string, id: string): number =>
 const historyRows = (id: string): number =>
   count('SELECT count(*) AS n FROM engagement_status_history WHERE engagement_id = ?', id);
 const auditRows = (id: string): number =>
-  count('SELECT count(*) AS n FROM audit_log WHERE entity_id = ?', id);
+  count(
+    // The status change's own row; entering ASSIGNED also writes WP-20a's
+    // "workflow created" row, which is the copy's, not the move's.
+    "SELECT count(*) AS n FROM audit_log WHERE entity_id = ? AND action = 'competition.status_changed'",
+    id,
+  );
 
 describe('invalid transitions are rejected (§19 AC)', () => {
   const pairs = ENGAGEMENT_STATUSES.flatMap((from) =>

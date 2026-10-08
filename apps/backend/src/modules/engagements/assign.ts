@@ -138,7 +138,16 @@ export class AssignService {
             requestId: context.requestId ?? null,
           },
           () => {
-            this.#write(context, plan.event.id, departmentId, planned, id, status, at);
+            this.#write(
+              context,
+              plan.event.id,
+              departmentId,
+              planned,
+              id,
+              status,
+              at,
+              request.workflow,
+            );
           },
         );
         return id;
@@ -159,6 +168,7 @@ export class AssignService {
     id: string,
     status: AssignRequest['initialStatus'],
     at: number,
+    workflow: AssignRequest['workflow'],
   ): void {
     const repo = this.#deps.engagements;
     repo.insert({
@@ -200,7 +210,7 @@ export class AssignService {
     }
     if (status === 'ASSIGNED') {
       for (const hook of this.#deps.onAssigned) {
-        hook({ engagementId: id, eventId, actorId: context.actor.id, at });
+        hook({ engagementId: id, eventId, actorId: context.actor.id, at, workflow });
       }
     }
   }

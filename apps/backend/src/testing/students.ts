@@ -116,9 +116,15 @@ export function openStudentsHarness(startIso = '2026-10-01T04:30:00.000Z'): Stud
   const settings = new SettingsStore(db, { clock });
   const module = createStudentsModule({ db, audit, settings, clock });
   const teams = createTeamsModule({ db, audit, clock });
-  const competitions = createEngagementsModule({ db, audit, clock });
   const workflows = createWorkflowsModule({ db, audit, clock });
   workflows.templatesRepository.ensureSeeded(at);
+  const competitions = createEngagementsModule({
+    db,
+    audit,
+    clock,
+    onAssigned: [workflows.copier.onAssigned],
+    summaries: (rows) => workflows.reader.summaries(rows),
+  });
   return {
     database,
     module,

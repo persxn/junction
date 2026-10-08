@@ -7,7 +7,10 @@ import {
   type CompetitionListItem,
   type CompetitionMentor,
   type CompetitionParticipant,
+  type EngagementStatus,
   type OwnershipFacts,
+  type ScheduleHealth,
+  type WorkflowChoice,
   type TeamMentorship,
 } from '@compintel/contracts';
 
@@ -32,7 +35,17 @@ export type OnAssignedHook = (assigned: {
   readonly eventId: string;
   readonly actorId: string;
   readonly at: number;
+  /** WP-20a: the template chosen in the assign flow; absent → the type's default. */
+  readonly workflow: WorkflowChoice | undefined;
 }) => void;
+
+/** WP-20a: progress and health per competition, for the list and the board. */
+export type WorkflowSummaries = (
+  competitions: readonly { readonly id: string; readonly status: EngagementStatus }[],
+) => ReadonlyMap<
+  string,
+  { progress: number | null; health: ScheduleHealth | null; healthReason: string | null }
+>;
 
 /** What every competitions service holds. */
 export interface EngagementsDependencies {
@@ -41,6 +54,7 @@ export interface EngagementsDependencies {
   readonly teams: TeamsRepository;
   readonly audit: AuditLog;
   readonly onAssigned: readonly OnAssignedHook[];
+  readonly summaries?: WorkflowSummaries;
   readonly clock?: Clock;
 }
 
@@ -158,6 +172,7 @@ export class EngagementReader {
       [...events.keys()],
       nowMs(this.#clock),
     );
+    const summaries = this.#deps.summaries?.(rows) ?? new Map();
     return rows.flatMap((row) => {
       const event = events.get(row.eventId);
       if (event === undefined) return [];
@@ -189,10 +204,9 @@ export class EngagementReader {
             next === undefined ? null : { kind: next.kind, at: next.at, precision: next.precision },
           statusChangedAt: iso(row.statusChangedAt),
           isMine: open.some((m) => m.userId === actor.id),
-          // WP-20a step 5 fills these from the workflow.
-          progress: null,
-          health: null,
-          healthReason: null,
+          progress: summaries.get(row.id)?.progress ?? null,
+          health: summaries.get(row.id)?.health ?? null,
+          healthReason: summaries.get(row.id)?.healthReason ?? null,
           can: {
             edit: editable && can(actor, 'competition.edit', facts),
             manageMentors: editable && can(actor, 'competition.manage_mentors', facts),

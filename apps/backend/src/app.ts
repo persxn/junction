@@ -42,6 +42,7 @@ import { studentsRoutes } from './routes/students.js';
 import { teamsRoutes } from './routes/teams.js';
 import { competitionsRoutes } from './routes/competitions.js';
 import { workflowTemplatesRoutes } from './routes/workflow-templates.js';
+import { workflowsRoutes } from './routes/workflows.js';
 import type { StudentsModule } from './modules/students/wiring.js';
 import type { TeamsModule } from './modules/teams/wiring.js';
 import type { EngagementsModule } from './modules/engagements/wiring.js';
@@ -211,6 +212,9 @@ export function buildApp(
     workflowTemplatesRoutes({ workflows: options.workflows ?? (() => undefined) }),
     { prefix: API_PREFIX },
   );
+  void server.register(workflowsRoutes({ workflows: options.workflows ?? (() => undefined) }), {
+    prefix: API_PREFIX,
+  });
   void server.register(
     eventDetailRoutes({
       detail: options.eventDetail ?? ((): EventDetailService | undefined => undefined),

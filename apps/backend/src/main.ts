@@ -222,11 +222,17 @@ async function main(): Promise<void> {
     const studentsModule = createStudentsModule({ db, audit, settings });
     // WP-18: teams, members and mentors.
     const teamsModule = createTeamsModule({ db, audit });
-    // WP-19: competitions — the onAssigned hooks arrive with WP-20a.
-    const competitionsModule = createEngagementsModule({ db, audit });
-    // WP-20a: workflow templates — the five defaults, inserted if absent (R101).
+    // WP-20a: workflow templates — the five defaults, inserted if absent (R101) —
+    // and the workflow copied in as a competition enters ASSIGNED.
     const workflowsModule = createWorkflowsModule({ db, audit });
     workflowsModule.templatesRepository.ensureSeeded(Date.now());
+    // WP-19: competitions, with WP-20a's copy-on-assign and progress/health.
+    const competitionsModule = createEngagementsModule({
+      db,
+      audit,
+      onAssigned: [workflowsModule.copier.onAssigned],
+      summaries: (rows) => workflowsModule.reader.summaries(rows),
+    });
     const refreshVocabulary = (): void => {
       try {
         searchModule.vocabulary.refresh();

@@ -126,3 +126,26 @@ export type TemplateMoveRequest = z.infer<typeof TemplateMoveRequest>;
 
 export const TemplateVersionRequest = z.object({ versionNo: VersionNo }).strict();
 export type TemplateVersionRequest = z.infer<typeof TemplateVersionRequest>;
+
+/** The review step's question: what dates would this template give this event (R100)? */
+export const ResolveTemplateRequest = z.object({ eventId: Uuid7 }).strict();
+export type ResolveTemplateRequest = z.infer<typeof ResolveTemplateRequest>;
+
+export const ResolvedTemplate = z
+  .object({
+    templateId: Uuid7.nullable(),
+    templateName: z.string().nullable(),
+    stages: z.array(
+      z
+        .object({
+          templateStageId: Uuid7,
+          name: z.string().min(1),
+          /** Null: "No date — set one". */
+          dueAt: z.iso.datetime().nullable(),
+          taskCount: z.int().min(0),
+        })
+        .strict(),
+    ),
+  })
+  .strict();
+export type ResolvedTemplate = z.infer<typeof ResolvedTemplate>;
