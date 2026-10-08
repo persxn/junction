@@ -221,6 +221,20 @@ export const ENGAGEMENT_ERROR_CODES = [
   'ENGAGEMENT_VERSION_CONFLICT',
 ] as const;
 
+/** Workflows, stages, tasks and templates (WP-20a, R99–R101). */
+export const WORKFLOW_ERROR_CODES = [
+  'WORKFLOW_NOT_FOUND',
+  'WORKFLOW_STAGE_NOT_FOUND',
+  'WORKFLOW_TASK_NOT_FOUND',
+  'WORKFLOW_TEMPLATE_NOT_FOUND',
+  'WORKFLOW_VERSION_CONFLICT',
+  /** Completing a stage with open tasks needs CLOSE or KEEP; carries `count`. */
+  'WORKFLOW_OPEN_TASKS',
+  'WORKFLOW_BLOCKED_REASON_REQUIRED',
+  'WORKFLOW_TEMPLATE_READ_ONLY',
+  'WORKFLOW_ASSIGNEE_NOT_ON_ROSTER',
+] as const;
+
 /** Database failures the API may surface at request time (WP-04b). */
 export const DB_ERROR_CODES = ['DB_UNAVAILABLE', 'DB_CONSTRAINT_VIOLATED'] as const;
 
@@ -241,6 +255,7 @@ export const ERROR_CODES = [
   ...STUDENT_ERROR_CODES,
   ...TEAM_ERROR_CODES,
   ...ENGAGEMENT_ERROR_CODES,
+  ...WORKFLOW_ERROR_CODES,
   ...DB_ERROR_CODES,
 ] as const;
 
@@ -261,6 +276,7 @@ export const ERROR_CODE_DOMAINS = [
   'STUDENT',
   'TEAM',
   'ENGAGEMENT',
+  'WORKFLOW',
   'DB',
 ] as const;
 export type ErrorCodeDomain = (typeof ERROR_CODE_DOMAINS)[number];
@@ -319,5 +335,7 @@ export const ProblemDetails = z.object({
    * the merged event's survivor, a team's open competitions (WP-19).
    */
   related: z.array(z.object({ id: z.string().min(1), name: z.string().min(1) })).optional(),
+  /** `WORKFLOW_OPEN_TASKS`: how many tasks are still open. */
+  count: z.int().min(0).optional(),
 });
 export type ProblemDetails = z.infer<typeof ProblemDetails>;

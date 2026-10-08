@@ -189,6 +189,10 @@ export class EngagementReader {
             next === undefined ? null : { kind: next.kind, at: next.at, precision: next.precision },
           statusChangedAt: iso(row.statusChangedAt),
           isMine: open.some((m) => m.userId === actor.id),
+          // WP-20a step 5 fills these from the workflow.
+          progress: null,
+          health: null,
+          healthReason: null,
           can: {
             edit: editable && can(actor, 'competition.edit', facts),
             manageMentors: editable && can(actor, 'competition.manage_mentors', facts),

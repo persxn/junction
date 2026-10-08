@@ -75,6 +75,10 @@ export const ACTIONS = [
   'competition.manage_mentors',
   /** Hand a competition's PRIMARY role to another professor: its primary. */
   'competition.transfer_primary',
+  /** WP-20a: a competition's stages, tasks, assignees and dates — its open mentors. */
+  'workflow.edit',
+  /** WP-20a: copy any template into one of your own. */
+  'workflow_template.clone',
   'workflow_template.manage_own',
   'workflow_template.manage_all',
   'saved_search.manage',
@@ -184,6 +188,8 @@ export const ROLE_ACTIONS: Matrix = {
     'competition.assign_individual': 'ALWAYS',
     'competition.manage_mentors': 'ALWAYS',
     'competition.transfer_primary': 'ALWAYS',
+    'workflow.edit': 'ALWAYS',
+    'workflow_template.clone': 'ALWAYS',
     'workflow_template.manage_own': 'ALWAYS',
     'workflow_template.manage_all': 'ALWAYS',
     'saved_search.manage': 'OWN',
@@ -238,6 +244,8 @@ export const ROLE_ACTIONS: Matrix = {
     'competition.assign_individual': 'ALWAYS',
     'competition.manage_mentors': 'COMPETITION_PRIMARY_MENTOR',
     'competition.transfer_primary': 'COMPETITION_PRIMARY_MENTOR',
+    'workflow.edit': 'COMPETITION_MENTOR',
+    'workflow_template.clone': 'ALWAYS',
     'workflow_template.manage_own': 'OWN',
     'workflow_template.manage_all': 'NEVER',
     'saved_search.manage': 'OWN',

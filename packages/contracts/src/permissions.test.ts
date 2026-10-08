@@ -168,6 +168,16 @@ describe('the §10.2 rows that are not a plain yes or no', () => {
     expect(decide(['ADMINISTRATOR'], 'competition.manage_mentors', facts('x-1'))).toBe(true);
   });
 
+  it('edits a workflow as its competition’s mentors do; templates as their owner (WP-20a)', () => {
+    expect(decide(['PROFESSOR'], 'workflow.edit', { isCompetitionMentor: true })).toBe(true);
+    expect(decide(['PROFESSOR'], 'workflow.edit', { isTeamMentor: true })).toBe(false);
+    expect(decide(['ADMINISTRATOR'], 'workflow.edit', {})).toBe(true);
+    expect(decide(['PROFESSOR'], 'workflow_template.clone')).toBe(true);
+    expect(decide(['PROFESSOR'], 'workflow_template.manage_own', { isOwner: true })).toBe(true);
+    expect(decide(['PROFESSOR'], 'workflow_template.manage_own', { isOwner: false })).toBe(false);
+    expect(decide(['PROFESSOR'], 'workflow_template.manage_all', { isOwner: true })).toBe(false);
+  });
+
   it('assigns a team only for its mentors, students for any professor (R96)', () => {
     expect(decide(['PROFESSOR'], 'competition.assign_team', { isTeamMentor: true })).toBe(true);
     expect(decide(['PROFESSOR'], 'competition.assign_team', {})).toBe(false);

@@ -6,6 +6,7 @@ import { EngagementStatus, ParticipantKind } from './engagement-status.js';
 import { Uuid7 } from './ids.js';
 import { StudentStatus } from './student-status.js';
 import { MentorRole, TeamPerson } from './teams.js';
+import { ScheduleHealth, WorkflowChoice } from './workflow-enums.js';
 
 /**
  * Competitions (§6.2 table `engagements`, UI label "Competition"; rulings
@@ -148,6 +149,11 @@ export const CompetitionListItem = z
     nextDeadline: NextDeadline.nullable(),
     statusChangedAt: z.iso.datetime(),
     isMine: z.boolean(),
+    /** WP-20a: R99's workflow progress (null with no counted stage, or no workflow yet). */
+    progress: z.number().min(0).max(100).nullable(),
+    /** WP-20a: R99's schedule health; null while Considering and once closed. */
+    health: ScheduleHealth.nullable(),
+    healthReason: z.string().nullable(),
     can: CompetitionAbilities,
     version: Version,
   })
@@ -207,7 +213,13 @@ export type InitialStatus = z.infer<typeof InitialStatus>;
 
 /** Who takes the event on: one team, or one INDIVIDUAL competition per student (R96). */
 export const TeamAssignRequest = z
-  .object({ eventId: Uuid7, teamId: Uuid7, initialStatus: InitialStatus.default('ASSIGNED') })
+  .object({
+    eventId: Uuid7,
+    teamId: Uuid7,
+    initialStatus: InitialStatus.default('ASSIGNED'),
+    /** WP-20a: the workflow copied when it starts at ASSIGNED; absent → the type's default. */
+    workflow: WorkflowChoice.optional(),
+  })
   .strict();
 export const StudentsAssignRequest = z
   .object({
@@ -216,6 +228,7 @@ export const StudentsAssignRequest = z
     /** An administrator names the primary; a professor is the primary themself. */
     primaryUserId: Uuid7.optional(),
     initialStatus: InitialStatus.default('ASSIGNED'),
+    workflow: WorkflowChoice.optional(),
   })
   .strict();
 /** One request for both the preview and the assignment. */
@@ -290,7 +303,13 @@ export const AssignResult = z.object({ competitions: z.array(CompetitionListItem
 export type AssignResult = z.infer<typeof AssignResult>;
 
 export const TransitionRequest = z
-  .object({ to: EngagementStatus, note: z.string().trim().max(500).nullish(), version: Version })
+  .object({
+    to: EngagementStatus,
+    note: z.string().trim().max(500).nullish(),
+    /** WP-20a: on CONSIDERING → ASSIGNED, the workflow to copy; absent → the type's default. */
+    workflow: WorkflowChoice.optional(),
+    version: Version,
+  })
   .strict();
 export type TransitionRequest = z.infer<typeof TransitionRequest>;
 

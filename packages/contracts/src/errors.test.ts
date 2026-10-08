@@ -18,6 +18,7 @@ import {
   STUDENT_ERROR_CODES,
   TEAM_ERROR_CODES,
   ENGAGEMENT_ERROR_CODES,
+  WORKFLOW_ERROR_CODES,
   SETUP_ERROR_CODES,
   SOURCE_ERROR_CODES,
   problemType,
@@ -145,6 +146,15 @@ describe('ErrorCode', () => {
       'ENGAGEMENT_MENTOR_NOT_FOUND',
       'ENGAGEMENT_PARTICIPANT_NOT_FOUND',
       'ENGAGEMENT_VERSION_CONFLICT',
+      'WORKFLOW_NOT_FOUND',
+      'WORKFLOW_STAGE_NOT_FOUND',
+      'WORKFLOW_TASK_NOT_FOUND',
+      'WORKFLOW_TEMPLATE_NOT_FOUND',
+      'WORKFLOW_VERSION_CONFLICT',
+      'WORKFLOW_OPEN_TASKS',
+      'WORKFLOW_BLOCKED_REASON_REQUIRED',
+      'WORKFLOW_TEMPLATE_READ_ONLY',
+      'WORKFLOW_ASSIGNEE_NOT_ON_ROSTER',
       'DB_UNAVAILABLE',
       'DB_CONSTRAINT_VIOLATED',
     ]);
@@ -164,6 +174,7 @@ describe('ErrorCode', () => {
       ...STUDENT_ERROR_CODES,
       ...TEAM_ERROR_CODES,
       ...ENGAGEMENT_ERROR_CODES,
+      ...WORKFLOW_ERROR_CODES,
       ...DB_ERROR_CODES,
     ]);
   });
@@ -179,6 +190,7 @@ describe('ErrorCode', () => {
     ['STUDENT_', STUDENT_ERROR_CODES],
     ['TEAM_', TEAM_ERROR_CODES],
     ['ENGAGEMENT_', ENGAGEMENT_ERROR_CODES],
+    ['WORKFLOW_', WORKFLOW_ERROR_CODES],
     ['DB_', DB_ERROR_CODES],
   ])('prefixes every %s domain code', (prefix, codes) => {
     for (const code of codes) {
