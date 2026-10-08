@@ -1,4 +1,8 @@
-import type { EventQueryInput, SearchSort } from '@compintel/contracts';
+import {
+  CLOSING_SOON_REGISTRATION,
+  type EventQueryInput,
+  type SearchSort,
+} from '@compintel/contracts';
 
 import type { FilterQuery } from './query.js';
 
@@ -41,7 +45,8 @@ const FEATURED: Readonly<Record<FeaturedView, Preset>> = {
   nearby: { sort: 'DISTANCE', filters: { maxDistanceKm: NEARBY_KM }, groupBy: 'none' },
   closing: {
     sort: 'DEADLINE',
-    filters: { registration: { states: ['CLOSING_SOON'] } },
+    // The Dashboard's "Closing soon" tile uses the same definition (R107).
+    filters: { registration: CLOSING_SOON_REGISTRATION },
     groupBy: 'none',
   },
   new: { sort: 'NEWEST', filters: {}, groupBy: 'none' },
