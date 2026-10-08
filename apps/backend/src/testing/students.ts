@@ -166,9 +166,12 @@ export function principalAuth(principals: readonly Principal[]): () => AuthServi
   return () => service as unknown as AuthService;
 }
 
-export async function startStudentsServer(h: StudentsHarness): Promise<TestServer> {
+export async function startStudentsServer(
+  h: StudentsHarness,
+  extra: readonly Principal[] = [],
+): Promise<TestServer> {
   return startTestServer({
-    auth: principalAuth([h.admin, h.alice, h.bob]),
+    auth: principalAuth([h.admin, h.alice, h.bob, ...extra]),
     students: () => h.module,
     teams: () => h.teams,
     competitions: () => h.competitions,

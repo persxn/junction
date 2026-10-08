@@ -3,7 +3,6 @@ import {
   isEngagementPrimaryMentor,
   type EngagementStatus,
   type OwnershipFacts,
-  type ScheduleHealth,
   type WorkflowStage,
   type WorkflowView,
 } from '@compintel/contracts';
@@ -22,7 +21,7 @@ import { APP_TIMEZONE, nowMs, systemClock, type Clock } from '../../platform/tim
 import { can } from '../auth/policy.js';
 import type { Principal } from '../auth/types.js';
 import { competitionClosed, competitionNotFound } from '../engagements/errors.js';
-import { mentorshipOf } from '../engagements/reader.js';
+import { mentorshipOf, type WorkflowSummary } from '../engagements/reader.js';
 import type { EngagementRecord, EngagementsRepository } from '../engagements/repository.js';
 import { workflowNotFound } from './errors.js';
 import { parseRule, type TemplatesRepository } from './templates-repo.js';
@@ -48,12 +47,6 @@ export interface WorkflowsContext {
 }
 
 const iso = (at: number | null): string | null => (at === null ? null : new Date(at).toISOString());
-
-export interface WorkflowSummary {
-  readonly progress: number | null;
-  readonly health: ScheduleHealth | null;
-  readonly healthReason: string | null;
-}
 
 interface Computed {
   readonly stage: StageRecord;

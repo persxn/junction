@@ -39,13 +39,17 @@ export type OnAssignedHook = (assigned: {
   readonly workflow: WorkflowChoice | undefined;
 }) => void;
 
+/** One competition's workflow progress and schedule health (R99). */
+export interface WorkflowSummary {
+  readonly progress: number | null;
+  readonly health: ScheduleHealth | null;
+  readonly healthReason: string | null;
+}
+
 /** WP-20a: progress and health per competition, for the list and the board. */
 export type WorkflowSummaries = (
   competitions: readonly { readonly id: string; readonly status: EngagementStatus }[],
-) => ReadonlyMap<
-  string,
-  { progress: number | null; health: ScheduleHealth | null; healthReason: string | null }
->;
+) => ReadonlyMap<string, WorkflowSummary>;
 
 /** What every competitions service holds. */
 export interface EngagementsDependencies {
@@ -172,7 +176,7 @@ export class EngagementReader {
       [...events.keys()],
       nowMs(this.#clock),
     );
-    const summaries = this.#deps.summaries?.(rows) ?? new Map();
+    const summaries = this.#deps.summaries?.(rows) ?? new Map<string, WorkflowSummary>();
     return rows.flatMap((row) => {
       const event = events.get(row.eventId);
       if (event === undefined) return [];
