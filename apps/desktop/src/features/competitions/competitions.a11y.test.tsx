@@ -93,7 +93,11 @@ describe('accessibility', () => {
     await expect(document.body).toBeAccessible();
     await user.click(within(dialog).getByRole('radio', { name: /Team Rocket/ }));
     await user.click(within(dialog).getByRole('button', { name: 'Next' }));
+    await within(dialog).findByRole('radio', { name: /^Hackathon/ });
+    await expect(document.body).toBeAccessible();
+    await user.click(within(dialog).getByRole('button', { name: 'Next' }));
     await within(dialog).findByText('Registration closes');
+    await within(dialog).findByText(/Stage dates/);
     await expect(document.body).toBeAccessible();
     await user.click(within(dialog).getByRole('button', { name: 'Next' }));
     await expect(document.body).toBeAccessible();

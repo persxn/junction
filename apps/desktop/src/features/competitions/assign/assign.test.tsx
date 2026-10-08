@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -12,6 +12,7 @@ import { installFakeSearch, makeItem } from '../../../testing/fake-search.js';
 import { renderApp, renderInRouter } from '../../../testing/render.js';
 import { makeStudent } from '../../../testing/students-api.js';
 import { makeTeam, memberOf } from '../../../testing/teams-api.js';
+import { CTF, HACKATHON } from '../../../testing/workflow-fixtures.js';
 import { stepLabel, withStep, type AssignStep } from './assign-model.js';
 import { AssignDialog } from './AssignDialog.js';
 import { ASSIGN_STEPS } from './steps.js';
@@ -57,19 +58,26 @@ describe('the assign flow (R98)', () => {
   it('A opens it from Discover; team → review → confirm → Assign → Open competition', async () => {
     const user = await openFromKey();
     const dialog = screen.getByRole('dialog');
-    expect(within(dialog).getByText('Step 1 of 3')).toBeInTheDocument();
+    expect(within(dialog).getByText('Step 1 of 4')).toBeInTheDocument();
     const next = within(dialog).getByRole('button', { name: 'Next' });
     expect(next).toBeDisabled();
     await user.click(await within(dialog).findByRole('radio', { name: /Team Rocket/ }));
     await user.click(next);
 
-    expect(within(dialog).getByText('Step 2 of 3')).toBeInTheDocument();
+    // WP-20a: the type's default is preselected.
+    expect(within(dialog).getByText('Step 2 of 4')).toBeInTheDocument();
+    expect(await within(dialog).findByRole('radio', { name: /^Hackathon/ })).toBeChecked();
+    expect(within(dialog).getByRole('radio', { name: /Blank workflow/ })).not.toBeChecked();
+    await user.click(within(dialog).getByRole('button', { name: 'Next' }));
+
+    expect(within(dialog).getByText('Step 3 of 4')).toBeInTheDocument();
     // The date keeps its precision: a day, never "00:00".
     expect(await within(dialog).findByText('by 7 Oct')).toBeInTheDocument();
     expect(within(dialog).getByText('Registration closes in 2 days.')).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Next' }));
 
     expect(within(dialog).getByText(/Taking part: Asha Demo, Ravi Demo/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/starts the “Hackathon” workflow/)).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Assign' }));
     await user.click(await screen.findByRole('button', { name: 'Open competition' }));
     expect(
@@ -78,6 +86,7 @@ describe('the assign flow (R98)', () => {
     expect(api.calls.find((call) => call.path === '/api/v1/competitions/assign')?.body).toEqual({
       eventId: ITEMS[0]!.id,
       teamId: ROCKET.id,
+      workflow: { templateId: HACKATHON.id, dueOverrides: {} },
       initialStatus: 'ASSIGNED',
     });
   });
@@ -85,6 +94,8 @@ describe('the assign flow (R98)', () => {
   it('"Just considering" creates it at Considering', async () => {
     const user = await openFromKey();
     await user.click(await screen.findByRole('radio', { name: /Team Rocket/ }));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await screen.findByRole('radio', { name: /^Hackathon/ });
     await user.click(screen.getByRole('button', { name: 'Next' }));
     await screen.findByText('by 7 Oct');
     await user.click(screen.getByRole('button', { name: 'Next' }));
@@ -101,6 +112,8 @@ describe('the assign flow (R98)', () => {
     });
     const user = await openFromKey();
     await user.click(await screen.findByRole('radio', { name: /Team Rocket/ }));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await screen.findByRole('radio', { name: /^Hackathon/ });
     await user.click(screen.getByRole('button', { name: 'Next' }));
     expect(
       await screen.findByText('Asha Demo is already in Team Comet — HackXYZ 2026 for this event.'),
@@ -121,41 +134,62 @@ describe('the assign flow (R98)', () => {
   });
 });
 
-describe('the steps are data (WP-20a’s seam)', () => {
-  const template: AssignStep = {
-    id: 'template',
-    title: 'Workflow template',
-    Component: () => <p>Pick a template</p>,
-    isComplete: () => true,
-    contribute: () => ({ templateId: 'tpl-1' }),
-  };
+describe('the workflow steps (WP-20a)', () => {
+  it('"Workflow template" sits at index 1 and the step array still takes insertions', () => {
+    expect(ASSIGN_STEPS.map((step) => step.title)).toEqual([
+      'Team or students',
+      'Workflow template',
+      'Review dates',
+      'Confirm',
+    ]);
+    const extra: AssignStep = { ...ASSIGN_STEPS[0]!, id: 'extra' };
+    expect(stepLabel(1, withStep(ASSIGN_STEPS, 1, extra))).toBe('Step 2 of 5');
+  });
 
-  it('a step inserted at index 1 reads "Step 2 of 4" and its fragment reaches the request', async () => {
-    const steps = withStep(ASSIGN_STEPS, 1, template);
-    expect(stepLabel(1, steps)).toBe('Step 2 of 4');
+  it('another template and an edited date reach the request', async () => {
     const user = userEvent.setup();
     await renderInRouter(
-      <AssignDialog
-        event={{ id: EVENT.id, title: EVENT.title }}
-        steps={steps}
-        onClose={() => undefined}
-      />,
+      <AssignDialog event={{ id: EVENT.id, title: EVENT.title }} onClose={() => undefined} />,
     );
     await user.click(await screen.findByRole('radio', { name: /Team Rocket/ }));
     await user.click(screen.getByRole('button', { name: 'Next' }));
-    expect(screen.getByText('Step 2 of 4')).toBeInTheDocument();
-    expect(screen.getByText('Pick a template')).toBeInTheDocument();
+    await user.click(await screen.findByRole('radio', { name: /^CTF/ }));
     await user.click(screen.getByRole('button', { name: 'Next' }));
-    await screen.findByText('by 7 Oct');
+    const first = await screen.findByLabelText(/Team & registration/);
+    expect(first).toHaveValue('2026-10-18T23:59');
+    expect(screen.getAllByText('No date — set one')).toHaveLength(2);
+    fireEvent.change(first, { target: { value: '2026-10-16T10:30' } });
+    expect(screen.getByText(/Your date: 16 Oct, 10:30/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Next' }));
     await user.click(screen.getByRole('button', { name: 'Assign' }));
     await waitFor(() => {
       expect(
         api.calls.find((call) => call.path === '/api/v1/competitions/assign')?.body,
       ).toMatchObject({
-        templateId: 'tpl-1',
-        teamId: ROCKET.id,
+        workflow: {
+          templateId: CTF.id,
+          dueOverrides: { [CTF.stages[0]!.id]: '2026-10-16T05:00:00.000Z' },
+        },
       });
+    });
+  });
+
+  it('Blank workflow says so on the dates step and sends only its choice', async () => {
+    const user = userEvent.setup();
+    await renderInRouter(
+      <AssignDialog event={{ id: EVENT.id, title: EVENT.title }} onClose={() => undefined} />,
+    );
+    await user.click(await screen.findByRole('radio', { name: /Team Rocket/ }));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(await screen.findByRole('radio', { name: /Blank workflow/ }));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(await screen.findByText(/A blank workflow has no stages yet/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: 'Assign' }));
+    await waitFor(() => {
+      expect(
+        api.calls.find((call) => call.path === '/api/v1/competitions/assign')?.body?.workflow,
+      ).toEqual({ templateId: null });
     });
   });
 });

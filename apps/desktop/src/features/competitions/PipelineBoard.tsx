@@ -64,6 +64,7 @@ export function PipelineBoard({
     setErrors(({ [item.id]: _gone, ...rest }) => rest);
     void onMove(item, to).then((result) => {
       if (result.ok) setAnnouncement(movedText(whoOf(item), to));
+      else if ('cancelled' in result) setAnnouncement(`${whoOf(item)} was not moved.`);
       else {
         setErrors((current) => ({ ...current, [item.id]: result.message }));
         setAnnouncement(`${whoOf(item)} was not moved. ${result.message}`);

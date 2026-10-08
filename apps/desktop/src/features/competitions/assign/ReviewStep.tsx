@@ -8,20 +8,19 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
 
-import { previewAssign } from '../../../api/competitions.js';
-import { isApiProblem } from '../../../api/problem.js';
 import { Skeleton } from '../../../components/Skeleton.js';
 import { useNow } from '../../../lib/use-now.js';
-import { useBackendConnection } from '../../../shell/connection-context.js';
 import { formatDeadline } from '../../discover/detail/values.js';
-import { previewRequestOf, type StepProps } from './assign-model.js';
+import { StageDatesEditor } from '../../workflows/StageDatesEditor.js';
+import type { StepProps } from './assign-model.js';
+import { useAssignPreview } from './use-assign-preview.js';
 
 /**
  * Step "Review dates" (R98): the event's key dates in words with their
  * precision kept ("by 7 Oct", never "00:00"), the warnings — which never
  * block — and the A14 conflicts, which do, each naming the other competition.
+ * WP-20a adds the workflow's stage dates, each editable.
  */
 
 const WARNING_ICONS: Readonly<Record<AssignWarningCode, LucideIcon>> = {
@@ -34,29 +33,8 @@ const WARNING_ICONS: Readonly<Record<AssignWarningCode, LucideIcon>> = {
 };
 
 export function ReviewStep({ draft, onChange }: StepProps): React.JSX.Element {
-  const connection = useBackendConnection();
   const now = useNow();
-  const [error, setError] = useState<string | undefined>(undefined);
-  const request = previewRequestOf(draft);
-  const key = JSON.stringify(request);
-
-  useEffect(() => {
-    if (request === undefined || draft.preview !== undefined) return;
-    let live = true;
-    previewAssign(connection, request).then(
-      (preview) => {
-        if (live) onChange({ preview });
-      },
-      (cause: unknown) => {
-        if (live) setError(isApiProblem(cause) ? (cause.detail ?? cause.title) : String(cause));
-      },
-    );
-    return () => {
-      live = false;
-    };
-    // `key` stands for the request; the draft object changes on every keystroke elsewhere.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, draft.preview === undefined]);
+  const error = useAssignPreview(draft, onChange);
 
   if (error !== undefined) {
     return (
@@ -134,6 +112,13 @@ export function ReviewStep({ draft, onChange }: StepProps): React.JSX.Element {
           None of this team’s members is an active student, so there is nobody to take part.
         </p>
       )}
+      <StageDatesEditor
+        eventId={draft.eventId}
+        draft={draft.workflow}
+        onChange={(dueOverrides) => {
+          onChange({ workflow: { ...draft.workflow, dueOverrides } });
+        }}
+      />
     </div>
   );
 }

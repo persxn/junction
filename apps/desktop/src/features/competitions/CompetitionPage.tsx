@@ -215,7 +215,7 @@ export function CompetitionPage(): React.JSX.Element {
             onMove={(to) => {
               setMoveError(undefined);
               void actions.move(data, to).then((result) => {
-                if (!result.ok) setMoveError(result.message);
+                if (!result.ok && 'message' in result) setMoveError(result.message);
               });
             }}
           />
@@ -259,6 +259,7 @@ export function CompetitionPage(): React.JSX.Element {
         icon={Medal}
         text="No outcome recorded. Once the competition is completed, its result is recorded here."
       />
+      {actions.dialog}
     </article>
   );
 }

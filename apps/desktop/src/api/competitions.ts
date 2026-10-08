@@ -8,6 +8,7 @@ import {
   type CompetitionQueryInput,
   type CompetitionTransferRequest,
   type EngagementStatus,
+  type WorkflowChoiceInput,
 } from '@compintel/contracts';
 
 import { apiGet, apiRequest } from './client.js';
@@ -77,12 +78,14 @@ export const transitionCompetition = (
   id: string,
   to: EngagementStatus,
   version: number,
-  note?: string,
+  options: { readonly note?: string; readonly workflow?: WorkflowChoiceInput } = {},
 ): Promise<CompetitionDetail> =>
   post(connection, `/api/v1/competitions/${id}/transitions`, {
     to,
     version,
-    ...(note === undefined ? {} : { note }),
+    ...(options.note === undefined ? {} : { note: options.note }),
+    // WP-20a: CONSIDERING → ASSIGNED copies this template (absent → the type's default).
+    ...(options.workflow === undefined ? {} : { workflow: options.workflow }),
   });
 
 export const updateCompetitionNotes = (

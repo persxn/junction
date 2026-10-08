@@ -174,6 +174,7 @@ export function CompetitionsPage(): React.JSX.Element {
             }}
           />
         ))}
+      {actions.dialog}
     </section>
   );
 }

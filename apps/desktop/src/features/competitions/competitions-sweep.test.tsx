@@ -199,7 +199,7 @@ describe('a keyboard-only walk', () => {
     radio.focus();
     await user.keyboard(' ');
     expect(radio).toBeChecked();
-    // Tab to Next and press it, twice, then Tab to Assign.
+    // Tab to Next and press it three times, then Tab to Assign.
     const press = async (name: string): Promise<void> => {
       for (let step = 0; step < 12 && document.activeElement?.textContent !== name; step += 1) {
         await user.tab();
@@ -207,6 +207,8 @@ describe('a keyboard-only walk', () => {
       expect(document.activeElement).toHaveTextContent(name);
       await user.keyboard('{Enter}');
     };
+    await press('Next');
+    expect(await within(dialog).findByRole('radio', { name: /^Hackathon/ })).toBeChecked();
     await press('Next');
     await within(dialog).findByText('Registration closes');
     await press('Next');

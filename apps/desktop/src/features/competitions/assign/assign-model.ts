@@ -1,6 +1,8 @@
 import type { AssignPreview, AssignRequestInput, InitialStatus } from '@compintel/contracts';
 import type { ComponentType } from 'react';
 
+import { EMPTY_WORKFLOW_DRAFT, type WorkflowDraft } from '../../workflows/template-choice.js';
+
 /**
  * The assign flow's pure parts (R98, WP-19 step 5): the draft the steps fill
  * in, and how the ordered step array turns into one `AssignRequest`. The array
@@ -22,6 +24,8 @@ export interface AssignDraft {
   readonly students: readonly PickedStudent[];
   /** The review step's answer; `canAssign` decides whether Confirm is reachable. */
   readonly preview: AssignPreview | undefined;
+  /** WP-20a: the workflow template and the review step's date edits. */
+  readonly workflow: WorkflowDraft;
   /** Fields a later step adds to the request (e.g. WP-20a's template id). */
   readonly extra: Readonly<Record<string, unknown>>;
 }
@@ -48,6 +52,7 @@ export const emptyDraft = (eventId: string, eventTitle: string): AssignDraft => 
   teamName: undefined,
   students: [],
   preview: undefined,
+  workflow: EMPTY_WORKFLOW_DRAFT,
   extra: {},
 });
 

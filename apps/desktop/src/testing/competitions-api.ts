@@ -13,6 +13,7 @@ import { vi } from 'vitest';
 
 import { TEST_USER } from './auth.js';
 import { PROFESSORS } from './teams-api.js';
+import { installWorkflowsApi, type WorkflowsApi } from './workflows-api.js';
 
 /**
  * The competitions backend, as far as the WP-19 screens can tell — in memory,
@@ -120,6 +121,8 @@ export interface CompetitionsApi {
     query: string;
     body: Record<string, unknown> | undefined;
   }[];
+  /** WP-20a's templates and workflows, answered in front of this fake. */
+  readonly workflows: WorkflowsApi;
 }
 
 function respond(status: number, body: unknown): Response {
@@ -374,5 +377,5 @@ export function installCompetitionsApi(options: CompetitionsApiOptions = {}): Co
       return Promise.resolve(answer);
     }),
   );
-  return { competitions, calls };
+  return { competitions, calls, workflows: installWorkflowsApi({ competitions }) };
 }
