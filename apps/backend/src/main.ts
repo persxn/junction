@@ -38,6 +38,7 @@ import {
 } from './modules/categories/wiring.js';
 import { createStudentsModule } from './modules/students/wiring.js';
 import { createTeamsModule } from './modules/teams/wiring.js';
+import { createEngagementsModule } from './modules/engagements/wiring.js';
 import { EventUserStateService } from './modules/events/user-state.js';
 import { createEventsModule } from './modules/events/wiring.js';
 import { createSearchModule } from './modules/search/wiring.js';
@@ -215,6 +216,8 @@ async function main(): Promise<void> {
     const studentsModule = createStudentsModule({ db, audit, settings });
     // WP-18: teams, members and mentors.
     const teamsModule = createTeamsModule({ db, audit });
+    // WP-19: competitions — the onAssigned hooks arrive with WP-20a.
+    const competitionsModule = createEngagementsModule({ db, audit });
     const refreshVocabulary = (): void => {
       try {
         searchModule.vocabulary.refresh();
@@ -292,6 +295,7 @@ async function main(): Promise<void> {
       eventCategories: () => eventsModule.categoryOverrides,
       students: () => studentsModule,
       teams: () => teamsModule,
+      competitions: () => competitionsModule,
       onShutdownRequested: () => {
         lifecycle.start('api');
       },

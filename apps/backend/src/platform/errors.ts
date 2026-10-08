@@ -23,6 +23,10 @@ export interface AppErrorInit {
   readonly hint?: string;
   readonly retryable?: boolean;
   readonly errors?: readonly ProblemFieldError[];
+  /** R97's next statuses, on `ENGAGEMENT_INVALID_TRANSITION`. */
+  readonly allowed?: readonly string[];
+  /** The records the problem names (WP-19): another competition, a survivor event. */
+  readonly related?: readonly { readonly id: string; readonly name: string }[];
   readonly cause?: unknown;
 }
 
@@ -39,6 +43,8 @@ export class AppError extends Error {
   readonly hint: string | undefined;
   readonly retryable: boolean | undefined;
   readonly errors: readonly ProblemFieldError[] | undefined;
+  readonly allowed: readonly string[] | undefined;
+  readonly related: readonly { readonly id: string; readonly name: string }[] | undefined;
 
   constructor(init: AppErrorInit) {
     super(init.detail ?? init.title, init.cause === undefined ? undefined : { cause: init.cause });
@@ -50,6 +56,8 @@ export class AppError extends Error {
     this.hint = init.hint;
     this.retryable = init.retryable;
     this.errors = init.errors;
+    this.allowed = init.allowed;
+    this.related = init.related;
   }
 
   toProblemDetails(requestId: string, instance?: string): ProblemDetails {
@@ -64,6 +72,10 @@ export class AppError extends Error {
       ...(this.hint === undefined ? {} : { hint: this.hint }),
       ...(this.retryable === undefined ? {} : { retryable: this.retryable }),
       ...(this.errors === undefined ? {} : { errors: [...this.errors] }),
+      ...(this.allowed === undefined ? {} : { allowed: [...this.allowed] }),
+      ...(this.related === undefined
+        ? {}
+        : { related: this.related.map((item) => ({ id: item.id, name: item.name })) }),
     };
   }
 }

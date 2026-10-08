@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { Uuid7 } from './ids.js';
+import { CompetitionRef } from './engagement-status.js';
 import { StudentStatus } from './student-status.js';
 
 /**
@@ -146,6 +147,8 @@ export const TeamDetail = z
     pastMembers: z.array(TeamMember),
     mentors: z.array(TeamMentor),
     pastMentors: z.array(TeamMentor),
+    /** WP-19: the team's competitions, open ones first. */
+    competitions: z.array(CompetitionRef),
     targets: z.array(z.string()),
     coverage: TeamCoverage,
     can: TeamAbilities,

@@ -9,6 +9,7 @@ import { RelationsRepository } from './relations-repo.js';
 import { StudentsRepository } from './repository.js';
 import { StudentRelationsService } from './relations.js';
 import { StudentsService } from './service.js';
+import { CompetitionLinksRepository } from '../engagements/links-repo.js';
 import { TeamLinksRepository } from './team-links-repo.js';
 
 /**
@@ -38,6 +39,7 @@ export function createStudentsModule(options: StudentsModuleOptions): StudentsMo
     students: repository,
     relations: new RelationsRepository(options.db),
     teamLinks: new TeamLinksRepository(options.db),
+    competitionLinks: new CompetitionLinksRepository(options.db),
     audit: options.audit,
     settings: options.settings,
     ...(options.clock === undefined ? {} : { clock: options.clock }),

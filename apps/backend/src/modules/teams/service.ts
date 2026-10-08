@@ -21,6 +21,7 @@ import {
   teamNameTaken,
   teamVersionConflict,
 } from './errors.js';
+import { teamHasActiveCompetitions } from '../engagements/errors.js';
 import { TeamReader, type TeamsContext, type TeamsDependencies } from './reader.js';
 
 /**
@@ -230,6 +231,9 @@ export class TeamsService {
   archive(context: TeamsContext, id: string, version: number): TeamDetail {
     const team = this.#reader.requireWritable(id, version);
     assertCan(context.actor, 'team.archive', this.#reader.facts(context.actor, id));
+    // WP-19: a team with a competition still under way cannot be put away.
+    const open = this.#deps.competitions.openOfTeam(id);
+    if (open.length > 0) throw teamHasActiveCompetitions(open);
     this.#setStatus(context, id, 'ARCHIVED', `Archived ${teamRef(team.name)}`);
     return this.#reader.detail(context.actor, id);
   }

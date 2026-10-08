@@ -63,6 +63,7 @@ export class StudentReader {
       mentors: this.#deps.relations.mentorshipsOf([id]),
       achievements: this.#deps.relations.achievementsOf(id),
       teams: this.#deps.teamLinks.teamsOf(id),
+      competitions: this.#deps.competitionLinks.ofStudent(id),
       phoneEnabled: this.#deps.settings.get(STUDENTS_PHONE_ENABLED),
       canDeactivate:
         row.erasedAt === null && can(actor, 'student.deactivate', this.deactivateFacts(actor, id)),

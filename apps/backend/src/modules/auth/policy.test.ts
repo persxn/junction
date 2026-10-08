@@ -30,6 +30,8 @@ describe('can() follows the contracts matrix exactly', () => {
         isTeamMentor: true,
         isTeamPrimaryMentor: true,
         isStudentMentor: true,
+        isCompetitionMentor: true,
+        isCompetitionPrimaryMentor: true,
       }),
     ).toBe(allowed);
   });

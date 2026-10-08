@@ -14,6 +14,7 @@ import type { AuditLog } from '../../platform/audit.js';
 import type { Clock } from '../../platform/time.js';
 import { can } from '../auth/policy.js';
 import type { Principal } from '../auth/types.js';
+import type { CompetitionLinksRepository } from '../engagements/links-repo.js';
 import type { RelationsRepository } from '../students/relations-repo.js';
 import { studentNotFound } from '../students/errors.js';
 import { studentNotActive, teamArchived, teamNotFound, teamVersionConflict } from './errors.js';
@@ -25,6 +26,8 @@ export interface TeamsDependencies {
   /** WP-17's tags: targets are SKILL tags, created on first use (R94). */
   readonly tags: RelationsRepository;
   readonly audit: AuditLog;
+  /** WP-19: the team's competitions, and the archive rule. */
+  readonly competitions: CompetitionLinksRepository;
   readonly clock?: Clock;
 }
 
@@ -137,6 +140,7 @@ export class TeamReader {
       pastMembers: members.filter((row) => row.leftAt !== null).map((row) => toMember(row, [])),
       mentors: mentors.filter((row) => row.toAt === null).map(toMentor),
       pastMentors: mentors.filter((row) => row.toAt !== null).map(toMentor),
+      competitions: this.#deps.competitions.ofTeam(id),
       targets,
       coverage: coverage(
         open.map((row) => ({

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { CompetitionRef } from './engagement-status.js';
 import { Uuid7 } from './ids.js';
 import { StudentStatus } from './student-status.js';
 import { StudentTeam } from './teams.js';
@@ -183,6 +184,8 @@ export const StudentDetail = z
     achievements: z.array(StudentAchievement),
     /** Open memberships first, then past ones (WP-18). */
     teams: z.array(StudentTeam),
+    /** WP-19: every competition the student has been on the roster of. */
+    competitions: z.array(CompetitionRef),
     /** What the caller may do here — cosmetic, the server decides again (§10.1). */
     canDeactivate: z.boolean(),
     canErase: z.boolean(),

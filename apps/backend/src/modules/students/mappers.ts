@@ -1,4 +1,9 @@
-import type { StudentDetail, StudentListItem, StudentTeam } from '@compintel/contracts';
+import type {
+  CompetitionRef,
+  StudentDetail,
+  StudentListItem,
+  StudentTeam,
+} from '@compintel/contracts';
 
 import type { StudentRow } from '../../db/schema/index.js';
 import type { AuditLog } from '../../platform/audit.js';
@@ -12,6 +17,7 @@ import type {
   StudentTagRef,
 } from './relations-repo.js';
 import type { ListCursor, ListRow, StudentsRepository } from './repository.js';
+import type { CompetitionLinksRepository } from '../engagements/links-repo.js';
 import type { TeamLinksRepository } from './team-links-repo.js';
 
 /** What every students service holds. */
@@ -20,6 +26,8 @@ export interface StudentsDependencies {
   readonly relations: RelationsRepository;
   /** WP-18: the student's teams and their mentors. */
   readonly teamLinks: TeamLinksRepository;
+  /** WP-19: the Student page's competitions. */
+  readonly competitionLinks: CompetitionLinksRepository;
   readonly audit: AuditLog;
   readonly settings: SettingsStore;
   readonly clock?: Clock;
@@ -86,6 +94,7 @@ export interface DetailParts {
   readonly mentors: readonly MentorshipRef[];
   readonly achievements: readonly AchievementRow[];
   readonly teams: readonly StudentTeam[];
+  readonly competitions: readonly CompetitionRef[];
   readonly phoneEnabled: boolean;
   readonly canDeactivate: boolean;
   readonly canErase: boolean;
@@ -136,6 +145,7 @@ export function toDetail(parts: DetailParts): StudentDetail {
       notes: achievement.notes,
     })),
     teams: [...parts.teams],
+    competitions: [...parts.competitions],
     canDeactivate: parts.canDeactivate,
     canErase: parts.canErase,
     version: row.version,

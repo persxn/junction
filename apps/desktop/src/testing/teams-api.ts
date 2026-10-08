@@ -82,6 +82,7 @@ export function makeTeam(n: number, patch: Partial<TeamDetail> = {}): TeamDetail
     pastMembers: [],
     mentors: [primaryOf()],
     pastMentors: [],
+    competitions: [],
     targets: [],
     coverage: { chips: [], counts: { covered: 0, thin: 0, missing: 0 } },
     can: ALL,

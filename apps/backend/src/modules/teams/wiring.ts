@@ -1,6 +1,7 @@
 import type { AuditLog } from '../../platform/audit.js';
 import type { DatabaseHandle } from '../../platform/db.js';
 import type { Clock } from '../../platform/time.js';
+import { CompetitionLinksRepository } from '../engagements/links-repo.js';
 import { RelationsRepository } from '../students/relations-repo.js';
 import { TeamMembersService } from './members.js';
 import { TeamMentorsService } from './mentors.js';
@@ -32,6 +33,7 @@ export function createTeamsModule(options: TeamsModuleOptions): TeamsModule {
     teams: repository,
     tags: new RelationsRepository(options.db),
     audit: options.audit,
+    competitions: new CompetitionLinksRepository(options.db),
     ...(options.clock === undefined ? {} : { clock: options.clock }),
   };
   return {

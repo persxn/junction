@@ -44,6 +44,7 @@ export function makeStudent(n: number, patch: Partial<StudentDetail> = {}): Stud
     mentors: [],
     achievements: [],
     teams: [],
+    competitions: [],
     canDeactivate: true,
     canErase: false,
     version: 1,
