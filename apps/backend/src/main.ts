@@ -39,6 +39,8 @@ import {
 import { createStudentsModule } from './modules/students/wiring.js';
 import { createTeamsModule } from './modules/teams/wiring.js';
 import { createEngagementsModule } from './modules/engagements/wiring.js';
+import { TemplatesRepository } from './modules/workflows/templates-repo.js';
+import { createWorkflowsModule } from './modules/workflows/wiring.js';
 import { EventUserStateService } from './modules/events/user-state.js';
 import { createEventsModule } from './modules/events/wiring.js';
 import { createSearchModule } from './modules/search/wiring.js';
@@ -121,6 +123,10 @@ async function main(): Promise<void> {
       audit,
       dataDir: config.dataDir,
       appVersion: config.appVersion,
+      // R101: the default workflow templates arrive with the department.
+      onCompleted: (_departmentId, at) => {
+        new TemplatesRepository(db).ensureSeeded(at);
+      },
     });
     const users = new UsersService({
       repository: new UsersRepository(db),
@@ -218,6 +224,9 @@ async function main(): Promise<void> {
     const teamsModule = createTeamsModule({ db, audit });
     // WP-19: competitions — the onAssigned hooks arrive with WP-20a.
     const competitionsModule = createEngagementsModule({ db, audit });
+    // WP-20a: workflow templates — the five defaults, inserted if absent (R101).
+    const workflowsModule = createWorkflowsModule({ db, audit });
+    workflowsModule.templatesRepository.ensureSeeded(Date.now());
     const refreshVocabulary = (): void => {
       try {
         searchModule.vocabulary.refresh();
@@ -296,6 +305,7 @@ async function main(): Promise<void> {
       students: () => studentsModule,
       teams: () => teamsModule,
       competitions: () => competitionsModule,
+      workflows: () => workflowsModule,
       onShutdownRequested: () => {
         lifecycle.start('api');
       },

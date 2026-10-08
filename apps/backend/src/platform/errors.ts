@@ -27,6 +27,8 @@ export interface AppErrorInit {
   readonly allowed?: readonly string[];
   /** The records the problem names (WP-19): another competition, a survivor event. */
   readonly related?: readonly { readonly id: string; readonly name: string }[];
+  /** `WORKFLOW_OPEN_TASKS`: how many are open (WP-20a). */
+  readonly count?: number;
   readonly cause?: unknown;
 }
 
@@ -45,6 +47,7 @@ export class AppError extends Error {
   readonly errors: readonly ProblemFieldError[] | undefined;
   readonly allowed: readonly string[] | undefined;
   readonly related: readonly { readonly id: string; readonly name: string }[] | undefined;
+  readonly count: number | undefined;
 
   constructor(init: AppErrorInit) {
     super(init.detail ?? init.title, init.cause === undefined ? undefined : { cause: init.cause });
@@ -58,6 +61,7 @@ export class AppError extends Error {
     this.errors = init.errors;
     this.allowed = init.allowed;
     this.related = init.related;
+    this.count = init.count;
   }
 
   toProblemDetails(requestId: string, instance?: string): ProblemDetails {
@@ -76,6 +80,7 @@ export class AppError extends Error {
       ...(this.related === undefined
         ? {}
         : { related: this.related.map((item) => ({ id: item.id, name: item.name })) }),
+      ...(this.count === undefined ? {} : { count: this.count }),
     };
   }
 }

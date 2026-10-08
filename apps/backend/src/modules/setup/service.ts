@@ -45,6 +45,11 @@ export interface SetupServiceDependencies {
   readonly minFreeBytes?: number;
   /** Lowered in tests; scrypt at the real factor costs a second per call. */
   readonly scryptWorkFactor?: number;
+  /**
+   * Runs inside the setup transaction once the department exists — WP-20a seeds
+   * the default workflow templates here (R101).
+   */
+  readonly onCompleted?: (departmentId: string, at: number) => void;
 }
 
 /** 409, not 401: nothing is wrong with the caller, the install is just empty. */
@@ -98,6 +103,7 @@ export class SetupService {
   readonly #clock: Clock;
   readonly #minFreeBytes: number | undefined;
   readonly #scryptWorkFactor: number | undefined;
+  readonly #onCompleted: ((departmentId: string, at: number) => void) | undefined;
 
   /**
    * The gate is asked on every single request, so the answer is cached. It only
@@ -114,6 +120,7 @@ export class SetupService {
     this.#clock = dependencies.clock ?? systemClock;
     this.#minFreeBytes = dependencies.minFreeBytes;
     this.#scryptWorkFactor = dependencies.scryptWorkFactor;
+    this.#onCompleted = dependencies.onCompleted;
   }
 
   /** Ruling R39. Cheap: one query on the first call, a boolean after that. */
@@ -217,8 +224,8 @@ export class SetupService {
           backupDir: pathCheck.resolvedPath,
         },
       }),
-      (): SetupWriteResult =>
-        this.#repository.completeSetup({
+      (): SetupWriteResult => {
+        const written = this.#repository.completeSetup({
           organization: request.organization,
           department: request.department,
           campus: request.campus,
@@ -228,7 +235,10 @@ export class SetupService {
             passwordHash,
           },
           settings,
-        }),
+        });
+        this.#onCompleted?.(written.departmentId, createdAt.getTime());
+        return written;
+      },
     );
 
     this.#administratorExists = true;

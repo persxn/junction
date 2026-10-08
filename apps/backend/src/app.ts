@@ -41,9 +41,11 @@ import { systemRoutes } from './routes/system.js';
 import { studentsRoutes } from './routes/students.js';
 import { teamsRoutes } from './routes/teams.js';
 import { competitionsRoutes } from './routes/competitions.js';
+import { workflowTemplatesRoutes } from './routes/workflow-templates.js';
 import type { StudentsModule } from './modules/students/wiring.js';
 import type { TeamsModule } from './modules/teams/wiring.js';
 import type { EngagementsModule } from './modules/engagements/wiring.js';
+import type { WorkflowsModule } from './modules/workflows/wiring.js';
 import { systemClock, type Clock } from './platform/time.js';
 
 /** Request bodies larger than this are rejected before they are parsed. */
@@ -101,6 +103,8 @@ export interface BuildAppOptions {
   readonly teams?: () => TeamsModule | undefined;
   /** WP-19's competitions: status machine, roster, mentors, assign flow. */
   readonly competitions?: () => EngagementsModule | undefined;
+  /** WP-20a's workflow templates and workflows. */
+  readonly workflows?: () => WorkflowsModule | undefined;
   /** Shared so jobs and services can publish; one hub per process (R36). */
   readonly streamHub?: StreamHub;
   /** Injected in tests so a heartbeat does not take fifteen real seconds. */
@@ -201,6 +205,10 @@ export function buildApp(
   });
   void server.register(
     competitionsRoutes({ competitions: options.competitions ?? (() => undefined) }),
+    { prefix: API_PREFIX },
+  );
+  void server.register(
+    workflowTemplatesRoutes({ workflows: options.workflows ?? (() => undefined) }),
     { prefix: API_PREFIX },
   );
   void server.register(

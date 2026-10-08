@@ -16,7 +16,7 @@ export interface Positioned {
 /** The midpoint of two neighbours; an open end steps a whole 1024 away. */
 export function midpoint(before: number | undefined, after: number | undefined): number {
   if (before === undefined && after === undefined) return POSITION_STEP;
-  if (before === undefined) return (after!) - POSITION_STEP;
+  if (before === undefined) return after! - POSITION_STEP;
   if (after === undefined) return before + POSITION_STEP;
   return (before + after) / 2;
 }
@@ -26,7 +26,10 @@ export function needsRenumber(a: number, b: number): boolean {
   return Math.abs(b - a) < MIN_GAP;
 }
 
-export interface Placement { readonly beforeId?: string; readonly afterId?: string }
+export interface Placement {
+  readonly beforeId?: string;
+  readonly afterId?: string;
+}
 
 export interface PlacementResult {
   readonly position: number;
