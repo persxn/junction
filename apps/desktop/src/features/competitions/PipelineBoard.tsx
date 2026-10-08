@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from 'react';
 import { canDrop, columnsOf, movedText, whoOf } from './board-model.js';
 import { statusIcon } from './labels.js';
 import { MoveMenu, type MoveMenuHandle } from './MoveMenu.js';
+import { ProgressHealth } from '../workflows/ProgressHealth.js';
 import { NextDeadline } from './NextDeadline.js';
 import type { MoveResult } from './use-competition-actions.js';
 
@@ -202,6 +203,7 @@ export function PipelineBoard({
                       <span className="text-xs">
                         <NextDeadline next={item.nextDeadline} now={now} />
                       </span>
+                      <ProgressHealth item={item} />
                       <div className="flex justify-end">
                         <MoveMenu
                           ref={(handle) => {

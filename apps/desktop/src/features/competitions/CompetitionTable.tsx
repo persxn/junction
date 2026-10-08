@@ -4,6 +4,7 @@ import { useRovingRows } from '../../lib/roving-rows.js';
 import { EVENT_TYPE_LABELS } from '../discover/labels.js';
 import { whoOf } from './board-model.js';
 import { CompetitionStatus, KIND_LABELS } from './labels.js';
+import { ProgressHealth } from '../workflows/ProgressHealth.js';
 import { NextDeadline } from './NextDeadline.js';
 
 /** The list view (WP-19 step 6): a dense table, J/K to move, Enter to open. */
@@ -23,11 +24,13 @@ export function CompetitionTable({ items, now, onOpen }: CompetitionTableProps):
       </caption>
       <thead>
         <tr className="border-b border-line text-fg-subtle">
-          {['Event', 'Team or student', 'Primary mentor', 'Next date', 'Status'].map((head) => (
-            <th key={head} scope="col" className="py-2 pr-3 font-medium">
-              {head}
-            </th>
-          ))}
+          {['Event', 'Team or student', 'Primary mentor', 'Next date', 'Progress', 'Status'].map(
+            (head) => (
+              <th key={head} scope="col" className="py-2 pr-3 font-medium">
+                {head}
+              </th>
+            ),
+          )}
         </tr>
       </thead>
       <tbody>
@@ -56,6 +59,9 @@ export function CompetitionTable({ items, now, onOpen }: CompetitionTableProps):
             <td className="py-2 pr-3 text-fg-muted">{item.primaryMentor?.displayName ?? 'None'}</td>
             <td className="py-2 pr-3">
               <NextDeadline next={item.nextDeadline} now={now} />
+            </td>
+            <td className="py-2 pr-3">
+              <ProgressHealth item={item} />
             </td>
             <td className="py-2">
               <CompetitionStatus status={item.status} />
