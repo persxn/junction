@@ -1,6 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { useNavigate, useSearch } from '@tanstack/react-router';
-import { Compass, Kanban, List, Trophy } from 'lucide-react';
+import { Link, useNavigate, useSearch } from '@tanstack/react-router';
+import { Compass, Kanban, List, ListChecks, Trophy } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { listCompetitions } from '../../api/competitions.js';
@@ -79,26 +79,35 @@ export function CompetitionsPage(): React.JSX.Element {
               : `${String(list.data.total)} ${list.data.total === 1 ? 'competition' : 'competitions'}${hasCompetitionFilters(search) ? ' match these filters' : ''}.`}
           </p>
         </div>
-        <div role="group" aria-label="View" className="flex rounded-md border border-line">
-          {(
-            [
-              ['board', 'Board', Kanban],
-              ['list', 'List', List],
-            ] as const
-          ).map(([view, label, Icon]) => (
-            <button
-              key={view}
-              type="button"
-              aria-pressed={search.view === view}
-              onClick={() => {
-                update({ ...search, view });
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm aria-pressed:bg-accent-surface aria-pressed:font-medium"
-            >
-              <Icon aria-hidden="true" className="size-4" />
-              {label}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            to="/competitions/templates"
+            className="flex items-center gap-1.5 rounded-md border border-line px-3 py-1.5 text-sm hover:bg-surface-hover"
+          >
+            <ListChecks aria-hidden="true" className="size-4" />
+            Templates
+          </Link>
+          <div role="group" aria-label="View" className="flex rounded-md border border-line">
+            {(
+              [
+                ['board', 'Board', Kanban],
+                ['list', 'List', List],
+              ] as const
+            ).map(([view, label, Icon]) => (
+              <button
+                key={view}
+                type="button"
+                aria-pressed={search.view === view}
+                onClick={() => {
+                  update({ ...search, view });
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm aria-pressed:bg-accent-surface aria-pressed:font-medium"
+              >
+                <Icon aria-hidden="true" className="size-4" />
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
       </header>
 

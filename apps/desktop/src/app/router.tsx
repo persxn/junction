@@ -115,6 +115,25 @@ export const competitionsRoute = createRoute({
   ),
 });
 
+// WP-20a: workflow templates — static segments outrank `$competitionId`.
+const templatesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/competitions/templates',
+  component: lazyRouteComponent(
+    () => import('../features/workflows/templates/TemplatesPage.js'),
+    'TemplatesPage',
+  ),
+});
+
+const templateRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/competitions/templates/$templateId',
+  component: lazyRouteComponent(
+    () => import('../features/workflows/templates/TemplateEditorPage.js'),
+    'TemplateEditorPage',
+  ),
+});
+
 const competitionRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/competitions/$competitionId',
@@ -283,6 +302,8 @@ const routeTree = rootRoute.addChildren([
   discoverRoute.addChildren([discoverEventRoute]),
   createEventRoute,
   competitionsRoute,
+  templatesRoute,
+  templateRoute,
   competitionRoute,
   teamsRoute,
   newTeamRoute,

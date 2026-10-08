@@ -116,7 +116,7 @@ export function installWorkflowsApi(options: WorkflowsApiOptions = {}): Workflow
     if (rest === '' && method === 'GET') {
       return respond(200, { items: [...templates.values()].map(({ stages: _s, ...t }) => t) });
     }
-    const [templateId = '', action] = rest.slice(1).split('/');
+    const [templateId = '', action, ...deeper] = rest.slice(1).split('/');
     const template = templates.get(templateId);
     if (template === undefined)
       return problem(404, 'WORKFLOW_TEMPLATE_NOT_FOUND', 'No such template.');
@@ -172,7 +172,7 @@ export function installWorkflowsApi(options: WorkflowsApiOptions = {}): Workflow
     };
     if (action === undefined) return bump(template.stages, fields);
     if (action === 'archive') return bump(template.stages, { isArchived: true });
-    if (action === 'stages') {
+    if (action === 'stages' && deeper.length === 0) {
       const added = {
         id: nextId(),
         description: null,
@@ -183,7 +183,7 @@ export function installWorkflowsApi(options: WorkflowsApiOptions = {}): Workflow
       } as unknown as WorkflowTemplateDetail['stages'][number];
       return bump(placed(template.stages, added, body));
     }
-    const [, stageId, op] = rest.slice(1).split('/');
+    const [stageId, op] = deeper;
     const stage = template.stages.find((s) => s.id === stageId);
     if (stage === undefined) return problem(404, 'WORKFLOW_STAGE_NOT_FOUND', 'No such stage.');
     if (op === 'remove') return bump(template.stages.filter((s) => s.id !== stageId));

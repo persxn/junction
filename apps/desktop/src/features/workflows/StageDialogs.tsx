@@ -128,21 +128,27 @@ export function BlockedReasonDialog({
 export function ConfirmRemoveDialog({
   what,
   detail,
+  verb = 'Remove',
   onAnswer,
 }: {
   /** "the stage “Build prototype”". */
   readonly what: string;
   readonly detail: string;
+  /** The action's word, in the title and on the button. */
+  readonly verb?: string;
   readonly onAnswer: (remove: boolean) => void;
 }): React.JSX.Element {
   return (
     <Dialog
-      title={`Remove ${what}?`}
+      title={`${verb} ${what}?`}
       onClose={() => {
         onAnswer(false);
       }}
     >
-      <p className="text-sm">{detail} This cannot be undone.</p>
+      <p className="text-sm">
+        {detail}
+        {verb === 'Remove' ? ' This cannot be undone.' : ''}
+      </p>
       <div className="flex justify-end gap-2">
         <button
           type="button"
@@ -160,7 +166,7 @@ export function ConfirmRemoveDialog({
             onAnswer(true);
           }}
         >
-          Remove
+          {verb}
         </button>
       </div>
     </Dialog>

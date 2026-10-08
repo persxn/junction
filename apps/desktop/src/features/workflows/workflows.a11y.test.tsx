@@ -11,13 +11,13 @@ import {
 } from '../../testing/competitions-api.js';
 import { renderApp } from '../../testing/render.js';
 import { installStudentsApi } from '../../testing/students-api.js';
-import { HACKATHON, workflowFrom } from '../../testing/workflow-fixtures.js';
+import { HACKATHON, makeTemplate, workflowFrom } from '../../testing/workflow-fixtures.js';
 
 /**
  * WP-20a's screens with axe (R89's `pnpm test:a11y`): the Competition page's
  * workflow with its guide and a stage's details open, the R100 banner, the
  * stage menu, the complete-with-open-tasks and blocked dialogs, and the board
- * with progress and health on its cards.
+ * with progress and health on its cards; the Templates list and editor.
  */
 
 vi.mock('@tauri-apps/api/core', () => ({
@@ -94,6 +94,20 @@ describe('accessibility', () => {
     const card = await screen.findByRole('article', { name: /^Alpha Hack/ });
     expect(within(card).getByText('40% done')).toBeInTheDocument();
     expect(within(card).getByText('At risk')).toBeInTheDocument();
+    await expect(document.body).toBeAccessible();
+  });
+
+  it('the templates list', async () => {
+    await renderApp('/competitions/templates');
+    await screen.findByRole('region', { name: 'Department defaults' });
+    await expect(document.body).toBeAccessible();
+  });
+
+  it('an editable template', async () => {
+    const mine = makeTemplate(5, { name: 'My hackathon', ownedByMe: true, canEdit: true });
+    api.workflows.templates.set(mine.id, mine);
+    await renderApp(`/competitions/templates/${mine.id}`);
+    await screen.findAllByLabelText('Stage name');
     await expect(document.body).toBeAccessible();
   });
 });
