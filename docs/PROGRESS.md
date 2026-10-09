@@ -35,11 +35,11 @@
   `emit()` for WP-24/28; user-scoped stream; inbox API. UI: bell, Inbox + preferences, Dashboard card; tray badge
   (built-in digits, "9+"), CRITICAL toasts (`tauri-winrt-notification =0.8.1`). e2e 6/6, a11y 51/51, cargo 111.
   **Unmet:** manual built-exe check **owed**; verify **207 s vs 120**; `audit:deps` HIGH (source-map-js, upstream).
-- **Next: WP-24** (closes M3). Every M3 WP
+- **WP-24 in progress** (closes M3; rulings R112–R113, v1.1.23). **Next: WP-25a** (M4). Every M3 WP
   ends with a **UI fault sweep** and carries an in-app guide on each new screen. Send `docs/` back when M3 closes.
 - **Owed live runs:** CTFtime / Devfolio smokes and `unstop:capture` wait on `scraper.contactEmail` (the
   owner's own address, R74); `clist:smoke` waits on U4.
-- Spec: docs/ARCHITECTURE.md **v1.1.22 - ACCEPTED** · roadmap §19 = **50 WPs, 37 done, 13 remaining** · **M2 closed** ·
+- Spec: docs/ARCHITECTURE.md **v1.1.23 - ACCEPTED** · roadmap §19 = **50 WPs, 37 done, 13 remaining** · **M2 closed** · **M3 closes with WP-24** ·
   ADR-0001...0019 · decisions register docs/DECISIONS.md.
 
 ## Environment facts
