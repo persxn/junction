@@ -6,11 +6,13 @@
 
 pub mod actions;
 pub mod backoff;
+pub mod badge;
 pub mod commands;
 pub mod external;
 pub mod files;
 pub mod job;
 pub mod loopback;
+pub mod notify;
 pub mod open;
 pub mod open_commands;
 pub mod paths;
@@ -94,6 +96,8 @@ pub fn run() {
             open_commands::reveal_path,
             open_commands::stat_paths,
             open_commands::machine_label,
+            notify::tray_set_unread,
+            notify::notify_critical,
         ])
         .setup(|app| {
             let resource_dir = app.path().resource_dir().ok();

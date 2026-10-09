@@ -27,6 +27,8 @@ serde_json = "1"
 getrandom = "0.4"
 
 [target.'cfg(windows)'.dependencies]
+# R90/WP-23: Windows toasts for CRITICAL notifications; pinned exactly.
+tauri-winrt-notification = "=0.8.1"
 windows = { version = "0.62", features = [
   "Win32_Foundation",
   # CreateJobObjectW takes SECURITY_ATTRIBUTES, which lives behind this feature.
