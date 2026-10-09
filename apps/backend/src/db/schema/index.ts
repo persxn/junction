@@ -17,3 +17,4 @@ export * from './workflows.js';
 export * from './resources.js';
 export * from './outcomes.js';
 export * from './notifications.js';
+export * from './saved-searches.js';
