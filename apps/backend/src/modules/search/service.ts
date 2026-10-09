@@ -197,6 +197,26 @@ export class SearchService {
     };
   }
 
+  /**
+   * The ids-only path (WP-24, R112): every event `query` matches for `userId`,
+   * through the same plan, text resolution and SQL builder as `search`, with
+   * `excludeHidden` forced (an event the owner hid is never news to them) and
+   * sort, cursor and limit ignored. A machine caller — the saved-search
+   * evaluator — so no permission check; the owner's own state scopes it.
+   */
+  matchingIds(userId: string, query: EventQuery): string[] {
+    const ranking = this.#deps.ranking();
+    const now = nowMs(this.#clock);
+    const { cursor: _cursor, sort: _sort, ...rest } = query;
+    const plan = this.#plan({ ...rest, excludeHidden: true }, now, ranking);
+    const text = plan.text === undefined ? undefined : this.#resolveText(plan.text);
+    return this.#deps.repo.matchingIds({
+      plan,
+      userId,
+      ...(text === undefined ? {} : { text: text.match }),
+    });
+  }
+
   /** The core event (WP-16b adds provenance, conflicts and history on top). */
   detail(context: SearchContext, id: string): EventCore {
     assertCan(context.actor, 'event.view');

@@ -1,7 +1,6 @@
-import type { HealthDatabase, ReadyLine } from '@compintel/contracts';
-import type { Logger } from 'pino';
+import type { HealthDatabase } from '@compintel/contracts';
 
-import { buildApp, type App } from './app.js';
+import { buildApp } from './app.js';
 import { hasNetworkInterface } from './jobs/online.js';
 import { Scheduler } from './jobs/scheduler.js';
 import { JobStore } from './jobs/store.js';
@@ -23,7 +22,7 @@ import { AUTO_LOCK_MINUTES } from './settings.js';
 import { resolveResources } from './platform/resources.js';
 import { SettingsStore } from './platform/settings.js';
 import { ShutdownRegistry } from './platform/shutdown.js';
-import { StartupError, toStartupFailure } from './platform/startup-error.js';
+import { failStart, listeningPort, writeReadyLine } from './platform/ready-line.js';
 import { openGazetteer, unavailableGazetteer } from './platform/gazetteer.js';
 import { nowMs, systemClock } from './platform/time.js';
 import { Geocoder } from './modules/geo/geocoder.js';
@@ -48,6 +47,7 @@ import { createDeadlinesModule } from './modules/deadlines/wiring.js';
 import { KpiService } from './modules/dashboard/kpis.js';
 import { registerDeadlineEvaluator } from './modules/deadlines/evaluator.js';
 import { createNotificationsModule } from './modules/notifications/wiring.js';
+import { createSavedSearchesModule } from './modules/saved-searches/wiring.js';
 import { EventUserStateService } from './modules/events/user-state.js';
 import { createEventsModule } from './modules/events/wiring.js';
 import { createSearchModule } from './modules/search/wiring.js';
@@ -56,34 +56,6 @@ import { registerScrapeJobs } from './scraping/jobs.js';
 import { StreamHub } from './platform/stream.js';
 import { adapterRegistry } from './sources/registry.js';
 import './settings.js';
-
-/**
- * The one and only thing this process writes to stdout (ruling R7). The callback
- * form matters: stdout is a pipe when the shell spawns us, so the line must be
- * flushed before `process.exit`.
- */
-function writeReadyLine(line: ReadyLine): Promise<void> {
-  return new Promise((resolve) => {
-    process.stdout.write(`${JSON.stringify(line)}\n`, () => {
-      resolve();
-    });
-  });
-}
-
-async function failStart(error: unknown, logger?: Logger): Promise<never> {
-  const failure = toStartupFailure(error);
-  logger?.fatal({ err: error, code: failure.code }, 'backend failed to start');
-  await writeReadyLine({ ready: false, error: failure });
-  process.exit(1);
-}
-
-function listeningPort(app: App): number {
-  const address = app.server.server.address();
-  if (address === null || typeof address !== 'object') {
-    throw new StartupError('LISTEN_FAILED', 'The server reported no TCP address after listening.');
-  }
-  return address.port;
-}
 
 async function main(): Promise<void> {
   let loggerHandle: LoggerHandle | undefined;
@@ -318,6 +290,13 @@ async function main(): Promise<void> {
     const notificationsModule = createNotificationsModule({ db, hub: streamHub });
     notificationsModule.attachToEvaluator();
     registerDeadlineEvaluator(scheduler, deadlinesModule);
+    // WP-24: hourly, and after every SUCCESS/PARTIAL scrape run (R86, R112).
+    const savedSearchesModule = createSavedSearchesModule({
+      db,
+      search: searchModule.service,
+      notifications: notificationsModule.engine,
+    });
+    savedSearchesModule.schedule(scheduler, streamHub);
     reclassify.trigger = () => {
       scheduler.trigger(RECLASSIFY_JOB_KEY);
     };

@@ -170,6 +170,20 @@ export class SearchRepository {
       ) as SearchRow[];
   }
 
+  /**
+   * Every id the query matches, unordered and unpaged (WP-24's saved searches):
+   * the same `matchedCte` as a page of results, so there is no second filter
+   * implementation — only the projection differs.
+   */
+  matchingIds(execution: SearchExecution): string[] {
+    const matched = matchedCte(execution, clause('e.id'));
+    if (matched === undefined) return [];
+    const rows = this.#db.raw
+      .prepare(`${matched.sql} SELECT id FROM matched`)
+      .all(...matched.params) as { id: string }[];
+    return rows.map((row) => row.id);
+  }
+
   /** Whether one word (or fragment) finds any visible event on its own — the typo gate (F5/A5). */
   hasVisibleHit(index: 'event_fts' | 'event_fts_trigram', match: string): boolean {
     const row = this.#db.raw
