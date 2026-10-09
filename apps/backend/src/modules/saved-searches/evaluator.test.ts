@@ -137,7 +137,9 @@ describe('the trigger (R86, R22)', () => {
   const runs = (b: SavedSearchBench): number =>
     (
       b.h.database.db.raw
-        .prepare('SELECT count(*) AS n FROM job_state WHERE job_key = ? AND last_run_at IS NOT NULL')
+        .prepare(
+          'SELECT count(*) AS n FROM job_state WHERE job_key = ? AND last_run_at IS NOT NULL',
+        )
         .get(SAVED_SEARCH_EVALUATOR_JOB_KEY) as { n: number }
     ).n;
 
@@ -173,6 +175,21 @@ describe('the trigger (R86, R22)', () => {
     const counter = counting(b);
     for (let n = 0; n < 5; n += 1) b.runFinished('SUCCESS');
     await b.scheduler.drain();
+    await b.scheduler.drain();
+    expect(counter.evaluations).toBe(1);
+  });
+
+  it('a manual entry or URL import asks for one evaluation through the same trigger', async () => {
+    const b = open();
+    const counter = { evaluations: 0 };
+    const original = b.saved.repo.evaluable.bind(b.saved.repo);
+    b.saved.repo.evaluable = () => {
+      counter.evaluations += 1;
+      return original();
+    };
+    const { request } = b.saved.schedule(b.scheduler, b.hub);
+    request();
+    request();
     await b.scheduler.drain();
     expect(counter.evaluations).toBe(1);
   });

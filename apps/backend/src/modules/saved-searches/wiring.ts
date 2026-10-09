@@ -25,8 +25,14 @@ export interface SavedSearchesModule {
   readonly service: SavedSearchService;
   /** One evaluation now, outside the scheduler (tests). */
   evaluate(now: number): EvaluationSummary;
-  /** Registers the job and subscribes to `source.run.finished`; returns the unsubscribe. */
-  schedule(scheduler: Scheduler, hub: StreamHub): () => void;
+  /**
+   * Registers the job and subscribes to `source.run.finished`. Returns the
+   * unsubscribe, and `request` — an evaluation soon, coalesced like a run's.
+   */
+  schedule(
+    scheduler: Scheduler,
+    hub: StreamHub,
+  ): { readonly stop: () => void; readonly request: () => void };
 }
 
 export function createSavedSearchesModule(options: {

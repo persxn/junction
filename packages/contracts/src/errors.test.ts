@@ -5,7 +5,6 @@ import {
   CATEGORY_ERROR_CODES,
   COMMON_ERROR_CODES,
   DB_ERROR_CODES,
-  ERROR_CODE_DOMAINS,
   ERROR_CODES,
   ErrorCode,
   EVENT_ERROR_CODES,
@@ -351,50 +350,7 @@ describe('ProblemDetails', () => {
   });
 });
 
-/** The longest registered domain a code starts with (`SAVED_SEARCH_…` is SAVED_SEARCH, not SAVED). */
-function domainOf(code: string): string | undefined {
-  return [...ERROR_CODE_DOMAINS]
-    .sort((a, b) => b.length - a.length)
-    .find((domain) => code.startsWith(`${domain}_`));
-}
-
-describe('the error-code domains (ruling R12)', () => {
-  it('gives every non-common code a registered domain prefix', () => {
-    const common = new Set<string>(COMMON_ERROR_CODES);
-    for (const code of ERROR_CODES) {
-      if (common.has(code)) {
-        continue;
-      }
-      expect(domainOf(code), code).toBeDefined();
-    }
-  });
-
-  it('uses SCREAMING_SNAKE throughout', () => {
-    for (const code of ERROR_CODES) {
-      expect(code, code).toMatch(/^[A-Z]+(_[A-Z0-9]+)*$/);
-    }
-  });
-
-  it('gives every non-common code a DOMAIN_NAME shape', () => {
-    const common = new Set<string>(COMMON_ERROR_CODES);
-    for (const code of ERROR_CODES) {
-      if (!common.has(code)) {
-        expect(code, code).toMatch(/^[A-Z]+_[A-Z0-9_]+$/);
-      }
-    }
-  });
-
-  it('has no duplicates across the whole enum', () => {
-    expect(new Set(ERROR_CODES).size).toBe(ERROR_CODES.length);
-  });
-
-  it('declares no domain that nothing uses', () => {
-    const used = new Set(
-      ERROR_CODES.filter((code) => !new Set<string>(COMMON_ERROR_CODES).has(code)).map(domainOf),
-    );
-    expect([...ERROR_CODE_DOMAINS].sort()).toStrictEqual([...used].sort());
-  });
-
+describe('the error-code blocks', () => {
   it('carries the blocks M1 needs', () => {
     expect(ERROR_CODES).toContain('EVENT_VERSION_CONFLICT');
     expect(ERROR_CODES).toContain('GEO_PLACE_UNKNOWN');

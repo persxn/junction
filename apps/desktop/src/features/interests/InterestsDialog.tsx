@@ -1,5 +1,6 @@
 import type { MyInterestsView } from '@compintel/contracts';
 import { X } from 'lucide-react';
+import { useState } from 'react';
 
 import { Dialog } from '../../components/Dialog.js';
 import { Guide } from '../../components/Guide.js';
@@ -15,6 +16,9 @@ import { useInterests } from './use-interests.js';
 export function InterestsDialog({ onClose }: { readonly onClose: () => void }): React.JSX.Element {
   const interests = useInterests();
   const view = interests.view;
+  // The clicked value, held here so the box ticks in the same render as the
+  // click (the query cache answers a tick later); dropped again if the write fails.
+  const [ticked, setTicked] = useState<Readonly<Record<string, boolean>>>({});
   const replaceTags = (next: MyInterestsView['tags'], newTagNames: string[] = []): void => {
     if (view === undefined) return;
     void interests
@@ -59,11 +63,16 @@ export function InterestsDialog({ onClose }: { readonly onClose: () => void }): 
                     <label key={category.id} className="flex items-center gap-2 text-sm">
                       <input
                         type="checkbox"
-                        checked={view.categoryIds.includes(category.id)}
+                        checked={ticked[category.id] ?? view.categoryIds.includes(category.id)}
                         onChange={(event) => {
-                          void interests
-                            .setCategory(category.id, event.target.checked)
-                            .catch(() => undefined);
+                          const on = event.target.checked;
+                          setTicked((current) => ({ ...current, [category.id]: on }));
+                          void interests.setCategory(category.id, on).catch(() => {
+                            setTicked((current) => {
+                              const { [category.id]: _dropped, ...rest } = current;
+                              return rest;
+                            });
+                          });
                         }}
                       />
                       {category.name}

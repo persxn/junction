@@ -235,6 +235,7 @@ async function main(): Promise<void> {
       competitions: () => competitionsModule,
       deadlines: () => deadlinesModule,
     });
+    const afterIngest = { evaluate: (): void => undefined };
     const refreshVocabulary = (): void => {
       try {
         searchModule.vocabulary.refresh();
@@ -262,7 +263,11 @@ async function main(): Promise<void> {
       geocoder,
       events: eventsModule,
       setupComplete: () => !setup.isRequired(),
-      onIngested: refreshVocabulary,
+      onIngested: () => {
+        refreshVocabulary();
+        // WP-24: a manual entry or URL import can be a saved search's new match.
+        afterIngest.evaluate();
+      },
       onRunFinished: (event) => {
         streamHub.publish('source.run.finished', { ...event });
       },
@@ -298,7 +303,7 @@ async function main(): Promise<void> {
       search: searchModule.service,
       notifications: notificationsModule.engine,
     });
-    savedSearchesModule.schedule(scheduler, streamHub);
+    afterIngest.evaluate = savedSearchesModule.schedule(scheduler, streamHub).request;
     const interests = new InterestsService({ repo: new InterestsRepository(db) });
     reclassify.trigger = () => {
       scheduler.trigger(RECLASSIFY_JOB_KEY);

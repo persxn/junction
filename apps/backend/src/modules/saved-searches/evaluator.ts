@@ -136,7 +136,9 @@ export function registerSavedSearchEvaluator(
 
 /**
  * Runs the evaluator after each scrape run that finished SUCCESS or PARTIAL
- * (R86), listening in-process on the hub the run is announced on.
+ * (R86), listening in-process on the hub the run is announced on. `request`
+ * is the same coalesced trigger for other ways events arrive — a manual entry
+ * or a URL import (WP-14) — which announce no run.
  *
  * Single-flight coalesces a burst: runs announced while an evaluation is in
  * flight are refused as ALREADY_RUNNING. The evaluation body is synchronous, so
@@ -148,7 +150,7 @@ export function triggerOnRunFinished(
   hub: StreamHub,
   scheduler: Pick<Scheduler, 'trigger'>,
   phase: EvaluationPhase,
-): () => void {
+): { readonly stop: () => void; readonly request: () => void } {
   let pending = false;
   const fire = (): void => {
     const result = scheduler.trigger(SAVED_SEARCH_EVALUATOR_JOB_KEY);
@@ -163,7 +165,7 @@ export function triggerOnRunFinished(
       pending = true;
     }
   };
-  return hub.subscribe({
+  const stop = hub.subscribe({
     send: (event) => {
       if (event.type !== 'source.run.finished') return;
       if (!TRIGGERING_OUTCOMES.has(event.payload.outcome)) return;
@@ -171,4 +173,5 @@ export function triggerOnRunFinished(
     },
     close: () => undefined,
   });
+  return { stop, request: fire };
 }

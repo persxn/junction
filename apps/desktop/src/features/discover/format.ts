@@ -84,3 +84,20 @@ export function weekOf(at: number): string {
   const weekday = (date.getUTCDay() + 6) % 7; // Monday = 0
   return new Date(date.getTime() - weekday * DAY_MS).toISOString().slice(0, 10);
 }
+
+/**
+ * The reasons a card states inline (WP-24): the two that added the most to its
+ * score, ties in the server's order. WP-15b lists reasons in the order they
+ * fire, so "the first two" could hide "AI/ML matches your interests" (20 points)
+ * behind "Registration open" (10). Every reason stays under "Why relevant?".
+ */
+export function inlineReasons<T extends { readonly weightApplied: number }>(
+  reasons: readonly T[],
+  count = 2,
+): T[] {
+  return reasons
+    .map((reason, index) => ({ reason, index }))
+    .sort((a, b) => b.reason.weightApplied - a.reason.weightApplied || a.index - b.index)
+    .slice(0, count)
+    .map((entry) => entry.reason);
+}

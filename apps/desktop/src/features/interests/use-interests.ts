@@ -71,6 +71,21 @@ export function useInterests(): InterestsApi {
     isPending: query.isPending,
     error: query.error,
     replace: (update) => replace.mutateAsync(update).then(settle, failed),
-    setCategory: (id, on) => category.mutateAsync({ id, on }).then(settle, failed),
+    // Optimistic: the box ticks as it is clicked, and un-ticks if the write fails.
+    setCategory: (id, on) => {
+      const previous = client.getQueryData<MyInterestsView>(INTERESTS_KEY);
+      if (previous !== undefined) {
+        client.setQueryData<MyInterestsView>(INTERESTS_KEY, {
+          ...previous,
+          categoryIds: on
+            ? [...new Set([...previous.categoryIds, id])]
+            : previous.categoryIds.filter((value) => value !== id),
+        });
+      }
+      return category.mutateAsync({ id, on }).then(settle, (error: unknown) => {
+        if (previous !== undefined) client.setQueryData(INTERESTS_KEY, previous);
+        return failed(error);
+      });
+    },
   };
 }

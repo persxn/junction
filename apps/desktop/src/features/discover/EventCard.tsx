@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { useId, useState } from 'react';
 
-import { formatDistance, formatPrize, formatTeam } from './format.js';
+import { formatDistance, formatPrize, formatTeam, inlineReasons } from './format.js';
 import { EVENT_TYPE_LABELS, sourceName } from './labels.js';
 import { countdown } from './urgency.js';
 
@@ -134,11 +134,10 @@ export function EventCard({
         )}
       </ul>
 
-      {/* WP-24 (§19 M3): every card says why it is here — the first two reasons
-          inline, all of them under "Why relevant?". The schema guarantees one. */}
+      {/* WP-24 (§19 M3): every card says why it is here — the two weightiest
+          reasons inline, all of them under "Why relevant?". The schema guarantees one. */}
       <p data-testid="card-reasons" className="mt-2 text-sm text-fg-muted">
-        {item.reasons
-          .slice(0, INLINE_REASONS)
+        {inlineReasons(item.reasons, INLINE_REASONS)
           .map((reason) => reason.text)
           .join(' · ')}
       </p>

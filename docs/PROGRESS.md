@@ -3,27 +3,9 @@
 ## Current
 - **pre-M2b done (PARTIAL), 2 Oct 2026** (`docs/handoff/pre-M2b.md`): R75–R88 fixes, migrations 0016–0022.
   **Unmet:** R88 first page 94 ms vs 50; live runs owed (no contactEmail).
-- **WP-17 done, 2 Oct 2026** (`docs/handoff/WP-17.md`): students, tags, mentorships, erasure, CSV/XLSX import (R91–R93);
-  in-house XLSX reader; in-app guides on every new screen (`components/Guide.tsx`); migration 0023; papaparse@5.7.0.
-- **WP-18 done, 8 Oct 2026** (`docs/handoff/WP-18.md`): teams, role labels, one lead, primary + co-mentors, R94
-  coverage, R95 lifecycle; migration 0024; `GET /professors`.
-- **WP-19 done, 8 Oct 2026** (`docs/handoff/WP-19.md`): competitions (R96–R98) — status machine, frozen roster, assign
-  flow, pipeline board; migration 0025.
-- **WP-20a done, 8 Oct 2026** (`docs/handoff/WP-20a.md`): workflows (R99–R101) — templates, copy-on-assign, §11
-  health; migration 0026.
-- **WP-20b PARTIAL, 8 Oct 2026** (`docs/handoff/WP-20b.md`, 7 step commits): R102–R103 (v1.1.19). Contracts
-  `resources.ts` + shell `OpenRefusal`/`StatPathsResult`; migration 0027 (`resources` + version; stage/task deletes
-  take their resources); `domain/resources/classify.ts`; API `/competitions/:id/resources`, `/resources…`, unaudited
-  check results. Shell `open.rs` + `open_commands.rs`: open/reveal/stat_paths/machine_label, canonical target
-  judged, no new crate, `core:default` kept; 20 `open::` tests (§19 "executables can't be opened"), cargo 106.
-  UI: Resources per competition/stage/task, Open / Show in Explorer / Copy, status lines, web build Copy only.
-  e2e 5/5, a11y 44/44. **Unmet:** manual built-app run **owed** (handoff lists steps); verify **176 s vs 120**.
-- **WP-21 done, 8 Oct 2026 — M2 CLOSED** (`docs/handoff/WP-21.md`, 9 step commits, ends with the M2 demo script):
-  R104–R105 (v1.1.20), Q7 applied. Migration 0028 `engagement_outcomes`; `PUT|DELETE /competitions/:id/outcome`
-  (from PARTICIPATING it completes the competition in the same unit of work); admin ownership transfer preview/commit
-  (token, one transaction, audit per entity + summary) — §19 snapshot test green; `GET /students/:id/history`. UI:
-  outcome panel, results on board/list, Transfer ownership dialog, Student page Competitions & outcomes; seed outcomes
-  + second professor. e2e 5/5, a11y 47/47. **Unmet:** verify **186 s vs 120**.
+- **M2 (WP-17…WP-21, 2–8 Oct 2026, CLOSED)**: students + import (R91–R93), teams (R94–R95), competitions (R96–R98),
+  workflows (R99–R101), resources (R102–R103, **WP-20b PARTIAL**: manual built-app run owed), outcomes + ownership
+  transfer (R104–R105); migrations 0023–0028; handoffs `docs/handoff/WP-17…WP-21.md` (WP-21 ends with the M2 demo).
 - **WP-22 done, 9 Oct 2026** (`docs/handoff/WP-22.md`, 8 step commits): R106–R107 (v1.1.21). `v_deadlines` view
   (migration 0029, no duplicates), `domain/deadlines` (Kolkata buckets, precision), `GET /deadlines` (counts = paged list,
   proven per scope × group × bucket), `GET /dashboard/kpis` (each tile its list's own total, proven via the links),
@@ -35,11 +17,17 @@
   `emit()` for WP-24/28; user-scoped stream; inbox API. UI: bell, Inbox + preferences, Dashboard card; tray badge
   (built-in digits, "9+"), CRITICAL toasts (`tauri-winrt-notification =0.8.1`). e2e 6/6, a11y 51/51, cargo 111.
   **Unmet:** manual built-exe check **owed**; verify **207 s vs 120**; `audit:deps` HIGH (source-map-js, upstream).
-- **WP-24 in progress** (closes M3; rulings R112–R113, v1.1.23). **Next: WP-25a** (M4). Every M3 WP
-  ends with a **UI fault sweep** and carries an in-app guide on each new screen. Send `docs/` back when M3 closes.
+- **WP-24 done, 9 Oct 2026 — M3 CLOSED** (`docs/handoff/WP-24.md`, 8 step commits, ends with the M3 demo script):
+  R112–R113 (v1.1.23). Migration 0031 `saved_searches` + `saved_search_matches`; `domain/saved-searches` (diff vs the
+  whole set, hash, one NEW_MATCH per run); `SearchService.matchingIds` (same `matchedCte`, no second filter);
+  `saved-search-evaluator` (hourly, offline-safe, triggered from the hub on SUCCESS/PARTIAL runs and after manual
+  entry/import); interests module (category = INTEREST tag named by its slug). UI: Save this search, Saved searches
+  menu, `/discover/saved/$id`, My interests (user menu, banner, combobox), More like this, two weightiest reasons on
+  every card. e2e 7/7, a11y 53/53. **Unmet:** verify **220 s vs 120**; `audit:deps` HIGH (source-map-js, upstream).
+- **Next: WP-25a** (M4; prompts in `docs/prompts/M4/`). **Send `docs/` back to the architect** — M3 is closed.
 - **Owed live runs:** CTFtime / Devfolio smokes and `unstop:capture` wait on `scraper.contactEmail` (the
   owner's own address, R74); `clist:smoke` waits on U4.
-- Spec: docs/ARCHITECTURE.md **v1.1.23 - ACCEPTED** · roadmap §19 = **50 WPs, 37 done, 13 remaining** · **M2 closed** · **M3 closes with WP-24** ·
+- Spec: docs/ARCHITECTURE.md **v1.1.23 - ACCEPTED** · roadmap §19 = **50 WPs, 38 done, 12 remaining** · **M2 and M3 closed** ·
   ADR-0001...0019 · decisions register docs/DECISIONS.md.
 
 ## Environment facts
