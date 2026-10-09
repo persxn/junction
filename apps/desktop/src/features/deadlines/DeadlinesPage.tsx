@@ -124,7 +124,7 @@ export function DeadlinesPage(): React.JSX.Element {
 
   return (
     <section aria-labelledby={`${id}-heading`} className="flex flex-col gap-4">
-      <header>
+      <div>
         <h1 id={`${id}-heading`} className="font-display text-xl">
           Deadline Radar
         </h1>
@@ -133,7 +133,7 @@ export function DeadlinesPage(): React.JSX.Element {
             ? 'What falls due, soonest first.'
             : `${formatCount(first.total)} due`}
         </p>
-      </header>
+      </div>
       <Guide id="deadline-radar" title="What the Radar shows">
         <p>
           Deadlines of events you <strong>saved</strong> or that a competition is entered for, and

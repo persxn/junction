@@ -66,10 +66,14 @@ function adminGuard(action: Action) {
   };
 }
 
+// WP-22: the Dashboard replaces the placeholder.
 const dashboardRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
-  component: () => <PlaceholderPage item={navItem('dashboard')} />,
+  component: lazyRouteComponent(
+    () => import('../features/dashboard/DashboardPage.js'),
+    'DashboardPage',
+  ),
 });
 
 // WP-16a: the filters live in the search state, so a screen can be restored
