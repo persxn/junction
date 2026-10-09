@@ -9,6 +9,7 @@ import {
 } from '@tanstack/react-router';
 
 import { parseCompetitionsSearch } from '../features/competitions/search-state.js';
+import { parseDeadlinesSearch } from '../features/deadlines/deadline-model.js';
 import { parseDiscoverSearch } from '../features/discover/search-state.js';
 import { AppShell } from './AppShell.js';
 import { ADMIN_NAV, MAIN_NAV, type NavItem } from './nav.js';
@@ -101,6 +102,17 @@ const createEventRoute = createRoute({
   component: lazyRouteComponent(
     () => import('../features/events/create/CreateEventPage.js'),
     'CreateEventPage',
+  ),
+});
+
+// WP-22: the Deadline Radar; its filters live in the search state, so a KPI tile's link opens it filtered.
+const deadlinesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/deadlines',
+  validateSearch: parseDeadlinesSearch,
+  component: lazyRouteComponent(
+    () => import('../features/deadlines/DeadlinesPage.js'),
+    'DeadlinesPage',
   ),
 });
 
@@ -302,6 +314,7 @@ const routeTree = rootRoute.addChildren([
   discoverRoute.addChildren([discoverEventRoute]),
   createEventRoute,
   competitionsRoute,
+  deadlinesRoute,
   templatesRoute,
   templateRoute,
   competitionRoute,

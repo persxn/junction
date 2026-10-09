@@ -7,6 +7,7 @@ import { AssignProvider, useAssign } from '../competitions/assign/assign-context
 import { isApiProblem } from '../../api/problem.js';
 import { EmptyState } from '../../components/EmptyState.js';
 import { Skeleton } from '../../components/Skeleton.js';
+import { formatCount } from '../../lib/count.js';
 import { useNow } from '../../lib/use-now.js';
 import { EventList } from './EventList.js';
 import { FilterBar } from './FilterBar.js';
@@ -103,7 +104,9 @@ function DiscoverScreen(): React.JSX.Element {
 
       {/* The count is announced politely whenever a filter changes it. */}
       <p id="discover-count" role="status" aria-live="polite" className="text-sm text-fg-muted">
-        {total === undefined ? '' : `${String(total)} ${total === 1 ? 'event' : 'events'}`}
+        {total === undefined
+          ? ''
+          : `${formatCount(total, result.totalIsApproximate)} ${total === 1 ? 'event' : 'events'}`}
         {result.correction === undefined ? '' : ` · ${result.correction}`}
       </p>
 

@@ -17,6 +17,8 @@ export const eventListKey = (query: EventQueryInput) => ['events', 'list', query
 export interface EventSearch {
   readonly items: readonly RankedEventListItem[];
   readonly total: number | undefined;
+  /** WP-22: the header formats it like the Dashboard tile does. */
+  readonly totalIsApproximate: boolean;
   readonly facets: Facets | undefined;
   readonly correction: string | undefined;
   readonly isPending: boolean;
@@ -52,6 +54,7 @@ export function useEventSearch(query: EventQueryInput): EventSearch {
   return {
     items: flatItems(data),
     total: first?.total,
+    totalIsApproximate: first?.totalIsApproximate === true,
     facets: first?.facets,
     correction: first?.correction?.message,
     isPending: result.isPending,

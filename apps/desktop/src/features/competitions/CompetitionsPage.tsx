@@ -9,6 +9,7 @@ import { listTeams } from '../../api/teams.js';
 import { EmptyState } from '../../components/EmptyState.js';
 import { Guide } from '../../components/Guide.js';
 import { Skeleton } from '../../components/Skeleton.js';
+import { formatCount } from '../../lib/count.js';
 import { useNow } from '../../lib/use-now.js';
 import { useBackendConnection } from '../../shell/connection-context.js';
 import { DEFAULT_SEARCH } from '../discover/search-state.js';
@@ -76,7 +77,7 @@ export function CompetitionsPage(): React.JSX.Element {
           <p className="text-fg-muted">
             {list.data === undefined
               ? 'Every event a team or student has taken on, from considering to completed.'
-              : `${String(list.data.total)} ${list.data.total === 1 ? 'competition' : 'competitions'}${hasCompetitionFilters(search) ? ' match these filters' : ''}.`}
+              : `${formatCount(list.data.total)} ${list.data.total === 1 ? 'competition' : 'competitions'}${hasCompetitionFilters(search) ? ' match these filters' : ''}.`}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
