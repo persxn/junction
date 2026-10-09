@@ -23,6 +23,7 @@ import {
   OUTCOME_ERROR_CODES,
   TRANSFER_ERROR_CODES,
   NOTIFICATION_ERROR_CODES,
+  SAVED_SEARCH_ERROR_CODES,
   SETUP_ERROR_CODES,
   SOURCE_ERROR_CODES,
   problemType,
@@ -98,7 +99,6 @@ describe('ErrorCode', () => {
       'SEARCH_INVALID_QUERY',
       'SEARCH_INDEX_UNAVAILABLE',
       'SEARCH_TOO_BROAD',
-      'SEARCH_SAVED_NOT_FOUND',
       'SEARCH_INVALID_CURSOR',
       'SEARCH_TEXT_TOO_LONG',
       'SEARCH_ALIAS_EXISTS',
@@ -174,6 +174,10 @@ describe('ErrorCode', () => {
       'TRANSFER_USER_NOT_FOUND',
       'NOTIFICATION_NOT_FOUND',
       'NOTIFICATION_SNOOZE_INVALID',
+      'SAVED_SEARCH_NOT_FOUND',
+      'SAVED_SEARCH_NAME_TAKEN',
+      'SAVED_SEARCH_VERSION_CONFLICT',
+      'SAVED_SEARCH_QUERY_INVALID',
       'DB_UNAVAILABLE',
       'DB_CONSTRAINT_VIOLATED',
     ]);
@@ -198,6 +202,7 @@ describe('ErrorCode', () => {
       ...OUTCOME_ERROR_CODES,
       ...TRANSFER_ERROR_CODES,
       ...NOTIFICATION_ERROR_CODES,
+      ...SAVED_SEARCH_ERROR_CODES,
       ...DB_ERROR_CODES,
     ]);
   });
@@ -218,6 +223,7 @@ describe('ErrorCode', () => {
     ['OUTCOME_', OUTCOME_ERROR_CODES],
     ['TRANSFER_', TRANSFER_ERROR_CODES],
     ['NOTIFICATION_', NOTIFICATION_ERROR_CODES],
+    ['SAVED_SEARCH_', SAVED_SEARCH_ERROR_CODES],
     ['DB_', DB_ERROR_CODES],
   ])('prefixes every %s domain code', (prefix, codes) => {
     for (const code of codes) {
@@ -345,6 +351,13 @@ describe('ProblemDetails', () => {
   });
 });
 
+/** The longest registered domain a code starts with (`SAVED_SEARCH_…` is SAVED_SEARCH, not SAVED). */
+function domainOf(code: string): string | undefined {
+  return [...ERROR_CODE_DOMAINS]
+    .sort((a, b) => b.length - a.length)
+    .find((domain) => code.startsWith(`${domain}_`));
+}
+
 describe('the error-code domains (ruling R12)', () => {
   it('gives every non-common code a registered domain prefix', () => {
     const common = new Set<string>(COMMON_ERROR_CODES);
@@ -352,8 +365,7 @@ describe('the error-code domains (ruling R12)', () => {
       if (common.has(code)) {
         continue;
       }
-      const domain = code.slice(0, code.indexOf('_'));
-      expect(ERROR_CODE_DOMAINS, code).toContain(domain);
+      expect(domainOf(code), code).toBeDefined();
     }
   });
 
@@ -378,9 +390,7 @@ describe('the error-code domains (ruling R12)', () => {
 
   it('declares no domain that nothing uses', () => {
     const used = new Set(
-      ERROR_CODES.filter((code) => !new Set<string>(COMMON_ERROR_CODES).has(code)).map((code) =>
-        code.slice(0, code.indexOf('_')),
-      ),
+      ERROR_CODES.filter((code) => !new Set<string>(COMMON_ERROR_CODES).has(code)).map(domainOf),
     );
     expect([...ERROR_CODE_DOMAINS].sort()).toStrictEqual([...used].sort());
   });

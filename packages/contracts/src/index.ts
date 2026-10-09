@@ -31,6 +31,7 @@ export * from './student-history.js';
 export * from './deadlines.js';
 export * from './dashboard.js';
 export * from './notifications.js';
+export * from './saved-searches.js';
 export * from './students.js';
 export * from './sources.js';
 export * from './system.js';

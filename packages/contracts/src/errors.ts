@@ -119,7 +119,6 @@ export const SEARCH_ERROR_CODES = [
   'SEARCH_INVALID_QUERY',
   'SEARCH_INDEX_UNAVAILABLE',
   'SEARCH_TOO_BROAD',
-  'SEARCH_SAVED_NOT_FOUND',
   /** WP-15a: a cursor this backend did not issue, was altered, or belongs to another query. */
   'SEARCH_INVALID_CURSOR',
   /** WP-15a: `text` over its 200 characters (§8.1). */
@@ -269,6 +268,18 @@ export const NOTIFICATION_ERROR_CODES = [
   'NOTIFICATION_SNOOZE_INVALID',
 ] as const;
 
+/**
+ * Saved searches (WP-24, R112). They replace the unused placeholder
+ * `SEARCH_SAVED_NOT_FOUND`: R12 wants the domain's own prefix, and nothing raised it.
+ */
+export const SAVED_SEARCH_ERROR_CODES = [
+  'SAVED_SEARCH_NOT_FOUND',
+  'SAVED_SEARCH_NAME_TAKEN',
+  'SAVED_SEARCH_VERSION_CONFLICT',
+  /** The stored query no longer parses; it can be replaced or deleted, not evaluated. */
+  'SAVED_SEARCH_QUERY_INVALID',
+] as const;
+
 /** Database failures the API may surface at request time (WP-04b). */
 export const DB_ERROR_CODES = ['DB_UNAVAILABLE', 'DB_CONSTRAINT_VIOLATED'] as const;
 
@@ -294,6 +305,7 @@ export const ERROR_CODES = [
   ...OUTCOME_ERROR_CODES,
   ...TRANSFER_ERROR_CODES,
   ...NOTIFICATION_ERROR_CODES,
+  ...SAVED_SEARCH_ERROR_CODES,
   ...DB_ERROR_CODES,
 ] as const;
 
@@ -319,6 +331,8 @@ export const ERROR_CODE_DOMAINS = [
   'OUTCOME',
   'TRANSFER',
   'NOTIFICATION',
+  /** Two words: a code's domain is the longest registered prefix it starts with. */
+  'SAVED_SEARCH',
   'DB',
 ] as const;
 export type ErrorCodeDomain = (typeof ERROR_CODE_DOMAINS)[number];
