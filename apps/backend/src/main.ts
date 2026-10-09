@@ -48,6 +48,8 @@ import { KpiService } from './modules/dashboard/kpis.js';
 import { registerDeadlineEvaluator } from './modules/deadlines/evaluator.js';
 import { createNotificationsModule } from './modules/notifications/wiring.js';
 import { createSavedSearchesModule } from './modules/saved-searches/wiring.js';
+import { InterestsRepository } from './modules/interests/repo.js';
+import { InterestsService } from './modules/interests/service.js';
 import { EventUserStateService } from './modules/events/user-state.js';
 import { createEventsModule } from './modules/events/wiring.js';
 import { createSearchModule } from './modules/search/wiring.js';
@@ -297,6 +299,7 @@ async function main(): Promise<void> {
       notifications: notificationsModule.engine,
     });
     savedSearchesModule.schedule(scheduler, streamHub);
+    const interests = new InterestsService({ repo: new InterestsRepository(db) });
     reclassify.trigger = () => {
       scheduler.trigger(RECLASSIFY_JOB_KEY);
     };
@@ -328,6 +331,8 @@ async function main(): Promise<void> {
       deadlines: () => deadlinesModule,
       kpis: () => kpis,
       notifications: () => notificationsModule,
+      savedSearches: () => savedSearchesModule.service,
+      interests: () => interests,
       onShutdownRequested: () => {
         lifecycle.start('api');
       },

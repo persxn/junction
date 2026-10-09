@@ -49,6 +49,9 @@ import { transferRoutes } from './routes/transfer.js';
 import { deadlinesRoutes } from './routes/deadlines.js';
 import { notificationsRoutes } from './routes/notifications.js';
 import { dashboardRoutes } from './routes/dashboard.js';
+import { savedSearchRoutes } from './routes/saved-searches.js';
+import type { SavedSearchService } from './modules/saved-searches/service.js';
+import type { InterestsService } from './modules/interests/service.js';
 import type { StudentsModule } from './modules/students/wiring.js';
 import type { TeamsModule } from './modules/teams/wiring.js';
 import type { EngagementsModule } from './modules/engagements/wiring.js';
@@ -130,6 +133,9 @@ export interface BuildAppOptions {
   readonly notifications?: () => NotificationsModule | undefined;
   /** WP-22's KPI strip. */
   readonly kpis?: () => KpiService | undefined;
+  /** WP-24: saved searches and "My interests". */
+  readonly savedSearches?: () => SavedSearchService | undefined;
+  readonly interests?: () => InterestsService | undefined;
   /** Shared so jobs and services can publish; one hub per process (R36). */
   readonly streamHub?: StreamHub;
   /** Injected in tests so a heartbeat does not take fifteen real seconds. */
@@ -253,6 +259,13 @@ export function buildApp(
   });
   void server.register(
     notificationsRoutes({ notifications: options.notifications ?? (() => undefined) }),
+    { prefix: API_PREFIX },
+  );
+  void server.register(
+    savedSearchRoutes({
+      savedSearches: options.savedSearches ?? (() => undefined),
+      interests: options.interests ?? (() => undefined),
+    }),
     { prefix: API_PREFIX },
   );
   void server.register(dashboardRoutes({ kpis: options.kpis ?? (() => undefined) }), {
