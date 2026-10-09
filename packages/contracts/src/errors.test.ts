@@ -22,6 +22,7 @@ import {
   RESOURCE_ERROR_CODES,
   OUTCOME_ERROR_CODES,
   TRANSFER_ERROR_CODES,
+  NOTIFICATION_ERROR_CODES,
   SETUP_ERROR_CODES,
   SOURCE_ERROR_CODES,
   problemType,
@@ -171,6 +172,8 @@ describe('ErrorCode', () => {
       'TRANSFER_SAME_USER',
       'TRANSFER_NOTHING_TO_MOVE',
       'TRANSFER_USER_NOT_FOUND',
+      'NOTIFICATION_NOT_FOUND',
+      'NOTIFICATION_SNOOZE_INVALID',
       'DB_UNAVAILABLE',
       'DB_CONSTRAINT_VIOLATED',
     ]);
@@ -194,6 +197,7 @@ describe('ErrorCode', () => {
       ...RESOURCE_ERROR_CODES,
       ...OUTCOME_ERROR_CODES,
       ...TRANSFER_ERROR_CODES,
+      ...NOTIFICATION_ERROR_CODES,
       ...DB_ERROR_CODES,
     ]);
   });
@@ -213,6 +217,7 @@ describe('ErrorCode', () => {
     ['RESOURCE_', RESOURCE_ERROR_CODES],
     ['OUTCOME_', OUTCOME_ERROR_CODES],
     ['TRANSFER_', TRANSFER_ERROR_CODES],
+    ['NOTIFICATION_', NOTIFICATION_ERROR_CODES],
     ['DB_', DB_ERROR_CODES],
   ])('prefixes every %s domain code', (prefix, codes) => {
     for (const code of codes) {

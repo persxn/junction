@@ -263,6 +263,12 @@ export const TRANSFER_ERROR_CODES = [
   'TRANSFER_USER_NOT_FOUND',
 ] as const;
 
+/** Notifications (WP-23, R108–R111). */
+export const NOTIFICATION_ERROR_CODES = [
+  'NOTIFICATION_NOT_FOUND',
+  'NOTIFICATION_SNOOZE_INVALID',
+] as const;
+
 /** Database failures the API may surface at request time (WP-04b). */
 export const DB_ERROR_CODES = ['DB_UNAVAILABLE', 'DB_CONSTRAINT_VIOLATED'] as const;
 
@@ -287,6 +293,7 @@ export const ERROR_CODES = [
   ...RESOURCE_ERROR_CODES,
   ...OUTCOME_ERROR_CODES,
   ...TRANSFER_ERROR_CODES,
+  ...NOTIFICATION_ERROR_CODES,
   ...DB_ERROR_CODES,
 ] as const;
 
@@ -311,6 +318,7 @@ export const ERROR_CODE_DOMAINS = [
   'RESOURCE',
   'OUTCOME',
   'TRANSFER',
+  'NOTIFICATION',
   'DB',
 ] as const;
 export type ErrorCodeDomain = (typeof ERROR_CODE_DOMAINS)[number];

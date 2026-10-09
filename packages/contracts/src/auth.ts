@@ -138,8 +138,10 @@ export const STREAM_EVENT_TYPES = [
    * which is what lets it stop polling every minute.
    */
   'source.run.finished',
-  /** A notification was raised for this user (WP-23). */
+  /** A notification was raised for this user (WP-23): `{ id, unreadCount }`. */
   'notification.created',
+  /** One changed — read, snoozed, resurfaced — or many (`id` null): `{ id, unreadCount }`. */
+  'notification.updated',
 ] as const;
 export const StreamEventType = z.enum(STREAM_EVENT_TYPES);
 export type StreamEventType = z.infer<typeof StreamEventType>;

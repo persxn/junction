@@ -175,3 +175,24 @@ export const PathActionResult = z.discriminatedUnion('done', [
   z.object({ done: z.literal(false), reason: OpenRefusal }),
 ]);
 export type PathActionResult = z.infer<typeof PathActionResult>;
+
+/**
+ * The tray's notification surface (R90, R24, WP-23): the UI tells the shell the
+ * unread count (the tray badge and tooltip) and hands it CRITICAL notifications
+ * to toast. Activation brings the window back and emits `navigate` with the
+ * route, which the UI accepts only when it is one of its own.
+ */
+export const TraySetUnread = z.object({ count: z.int().min(0) });
+export type TraySetUnread = z.infer<typeof TraySetUnread>;
+
+export const CriticalToast = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1).max(200),
+  body: z.string().max(500),
+  /** An internal route, "/competitions/<id>"; the shell refuses anything else. */
+  route: z.string().regex(/^\/[A-Za-z0-9/_-]*$/),
+});
+export type CriticalToast = z.infer<typeof CriticalToast>;
+
+/** The event the shell emits when a toast is clicked. */
+export const NAVIGATE_EVENT = 'app://navigate';
