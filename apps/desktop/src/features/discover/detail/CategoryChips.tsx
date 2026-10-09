@@ -1,5 +1,5 @@
 import type { CategoryOrigin, EventCategoryDetail } from '@compintel/contracts';
-import { Bot, Plus, ScrollText, Tag, UserPen, X, type LucideIcon } from 'lucide-react';
+import { Bot, Plus, ScrollText, Sparkles, Tag, UserPen, X, type LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 
 export interface CategoryChipsProps {
@@ -8,6 +8,9 @@ export interface CategoryChipsProps {
   readonly canOverride: boolean;
   readonly isSaving: boolean;
   readonly onSave: (categoryIds: readonly string[]) => void;
+  /** WP-24: categories already among my interests, and "More like this" (R113). */
+  readonly interestIds?: ReadonlySet<string>;
+  readonly onMoreLikeThis?: (category: EventCategoryDetail) => void;
 }
 
 /** Where a category came from, as icon **and** words (§16.3: never colour alone). */
@@ -32,6 +35,8 @@ export function CategoryChips({
   canOverride,
   isSaving,
   onSave,
+  interestIds,
+  onMoreLikeThis,
 }: CategoryChipsProps): React.JSX.Element {
   const [adding, setAdding] = useState(false);
   const carried = categories.filter((category) => !category.isSuppressed);
@@ -62,6 +67,25 @@ export function CategoryChips({
               <OriginIcon aria-hidden="true" className="size-3" />
               <span>{category.name}</span>
               <span className="text-xs text-fg-muted">({origin.label})</span>
+              {onMoreLikeThis !== undefined &&
+                (interestIds?.has(category.id) === true ? (
+                  <span className="flex items-center gap-0.5 text-xs text-accent">
+                    <Sparkles aria-hidden="true" className="size-3" />
+                    One of your interests
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    aria-label={`More like this: add ${category.name} to your interests`}
+                    onClick={() => {
+                      onMoreLikeThis(category);
+                    }}
+                    className="flex items-center gap-0.5 rounded-full px-1 text-xs text-accent hover:bg-surface-hover"
+                  >
+                    <Sparkles aria-hidden="true" className="size-3" />
+                    More like this
+                  </button>
+                ))}
               {canOverride && (
                 <button
                   type="button"

@@ -28,6 +28,9 @@ export const CATEGORY_OPTIONS = [
   { id: '01931f2a-0000-7000-8000-00000000c002', name: 'Cybersecurity/CTF' },
 ];
 
+/** What `/me/interests/tag-options` offers, whatever is typed. */
+export const TAG_OPTIONS = [{ id: '01931f2a-0000-7000-8000-00000000a001', name: 'Rust' }];
+
 export class FakeProblem {
   constructor(
     readonly status: number,
@@ -108,8 +111,9 @@ export function fakeSavedSearches(): FakeSavedSearches {
     if (path === '/api/v1/me/interests' && method === 'PUT') {
       interests.categoryIds = (body?.categoryIds ?? []) as string[];
       const typed = ((body?.newTagNames ?? []) as string[]).map((name) => ({ id: id(), name }));
-      const kept = interests.tags.filter((tag) =>
-        ((body?.tagIds ?? []) as string[]).includes(tag.id),
+      const known = [...interests.tags, ...TAG_OPTIONS];
+      const kept = ((body?.tagIds ?? []) as string[]).flatMap((tagId) =>
+        known.filter((tag) => tag.id === tagId).slice(0, 1),
       );
       interests.tags = [...kept, ...typed];
       interests.tagIds = interests.tags.map((tag) => tag.id);
@@ -125,7 +129,7 @@ export function fakeSavedSearches(): FakeSavedSearches {
       return interests;
     }
     if (path === '/api/v1/me/interests/tag-options') {
-      return { tags: [{ id: '01931f2a-0000-7000-8000-00000000t001', name: 'Rust' }] };
+      return { tags: TAG_OPTIONS };
     }
     return NOT_MINE;
   };

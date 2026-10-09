@@ -16,6 +16,8 @@ import { formatDistance, formatPrize, formatTeam } from './format.js';
 import { EVENT_TYPE_LABELS, sourceName } from './labels.js';
 import { countdown } from './urgency.js';
 
+/** How many reasons a card states inline; the rest wait under "Why relevant?". */
+export const INLINE_REASONS = 2;
 export interface EventCardProps {
   readonly item: RankedEventListItem;
   readonly now: number;
@@ -131,6 +133,15 @@ export function EventCard({
           </li>
         )}
       </ul>
+
+      {/* WP-24 (§19 M3): every card says why it is here — the first two reasons
+          inline, all of them under "Why relevant?". The schema guarantees one. */}
+      <p data-testid="card-reasons" className="mt-2 text-sm text-fg-muted">
+        {item.reasons
+          .slice(0, INLINE_REASONS)
+          .map((reason) => reason.text)
+          .join(' · ')}
+      </p>
 
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <button

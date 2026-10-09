@@ -13,6 +13,7 @@ import { useGlobalHotkeys, type Hotkey } from '../../../lib/hotkeys.js';
 import { useNow } from '../../../lib/use-now.js';
 import { flatItems, type Pages } from '../cache.js';
 import { useAssign } from '../../competitions/assign/assign-context.js';
+import { useMoreLikeThis } from '../../interests/use-more-like-this.js';
 import { useEventActions } from '../use-event-actions.js';
 import { countdown } from '../urgency.js';
 import { CategoryChips } from './CategoryChips.js';
@@ -45,6 +46,7 @@ export function EventDrawer(): React.JSX.Element {
   const heading = useRef<HTMLHeadingElement>(null);
   const now = useNow();
   const toast = useToast();
+  const moreLikeThis = useMoreLikeThis();
   const auth = useAuth();
   const actions = useEventActions();
   const detail = useEventDetail(eventId);
@@ -236,6 +238,8 @@ export function EventDrawer(): React.JSX.Element {
             canOverride={auth.can('event.categorize')}
             isSaving={override.isSaving}
             onSave={override.save}
+            interestIds={moreLikeThis.interestIds}
+            onMoreLikeThis={moreLikeThis.add}
           />
           {event.descriptionMd !== null && (
             <section aria-labelledby="drawer-description">

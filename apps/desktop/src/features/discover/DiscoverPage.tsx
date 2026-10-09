@@ -9,6 +9,7 @@ import { EmptyState } from '../../components/EmptyState.js';
 import { Skeleton } from '../../components/Skeleton.js';
 import { formatCount } from '../../lib/count.js';
 import { useNow } from '../../lib/use-now.js';
+import { InterestsBanner } from '../interests/InterestsBanner.js';
 import { EventList } from './EventList.js';
 import { FilterBar } from './FilterBar.js';
 import { effectiveQuery, FEATURED_VIEWS, filtersToSave, presetOf, TABS } from './presets.js';
@@ -123,6 +124,8 @@ function DiscoverScreen(): React.JSX.Element {
         </div>
         <SaveSearchButton searches={saved} filters={toSave} facets={result.facets} />
       </div>
+
+      {search.tab === 'featured' && search.view === 'recommended' && <InterestsBanner />}
 
       {/* The count is announced politely whenever a filter changes it. */}
       <p id="discover-count" role="status" aria-live="polite" className="text-sm text-fg-muted">

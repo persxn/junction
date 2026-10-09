@@ -8,6 +8,7 @@ import { effectiveQuery, type FeaturedView } from '../discover/presets.js';
 import { DEFAULT_SEARCH } from '../discover/search-state.js';
 import { useEventActions } from '../discover/use-event-actions.js';
 import { useEventSearch } from '../discover/use-event-search.js';
+import { InterestsBanner } from '../interests/InterestsBanner.js';
 import { Panel, PanelError } from './Panels.js';
 
 /**
@@ -84,7 +85,14 @@ export function EventPanel({
         </Link>
       }
     >
-      {body}
+      {view === 'recommended' ? (
+        <div className="flex flex-col gap-2">
+          <InterestsBanner compact />
+          {body}
+        </div>
+      ) : (
+        body
+      )}
     </Panel>
   );
 }

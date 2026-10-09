@@ -1,7 +1,8 @@
-import { Lock, LogOut, PowerOff, UserRound } from 'lucide-react';
+import { Lock, LogOut, PowerOff, Sparkles, UserRound } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { useAuth } from '../auth/auth-context.js';
+import { InterestsDialog } from '../features/interests/InterestsDialog.js';
 import { useTheme } from '../theme/theme-context.js';
 import { THEME_CHOICES, type ThemeChoice } from '../theme/theme.js';
 
@@ -25,6 +26,7 @@ export function UserMenu({ onExit }: UserMenuProps): React.JSX.Element {
   const { choice, setChoice } = useTheme();
   const { me, lock, signOut } = useAuth();
   const [open, setOpen] = useState(false);
+  const [interests, setInterests] = useState(false);
   const container = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -99,6 +101,19 @@ export function UserMenu({ onExit }: UserMenuProps): React.JSX.Element {
             role="menuitem"
             onClick={() => {
               setOpen(false);
+              setInterests(true);
+            }}
+            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left hover:bg-surface-hover"
+          >
+            <Sparkles aria-hidden="true" className="size-4" />
+            My interests
+          </button>
+
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
               lock();
             }}
             className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left hover:bg-surface-hover"
@@ -135,6 +150,13 @@ export function UserMenu({ onExit }: UserMenuProps): React.JSX.Element {
             Exit completely
           </button>
         </div>
+      )}
+      {interests && (
+        <InterestsDialog
+          onClose={() => {
+            setInterests(false);
+          }}
+        />
       )}
     </div>
   );
