@@ -1,7 +1,7 @@
-import { Link } from '@tanstack/react-router';
-import { Bell, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 
 import { FreshnessPill } from '../features/freshness/FreshnessPill.js';
+import { NotificationBell } from '../features/notifications/NotificationBell.js';
 import { UserMenu } from './UserMenu.js';
 
 export interface TopBarProps {
@@ -71,13 +71,7 @@ export function TopBar({
 
       <FreshnessPill />
 
-      <Link
-        to="/notifications"
-        aria-label="Notifications"
-        className="rounded-md p-2 text-fg-muted hover:bg-surface-hover data-[status=active]:text-accent"
-      >
-        <Bell aria-hidden="true" className="size-4" />
-      </Link>
+      <NotificationBell />
 
       <UserMenu onExit={onExit} />
     </header>

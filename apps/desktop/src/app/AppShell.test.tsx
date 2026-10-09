@@ -131,7 +131,7 @@ describe('the keyboard (§16.3)', () => {
     await user.tab();
     expect(topBar.getByTestId('freshness-pill')).toHaveFocus();
     await user.tab();
-    expect(topBar.getByRole('link', { name: 'Notifications' })).toHaveFocus();
+    expect(topBar.getByTestId('notification-bell')).toHaveFocus();
     await user.tab();
     expect(topBar.getByRole('button', { name: TEST_USER.displayName })).toHaveFocus();
   });

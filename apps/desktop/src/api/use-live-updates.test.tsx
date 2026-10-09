@@ -176,4 +176,26 @@ describe('live updates (rulings R30 and R36)', () => {
     await vi.advanceTimersByTimeAsync(1_000);
     expect(statusReads).toBe(1);
   });
+
+  it('re-reads the notifications when one is created or changed (WP-23)', async () => {
+    let reads = 0;
+    function BellHarness(): React.JSX.Element {
+      useLiveUpdates({ connection: CONNECTION, enabled: true, refresh: () => Promise.resolve() });
+      const count = useQuery({
+        queryKey: ['notifications', 'unread-count'],
+        queryFn: () => {
+          reads += 1;
+          return Promise.resolve(reads);
+        },
+        staleTime: Infinity,
+      });
+      return <p>bell: {count.data ?? 0}</p>;
+    }
+    renderWithProviders(<BellHarness />);
+    await screen.findByText('bell: 1');
+    deliver({ id: 1, type: 'notification.created', payload: { id: 'n', unreadCount: 1 } });
+    await screen.findByText('bell: 2');
+    deliver({ id: 2, type: 'notification.updated', payload: { id: null, unreadCount: 0 } });
+    await screen.findByText('bell: 3');
+  });
 });

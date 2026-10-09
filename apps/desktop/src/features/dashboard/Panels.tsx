@@ -12,6 +12,11 @@ import { whoOf } from '../competitions/board-model.js';
 import { problemText } from '../competitions/use-competition-actions.js';
 import { DeadlineRow } from '../deadlines/DeadlineRow.js';
 import { DEFAULT_DEADLINES_SEARCH } from '../deadlines/deadline-model.js';
+import { NotificationItem } from '../notifications/NotificationItem.js';
+import {
+  useLatestNotifications,
+  useNotificationActions,
+} from '../notifications/use-notifications.js';
 import { ProgressHealth } from '../workflows/ProgressHealth.js';
 
 /**
@@ -174,12 +179,42 @@ export function ActivePanel({ scope }: { readonly scope: KpiScope }): React.JSX.
 }
 
 /** WP-23 replaces this card with the inbox. */
+/** WP-23: the latest five, each opening where it points. */
 export function NotificationsPanel(): React.JSX.Element {
+  const latest = useLatestNotifications();
+  const actions = useNotificationActions();
+  const now = useNow();
+  const items = latest.data?.items ?? [];
   return (
     <Panel title="Recent notifications">
-      <p className="text-sm text-fg-muted">
-        No notifications yet. Deadline reminders and changes to saved events will appear here.
-      </p>
+      {latest.isPending ? (
+        <Skeleton lines={3} label="Loading notifications" />
+      ) : latest.isError ? (
+        <PanelError
+          what="The notifications"
+          error={latest.error}
+          retry={() => void latest.refetch()}
+        />
+      ) : items.length === 0 ? (
+        <p className="text-sm text-fg-muted">
+          You’re all caught up. Deadline reminders and changes to saved events arrive here.
+        </p>
+      ) : (
+        <ul className="flex flex-col gap-1.5">
+          {items.map((notification) => (
+            <NotificationItem
+              key={notification.id}
+              notification={notification}
+              now={now}
+              actions={actions}
+              compact
+            />
+          ))}
+        </ul>
+      )}
+      <Link to="/notifications" className="text-sm text-accent hover:underline">
+        Open the Inbox
+      </Link>
     </Panel>
   );
 }

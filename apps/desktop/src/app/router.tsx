@@ -236,7 +236,10 @@ const assistantRoute = createRoute({
 const notificationsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/notifications',
-  component: () => <PlaceholderPage item={navItem('notifications')} />,
+  component: lazyRouteComponent(
+    () => import('../features/notifications/InboxPage.js'),
+    'InboxPage',
+  ),
 });
 
 const adminUsersRoute = createRoute({

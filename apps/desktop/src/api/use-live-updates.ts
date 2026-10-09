@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { useToast } from '../components/toast/ToastProvider.js';
 import { SOURCE_STATUS_KEY } from './event-detail.js';
+import { NOTIFICATIONS_KEY } from './notifications.js';
 import { openStream, POLL_INTERVAL_MS, type StreamUnavailableReason } from './stream.js';
 
 /**
@@ -76,6 +77,10 @@ export function useLiveUpdates(options: LiveUpdatesOptions): LiveUpdatesView {
           // for those when it has actually written something.
           if (event.type === 'source.run.finished') {
             void queryClient.invalidateQueries({ queryKey: SOURCE_STATUS_KEY });
+          }
+          // WP-23: ids only (R36); the bell, the Inbox and the toasts re-read.
+          if (event.type === 'notification.created' || event.type === 'notification.updated') {
+            void queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_KEY });
           }
         },
         onOpen: () => {

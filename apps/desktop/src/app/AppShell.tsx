@@ -3,6 +3,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { ErrorBoundary } from '../components/ErrorBoundary.js';
 import { discoverSearch } from '../features/discover/search-state.js';
+import { useNotificationDelivery } from '../features/notifications/use-notification-delivery.js';
 import { useGlobalHotkeys, type Hotkey } from '../lib/hotkeys.js';
 import { exitCompletely, hideToTray, openLogsFolder } from '../shell/backend.js';
 import { useTheme } from '../theme/theme-context.js';
@@ -76,6 +77,8 @@ export function AppShell(): React.JSX.Element {
     [],
   );
   useGlobalHotkeys(hotkeys);
+  // WP-23: the tray badge, CRITICAL toasts and toast clicks.
+  useNotificationDelivery();
 
   return (
     <div className="flex h-full bg-surface text-fg">

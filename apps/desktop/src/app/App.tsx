@@ -4,6 +4,7 @@ import { RouterProvider } from '@tanstack/react-router';
 import { useState } from 'react';
 
 import { createQueryClient } from '../api/query.js';
+import { LiveDegradedContext } from '../features/notifications/use-notifications.js';
 import { useLiveUpdates } from '../api/use-live-updates.js';
 import { AuthProvider, useAuth } from '../auth/auth-context.js';
 import { ChangePasswordScreen, LockScreen, LoginScreen } from '../auth/AuthScreens.js';
@@ -148,7 +149,7 @@ function AuthGate({ connection }: { readonly connection: BackendConnection }): R
   // only decides when to put the lock screen up.
   useIdleTimer(status === 'READY' ? me?.session.autoLockMinutes : undefined, lock);
 
-  useLiveUpdates({ connection, enabled: status === 'READY', refresh });
+  const live = useLiveUpdates({ connection, enabled: status === 'READY', refresh });
 
   switch (status) {
     case 'SIGNED_OUT':
@@ -163,7 +164,9 @@ function AuthGate({ connection }: { readonly connection: BackendConnection }): R
       // and it must never stand between somebody and the login screen.
       return (
         <ConnectSourcesGate>
-          <RouterProvider router={router} context={{ can }} />
+          <LiveDegradedContext.Provider value={live.unavailable !== undefined}>
+            <RouterProvider router={router} context={{ can }} />
+          </LiveDegradedContext.Provider>
         </ConnectSourcesGate>
       );
   }

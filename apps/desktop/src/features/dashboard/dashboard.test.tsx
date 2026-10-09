@@ -7,6 +7,7 @@ import { resetApiTransport } from '../../api/client.js';
 import { installCompetitionsApi } from '../../testing/competitions-api.js';
 import { installDeadlinesApi, makeDueItem } from '../../testing/deadlines-api.js';
 import { installFakeSearch, makeItem } from '../../testing/fake-search.js';
+import { installNotificationsApi } from '../../testing/notifications-api.js';
 import { renderApp } from '../../testing/render.js';
 import { installStudentsApi } from '../../testing/students-api.js';
 
@@ -80,6 +81,7 @@ function install(options: { failDeadlines?: boolean } = {}): void {
     tiles: TILES,
     ...options,
   });
+  installNotificationsApi();
 }
 beforeEach(() => {
   install();
@@ -171,7 +173,7 @@ describe('the scope toggle and the panels', () => {
     expect(
       await within(recommended).findByRole('list', { name: 'Recommended' }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/No notifications yet/)).toBeInTheDocument();
+    expect(await screen.findByText(/You’re all caught up/)).toBeInTheDocument();
   });
 
   it('the Radar panel shows the next items and leads to all of them', async () => {
