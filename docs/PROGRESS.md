@@ -9,13 +9,8 @@
   coverage, R95 lifecycle; migration 0024; `GET /professors`.
 - **WP-19 done, 8 Oct 2026** (`docs/handoff/WP-19.md`): competitions (R96–R98) — status machine, frozen roster, assign
   flow, pipeline board; migration 0025.
-- **WP-20a done, 8 Oct 2026** (`docs/handoff/WP-20a.md`, 9 step commits): R99–R101 (v1.1.18). Contracts
-  `workflow-enums/-templates/workflows.ts`; migration 0026 (+ `workflows.version`); `domain/workflows` (80-case §11
-  precedence table, health reasons, due rules, R101 order); 5 seeded templates + templates API; workflow API under
-  `/api/v1/competitions/:id/workflow`; copy-on-assign via `onAssigned`. UI: assign flow gains "Workflow template"
-  + stage dates (board's Considering → Assigned asks too); Competition page stages/tasks/Alt+↑↓/dialogs/R100 banner;
-  progress + health on board and list; Competitions → Templates. Seed shows all 5 healths. e2e 5/5, a11y 42/42.
-  **Unmet:** verify **183 s vs 120** (pre-M2a Q1).
+- **WP-20a done, 8 Oct 2026** (`docs/handoff/WP-20a.md`): workflows (R99–R101) — templates, copy-on-assign, §11
+  health; migration 0026.
 - **WP-20b PARTIAL, 8 Oct 2026** (`docs/handoff/WP-20b.md`, 7 step commits): R102–R103 (v1.1.19). Contracts
   `resources.ts` + shell `OpenRefusal`/`StatPathsResult`; migration 0027 (`resources` + version; stage/task deletes
   take their resources); `domain/resources/classify.ts`; API `/competitions/:id/resources`, `/resources…`, unaudited
@@ -34,11 +29,17 @@
   proven per scope × group × bucket), `GET /dashboard/kpis` (each tile its list's own total, proven via the links),
   `deadline-evaluator` (offline, 5 min; `registerDueItemSink()` for WP-23). UI: Radar `/deadlines`, Dashboard at `/`.
   e2e 6/6, a11y 49/49. **Unmet:** verify **196 s vs 120**.
-- **Next: WP-23**, then WP-24 (M3). Every M3 WP
+- **WP-23 PARTIAL, 9 Oct 2026** (`docs/handoff/WP-23.md`, 8 step commits): R108–R111 (v1.1.22). Migration 0030
+  `notifications` + preferences; `domain/notifications` (thresholds from WP-22's buckets, most urgent only, keys
+  re-arm on a moved deadline); engine = the evaluator's sink (thresholds, watched changes, admin episodes, snooze);
+  `emit()` for WP-24/28; user-scoped stream; inbox API. UI: bell, Inbox + preferences, Dashboard card; tray badge
+  (built-in digits, "9+"), CRITICAL toasts (`tauri-winrt-notification =0.8.1`). e2e 6/6, a11y 51/51, cargo 111.
+  **Unmet:** manual built-exe check **owed**; verify **207 s vs 120**; `audit:deps` HIGH (source-map-js, upstream).
+- **Next: WP-24** (closes M3). Every M3 WP
   ends with a **UI fault sweep** and carries an in-app guide on each new screen. Send `docs/` back when M3 closes.
 - **Owed live runs:** CTFtime / Devfolio smokes and `unstop:capture` wait on `scraper.contactEmail` (the
   owner's own address, R74); `clist:smoke` waits on U4.
-- Spec: docs/ARCHITECTURE.md **v1.1.21 - ACCEPTED** · roadmap §19 = **50 WPs, 36 done, 14 remaining** · **M2 closed** ·
+- Spec: docs/ARCHITECTURE.md **v1.1.22 - ACCEPTED** · roadmap §19 = **50 WPs, 37 done, 13 remaining** · **M2 closed** ·
   ADR-0001...0019 · decisions register docs/DECISIONS.md.
 
 ## Environment facts
