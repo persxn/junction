@@ -10,6 +10,12 @@ import {
 import { vi } from 'vitest';
 
 import { NOW } from './clock.js';
+import {
+  FakeProblem,
+  fakeSavedSearches,
+  NOT_MINE,
+  type FakeSavedSearches,
+} from './fake-saved-searches.js';
 import { detailFixture, OLDER_HISTORY } from './event-detail.js';
 
 /**
@@ -101,6 +107,8 @@ export interface FakeSearch {
   failNext(path: RegExp, delayMs?: number): void;
   /** Search requests only, parsed. */
   searches(): Record<string, unknown>[];
+  /** WP-24: the in-memory saved searches and interests. */
+  readonly savedSearches: FakeSavedSearches;
 }
 
 function respond(status: number, body: unknown): Response {
@@ -118,6 +126,7 @@ export function installFakeSearch(items: readonly RankedEventListItem[]): FakeSe
   const saved = new Set(items.filter((item) => item.watchlisted).map((item) => item.id));
   const hidden = new Set<string>();
   const failures: { path: RegExp; delayMs: number }[] = [];
+  const savedSearches = fakeSavedSearches();
 
   const search = (raw: Record<string, unknown>): SearchResponse => {
     const request = SearchRequest.parse(raw);
@@ -241,6 +250,11 @@ export function installFakeSearch(items: readonly RankedEventListItem[]): FakeSe
         respond(200, { eventId: id, hidden: action === 'hide', hiddenReason: null }),
       );
     }
+    const own = savedSearches.handle(method, path, body);
+    if (own !== NOT_MINE) {
+      if (own instanceof FakeProblem) return Promise.resolve(respond(own.status, own.body));
+      return Promise.resolve(own === undefined ? respond(204, undefined) : respond(200, own));
+    }
     return Promise.resolve(
       respond(404, {
         type: problemType('NOT_FOUND'),
@@ -261,6 +275,7 @@ export function installFakeSearch(items: readonly RankedEventListItem[]): FakeSe
     failNext: (path, delayMs = 0) => {
       failures.push({ path, delayMs });
     },
+    savedSearches,
     searches: () =>
       calls.filter((call) => call.path === '/api/v1/search/events').map((call) => call.body ?? {}),
   };

@@ -60,7 +60,7 @@ export class InterestsService {
     this.#repo.transaction(() => {
       const wanted = new Set<string>();
       for (const id of new Set(update.categoryIds)) {
-        const category = byId.get(id) as NamedCategory;
+        const category = byId.get(id)!;
         wanted.add(this.#repo.ensureInterestTag(category.name, category.slug, this.#ids(), at));
       }
       // A picked tag that names a category *is* that category (the ranking's own

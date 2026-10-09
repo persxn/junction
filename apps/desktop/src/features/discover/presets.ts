@@ -85,3 +85,23 @@ export function effectiveQuery(
     limit,
   };
 }
+
+/**
+ * What "Save this search" stores (WP-24): the tab's defining filters folded
+ * into the person's chips, so the saved search matches what the screen shows
+ * (a search saved on "Closing soon" keeps its registration filter, now as a
+ * chip). The tab's sort is not part of it.
+ */
+export function filtersToSave(
+  tab: DiscoverTab,
+  view: FeaturedView,
+  filters: FilterQuery,
+): FilterQuery {
+  const {
+    excludeHidden: _hidden,
+    sort: _sort,
+    limit: _limit,
+    ...rest
+  } = effectiveQuery(tab, view, filters, 1);
+  return rest;
+}

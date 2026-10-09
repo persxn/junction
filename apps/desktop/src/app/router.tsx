@@ -98,6 +98,16 @@ export const discoverEventRoute = createRoute({
   ),
 });
 
+// WP-24: a NEW_MATCH notification opens Discover with its saved search applied.
+export const discoverSavedRoute = createRoute({
+  getParentRoute: () => discoverRoute,
+  path: 'saved/$savedSearchId',
+  component: lazyRouteComponent(
+    () => import('../features/discover/saved/OpenSavedSearch.js'),
+    'OpenSavedSearch',
+  ),
+});
+
 // WP-14: reachable from the palette and from a link, with no rail item of its
 // own — §16.1's rail is places, and this is an action.
 const createEventRoute = createRoute({
@@ -318,7 +328,7 @@ const adminHealthRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   dashboardRoute,
-  discoverRoute.addChildren([discoverEventRoute]),
+  discoverRoute.addChildren([discoverEventRoute, discoverSavedRoute]),
   createEventRoute,
   competitionsRoute,
   deadlinesRoute,

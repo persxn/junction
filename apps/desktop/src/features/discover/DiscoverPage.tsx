@@ -11,8 +11,11 @@ import { formatCount } from '../../lib/count.js';
 import { useNow } from '../../lib/use-now.js';
 import { EventList } from './EventList.js';
 import { FilterBar } from './FilterBar.js';
-import { effectiveQuery, FEATURED_VIEWS, presetOf, TABS } from './presets.js';
-import { hasChips, readChip, writeChip, type FilterQuery } from './query.js';
+import { effectiveQuery, FEATURED_VIEWS, filtersToSave, presetOf, TABS } from './presets.js';
+import { filtersOfSaved, hasChips, readChip, writeChip, type FilterQuery } from './query.js';
+import { SaveSearchButton } from './saved/SaveSearchButton.js';
+import { SavedSearchesMenu } from './saved/SavedSearchesMenu.js';
+import { useSavedSearches } from './saved/use-saved-searches.js';
 import { type DiscoverSearch } from './search-state.js';
 import { Tabs } from './Tabs.js';
 import { useEventActions } from './use-event-actions.js';
@@ -48,6 +51,8 @@ function DiscoverScreen(): React.JSX.Element {
   const query = effectiveQuery(search.tab, search.view, search.filters, PAGE_SIZE);
   const result = useEventSearch(query);
   const actions = useEventActions();
+  const saved = useSavedSearches();
+  const toSave = filtersToSave(search.tab, search.view, search.filters);
 
   const update = (patch: Partial<DiscoverSearch>): void => {
     void navigate({ to: '/discover', search: { ...search, ...patch } });
@@ -78,15 +83,27 @@ function DiscoverScreen(): React.JSX.Element {
     <div className="flex flex-col gap-4">
       <h1 className="text-xl font-medium">Discover</h1>
 
-      <Tabs
-        label="Discover views"
-        items={TABS}
-        selected={search.tab}
-        onSelect={(tab) => {
-          update({ tab });
-        }}
-        panelId={PANEL_ID}
-      />
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <Tabs
+          label="Discover views"
+          items={TABS}
+          selected={search.tab}
+          onSelect={(tab) => {
+            update({ tab });
+          }}
+          panelId={PANEL_ID}
+        />
+        <SavedSearchesMenu
+          searches={saved}
+          currentFilters={toSave}
+          onApply={(chosen) => {
+            if (chosen.query === null) return;
+            // A saved search is its filters alone, so it opens on All events,
+            // the one tab that adds none of its own (R112: what it matches).
+            update({ tab: 'all', filters: filtersOfSaved(chosen.query) });
+          }}
+        />
+      </div>
       {search.tab === 'featured' && (
         <Tabs
           label="Featured"
@@ -100,7 +117,12 @@ function DiscoverScreen(): React.JSX.Element {
         />
       )}
 
-      <FilterBar filters={search.filters} facets={result.facets} onChange={setFilters} />
+      <div className="flex flex-wrap items-start gap-2">
+        <div className="min-w-0 flex-1">
+          <FilterBar filters={search.filters} facets={result.facets} onChange={setFilters} />
+        </div>
+        <SaveSearchButton searches={saved} filters={toSave} facets={result.facets} />
+      </div>
 
       {/* The count is announced politely whenever a filter changes it. */}
       <p id="discover-count" role="status" aria-live="polite" className="text-sm text-fg-muted">

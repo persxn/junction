@@ -2,6 +2,7 @@ import {
   DISTANCE_BUCKETS_KM,
   EventFilters,
   type EventMode,
+  type EventQueryInput,
   type EventType,
   type IncludeUnknown,
   type RegState,
@@ -290,4 +291,21 @@ export function clearChips(query: FilterQuery): FilterQuery {
 
 export function hasChips(query: FilterQuery): boolean {
   return Object.keys(tidy({ ...query, text: undefined })).length > 0;
+}
+
+// ---- Saved searches (WP-24, R112) ---------------------------------------------
+
+/**
+ * The `EventQuery` a saved search stores for these filters: exactly the chips
+ * and the text, tidied, with no cursor, page size or sort — a saved search is
+ * "what I want", not "how I was looking at it".
+ */
+export function savedQueryOf(filters: FilterQuery): EventQueryInput {
+  return { ...tidy(filters) };
+}
+
+/** The filters a saved search's query puts back on the chips — `savedQueryOf`'s inverse. */
+export function filtersOfSaved(query: EventQueryInput): FilterQuery {
+  const { cursor: _cursor, limit: _limit, sort: _sort, ...rest } = query;
+  return tidy(rest);
 }

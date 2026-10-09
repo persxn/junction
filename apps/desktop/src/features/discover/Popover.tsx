@@ -6,7 +6,10 @@ export interface PopoverProps {
   /** The trigger's accessible name. */
   readonly label: string;
   readonly active: boolean;
-  readonly children: React.ReactNode;
+  /** Content, or a function of `close` for content that finishes the job (WP-24's menu). */
+  readonly children: React.ReactNode | ((close: () => void) => React.ReactNode);
+  /** Panel width; a chip editor's by default. */
+  readonly width?: string;
   /** Test seam and "open with the page" state. */
   readonly defaultOpen?: boolean;
 }
@@ -21,6 +24,7 @@ export function Popover({
   label,
   active,
   children,
+  width = 'w-72',
   defaultOpen = false,
 }: PopoverProps): React.JSX.Element {
   const [open, setOpen] = useState(defaultOpen);
@@ -39,8 +43,34 @@ export function Popover({
     };
   }, [open]);
 
+  // When the panel closes with focus inside it (a menu item finished the job),
+  // focus would fall to the page; it goes back to the trigger instead. An
+  // outside click has already put focus where the person clicked.
+  const wasOpen = useRef(open);
+  useEffect(() => {
+    const active = document.activeElement;
+    if (wasOpen.current && !open && (active === null || active === document.body)) {
+      button.current?.focus();
+    }
+    wasOpen.current = open;
+  }, [open]);
+
   return (
-    <div ref={root} className="relative">
+    // Esc closes from the trigger as well as from inside the panel (WP-24's
+    // menu can open with nothing focusable in it).
+    <div
+      ref={root}
+      className="relative"
+      onKeyDown={(event) => {
+        if (event.key === 'Escape' && open) {
+          // The drawer and the palette also listen for Esc; this one is closing first.
+          event.stopPropagation();
+          event.nativeEvent.stopImmediatePropagation();
+          setOpen(false);
+          button.current?.focus();
+        }
+      }}
+    >
       <button
         ref={button}
         type="button"
@@ -64,18 +94,13 @@ export function Popover({
           id={panelId}
           role="dialog"
           aria-label={label}
-          onKeyDown={(event) => {
-            if (event.key === 'Escape') {
-              // The drawer and the palette also listen for Esc; this one is closing first.
-              event.stopPropagation();
-              event.nativeEvent.stopImmediatePropagation();
-              setOpen(false);
-              button.current?.focus();
-            }
-          }}
-          className="absolute left-0 z-30 mt-1 w-72 rounded-lg border border-line bg-surface-raised p-3 shadow-[var(--ci-shadow-popover)]"
+          className={`absolute left-0 z-30 mt-1 ${width} rounded-lg border border-line bg-surface-raised p-3 shadow-[var(--ci-shadow-popover)]`}
         >
-          {children}
+          {typeof children === 'function'
+            ? children(() => {
+                setOpen(false);
+              })
+            : children}
         </div>
       )}
     </div>
