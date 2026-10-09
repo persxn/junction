@@ -66,7 +66,7 @@ export const streamRoutes =
 
       // Anything the client missed while it was away, before anything new.
       const lastEventId = parseLastEventId(request.headers['last-event-id']);
-      for (const missed of options.hub.replay(lastEventId)) {
+      for (const missed of options.hub.replay(lastEventId, session.user.id)) {
         write(formatSseEvent(missed));
       }
 
@@ -106,6 +106,7 @@ export const streamRoutes =
           }
         },
         close: finish,
+        userId: session.user.id,
       });
 
       request.raw.on('close', finish);

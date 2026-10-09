@@ -48,7 +48,16 @@ export interface CollapsedChange {
   readonly changers: ReadonlySet<string>;
 }
 
-const asNumber = (value: unknown): number | null => (typeof value === 'number' ? value : null);
+/** A deadline value as stored: Unix ms, an ISO string, or `{ at }` (WP-10's claims). */
+const asNumber = (value: unknown): number | null => {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    const parsed = Date.parse(value);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+  if (typeof value === 'object' && value !== null && 'at' in value) return asNumber(value.at);
+  return null;
+};
 
 /** All changes of one event in one run → one notification, keyed on the newest change. */
 export function collapseChanges(changes: readonly EventChange[]): CollapsedChange[] {

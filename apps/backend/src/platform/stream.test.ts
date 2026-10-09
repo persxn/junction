@@ -202,3 +202,21 @@ describe('parseLastEventId', () => {
     }
   });
 });
+
+describe('user-scoped events (WP-23)', () => {
+  it('reach only their user, live and on replay', () => {
+    const hub = new StreamHub();
+    const ada: StreamEvent[] = [];
+    const sam: StreamEvent[] = [];
+    hub.subscribe({ send: (event) => ada.push(event), close: () => undefined, userId: 'ada' });
+    hub.subscribe({ send: (event) => sam.push(event), close: () => undefined, userId: 'sam' });
+    const first = hub.publish('data.invalidated', {});
+    hub.publish('notification.created', { id: 'n1', unreadCount: 1 }, 'ada');
+    expect(ada.map((event) => event.type)).toEqual(['data.invalidated', 'notification.created']);
+    expect(sam.map((event) => event.type)).toEqual(['data.invalidated']);
+    expect(hub.replay(first.id, 'sam')).toEqual([]);
+    expect(hub.replay(first.id, 'ada').map((event) => event.type)).toEqual([
+      'notification.created',
+    ]);
+  });
+});

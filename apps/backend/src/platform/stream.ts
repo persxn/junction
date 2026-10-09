@@ -27,6 +27,8 @@ export const HEARTBEAT_INTERVAL_MS = 15_000;
 interface BufferedEvent {
   readonly event: StreamEvent;
   readonly at: number;
+  /** A user id: only that user's streams see it (WP-23). Undefined = everyone. */
+  readonly audience?: string;
 }
 
 export interface Subscriber {
@@ -34,7 +36,12 @@ export interface Subscriber {
   readonly send: (event: StreamEvent) => void;
   /** Called when the backend is shutting down; the route ends the response. */
   readonly close: () => void;
+  /** Whose stream this is; user-scoped events reach only their user (WP-23). */
+  readonly userId?: string;
 }
+
+const reaches = (audience: string | undefined, userId: string | undefined): boolean =>
+  audience === undefined || audience === userId;
 
 export interface StreamHubOptions {
   readonly clock?: Clock;
@@ -70,14 +77,25 @@ export class StreamHub {
     return this.#subscribers.size;
   }
 
-  /** Publishes an event to every open stream and remembers it for replay. */
-  publish(type: StreamEventType, payload: Readonly<Record<string, unknown>> = {}): StreamEvent {
+  /**
+   * Publishes an event to every open stream — or, with `audience`, only to that
+   * user's streams (notifications, WP-23) — and remembers it for replay.
+   */
+  publish(
+    type: StreamEventType,
+    payload: Readonly<Record<string, unknown>> = {},
+    audience?: string,
+  ): StreamEvent {
     this.#lastId += 1;
     const event: StreamEvent = { id: this.#lastId, type, payload: { ...payload } };
-    this.#buffer.push({ event, at: this.#nowMs });
+    this.#buffer.push(
+      audience === undefined ? { event, at: this.#nowMs } : { event, at: this.#nowMs, audience },
+    );
     this.#prune();
     for (const subscriber of this.#subscribers) {
-      subscriber.send(event);
+      if (reaches(audience, subscriber.userId)) {
+        subscriber.send(event);
+      }
     }
     return event;
   }
@@ -92,7 +110,7 @@ export class StreamHub {
    * still buffered comes back empty — the caller cannot be caught up, and the
    * honest answer is to let it re-read rather than invent history.
    */
-  replay(lastEventId: number | undefined): readonly StreamEvent[] {
+  replay(lastEventId: number | undefined, userId?: string): readonly StreamEvent[] {
     this.#prune();
     if (lastEventId === undefined || lastEventId <= 0) {
       return [];
@@ -101,7 +119,9 @@ export class StreamHub {
     if (oldest === undefined || lastEventId + 1 < oldest) {
       return [];
     }
-    return this.#buffer.filter((entry) => entry.event.id > lastEventId).map((entry) => entry.event);
+    return this.#buffer
+      .filter((entry) => entry.event.id > lastEventId && reaches(entry.audience, userId))
+      .map((entry) => entry.event);
   }
 
   /** True when the caller asked to resume from an id the buffer no longer has. */

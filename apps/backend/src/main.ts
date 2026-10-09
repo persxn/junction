@@ -47,6 +47,7 @@ import { createTransferModule } from './modules/transfer/wiring.js';
 import { createDeadlinesModule } from './modules/deadlines/wiring.js';
 import { KpiService } from './modules/dashboard/kpis.js';
 import { registerDeadlineEvaluator } from './modules/deadlines/evaluator.js';
+import { createNotificationsModule } from './modules/notifications/wiring.js';
 import { EventUserStateService } from './modules/events/user-state.js';
 import { createEventsModule } from './modules/events/wiring.js';
 import { createSearchModule } from './modules/search/wiring.js';
@@ -313,7 +314,9 @@ async function main(): Promise<void> {
     });
     logger.info({ scrapeJobs, adapters: adapterRegistry.size }, 'scrape jobs registered');
     registerReclassifyJob(scheduler, categoriesModule.classifier);
-    // WP-22: offline-capable, every five minutes; WP-23 registers its sinks.
+    // WP-22: offline, every 5 min; WP-23's notifications are its sink (R108-R111).
+    const notificationsModule = createNotificationsModule({ db, hub: streamHub });
+    notificationsModule.attachToEvaluator();
     registerDeadlineEvaluator(scheduler, deadlinesModule);
     reclassify.trigger = () => {
       scheduler.trigger(RECLASSIFY_JOB_KEY);
