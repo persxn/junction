@@ -7,12 +7,8 @@
   in-house XLSX reader; in-app guides on every new screen (`components/Guide.tsx`); migration 0023; papaparse@5.7.0.
 - **WP-18 done, 8 Oct 2026** (`docs/handoff/WP-18.md`): teams, role labels, one lead, primary + co-mentors, R94
   coverage, R95 lifecycle; migration 0024; `GET /professors`.
-- **WP-19 done, 8 Oct 2026** (`docs/handoff/WP-19.md`, 8 step commits): R96–R98. Contracts `engagements.ts` +
-  `engagement-status.ts`; migration 0025; `domain/engagements`; `/api/v1/competitions` (assign preview/assign,
-  transitions with history + audit, roster, mentors, notes, `onAssigned` hook seam for WP-20a); team archive refuses
-  open competitions; Team/Student pages list them; seed adds 20. UI: assign dialog from `assign/steps.ts` (card, A,
-  drawer), pipeline board (drag, M menu, arrows, Undo only Considering ↔ Assigned), list, Competition page. Both
-  §19 ACs green; e2e 5/5; a11y 37/37. **Unmet:** verify **186 s vs 120** (pre-M2a Q1).
+- **WP-19 done, 8 Oct 2026** (`docs/handoff/WP-19.md`): competitions (R96–R98) — status machine, frozen roster, assign
+  flow, pipeline board; migration 0025.
 - **WP-20a done, 8 Oct 2026** (`docs/handoff/WP-20a.md`, 9 step commits): R99–R101 (v1.1.18). Contracts
   `workflow-enums/-templates/workflows.ts`; migration 0026 (+ `workflows.version`); `domain/workflows` (80-case §11
   precedence table, health reasons, due rules, R101 order); 5 seeded templates + templates API; workflow API under
@@ -33,11 +29,16 @@
   (token, one transaction, audit per entity + summary) — §19 snapshot test green; `GET /students/:id/history`. UI:
   outcome panel, results on board/list, Transfer ownership dialog, Student page Competitions & outcomes; seed outcomes
   + second professor. e2e 5/5, a11y 47/47. **Unmet:** verify **186 s vs 120**.
-- **Next: WP-22**, then WP-23 · 24 (M3). Every M3 WP
+- **WP-22 done, 9 Oct 2026** (`docs/handoff/WP-22.md`, 8 step commits): R106–R107 (v1.1.21). `v_deadlines` view
+  (migration 0029, no duplicates), `domain/deadlines` (Kolkata buckets, precision), `GET /deadlines` (counts = paged list,
+  proven per scope × group × bucket), `GET /dashboard/kpis` (each tile its list's own total, proven via the links),
+  `deadline-evaluator` (offline, 5 min; `registerDueItemSink()` for WP-23). UI: Radar `/deadlines`, Dashboard at `/`.
+  e2e 6/6, a11y 49/49. **Unmet:** verify **196 s vs 120**.
+- **Next: WP-23**, then WP-24 (M3). Every M3 WP
   ends with a **UI fault sweep** and carries an in-app guide on each new screen. Send `docs/` back when M3 closes.
 - **Owed live runs:** CTFtime / Devfolio smokes and `unstop:capture` wait on `scraper.contactEmail` (the
   owner's own address, R74); `clist:smoke` waits on U4.
-- Spec: docs/ARCHITECTURE.md **v1.1.20 - ACCEPTED** · roadmap §19 = **50 WPs, 35 done, 15 remaining** · **M2 closed** ·
+- Spec: docs/ARCHITECTURE.md **v1.1.21 - ACCEPTED** · roadmap §19 = **50 WPs, 36 done, 14 remaining** · **M2 closed** ·
   ADR-0001...0019 · decisions register docs/DECISIONS.md.
 
 ## Environment facts
