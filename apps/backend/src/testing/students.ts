@@ -25,7 +25,7 @@ import { sessionExpired } from '../modules/auth/errors.js';
 import { uuid7 } from '../platform/ids.js';
 import { SettingsStore } from '../platform/settings.js';
 import { openMigratedDatabase, type MigratedDatabase } from './database.js';
-import { startTestServer, type TestServer } from './harness.js';
+import { startTestServer, type StartTestServerOptions, type TestServer } from './harness.js';
 import { silentLogger } from './scraping.js';
 
 /**
@@ -219,8 +219,10 @@ export function principalAuth(principals: readonly Principal[]): () => AuthServi
 export async function startStudentsServer(
   h: StudentsHarness,
   extra: readonly Principal[] = [],
+  more: Partial<StartTestServerOptions> = {},
 ): Promise<TestServer> {
   return startTestServer({
+    ...more,
     auth: principalAuth([h.admin, h.alice, h.bob, ...extra]),
     students: () => h.module,
     teams: () => h.teams,

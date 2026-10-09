@@ -1,7 +1,8 @@
 import type { DueItem, StreamEvent } from '@compintel/contracts';
 
-import { NotificationEngine } from '../modules/notifications/engine.js';
-import { NotificationsRepository } from '../modules/notifications/repo.js';
+import type { NotificationEngine } from '../modules/notifications/engine.js';
+import type { NotificationsRepository } from '../modules/notifications/repo.js';
+import { createNotificationsModule } from '../modules/notifications/wiring.js';
 import { StreamHub } from '../platform/stream.js';
 import type { TestServer } from './harness.js';
 import { openStudentsHarness, startStudentsServer, type StudentsHarness } from './students.js';
@@ -52,7 +53,9 @@ export const thresholdOf = (key: string): string | undefined =>
 
 export async function openBench(taskDueIso: string): Promise<Bench> {
   const h = openStudentsHarness();
-  const server = await startStudentsServer(h);
+  const hub = new StreamHub({ clock: h.clock });
+  const module = createNotificationsModule({ db: h.database.db, hub, clock: h.clock });
+  const server = await startStudentsServer(h, [], { notifications: () => module, streamHub: hub });
   const { view, competitionId, eventId } = await withWorkflow(server, h, h.alice);
   const stage = view.stages[0]!;
   const taskId = stage.tasks[0]!.id;
@@ -62,9 +65,8 @@ export async function openBench(taskDueIso: string): Promise<Bench> {
       version: stage.version,
     }),
   );
-  const hub = new StreamHub({ clock: h.clock });
-  const repo = new NotificationsRepository(h.database.db);
-  const engine = new NotificationEngine({ repo, hub, clock: h.clock });
+  const repo = module.repository;
+  const engine = module.engine;
   const now = (): number => h.clock.now().getTime();
   return {
     h,

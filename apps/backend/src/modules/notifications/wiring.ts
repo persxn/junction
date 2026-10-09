@@ -3,6 +3,7 @@ import type { StreamHub } from '../../platform/stream.js';
 import type { Clock } from '../../platform/time.js';
 import { registerDueItemSink } from '../deadlines/evaluator.js';
 import { NotificationEngine } from './engine.js';
+import { InboxService } from './inbox.js';
 import { NotificationsRepository } from './repo.js';
 
 /**
@@ -14,6 +15,7 @@ import { NotificationsRepository } from './repo.js';
 export interface NotificationsModule {
   readonly engine: NotificationEngine;
   readonly repository: NotificationsRepository;
+  readonly inbox: InboxService;
   attachToEvaluator(): () => void;
 }
 
@@ -31,6 +33,11 @@ export function createNotificationsModule(options: {
   return {
     engine,
     repository,
+    inbox: new InboxService({
+      repo: repository,
+      engine,
+      ...(options.clock === undefined ? {} : { clock: options.clock }),
+    }),
     attachToEvaluator: () =>
       registerDueItemSink({
         name: 'notifications',

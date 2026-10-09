@@ -155,6 +155,11 @@ export class NotificationEngine {
     this.#hub.publish(kind, { id, unreadCount: this.#repo.unreadCount(userId, now) }, userId);
   }
 
+  /** Drops a person's cached preferences after they change them. */
+  forget(userId: string): void {
+    this.#prefs.delete(userId);
+  }
+
   /** For routes: a person's own read/snooze/dismiss also moves their badge. */
   published(userId: string, id: string | null): void {
     this.#publish('notification.updated', id, userId, nowMs(this.#clock));

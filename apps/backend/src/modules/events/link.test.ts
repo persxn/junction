@@ -75,13 +75,13 @@ describe('change detection', () => {
     expect(tableCounts(h.database)).toEqual(before);
   });
 
-  it('creates no notification — WP-23 reads event_changes later', () => {
+  it('creates no notification — WP-23’s evaluator reads event_changes later', () => {
     const record = h.ingest('devfolio', toCandidate('devfolio', 'hackx', BASE));
     h.ingest(
       'devfolio',
       toCandidate('devfolio', 'hackx', { ...BASE, registrationDeadlineAt: '2026-10-05T18:29:00Z' }),
     );
-    expect(Object.keys(tableCounts(h.database))).not.toContain('notifications');
+    expect(tableCounts(h.database).notifications ?? 0).toBe(0);
     expect(changesOf(h.eventOf(record).id)).toHaveLength(1);
   });
 });

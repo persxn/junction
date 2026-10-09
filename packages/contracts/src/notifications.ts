@@ -81,6 +81,8 @@ export const Notification = z
     createdAt: z.iso.datetime(),
     readAt: z.iso.datetime().nullable(),
     snoozedUntil: z.iso.datetime().nullable(),
+    /** CRITICAL and the person's toast preference for its type is on (R110). */
+    toast: z.boolean(),
   })
   .strict();
 export type Notification = z.infer<typeof Notification>;

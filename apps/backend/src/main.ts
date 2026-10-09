@@ -321,7 +321,6 @@ async function main(): Promise<void> {
     reclassify.trigger = () => {
       scheduler.trigger(RECLASSIFY_JOB_KEY);
     };
-
     // The shutdown route needs the trigger, which needs the built app; one
     // mutable hop breaks the cycle without leaking process concerns into app.ts.
     const lifecycle: { start: (reason: string) => void } = { start: () => undefined };
@@ -349,6 +348,7 @@ async function main(): Promise<void> {
       transfer: () => transferModule,
       deadlines: () => deadlinesModule,
       kpis: () => kpis,
+      notifications: () => notificationsModule,
       onShutdownRequested: () => {
         lifecycle.start('api');
       },
