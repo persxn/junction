@@ -115,7 +115,7 @@ describe('in the desktop app', () => {
     const exe = row('setup.exe');
     expect(within(exe).queryByRole('button', { name: /^Open/ })).toBeNull();
     expect(
-      within(exe).getByText(/Programs and scripts can’t be opened from CompIntel/),
+      within(exe).getByText(/Programs and scripts can’t be opened from Junction/),
     ).toBeInTheDocument();
     await user.click(within(exe).getByRole('button', { name: 'Show setup.exe in Explorer' }));
     expect(invoke).toHaveBeenCalledWith('reveal_path', { path: EXE });
@@ -145,7 +145,7 @@ describe('in the web build', () => {
     const pdf = row('deck.pdf');
     expect(within(pdf).queryByRole('button', { name: /Open|Explorer/ })).toBeNull();
     expect(
-      within(pdf).getByText(/Opening files needs the CompIntel desktop app/),
+      within(pdf).getByText(/Opening files needs the Junction desktop app/),
     ).toBeInTheDocument();
     expect(within(pdf).getByRole('button', { name: 'Actions for deck.pdf' })).toBeInTheDocument();
     expect(

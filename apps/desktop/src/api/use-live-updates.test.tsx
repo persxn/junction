@@ -95,7 +95,7 @@ describe('live updates (rulings R30 and R36)', () => {
     fail('NO_TRANSPORT');
     await screen.findByText('Live updates unavailable');
     expect(
-      screen.getByText(/blocks the live connection, so CompIntel re-checks every 30 seconds/),
+      screen.getByText(/blocks the live connection, so Junction re-checks every 30 seconds/),
     ).toBeInTheDocument();
 
     // Six minutes of polling must not stack six toasts on top of each other.

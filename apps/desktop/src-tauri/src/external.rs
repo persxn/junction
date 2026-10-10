@@ -31,9 +31,9 @@ impl OpenRefusal {
     #[must_use]
     pub fn message(&self) -> String {
         match self {
-            Self::Unparseable => "That is not a URL CompIntel can open.".to_owned(),
+            Self::Unparseable => "That is not a URL Junction can open.".to_owned(),
             Self::Scheme(scheme) => {
-                format!("CompIntel opens web and email links only, not {scheme}: links.")
+                format!("Junction opens web and email links only, not {scheme}: links.")
             }
             Self::Credentials => {
                 "That link carries a user name and password, so it is not opened.".to_owned()

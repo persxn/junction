@@ -126,7 +126,7 @@ export function SettingsPage(): React.JSX.Element {
       <Guide id="admin-settings" title="About these settings">
         <p>
           These choices apply to everyone in the institution, and each change is recorded in the
-          audit log with your name. Personal details are off unless you switch them on: CompIntel
+          audit log with your name. Personal details are off unless you switch them on: Junction
           keeps as little about students as it can.
         </p>
       </Guide>

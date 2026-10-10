@@ -10,7 +10,7 @@ import { useBackendConnection } from '../../shell/connection-context.js';
 import { studentKey } from './use-student-actions.js';
 
 /**
- * Achievements from before CompIntel (§6.2 `student_achievements`). Results of
+ * Achievements from before Junction (§6.2 `student_achievements`). Results of
  * competitions run in the app arrive on their own under "Competitions and
  * outcomes"; this is for the history a professor already knows.
  */
@@ -88,7 +88,7 @@ export function AchievementsSection({
     <section aria-labelledby="achievements-heading" className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <h2 id="achievements-heading" className="text-md">
-          Achievements before CompIntel
+          Achievements before Junction
         </h2>
         {!readOnly && !adding && (
           <button
@@ -105,7 +105,7 @@ export function AchievementsSection({
       </div>
       {student.achievements.length === 0 && !adding && (
         <p className="text-sm text-fg-muted">
-          None recorded. Add prizes and results from before CompIntel; results of competitions run
+          None recorded. Add prizes and results from before Junction; results of competitions run
           here appear by themselves.
         </p>
       )}

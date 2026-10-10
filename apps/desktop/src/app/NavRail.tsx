@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 
 import { useAuth } from '../auth/auth-context.js';
+import { Logo } from '../components/Logo.js';
 import { ADMIN_NAV, MAIN_NAV, type NavItem } from './nav.js';
 
 const ITEM_CLASS =
@@ -52,7 +53,12 @@ export function NavRail({ collapsed, onToggle }: NavRailProps): React.JSX.Elemen
               <PanelLeftClose aria-hidden="true" className="size-4" />
             )}
           </button>
-          {!collapsed && <span className="font-display font-semibold">CompIntel</span>}
+          {!collapsed && (
+            <span className="flex items-center gap-2 font-display font-semibold">
+              <Logo size={22} />
+              Junction
+            </span>
+          )}
         </div>
 
         <div className="flex flex-col gap-0.5 p-2">

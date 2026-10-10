@@ -56,7 +56,7 @@ export const phoneDisabled = (): AppError =>
     code: 'STUDENT_PHONE_DISABLED',
     status: 422,
     title: 'Phone numbers are not collected',
-    detail: 'CompIntel is set not to store students’ phone numbers.',
+    detail: 'Junction is set not to store students’ phone numbers.',
     hint: 'An administrator can switch them on in Admin → Campus & settings.',
     retryable: false,
   });
@@ -66,7 +66,7 @@ export const externalDisabled = (): AppError =>
     code: 'STUDENT_EXTERNAL_DISABLED',
     status: 422,
     title: 'Students from other institutions are switched off',
-    detail: 'CompIntel is set to hold only this institution’s students.',
+    detail: 'Junction is set to hold only this institution’s students.',
     hint: 'An administrator can allow them in Admin → Campus & settings.',
     retryable: false,
   });
@@ -95,7 +95,7 @@ export const previewExpired = (): AppError =>
     code: 'STUDENT_IMPORT_PREVIEW_EXPIRED',
     status: 410,
     title: 'This preview has expired',
-    detail: 'Import previews are kept for 30 minutes and are lost when CompIntel restarts.',
+    detail: 'Import previews are kept for 30 minutes and are lost when Junction restarts.',
     hint: 'Choose the file again; nothing was imported.',
     retryable: false,
   });

@@ -65,7 +65,7 @@ describe('the drawer', () => {
     expect(await screen.findByTestId('sources-disagree')).toHaveTextContent('Sources disagree');
     const panel = within(screen.getByTestId('sources-disagree'));
     expect(panel.getByTestId('conflict-registrationDeadlineAt')).toBeInTheDocument();
-    expect(panel.getAllByText('Shown by CompIntel:').length).toBe(3);
+    expect(panel.getAllByText('Shown by Junction:').length).toBe(3);
   });
 
   it('carries each source with D-32 attribution', async () => {

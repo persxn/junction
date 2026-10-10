@@ -36,8 +36,8 @@ export interface LiveUpdatesView {
 }
 
 const NOTICE: Record<StreamUnavailableReason, string> = {
-  NO_TRANSPORT: 'This machine blocks the live connection, so CompIntel re-checks every 30 seconds.',
-  DISCONNECTED: 'The live connection dropped. CompIntel is reconnecting and re-checking meanwhile.',
+  NO_TRANSPORT: 'This machine blocks the live connection, so Junction re-checks every 30 seconds.',
+  DISCONNECTED: 'The live connection dropped. Junction is reconnecting and re-checking meanwhile.',
   UNAUTHENTICATED: 'The live connection was refused because the session ended.',
 };
 

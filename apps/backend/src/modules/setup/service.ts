@@ -57,7 +57,7 @@ export function setupRequired(): AppError {
   return new AppError({
     status: 409,
     code: 'SETUP_REQUIRED',
-    title: 'CompIntel has not been set up yet',
+    title: 'Junction has not been set up yet',
     detail: 'The first-run wizard has to be completed before anything else works.',
     retryable: false,
   });
@@ -67,7 +67,7 @@ export function setupAlreadyDone(): AppError {
   return new AppError({
     status: 409,
     code: 'SETUP_ALREADY_DONE',
-    title: 'CompIntel is already set up',
+    title: 'Junction is already set up',
     detail: 'An administrator already exists, so the first-run wizard cannot run again.',
     hint: 'Sign in instead. An administrator can add more accounts under Admin → Users.',
     retryable: false,
@@ -215,7 +215,7 @@ export class SetupService {
         action: 'setup.completed',
         entityKind: 'organization',
         entityId: result.organizationId,
-        summary: `CompIntel was set up for ${request.organization.name}`,
+        summary: `Junction was set up for ${request.organization.name}`,
         diff: {
           organization: request.organization.name,
           department: request.department.name,
@@ -267,7 +267,7 @@ export class SetupService {
     }
     if (passphrase === request.admin.password) {
       throw passphraseWeak(
-        'The backup passphrase must be different from your CompIntel password: ' +
+        'The backup passphrase must be different from your Junction password: ' +
           'one unlocks this machine, the other unlocks backups that leave it.',
       );
     }

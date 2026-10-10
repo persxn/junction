@@ -6,7 +6,7 @@
 //! Debug builds toast under the PowerShell AUMID: there is no Start-menu
 //! shortcut with our own AppUserModelID until the installer (WP-31) registers
 //! one, so toasts read "Windows PowerShell" and a click after the toast has
-//! moved to Action Center may open PowerShell rather than CompIntel.
+//! moved to Action Center may open PowerShell rather than Junction.
 
 use serde::Deserialize;
 use tauri::image::Image;
@@ -93,7 +93,7 @@ pub fn tray_set_unread(app: AppHandle, count: u32) -> Result<(), String> {
 #[tauri::command]
 pub fn notify_critical(app: AppHandle, toast: CriticalToast) -> Result<(), String> {
     if !is_internal_route(&toast.route) {
-        return Err("a notification can only open a page inside CompIntel".to_owned());
+        return Err("a notification can only open a page inside Junction".to_owned());
     }
     show_toast(app, toast)
 }

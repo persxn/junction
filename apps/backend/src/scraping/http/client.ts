@@ -53,7 +53,7 @@ export class ScrapingHttp {
     const queue = new HostQueue({ clock, sleep });
     const userAgent = (): string => {
       const email = options.contactEmail().trim();
-      return `CompIntel/${options.appVersion} (+mailto:${email})`;
+      return `Junction/${options.appVersion} (+mailto:${email})`;
     };
     this.#maxWaitMs = options.maxWaitMs ?? DEFAULT_MAX_WAIT_MS;
     this.#env = {

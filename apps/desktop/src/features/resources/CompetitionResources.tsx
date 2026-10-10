@@ -56,7 +56,7 @@ export function CompetitionResources({
         </p>
         <p>
           Documents, images and archives open with their usual program. Programs and scripts never
-          open from CompIntel — use <strong>Show in Explorer</strong>. A path added on another PC
+          open from Junction — use <strong>Show in Explorer</strong>. A path added on another PC
           says so; for anything the team shares, a link works on every PC.
         </p>
       </Guide>

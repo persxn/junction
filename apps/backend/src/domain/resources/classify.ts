@@ -16,7 +16,7 @@ export const CLASSIFY_REFUSAL_TEXT: Readonly<Record<ClassifyRefusal, string>> = 
   EMPTY: 'Paste a link or a path.',
   TOO_LONG: `That is longer than ${String(RESOURCE_URI_MAX)} characters.`,
   SCHEME: 'Only web links (http or https) and paths on a PC can be added.',
-  MALFORMED: 'That is not a link CompIntel can use.',
+  MALFORMED: 'That is not a link Junction can use.',
   RELATIVE: 'A path must be complete: start it with a drive letter or \\\\server\\share.',
   KIND: 'That link or path is not of the kind chosen.',
 };

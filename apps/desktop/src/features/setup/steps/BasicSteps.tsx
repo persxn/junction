@@ -73,7 +73,7 @@ export function OrganizationStep({ values, errors, onChange }: StepProps): React
         placeholder="CSE"
       />
       <Note icon={Building2}>
-        This is the department CompIntel belongs to. Students from other departments can still join
+        This is the department Junction belongs to. Students from other departments can still join
         teams — you will add those departments as you go.
       </Note>
     </>
@@ -195,7 +195,7 @@ export function ContactStep({ values, errors, onChange }: StepProps): React.JSX.
         autoFocus
       />
       <Note icon={Mail}>
-        Every request CompIntel makes to an event site says who it is and gives this address, so a
+        Every request Junction makes to an event site says who it is and gives this address, so a
         site owner with a problem can write to a person instead of blocking a robot. Nothing is
         collected from any site until this is set.
       </Note>

@@ -4,7 +4,7 @@
 //! (`resources\node\node.exe`, `resources\backend\main.mjs`). In a dev run there
 //! is no `resources` directory, so the repository's own esbuild bundle and the
 //! system Node are used instead, and the data directory is
-//! `%LOCALAPPDATA%\CompIntel-dev` - never `%LOCALAPPDATA%\CompIntel`, so a
+//! `%LOCALAPPDATA%\CompIntel-dev` - never `%LOCALAPPDATA%\Junction`, so a
 //! developer can never point a debug build at pilot data (CLAUDE.md).
 
 use std::path::{Path, PathBuf};
@@ -14,8 +14,8 @@ pub const ENV_DATA_DIR: &str = "COMPINTEL_DATA_DIR";
 pub const ENV_NODE: &str = "COMPINTEL_BACKEND_NODE";
 pub const ENV_ENTRY: &str = "COMPINTEL_BACKEND_ENTRY";
 
-/// `%LOCALAPPDATA%\CompIntel` in a packaged run (§4.13).
-pub const DATA_DIR_NAME: &str = "CompIntel";
+/// `%LOCALAPPDATA%\Junction` in a packaged run (§4.13).
+pub const DATA_DIR_NAME: &str = "Junction";
 
 /// `%LOCALAPPDATA%\CompIntel-dev` in a dev run (CLAUDE.md).
 pub const DEV_DATA_DIR_NAME: &str = "CompIntel-dev";
@@ -173,7 +173,7 @@ mod tests {
 
         assert_eq!(
             paths.data_dir,
-            PathBuf::from(r"C:\Users\x\AppData\Local\CompIntel")
+            PathBuf::from(r"C:\Users\x\AppData\Local\Junction")
         );
         assert_eq!(paths.node, PathBuf::from(r"C:\app\resources\node\node.exe"));
         assert_eq!(
@@ -182,7 +182,7 @@ mod tests {
         );
         assert_eq!(
             paths.logs_dir(),
-            PathBuf::from(r"C:\Users\x\AppData\Local\CompIntel\logs")
+            PathBuf::from(r"C:\Users\x\AppData\Local\Junction\logs")
         );
     }
 
@@ -190,7 +190,7 @@ mod tests {
     fn the_environment_wins_over_everything() {
         let vars = env(&[
             ("LOCALAPPDATA", r"C:\Users\x\AppData\Local"),
-            (ENV_DATA_DIR, r"D:\CompIntel"),
+            (ENV_DATA_DIR, r"D:\Junction"),
             (ENV_NODE, r"D:\node\node.exe"),
             (ENV_ENTRY, r"D:\fake\main.mjs"),
         ]);
@@ -204,7 +204,7 @@ mod tests {
             exists: &exists,
         });
 
-        assert_eq!(paths.data_dir, PathBuf::from(r"D:\CompIntel"));
+        assert_eq!(paths.data_dir, PathBuf::from(r"D:\Junction"));
         assert_eq!(paths.node, PathBuf::from(r"D:\node\node.exe"));
         assert_eq!(paths.entry, PathBuf::from(r"D:\fake\main.mjs"));
     }
@@ -263,7 +263,7 @@ mod tests {
 
         assert_eq!(
             paths.data_dir,
-            PathBuf::from(r"C:\Users\x\AppData\Local\CompIntel")
+            PathBuf::from(r"C:\Users\x\AppData\Local\Junction")
         );
     }
 }

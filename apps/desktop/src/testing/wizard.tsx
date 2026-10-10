@@ -20,12 +20,12 @@ export const WIZARD_CONNECTION: BackendConnection = {
   generation: 2,
 };
 
-export const WIZARD_DATA_DIR = 'C:\\CompIntel';
+export const WIZARD_DATA_DIR = 'C:\\Junction';
 
 export const WIZARD_RECOVERY = {
   recoveryCode: 'ABCDE-FGHJK-MNPQR-STVWX-YZ234-56789-ABCDE',
-  recoveryFileName: 'compintel-recovery-20260920.txt',
-  recoveryFile: 'CompIntel — backup recovery material\n…',
+  recoveryFileName: 'junction-recovery-20260920.txt',
+  recoveryFile: 'Junction — backup recovery material\n…',
 };
 
 export interface WizardApiOptions {
@@ -110,7 +110,7 @@ export async function typeInto(label: string | RegExp, value: string): Promise<v
 }
 
 export async function nextStep(
-  name: string | RegExp = /Next|Get started|Set up CompIntel/,
+  name: string | RegExp = /Next|Get started|Set up Junction/,
 ): Promise<void> {
   await wizardUser().click(screen.getByRole('button', { name }));
 }

@@ -138,7 +138,7 @@ export function OutcomeDialog({
           )}
         </div>
         <p className="-mt-2 text-xs text-fg-muted">
-          An amount keeps its own currency; CompIntel never converts or adds up currencies.
+          An amount keeps its own currency; Junction never converts or adds up currencies.
         </p>
         {text(
           'certificate',

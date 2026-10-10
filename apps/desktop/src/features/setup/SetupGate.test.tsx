@@ -71,35 +71,31 @@ afterEach(() => {
 describe('the setup gate (ruling R39)', () => {
   it('shows the wizard, and no login screen, while setup is required', async () => {
     backend({ required: true });
-    renderWithProviders(<SetupGate connection={CONNECTION} dataDir="C:\\CompIntel" />);
+    renderWithProviders(<SetupGate connection={CONNECTION} dataDir="C:\\Junction" />);
 
-    expect(
-      await screen.findByRole('heading', { name: 'Welcome to CompIntel' }),
-    ).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Sign in to CompIntel' })).toBeNull();
+    expect(await screen.findByRole('heading', { name: 'Welcome to Junction' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Sign in to Junction' })).toBeNull();
     expect(screen.queryByRole('navigation', { name: 'Main' })).toBeNull();
   });
 
   it('goes straight to the login screen once an administrator exists', async () => {
     backend({ required: false });
-    renderWithProviders(<SetupGate connection={CONNECTION} dataDir="C:\\CompIntel" />);
+    renderWithProviders(<SetupGate connection={CONNECTION} dataDir="C:\\Junction" />);
 
-    expect(
-      await screen.findByRole('heading', { name: 'Sign in to CompIntel' }),
-    ).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Welcome to CompIntel' })).toBeNull();
+    expect(await screen.findByRole('heading', { name: 'Sign in to Junction' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Welcome to Junction' })).toBeNull();
   });
 
   it('offers a retry rather than a wrong screen when the status call fails', async () => {
     backend('FAILS');
-    renderWithProviders(<SetupGate connection={CONNECTION} dataDir="C:\\CompIntel" />);
+    renderWithProviders(<SetupGate connection={CONNECTION} dataDir="C:\\Junction" />);
 
     expect(
       await screen.findByRole('heading', { name: /could not read its own setup state/ }),
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
     // Neither of the two screens that would be a lie.
-    expect(screen.queryByRole('heading', { name: 'Welcome to CompIntel' })).toBeNull();
-    expect(screen.queryByRole('heading', { name: 'Sign in to CompIntel' })).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Welcome to Junction' })).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Sign in to Junction' })).toBeNull();
   });
 });

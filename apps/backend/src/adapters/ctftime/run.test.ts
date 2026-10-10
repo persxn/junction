@@ -181,7 +181,7 @@ describe('the delay comes from robots.txt (A9, D-28)', () => {
     const transport = recordedTransport(clock);
     await run(transport);
     for (const call of transport.calls) {
-      expect(call.headers['user-agent']).toBe('CompIntel/1.2.3 (+mailto:tech.office@example.edu)');
+      expect(call.headers['user-agent']).toBe('Junction/1.2.3 (+mailto:tech.office@example.edu)');
     }
   });
 });

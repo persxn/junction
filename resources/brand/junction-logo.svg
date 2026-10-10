@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Junction">
+  <title>Junction</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#313244"/>
+      <stop offset="1" stop-color="#11111b"/>
+    </linearGradient>
+    <linearGradient id="out" gradientUnits="userSpaceOnUse" x1="520" y1="512" x2="840" y2="512">
+      <stop offset="0" stop-color="#89b4fa"/>
+      <stop offset="1" stop-color="#f5c2e7"/>
+    </linearGradient>
+  </defs>
+  <rect x="40" y="40" width="944" height="944" rx="220" fill="url(#bg)"/>
+  <rect x="52" y="52" width="920" height="920" rx="208" fill="none" stroke="#cba6f7" stroke-opacity="0.3" stroke-width="8"/>
+  <!-- Three routes (students, teams, events) meet at one junction and run on as one. -->
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="80">
+    <path d="M200 280 C 360 280, 400 512, 500 512" stroke="#cba6f7"/>
+    <path d="M200 744 C 360 744, 400 512, 500 512" stroke="#94e2d5"/>
+    <path d="M200 512 L 500 512" stroke="#89b4fa"/>
+    <path d="M520 512 L 824 512" stroke="url(#out)"/>
+  </g>
+  <circle cx="520" cy="512" r="100" fill="#f5e0dc"/>
+  <circle cx="520" cy="512" r="48" fill="#1e1e2e"/>
+</svg>

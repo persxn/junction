@@ -44,12 +44,12 @@ describe('the copy for each state', () => {
   });
 
   it('treats an unknown phase as "starting"', () => {
-    expect(connectionCopy(undefined, null).title).toBe('Starting CompIntel');
+    expect(connectionCopy(undefined, null).title).toBe('Starting Junction');
   });
 
   it('says the app is closing while it shuts down', () => {
     for (const phase of ['STOPPING', 'STOPPED'] as const) {
-      expect(connectionCopy(phase, null).title).toBe('Closing CompIntel');
+      expect(connectionCopy(phase, null).title).toBe('Closing Junction');
     }
   });
 });

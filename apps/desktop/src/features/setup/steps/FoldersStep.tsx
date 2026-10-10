@@ -17,9 +17,9 @@ import { Note, type StepProps } from './BasicSteps.js';
 const REASONS: Readonly<Record<PathCheckReason, string>> = {
   MISSING: 'That folder is not there any more.',
   NOT_A_DIRECTORY: 'That is a file, not a folder.',
-  NOT_WRITABLE: 'CompIntel cannot write there. Pick a folder you own, or change its permissions.',
+  NOT_WRITABLE: 'Junction cannot write there. Pick a folder you own, or change its permissions.',
   INSIDE_DATA_DIR:
-    'That folder is inside CompIntel’s own data folder. A backup kept there is lost with everything else.',
+    'That folder is inside Junction’s own data folder. A backup kept there is lost with everything else.',
   LOW_SPACE: 'There is less than 1 GB free on that drive.',
 };
 

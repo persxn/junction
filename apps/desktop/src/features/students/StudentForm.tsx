@@ -203,7 +203,7 @@ export function StudentForm(props: StudentFormProps): React.JSX.Element {
         <span>
           The student has been shown the privacy notice
           <span className="block text-sm text-fg-subtle">
-            Tick this once you have told the student what CompIntel keeps about them and why. The
+            Tick this once you have told the student what Junction keeps about them and why. The
             date is recorded.
           </span>
         </span>

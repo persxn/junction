@@ -40,12 +40,12 @@ pub fn badge_text(unread: u32) -> Option<String> {
     }
 }
 
-/// "CompIntel - 3 unread notifications".
+/// "Junction - 3 unread notifications".
 pub fn tooltip(unread: u32) -> String {
     match unread {
-        0 => "CompIntel".to_owned(),
-        1 => "CompIntel \u{2014} 1 unread notification".to_owned(),
-        n => format!("CompIntel \u{2014} {n} unread notifications"),
+        0 => "Junction".to_owned(),
+        1 => "Junction \u{2014} 1 unread notification".to_owned(),
+        n => format!("Junction \u{2014} {n} unread notifications"),
     }
 }
 
@@ -164,9 +164,9 @@ mod tests {
 
     #[test]
     fn the_tooltip_names_the_count() {
-        assert_eq!(tooltip(0), "CompIntel");
-        assert_eq!(tooltip(1), "CompIntel \u{2014} 1 unread notification");
-        assert_eq!(tooltip(3), "CompIntel \u{2014} 3 unread notifications");
+        assert_eq!(tooltip(0), "Junction");
+        assert_eq!(tooltip(1), "Junction \u{2014} 1 unread notification");
+        assert_eq!(tooltip(3), "Junction \u{2014} 3 unread notifications");
     }
 
     #[test]

@@ -18,7 +18,7 @@ import { Guide } from '../../../components/Guide.js';
  */
 
 const FIELD_NOTES: Partial<Record<(typeof STUDENT_IMPORT_FIELDS)[number], string>> = {
-  universityId: 'Identifies the student; a roll number already in CompIntel updates that student.',
+  universityId: 'Identifies the student; a roll number already in Junction updates that student.',
   program: `One of ${STUDENT_PROGRAMS.map((program) => PROGRAM_LABELS[program]).join(', ')}. “BE”, “B.E.” and “B Tech” also work.`,
   graduationYear: 'A four-digit year, e.g. 2027.',
   homeDepartment:
@@ -43,7 +43,7 @@ export function ImportGuide(): React.JSX.Element {
           sheet is read; the first row must hold the column headings.
         </li>
         <li>
-          CompIntel matches each heading to a field. A heading it does not recognise is shown as{' '}
+          Junction matches each heading to a field. A heading it does not recognise is shown as{' '}
           <strong>Not imported</strong> — it is never guessed. You can change any match.
         </li>
         <li>

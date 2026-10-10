@@ -238,7 +238,7 @@ export function assertCanSeal(vault: SessionVault): void {
   if (vault.key === undefined) {
     throw conflict(
       'This machine cannot store a session.',
-      'A session is sealed under a key the desktop shell holds (R76), and this backend was started without one. Start CompIntel from its own shortcut and try again.',
+      'A session is sealed under a key the desktop shell holds (R76), and this backend was started without one. Start Junction from its own shortcut and try again.',
     );
   }
 }

@@ -53,7 +53,7 @@ function lastAdministrator(what: string): AppError {
     status: 409,
     code: 'CONFLICT',
     title: 'This is the last administrator',
-    detail: `${what} would leave CompIntel with no administrator, and nobody could manage it again.`,
+    detail: `${what} would leave Junction with no administrator, and nobody could manage it again.`,
     hint: 'Give another account the Administrator role first.',
     retryable: false,
   });

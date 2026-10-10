@@ -29,7 +29,7 @@ const REQUEST = {
     password: 'a-long-enough-password',
   },
   scraperContactEmail: 'compintel@example.edu',
-  backupDir: 'D:\\CompIntel-backups',
+  backupDir: 'D:\\Junction-backups',
   backupPassphrase: 'correct horse battery',
 };
 
@@ -100,17 +100,17 @@ describe('SetupResult and PathCheckResult', () => {
   it('carries the recovery code, the file name and the file', () => {
     const parsed = SetupResult.parse({
       recoveryCode: 'ABCDE-FGHJK-MNPQR-STVWX-YZ234-56789-ABCDE',
-      recoveryFileName: 'compintel-recovery-20260920.txt',
-      recoveryFile: 'CompIntel recovery material\n...',
+      recoveryFileName: 'junction-recovery-20260920.txt',
+      recoveryFile: 'Junction recovery material\n...',
     });
-    expect(parsed.recoveryFileName).toMatch(/^compintel-recovery-\d{8}\.txt$/);
+    expect(parsed.recoveryFileName).toMatch(/^junction-recovery-\d{8}\.txt$/);
   });
 
   it('names one of the fixed reasons when a folder is refused', () => {
     const parsed = PathCheckResult.parse({
       ok: false,
       reason: 'INSIDE_DATA_DIR',
-      resolvedPath: 'C:\\CompIntel\\data',
+      resolvedPath: 'C:\\Junction\\data',
     });
     expect(parsed.reason).toBe('INSIDE_DATA_DIR');
     expect(

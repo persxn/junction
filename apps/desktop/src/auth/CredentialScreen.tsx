@@ -2,6 +2,7 @@ import { Lock, LogIn, ShieldAlert } from 'lucide-react';
 import { useId, useState, type FormEvent } from 'react';
 
 import type { ApiProblem } from '../api/problem.js';
+import { Logo } from '../components/Logo.js';
 
 export interface CredentialField {
   readonly name: string;
@@ -63,6 +64,10 @@ export function CredentialScreen({
         onSubmit={submit}
         className="flex w-full max-w-sm flex-col gap-4 rounded-lg border border-line bg-surface-raised p-6"
       >
+        <p className="flex items-center gap-2 font-display font-semibold">
+          <Logo size={28} />
+          Junction
+        </p>
         <div className="flex items-center gap-2">
           <Icon aria-hidden="true" className="size-5 text-accent" />
           <h1 className="text-lg">{title}</h1>

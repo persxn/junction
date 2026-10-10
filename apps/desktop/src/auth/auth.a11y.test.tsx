@@ -50,7 +50,7 @@ describe('the credential screens', () => {
   it('has no axe violations on the login screen', async () => {
     installFakeApi();
     renderWithProviders(<SessionGate connection={CONNECTION} />);
-    await screen.findByRole('heading', { name: 'Sign in to CompIntel' });
+    await screen.findByRole('heading', { name: 'Sign in to Junction' });
     await expect(document.body).toBeAccessible();
   });
 
@@ -77,7 +77,7 @@ describe('the credential screens', () => {
     await screen.findByRole('navigation', { name: 'Main' });
 
     await vi.advanceTimersByTimeAsync(AUTO_LOCK_MINUTES * 60_000);
-    await screen.findByRole('heading', { name: 'CompIntel is locked' });
+    await screen.findByRole('heading', { name: 'Junction is locked' });
     await expect(document.body).toBeAccessible();
   });
 });

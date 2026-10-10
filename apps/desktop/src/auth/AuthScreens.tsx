@@ -16,7 +16,7 @@ export function LoginScreen(): React.JSX.Element {
   return (
     <CredentialScreen
       icon="sign-in"
-      title="Sign in to CompIntel"
+      title="Sign in to Junction"
       description="Use the account an administrator created for you."
       fields={[
         { name: 'email', label: 'Email', type: 'email', autoComplete: 'username' },
@@ -42,7 +42,7 @@ export function LockScreen(): React.JSX.Element {
   return (
     <CredentialScreen
       icon="lock"
-      title="CompIntel is locked"
+      title="Junction is locked"
       description={`Enter the password for ${me?.user.email ?? 'this account'} to carry on. Scraping and reminders kept running.`}
       fields={[
         {

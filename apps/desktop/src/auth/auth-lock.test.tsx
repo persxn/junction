@@ -66,7 +66,7 @@ describe('auto-lock (§10.5)', () => {
     await signIn(user);
 
     await vi.advanceTimersByTimeAsync((AUTO_LOCK_MINUTES - 1) * 60_000);
-    expect(screen.queryByRole('heading', { name: 'CompIntel is locked' })).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Junction is locked' })).toBeNull();
 
     // A keystroke is the user still being there; the countdown starts again.
     await user.keyboard('a');
@@ -82,7 +82,7 @@ describe('auto-lock (§10.5)', () => {
 
     await vi.advanceTimersByTimeAsync(AUTO_LOCK_MINUTES * 60_000);
 
-    expect(await screen.findByRole('heading', { name: 'CompIntel is locked' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Junction is locked' })).toBeInTheDocument();
     expect(screen.getByText(new RegExp(TEST_USER.email))).toBeInTheDocument();
     expect(screen.queryByRole('navigation', { name: 'Main' })).toBeNull();
   });
@@ -96,7 +96,7 @@ describe('auto-lock (§10.5)', () => {
     await user.click(screen.getByRole('button', { name: TEST_USER.displayName }));
     await user.click(screen.getByRole('menuitem', { name: /Lock/ }));
 
-    expect(await screen.findByRole('heading', { name: 'CompIntel is locked' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Junction is locked' })).toBeInTheDocument();
   });
 });
 
@@ -108,7 +108,7 @@ describe('unlocking (ruling R37)', () => {
     await signIn(user);
 
     await vi.advanceTimersByTimeAsync(AUTO_LOCK_MINUTES * 60_000);
-    await screen.findByRole('heading', { name: 'CompIntel is locked' });
+    await screen.findByRole('heading', { name: 'Junction is locked' });
 
     await user.type(screen.getByLabelText('Password'), CORRECT_PASSWORD);
     await user.click(screen.getByRole('button', { name: 'Unlock' }));
@@ -131,13 +131,13 @@ describe('unlocking (ruling R37)', () => {
     await signIn(user);
 
     await vi.advanceTimersByTimeAsync(AUTO_LOCK_MINUTES * 60_000);
-    await screen.findByRole('heading', { name: 'CompIntel is locked' });
+    await screen.findByRole('heading', { name: 'Junction is locked' });
 
     await user.type(screen.getByLabelText('Password'), 'not-the-password');
     await user.click(screen.getByRole('button', { name: 'Unlock' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('That password does not match');
-    expect(screen.getByRole('heading', { name: 'CompIntel is locked' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Junction is locked' })).toBeInTheDocument();
   });
 
   it('offers a way out for somebody else at the keyboard', async () => {
@@ -147,12 +147,10 @@ describe('unlocking (ruling R37)', () => {
     await signIn(user);
 
     await vi.advanceTimersByTimeAsync(AUTO_LOCK_MINUTES * 60_000);
-    await screen.findByRole('heading', { name: 'CompIntel is locked' });
+    await screen.findByRole('heading', { name: 'Junction is locked' });
 
     await user.click(screen.getByRole('button', { name: 'Sign out instead' }));
-    expect(
-      await screen.findByRole('heading', { name: 'Sign in to CompIntel' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Sign in to Junction' })).toBeInTheDocument();
   });
 });
 

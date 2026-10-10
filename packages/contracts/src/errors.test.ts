@@ -315,7 +315,7 @@ describe('ProblemDetails', () => {
   });
 
   it.each(['about:blank', 'https://example.com/problems/x', 'urn:other:problem:X', 'not a uri'])(
-    'rejects the type %p — only the CompIntel URN is allowed',
+    'rejects the type %p — only the Junction URN is allowed',
     (type) => {
       expect(ProblemDetails.safeParse({ ...valid, type }).success).toBe(false);
     },

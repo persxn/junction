@@ -176,7 +176,7 @@ function planRow(
       if (program === undefined) {
         fail(
           'program',
-          `“${values.program}” is not a programme CompIntel knows. Use one of: ${programChoices()}.`,
+          `“${values.program}” is not a programme Junction knows. Use one of: ${programChoices()}.`,
         );
       } else {
         fields.program = program;

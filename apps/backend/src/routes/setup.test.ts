@@ -197,7 +197,7 @@ describe('POST /setup/complete (ruling R40)', () => {
       recoveryFileName: string;
       recoveryFile: string;
     };
-    expect(result.recoveryFileName).toMatch(/^compintel-recovery-\d{8}\.txt$/);
+    expect(result.recoveryFileName).toMatch(/^junction-recovery-\d{8}\.txt$/);
 
     // The code is stored only as a hash, and that hash verifies (R41).
     const hash = h.settings.get(RECOVERY_CODE_HASH);
@@ -253,7 +253,7 @@ describe('the passphrase rules (ruling R42)', () => {
     });
     expect(answer.status).toBe(422);
     expect(answer.body.code).toBe('SETUP_PASSPHRASE_WEAK');
-    expect(String(answer.body.detail)).toContain('different from your CompIntel password');
+    expect(String(answer.body.detail)).toContain('different from your Junction password');
   });
 });
 

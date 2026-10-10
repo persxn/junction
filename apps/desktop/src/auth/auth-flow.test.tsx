@@ -61,9 +61,7 @@ describe('signing in (§10.3)', () => {
     installFakeApi();
     renderWithProviders(<SessionGate connection={CONNECTION} />);
 
-    expect(
-      await screen.findByRole('heading', { name: 'Sign in to CompIntel' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Sign in to Junction' })).toBeInTheDocument();
     expect(screen.queryByRole('navigation', { name: 'Main' })).toBeNull();
   });
 
@@ -177,9 +175,7 @@ describe('signing out', () => {
     await user.click(screen.getByRole('button', { name: TEST_USER.displayName }));
     await user.click(screen.getByRole('menuitem', { name: /Sign out/ }));
 
-    expect(
-      await screen.findByRole('heading', { name: 'Sign in to CompIntel' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Sign in to Junction' })).toBeInTheDocument();
     expect(api.calls.some((call) => call.path === '/api/v1/auth/logout')).toBe(true);
     expect(stored()).toStrictEqual([]);
   });

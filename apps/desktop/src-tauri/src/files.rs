@@ -121,7 +121,7 @@ mod tests {
     fn writes_into_a_folder_the_user_picked() {
         let target = authorise_write(
             Path::new(r"C:\Users\Someone\Documents"),
-            "compintel-recovery-20260920.txt",
+            "junction-recovery-20260920.txt",
             false,
             &picked(),
             &never_exists,
@@ -129,7 +129,7 @@ mod tests {
         .expect("a picked folder and a plain name are allowed");
         assert_eq!(
             target,
-            PathBuf::from(r"C:\Users\Someone\Documents\compintel-recovery-20260920.txt")
+            PathBuf::from(r"C:\Users\Someone\Documents\junction-recovery-20260920.txt")
         );
     }
 
@@ -219,7 +219,7 @@ mod tests {
 
     #[test]
     fn plain_file_names_are_recognised() {
-        assert!(is_plain_file_name("compintel-recovery-20260920.txt"));
+        assert!(is_plain_file_name("junction-recovery-20260920.txt"));
         assert!(is_plain_file_name("file with spaces.txt"));
         assert!(!is_plain_file_name(&"x".repeat(256)));
     }

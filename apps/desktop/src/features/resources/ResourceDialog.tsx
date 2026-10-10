@@ -150,7 +150,7 @@ export function ResourceDialog({
           />
         </label>
         <p className="text-xs text-fg-muted">
-          Only the link or path is kept — CompIntel never copies or reads the file.
+          Only the link or path is kept — Junction never copies or reads the file.
         </p>
         {error !== undefined && (
           <p role="alert" className="rounded-md bg-danger-surface p-2 text-sm">

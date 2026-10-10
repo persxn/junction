@@ -71,8 +71,8 @@ describe('the recovery file (ruling R42)', () => {
   };
 
   it('is named for the day it was made', () => {
-    expect(recoveryFileName(new Date(2026, 8, 20))).toBe('compintel-recovery-20260920.txt');
-    expect(recoveryFileName(new Date(2027, 0, 3))).toBe('compintel-recovery-20270103.txt');
+    expect(recoveryFileName(new Date(2026, 8, 20))).toBe('junction-recovery-20260920.txt');
+    expect(recoveryFileName(new Date(2027, 0, 3))).toBe('junction-recovery-20270103.txt');
   });
 
   it('carries the public key, the wrapped identity and how to use them', () => {

@@ -1,8 +1,9 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "CompIntel",
+  "productName": "Junction",
   "version": "0.1.0",
-  "identifier": "in.compintel.desktop",
+  "mainBinaryName": "Junction",
+  "identifier": "io.github.persxn.junction",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:5173",
@@ -13,7 +14,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "CompIntel",
+        "title": "Junction",
         "width": 1280,
         "height": 800,
         "minWidth": 960,

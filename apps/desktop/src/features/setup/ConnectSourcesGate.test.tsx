@@ -178,9 +178,7 @@ describe('the connect-sources step', () => {
       </MockAuthProvider>,
     );
 
-    expect(
-      await screen.findByRole('heading', { name: 'Sign in to CompIntel' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Sign in to Junction' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Connect your sources' })).toBeNull();
     await waitFor(() => {
       expect(calls.some((call) => call.path === '/api/v1/sources/connect-prompt')).toBe(false);

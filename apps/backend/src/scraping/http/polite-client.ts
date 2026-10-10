@@ -62,7 +62,7 @@ export interface HttpEnvironment {
   readonly sleep: Sleeper;
   readonly logger: Logger;
   readonly random: () => number;
-  /** `CompIntel/<version> (+mailto:…)`, read at request time (A10). */
+  /** `Junction/<version> (+mailto:…)`, read at request time (A10). */
   readonly userAgent: () => string;
   /** False until the wizard has finished *and* recorded a contact address. */
   readonly setupComplete: () => boolean;

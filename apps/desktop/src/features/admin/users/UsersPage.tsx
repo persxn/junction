@@ -172,7 +172,7 @@ export function UsersPage(): React.JSX.Element {
 
       {users.data !== undefined && users.data.length > 0 && (
         <table className="w-full border-collapse text-left">
-          <caption className="sr-only">Every CompIntel account</caption>
+          <caption className="sr-only">Every Junction account</caption>
           <thead>
             <tr className="border-b border-line text-sm text-fg-subtle">
               <th scope="col" className="py-2 font-medium">

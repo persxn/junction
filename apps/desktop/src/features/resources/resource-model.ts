@@ -29,7 +29,7 @@ export interface RowState {
 }
 
 export const WEB_BUILD_TEXT =
-  'Opening files needs the CompIntel desktop app — copy the path instead.';
+  'Opening files needs the Junction desktop app — copy the path instead.';
 
 export function isLink(resource: Resource): boolean {
   return resource.kind !== 'LOCAL_PATH';

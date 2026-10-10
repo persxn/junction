@@ -87,7 +87,7 @@ export function parseImportFile(fileName: string, base64: string): ParsedFile {
     rows = readCsv(bytes);
   } else {
     throw importFileInvalid(
-      `CompIntel imports .csv and .xlsx files; “${fileName}” is neither. (An old .xls file can be saved as .xlsx from Excel.)`,
+      `Junction imports .csv and .xlsx files; “${fileName}” is neither. (An old .xls file can be saved as .xlsx from Excel.)`,
     );
   }
 

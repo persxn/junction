@@ -39,12 +39,12 @@ import {
  */
 
 const DESCRIPTIONS: Readonly<Record<WizardStep, string>> = {
-  welcome: 'A few questions, and then CompIntel is yours.',
+  welcome: 'A few questions, and then Junction is yours.',
   organization: 'Who this installation belongs to.',
   campus: 'Where your campus is, so “nearby” means something.',
   administrator: 'The first account. You can add more once you are in.',
   contact: 'How event sites can reach a person.',
-  folders: 'Where CompIntel keeps its data, and where backups go.',
+  folders: 'Where Junction keeps its data, and where backups go.',
   passphrase: 'The secret that encrypts your backups.',
   recovery: 'Two things to keep somewhere safe. You will not see them again.',
   done: 'That is everything.',
@@ -85,7 +85,7 @@ export function SetupWizard({
   }, []);
 
   const choose = useCallback(async (): Promise<void> => {
-    const picked = await pickFolder('Choose a folder for CompIntel backups');
+    const picked = await pickFolder('Choose a folder for Junction backups');
     if (picked === undefined) {
       return;
     }
@@ -155,7 +155,7 @@ export function SetupWizard({
       return;
     }
     if (step === 'folders' && pathCheck?.ok !== true) {
-      setErrors({ backupDir: 'Choose a folder CompIntel can write to.' });
+      setErrors({ backupDir: 'Choose a folder Junction can write to.' });
       return;
     }
     if (step === 'passphrase') {
@@ -278,7 +278,7 @@ function labelFor(step: WizardStep, busy: boolean): string {
     case 'welcome':
       return 'Get started';
     case 'passphrase':
-      return 'Set up CompIntel';
+      return 'Set up Junction';
     case 'recovery':
       return 'I have saved both';
     case 'done':

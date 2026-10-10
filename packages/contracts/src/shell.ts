@@ -137,15 +137,15 @@ export type OpenRefusal = z.infer<typeof OpenRefusal>;
 
 export const OPEN_REFUSAL_TEXT: Readonly<Record<OpenRefusal, string>> = {
   NOT_ABSOLUTE: 'Only a full path — a drive letter or a \\\\server\\share — can be opened.',
-  TRAVERSAL: 'A path that steps up with “..” can’t be opened from CompIntel.',
-  DEVICE_PATH: 'Device paths can’t be opened from CompIntel.',
+  TRAVERSAL: 'A path that steps up with “..” can’t be opened from Junction.',
+  DEVICE_PATH: 'Device paths can’t be opened from Junction.',
   ALTERNATE_STREAM: 'That path names a hidden part of a file, so it isn’t opened.',
-  TRAILING_DOT_OR_SPACE: 'A name ending in a dot or a space can’t be opened from CompIntel.',
+  TRAILING_DOT_OR_SPACE: 'A name ending in a dot or a space can’t be opened from Junction.',
   RESERVED_NAME: 'That name is reserved by Windows, so it isn’t opened.',
   NOT_FOUND: 'Not found on this PC.',
   IS_DIRECTORY: 'That is a folder — use Show in Explorer.',
-  BLOCKED_TYPE: 'Programs and scripts can’t be opened from CompIntel — use Show in Explorer.',
-  UNKNOWN_TYPE: 'CompIntel opens documents, images and archives only — use Show in Explorer.',
+  BLOCKED_TYPE: 'Programs and scripts can’t be opened from Junction — use Show in Explorer.',
+  UNKNOWN_TYPE: 'Junction opens documents, images and archives only — use Show in Explorer.',
 };
 
 /** What `stat_paths` found for one path, on this PC. */

@@ -64,7 +64,7 @@ describe('the "Sources disagree" panel', () => {
     render(<ConflictPanel conflicts={CONFLICTS} now={NOW} />);
     const block = within(screen.getByTestId('conflict-teamMax'));
     // Icon *and* words: the marker is never colour alone (§16.3).
-    expect(block.getByText('Shown by CompIntel:')).toBeInTheDocument();
+    expect(block.getByText('Shown by Junction:')).toBeInTheDocument();
     expect(
       block.getByText('Selected because hackxyz-site is the most trusted source stating it'),
     ).toBeInTheDocument();
@@ -131,7 +131,7 @@ describe('the "Sources disagree" panel', () => {
         now={NOW}
       />,
     );
-    expect(screen.getAllByText('Shown by CompIntel:')).toHaveLength(1);
+    expect(screen.getAllByText('Shown by Junction:')).toHaveLength(1);
   });
 
   it('is accessible', async () => {

@@ -83,12 +83,12 @@ export async function unwrapIdentity(
   return decrypter.decrypt(armor.decode(privateKeyEncrypted), 'text');
 }
 
-/** `compintel-recovery-<yyyyMMdd>.txt` (R42). */
+/** `junction-recovery-<yyyyMMdd>.txt` (R42). */
 export function recoveryFileName(at: Date): string {
   const yyyy = at.getFullYear().toString().padStart(4, '0');
   const mm = (at.getMonth() + 1).toString().padStart(2, '0');
   const dd = at.getDate().toString().padStart(2, '0');
-  return `compintel-recovery-${yyyy}${mm}${dd}.txt`;
+  return `junction-recovery-${yyyy}${mm}${dd}.txt`;
 }
 
 export interface RecoveryFileInput {
@@ -103,7 +103,7 @@ export interface RecoveryFileInput {
 /**
  * The text of the recovery file.
  *
- * Deliberately readable by a person with no CompIntel: it names the standard
+ * Deliberately readable by a person with no Junction: it names the standard
  * `age` CLI and the two commands that get a database back, because the whole
  * point of an open format is that recovery does not depend on this application
  * still existing. It carries **no plaintext key and no admin recovery code** —
@@ -112,7 +112,7 @@ export interface RecoveryFileInput {
  */
 export function renderRecoveryFile(input: RecoveryFileInput): string {
   return [
-    'CompIntel — backup recovery material',
+    'Junction — backup recovery material',
     '====================================',
     '',
     `Institution : ${input.organizationName}`,
@@ -122,7 +122,7 @@ export function renderRecoveryFile(input: RecoveryFileInput): string {
     '',
     'KEEP THIS FILE. Without it — or without the backup passphrase you chose —',
     'your encrypted backups cannot be read by anyone, including us.',
-    'Store it somewhere other than the machine CompIntel runs on.',
+    'Store it somewhere other than the machine Junction runs on.',
     '',
     'Public key (safe to share; backups are encrypted to it)',
     '-------------------------------------------------------',
@@ -132,20 +132,20 @@ export function renderRecoveryFile(input: RecoveryFileInput): string {
     '--------------------------------------------------',
     input.privateKeyEncrypted.trimEnd(),
     '',
-    'How to restore without CompIntel',
+    'How to restore without Junction',
     '--------------------------------',
     'Install age (https://age-encryption.org) and run, in a folder holding this',
-    'file and a CompIntel backup:',
+    'file and a Junction backup:',
     '',
     '  1. Recover the private key (you will be asked for the passphrase):',
-    '     age --decrypt -o compintel-key.txt <the block above, saved on its own>',
+    '     age --decrypt -o junction-key.txt <the block above, saved on its own>',
     '',
     '  2. Decrypt a backup with it:',
-    '     age --decrypt -i compintel-key.txt -o backup.db.gz compintel-AUTO-<date>.age',
+    '     age --decrypt -i junction-key.txt -o backup.db.gz junction-AUTO-<date>.age',
     '',
     '  3. Un-gzip backup.db.gz. The result is a SQLite database.',
     '',
-    'This file does not contain your CompIntel password or your admin recovery',
+    'This file does not contain your Junction password or your admin recovery',
     'code. Those are separate, and are not recoverable from here.',
     '',
   ].join('\n');

@@ -48,7 +48,7 @@ describe('opening an external link', () => {
   });
 
   it('reports a shell refusal as false, so the caller can offer the URL to copy', async () => {
-    invoke.mockRejectedValue(new Error('CompIntel opens web and email links only.'));
+    invoke.mockRejectedValue(new Error('Junction opens web and email links only.'));
     await expect(openExternal('https://evil.test/x')).resolves.toBe(false);
   });
 });

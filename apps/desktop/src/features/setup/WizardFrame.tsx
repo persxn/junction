@@ -1,5 +1,6 @@
 import { Check } from 'lucide-react';
 
+import { Logo } from '../../components/Logo.js';
 import { NUMBERED_STEPS, STEP_TITLES, stepIndex, type WizardStep } from './wizard-state.js';
 
 /**
@@ -37,14 +38,17 @@ export function WizardFrame({
   return (
     <div className="flex h-full items-center justify-center overflow-auto bg-surface-sunken p-6">
       <section
-        aria-label="CompIntel setup"
+        aria-label="Junction setup"
         className="flex max-h-full w-full max-w-4xl overflow-hidden rounded-lg border border-line bg-surface shadow-[var(--ci-shadow-popover)]"
       >
         <nav
           aria-label="Setup steps"
           className="hidden w-60 shrink-0 flex-col gap-1 border-r border-line bg-surface-raised p-4 sm:flex"
         >
-          <p className="px-2 pb-3 font-display text-md font-semibold">CompIntel</p>
+          <p className="flex items-center gap-2 px-2 pb-3 font-display text-md font-semibold">
+            <Logo size={26} />
+            Junction
+          </p>
           <ol className="flex flex-col gap-0.5">
             {NUMBERED_STEPS.map((candidate, index) => {
               const position = stepIndex(candidate);

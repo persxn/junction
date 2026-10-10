@@ -27,7 +27,7 @@ import { createAppRouter } from './router.js';
  * The application root and its two gates.
  *
  * The first is the backend: while there is none, the whole window is
- * `<ConnectionScreen>` (ruling R26), because nothing in CompIntel works without
+ * `<ConnectionScreen>` (ruling R26), because nothing in Junction works without
  * the local service. The second is the session (§10.3): login, the forced
  * password change (R38) and the lock screen (R37) each take the whole window
  * too, so there is never a half-usable app behind a modal.
@@ -39,7 +39,7 @@ export function App(): React.JSX.Element {
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
-          <ErrorBoundary label="CompIntel">
+          <ErrorBoundary label="Junction">
             <BackendGate />
           </ErrorBoundary>
         </ToastProvider>

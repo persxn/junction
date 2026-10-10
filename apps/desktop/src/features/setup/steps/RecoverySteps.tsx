@@ -27,7 +27,7 @@ export function PassphraseStep({ values, errors, onChange }: StepProps): React.J
           onChange('backupPassphrase', value);
         }}
         autoComplete="new-password"
-        hint="At least 12 characters, and not the same as your CompIntel password."
+        hint="At least 12 characters, and not the same as your Junction password."
         autoFocus
       />
       <Field
@@ -82,7 +82,7 @@ export function RecoveryStep({
         </p>
         <p className="text-sm text-fg-muted">
           Gets you back in if every administrator is locked out. It is shown once and stored only as
-          a hash, so nobody — including CompIntel — can read it back.
+          a hash, so nobody — including Junction — can read it back.
         </p>
         <div className="flex items-center gap-2">
           <code className="min-w-0 flex-1 rounded-md border border-line bg-surface px-3 py-2 font-mono text-sm break-all select-all">
@@ -119,7 +119,7 @@ export function RecoveryStep({
         </p>
         <p className="text-sm text-fg-muted">
           Holds the encrypted backup key and instructions for reading a backup with the standard{' '}
-          <code className="font-mono">age</code> tool, with or without CompIntel. Save it somewhere
+          <code className="font-mono">age</code> tool, with or without Junction. Save it somewhere
           other than this machine.
         </p>
         <div>
@@ -198,11 +198,11 @@ export function WelcomeStep(): React.JSX.Element {
   return (
     <>
       <p>
-        CompIntel finds hackathons, CTFs and coding contests your students could enter, keeps track
+        Junction finds hackathons, CTFs and coding contests your students could enter, keeps track
         of who is doing what, and reminds you before deadlines pass.
       </p>
       <p className="text-fg-muted">
-        Everything runs on this machine. No data leaves it except the requests CompIntel makes to
+        Everything runs on this machine. No data leaves it except the requests Junction makes to
         public event sites, and the encrypted backups you tell it to write.
       </p>
       <Note icon={Sparkles}>
@@ -225,7 +225,7 @@ export function DoneStep({
       <p className="flex items-center gap-2.5 rounded-md border-l-4 border-success bg-success-surface p-3 text-success">
         <PartyPopper aria-hidden="true" className="size-5 shrink-0" />
         <span>
-          CompIntel is set up for <strong>{organizationName}</strong>.
+          Junction is set up for <strong>{organizationName}</strong>.
         </span>
       </p>
       <p>
@@ -233,7 +233,7 @@ export function DoneStep({
       </p>
       <p className="text-fg-muted">
         Next, you will probably want to add your colleagues under Admin → Users, and check the
-        sources CompIntel is allowed to read under Admin → Sources &amp; scraper.
+        sources Junction is allowed to read under Admin → Sources &amp; scraper.
       </p>
     </>
   );

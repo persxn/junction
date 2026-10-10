@@ -217,7 +217,7 @@ describe('the User-Agent (§7.2)', () => {
     const { client } = clientOn(transport, { contactEmail: 'tech@example.edu' });
     await client.get(API);
     expect(transport.calls[0]?.headers['user-agent']).toBe(
-      'CompIntel/1.2.3 (+mailto:tech@example.edu)',
+      'Junction/1.2.3 (+mailto:tech@example.edu)',
     );
   });
 });

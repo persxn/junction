@@ -39,7 +39,7 @@ const MAX_ROBOTS_BYTES = 512 * 1024;
  * carries a version and a contact address (A10), neither of which belongs in a
  * `User-agent:` comparison.
  */
-export const ROBOTS_USER_AGENT = 'CompIntel';
+export const ROBOTS_USER_AGENT = 'Junction';
 
 export interface RobotsLookup {
   readonly verdict: RobotsVerdict;
@@ -60,7 +60,7 @@ export interface RobotsCacheOptions {
   readonly queue: HostQueue;
   readonly clock: Clock;
   readonly logger: Logger;
-  /** The full `CompIntel/<version> (+mailto:…)` string, sent as a header. */
+  /** The full `Junction/<version> (+mailto:…)` string, sent as a header. */
   readonly userAgent: () => string;
 }
 

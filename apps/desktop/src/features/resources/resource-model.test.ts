@@ -39,11 +39,11 @@ describe('a resource row', () => {
 
   it('a program is shown in Explorer, never opened, and says why', () => {
     expect(state(path(), { stat: stat({ openable: false, reason: 'BLOCKED_TYPE' }) })).toEqual({
-      line: 'Programs and scripts can’t be opened from CompIntel — use Show in Explorer.',
+      line: 'Programs and scripts can’t be opened from Junction — use Show in Explorer.',
       warn: false,
       canOpen: false,
       canReveal: true,
-      openHint: 'Programs and scripts can’t be opened from CompIntel — use Show in Explorer.',
+      openHint: 'Programs and scripts can’t be opened from Junction — use Show in Explorer.',
     });
   });
 
@@ -79,7 +79,7 @@ describe('a resource row', () => {
     expect(
       state(path(), { stat: stat({ status: 'MISSING', openable: false, reason: 'TRAVERSAL' }) })
         .line,
-    ).toBe('A path that steps up with “..” can’t be opened from CompIntel.');
+    ).toBe('A path that steps up with “..” can’t be opened from Junction.');
   });
 
   it('before this session’s check, the last check is shown with its age', () => {

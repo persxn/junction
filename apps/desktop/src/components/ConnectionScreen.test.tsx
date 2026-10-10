@@ -30,9 +30,9 @@ describe('<ConnectionScreen> (ruling R26)', () => {
   it('gives DATA_DIR_LOCKED its own copy', () => {
     renderScreen('FAILED', 'DATA_DIR_LOCKED: another process holds backend.lock (pid 4242)');
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      'Another CompIntel is already using this data folder',
+      'Another Junction is already using this data folder',
     );
-    expect(screen.getByRole('alert')).toHaveTextContent('Close the other CompIntel window');
+    expect(screen.getByRole('alert')).toHaveTextContent('Close the other Junction window');
   });
 
   it('gives DB_CORRUPT its own copy, pointing at a backup', () => {
@@ -75,7 +75,7 @@ describe('<ConnectionScreen> (ruling R26)', () => {
 
   it('waits quietly while the backend is starting', () => {
     renderScreen('STARTING');
-    expect(screen.getByRole('status')).toHaveTextContent('Starting CompIntel');
+    expect(screen.getByRole('status')).toHaveTextContent('Starting Junction');
     expect(screen.getByRole('button', { name: /Try again/ })).toBeDisabled();
   });
 

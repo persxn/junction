@@ -49,7 +49,7 @@ export function ConnectSourcesScreen({
           </h1>
           <p className="mt-1.5 text-fg-muted">
             Some sites show you more when you are signed in. You can sign in with your own account
-            now, or do it later — CompIntel reads their public pages either way.
+            now, or do it later — Junction reads their public pages either way.
           </p>
 
           <p className="mt-4 flex items-start gap-2 rounded-md border border-line bg-surface-raised p-3 text-sm text-fg-muted">
@@ -65,7 +65,7 @@ export function ConnectSourcesScreen({
           <div className="mt-6 flex flex-col gap-4">
             {sources.length === 0 ? (
               <p className="text-fg-muted">
-                None of the sources CompIntel reads has anything to sign in to, so there is nothing
+                None of the sources Junction reads has anything to sign in to, so there is nothing
                 to do here.
               </p>
             ) : (

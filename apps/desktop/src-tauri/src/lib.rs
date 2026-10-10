@@ -1,4 +1,4 @@
-//! CompIntel desktop shell (ARCHITECTURE.md §3.2, ADR-0001, ADR-0002).
+//! Junction desktop shell (ARCHITECTURE.md §3.2, ADR-0001, ADR-0002).
 //!
 //! The shell is deliberately thin: a window, a tray, the backend supervisor and a
 //! handful of IPC commands. No business logic, no database, no network beyond the

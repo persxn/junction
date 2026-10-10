@@ -31,7 +31,7 @@ const FILLED: WizardValues = {
   adminPassword: 'an-admin-password',
   adminPasswordConfirm: 'an-admin-password',
   scraperContactEmail: 'compintel@example.edu',
-  backupDir: 'D:\\CompIntel-backups',
+  backupDir: 'D:\\Junction-backups',
   backupPassphrase: 'a-different-passphrase',
   backupPassphraseConfirm: 'a-different-passphrase',
 };
@@ -108,7 +108,7 @@ describe('validateStep', () => {
     ).toBeDefined();
   });
 
-  it('refuses a backup passphrase equal to the CompIntel password (R42)', () => {
+  it('refuses a backup passphrase equal to the Junction password (R42)', () => {
     const same = {
       ...FILLED,
       backupPassphrase: FILLED.adminPassword,

@@ -10,7 +10,7 @@ export function NotFoundPage(): React.JSX.Element {
       <h1 className="text-xl">That screen does not exist</h1>
       <EmptyState
         title="Nothing here"
-        description="The screen you asked for is not part of CompIntel."
+        description="The screen you asked for is not part of Junction."
         action={{
           label: 'Back to the dashboard',
           onAction: () => {

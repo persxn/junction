@@ -92,7 +92,7 @@ export type SetupRequest = z.infer<typeof SetupRequest>;
  */
 export const SetupResult = z.object({
   recoveryCode: z.string().min(1),
-  /** Suggested file name, e.g. `compintel-recovery-20260920.txt` (R42). */
+  /** Suggested file name, e.g. `junction-recovery-20260920.txt` (R42). */
   recoveryFileName: z.string().min(1),
   recoveryFile: z.string().min(1),
 });

@@ -90,7 +90,7 @@ test('Discover → assign with a template → tick → board → Applied → out
   await expect(links.getByText('e2e/pipeline')).toBeVisible();
   await expect(links.getByRole('button', { name: 'Open e2e/pipeline' })).toBeVisible();
   await addResource('C:\\Team\\deck.pdf');
-  await expect(links.getByText(/Opening files needs the CompIntel desktop app/)).toBeVisible();
+  await expect(links.getByText(/Opening files needs the Junction desktop app/)).toBeVisible();
   await expect(links.getByRole('button', { name: 'Open deck.pdf' })).toHaveCount(0);
 
   // The board: Assigned, then Move to… Applied.

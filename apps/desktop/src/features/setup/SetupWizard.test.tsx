@@ -57,7 +57,7 @@ afterEach(() => {
 describe('the wizard cannot be skipped (the §19 criterion)', () => {
   it('opens on Welcome with no way past it but Get started', () => {
     render();
-    expect(screen.getByRole('heading', { name: 'Welcome to CompIntel' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Welcome to Junction' })).toBeInTheDocument();
     // Nothing else is on screen: no rail, no top bar, no route to anywhere.
     expect(screen.queryByRole('navigation', { name: 'Main' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
@@ -70,7 +70,7 @@ describe('the wizard cannot be skipped (the §19 criterion)', () => {
 
     expect(screen.getByRole('heading', { name: 'Your institution' })).toBeInTheDocument();
     expect(screen.getByText('Enter the name of your college or university.')).toBeInTheDocument();
-    expect(screen.getByText('Enter the department that will run CompIntel.')).toBeInTheDocument();
+    expect(screen.getByText('Enter the department that will run Junction.')).toBeInTheDocument();
   });
 
   it('will not leave the folder step until the backend approves the folder', async () => {
@@ -83,7 +83,7 @@ describe('the wizard cannot be skipped (the §19 criterion)', () => {
 
     shell({ folder: 'D:\\bad-folder' });
     await user().click(screen.getByRole('button', { name: /Choose…/ }));
-    await screen.findByText(/CompIntel cannot write there/);
+    await screen.findByText(/Junction cannot write there/);
     await next();
     expect(screen.getByRole('heading', { name: 'Folders' })).toBeInTheDocument();
   });
@@ -116,12 +116,12 @@ describe('what the server refuses', () => {
       completeFails: {
         code: 'SETUP_PASSPHRASE_WEAK',
         title: 'That backup passphrase cannot be used',
-        detail: 'The backup passphrase must be different from your CompIntel password.',
+        detail: 'The backup passphrase must be different from your Junction password.',
       },
     });
     render();
     await fillTo('submit');
-    await next(/Set up CompIntel/);
+    await next(/Set up Junction/);
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'That backup passphrase cannot be used',
@@ -133,7 +133,7 @@ describe('what the server refuses', () => {
 describe('the recovery step (rulings R41 and R42)', () => {
   async function reachRecovery(): Promise<void> {
     await fillTo('submit');
-    await next(/Set up CompIntel/);
+    await next(/Set up Junction/);
     await screen.findByRole('heading', { name: 'Save your recovery material' });
   }
 

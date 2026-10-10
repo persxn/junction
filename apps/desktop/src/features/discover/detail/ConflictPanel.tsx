@@ -43,8 +43,8 @@ export function ConflictPanel({ conflicts, now }: ConflictPanelProps): React.JSX
         Sources disagree
       </h3>
       <p className="mt-1 text-sm text-fg-muted">
-        CompIntel never merges values that disagree. Every source&apos;s answer is below; the one
-        the app shows is marked, with the reason it was chosen.
+        Junction never merges values that disagree. Every source&apos;s answer is below; the one the
+        app shows is marked, with the reason it was chosen.
       </p>
 
       {material.map((conflict) => (
@@ -96,7 +96,7 @@ function ConflictBlock({
                 <CheckCircle2 aria-hidden="true" className="size-3.5 shrink-0 text-success" />
               )}
               <span className={isSelected ? 'font-medium' : ''}>
-                {isSelected && <span className="sr-only">Shown by CompIntel: </span>}
+                {isSelected && <span className="sr-only">Shown by Junction: </span>}
                 {formatClaimValue(conflict.field, value.value, now)}
               </span>
               <span className="text-fg-muted">
@@ -114,7 +114,7 @@ function ConflictBlock({
       </ul>
       {!anySelected && (
         <p className="mt-1 text-xs text-fg-muted">
-          CompIntel shows {formatClaimValue(conflict.field, conflict.selected, now)} —{' '}
+          Junction shows {formatClaimValue(conflict.field, conflict.selected, now)} —{' '}
           {selectionReasonText(conflict.selectedReason, conflict.selectedSourceName)}.
         </p>
       )}

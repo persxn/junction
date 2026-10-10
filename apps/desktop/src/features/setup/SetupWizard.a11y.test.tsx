@@ -52,7 +52,7 @@ describe('accessibility (the §19 criterion)', () => {
   it('has no axe violations on the recovery step', async () => {
     renderWizard();
     await fillTo('submit');
-    await nextStep(/Set up CompIntel/);
+    await nextStep(/Set up Junction/);
     await screen.findByRole('heading', { name: 'Save your recovery material' });
     await expect(document.body).toBeAccessible();
   });

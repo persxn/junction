@@ -189,8 +189,8 @@ export function StudentPage(): React.JSX.Element {
 
       <Guide id="student-page" title="What this page is for">
         <p>
-          Everything CompIntel knows about one student. Skills carry a level — Beginner,
-          Intermediate or Advanced — which team building (Teams) uses to suggest who covers what.
+          Everything Junction knows about one student. Skills carry a level — Beginner, Intermediate
+          or Advanced — which team building (Teams) uses to suggest who covers what.
         </p>
         <p>
           <strong>Deactivate</strong> is for a student who has left or paused; it is reversible and

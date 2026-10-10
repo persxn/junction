@@ -63,7 +63,7 @@ impl TrayHandles {
 /// Builds the tray icon and its menu. Returns the check items so the UI can keep
 /// them in step.
 pub fn build(app: &AppHandle, settings: ShellSettings) -> tauri::Result<TrayHandles> {
-    let show = MenuItem::with_id(app, ID_SHOW, "Open CompIntel", true, None::<&str>)?;
+    let show = MenuItem::with_id(app, ID_SHOW, "Open Junction", true, None::<&str>)?;
     let close_to_tray = CheckMenuItem::with_id(
         app,
         ID_CLOSE_TO_TRAY,
@@ -102,7 +102,7 @@ pub fn build(app: &AppHandle, settings: ShellSettings) -> tauri::Result<TrayHand
 
     TrayIconBuilder::with_id(TRAY_ID)
         .icon(icon)
-        .tooltip("CompIntel")
+        .tooltip("Junction")
         // Windows convention: left click opens the app, right click the menu.
         .show_menu_on_left_click(false)
         .menu(&menu)

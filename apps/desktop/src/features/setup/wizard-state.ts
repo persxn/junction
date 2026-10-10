@@ -33,7 +33,7 @@ export const NUMBERED_STEPS = WIZARD_STEPS.filter(
 ) as readonly WizardStep[];
 
 export const STEP_TITLES: Readonly<Record<WizardStep, string>> = {
-  welcome: 'Welcome to CompIntel',
+  welcome: 'Welcome to Junction',
   organization: 'Your institution',
   campus: 'Where you are',
   administrator: 'Your administrator account',
@@ -112,7 +112,7 @@ export function validateStep(step: WizardStep, values: WizardValues): FieldError
         errors.organizationName = 'Enter the name of your college or university.';
       }
       if (values.departmentName.trim().length < 2) {
-        errors.departmentName = 'Enter the department that will run CompIntel.';
+        errors.departmentName = 'Enter the department that will run Junction.';
       }
       break;
     }
@@ -172,7 +172,7 @@ export function validateStep(step: WizardStep, values: WizardValues): FieldError
       } else if (values.backupPassphrase === values.adminPassword) {
         // Ruling R42: one unlocks this machine, the other unlocks backups that
         // leave it, so they must not be the same secret.
-        errors.backupPassphrase = 'Use something different from your CompIntel password.';
+        errors.backupPassphrase = 'Use something different from your Junction password.';
       }
       if (values.backupPassphraseConfirm !== values.backupPassphrase) {
         errors.backupPassphraseConfirm = 'The two passphrases are not the same.';

@@ -39,7 +39,7 @@ function FormGuide(): React.JSX.Element {
         “21CS1042” are the same student.
       </p>
       <p>
-        Tick <strong>the privacy notice</strong> once the student has been told what CompIntel keeps
+        Tick <strong>the privacy notice</strong> once the student has been told what Junction keeps
         about them. Notes are for mentoring only; the student may ask to see them.
       </p>
     </Guide>
