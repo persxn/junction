@@ -16,7 +16,10 @@ describe('the dev data root', () => {
     const root = testTempRoot();
     expect(root.startsWith(devRoot())).toBe(true);
     expect(root).toContain('CompIntel-dev');
-    expect(path.relative(path.resolve('.'), root).startsWith('..')).toBe(true);
+    // Outside the checkout: either above it, or on another drive altogether (a CI
+    // runner keeps the checkout on D: and %LOCALAPPDATA% on C:).
+    const relative = path.relative(path.resolve('.'), root);
+    expect(relative.startsWith('..') || path.isAbsolute(relative)).toBe(true);
   });
 });
 

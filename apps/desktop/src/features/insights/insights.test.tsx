@@ -1,5 +1,5 @@
 import type { Appearance } from '@compintel/contracts';
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -144,8 +144,12 @@ describe('information parity across tiers (R68: never glow alone)', () => {
       localStorage.setItem(MILESTONES_SEEN_KEY, JSON.stringify(['FIRST_WINNER']));
       installInsightsApi({ appearance: tier(effects) });
       const view = await renderApp('/insights', { appearance: tier(effects) });
-      await screen.findByTestId('insights-active-now');
+      const counter = await screen.findByTestId('insights-active-now');
       expect(document.documentElement.dataset.effects).toBe(effects.toLowerCase());
+      // At SHOWCASE the counter counts up; compare the state it settles on.
+      await waitFor(() => {
+        expect(counter.textContent).toBe('3');
+      });
       const main = screen.getByRole('main');
       const names = within(main)
         .getAllByRole('figure')

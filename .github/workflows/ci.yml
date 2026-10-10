@@ -11,8 +11,11 @@ permissions:
 jobs:
   verify:
     runs-on: windows-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
+      # The repository is LF everywhere (.gitattributes) and its golden files are
+      # compared byte for byte; the runner's default autocrlf would rewrite them.
+      - run: git config --global core.autocrlf false
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
@@ -20,6 +23,12 @@ jobs:
           node-version-file: .node-version
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm verify
+      # `pnpm verify`, step by step. The test step runs with fewer workers than the
+      # 8 vitest.config.ts allows: the hosted runner has 4 vCPUs, and the suites that
+      # spawn a real backend or hash with Argon2id starve past their ceilings at 8.
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test --maxWorkers=2
       - run: pnpm test:a11y
       - run: pnpm audit:deps
