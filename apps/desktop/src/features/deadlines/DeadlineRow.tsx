@@ -30,6 +30,15 @@ const TONES: Readonly<Record<UrgencyBucket, string>> = {
   LATER: 'text-fg-muted',
 };
 
+/** The glow tier a bucket earns at SHOWCASE (WP-33); the icon and words carry the meaning. */
+const URGENCY: Readonly<Record<UrgencyBucket, string>> = {
+  OVERDUE: 'critical',
+  TODAY: 'high',
+  DAYS_3: 'medium',
+  DAYS_7: 'normal',
+  LATER: 'normal',
+};
+
 export function DeadlineRow({
   item,
   now,
@@ -41,7 +50,10 @@ export function DeadlineRow({
   return (
     <li className="flex flex-col gap-0.5 rounded-md border border-line px-3 py-2 text-sm">
       <span className="flex flex-wrap items-center gap-2">
-        <span className="inline-flex items-center gap-1 font-medium">
+        <span
+          data-urgency={URGENCY[item.bucket]}
+          className="inline-flex items-center gap-1 font-medium"
+        >
           <Icon aria-hidden="true" className={`size-4 ${TONES[item.bucket]}`} />
           {urgencyText(item, now)}
         </span>

@@ -1,0 +1,299 @@
+/*
+ * Effect tiers (WP-33, ruling R68, ADR-0019) — one layer, keyed off the
+ * `data-effects` attribute `theme/appearance.ts` writes on <html>.
+ *
+ * Rules that this file lives by, each checked by `effects.test.ts`:
+ *   - Every rule here is scoped to `standard` or `showcase`. CALM has no rule at
+ *     all, so it cannot animate or glow: it is the app without this file.
+ *   - Animations touch only `transform`, `opacity` and `filter` — the compositor
+ *     properties — so nothing here causes layout.
+ *   - `data-paused` (window hidden, minimised or in the tray) pauses every loop.
+ *   - No effect carries meaning by itself: every element styled here already has
+ *     its icon and label. The RGB cycle never touches text or a status colour.
+ */
+
+/* ---------- STANDARD and up: subtle ---------- */
+
+:root:is([data-effects='standard'], [data-effects='showcase']) .ci-app-surface {
+  background-image:
+    radial-gradient(
+      60rem 30rem at 100% 0%,
+      color-mix(in srgb, var(--ci-fx-1) 7%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      50rem 30rem at 0% 100%,
+      color-mix(in srgb, var(--ci-fx-3) 6%, transparent),
+      transparent 70%
+    );
+}
+
+/* Shimmer skeletons: a highlight sliding over each bar. */
+:root:is([data-effects='standard'], [data-effects='showcase']) .ci-skeleton-bar {
+  position: relative;
+  overflow: hidden;
+}
+
+:root:is([data-effects='standard'], [data-effects='showcase']) .ci-skeleton-bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--ci-color-surface) 70%, transparent),
+    transparent
+  );
+  transform: translateX(-100%);
+  animation: ci-shimmer 1.4s ease-in-out infinite;
+}
+
+/* Eased progress: the fill is scaled, never resized. */
+:root:is([data-effects='standard'], [data-effects='showcase']) .ci-progress-fill {
+  transition: transform 600ms var(--ci-motion-ease);
+}
+
+/* Staggered list entrance, capped at ~200 ms in total. */
+:root:is([data-effects='standard'], [data-effects='showcase']) .ci-stagger > * {
+  animation: ci-enter 180ms var(--ci-motion-ease) both;
+}
+
+:root:is([data-effects='standard'], [data-effects='showcase']) .ci-stagger > :nth-child(2) {
+  animation-delay: 15ms;
+}
+
+:root:is([data-effects='standard'], [data-effects='showcase']) .ci-stagger > :nth-child(3) {
+  animation-delay: 30ms;
+}
+
+:root:is([data-effects='standard'], [data-effects='showcase']) .ci-stagger > :nth-child(4) {
+  animation-delay: 45ms;
+}
+
+:root:is([data-effects='standard'], [data-effects='showcase']) .ci-stagger > :nth-child(n + 5) {
+  animation-delay: 60ms;
+}
+
+/* Hover and focus glow on cards and tiles (no transition: nothing to animate). */
+:root:is([data-effects='standard'], [data-effects='showcase']) :is(.ci-fx-card, .ci-glow):hover,
+:root:is([data-effects='standard'], [data-effects='showcase'])
+  :is(.ci-fx-card, .ci-glow):focus-within {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--ci-fx-2) 45%, transparent),
+    0 6px 22px color-mix(in srgb, var(--ci-fx-1) 22%, transparent);
+}
+
+/* A milestone, acknowledged once (R69). */
+:root:is([data-effects='standard'], [data-effects='showcase']) .ci-celebrate {
+  animation: ci-pop 420ms var(--ci-motion-ease) both;
+}
+
+:root:is([data-effects='standard'], [data-effects='showcase']) .ci-celebrate-spark {
+  animation: ci-spark 900ms ease-out both;
+}
+
+/* ---------- SHOWCASE: the full treatment ---------- */
+
+/* Animated gradient border: a rotating conic layer behind an inset surface. */
+:root[data-effects='showcase'] .ci-fx-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-color: transparent;
+}
+
+:root[data-effects='showcase'] .ci-fx-card::before {
+  content: '';
+  position: absolute;
+  inset: -60%;
+  z-index: -2;
+  background: conic-gradient(
+    from 0deg,
+    var(--ci-rgb-a, var(--ci-fx-1)),
+    var(--ci-rgb-b, var(--ci-fx-2)),
+    var(--ci-rgb-c, var(--ci-fx-3)),
+    var(--ci-rgb-a, var(--ci-fx-1))
+  );
+  animation: ci-spin 8s linear infinite;
+}
+
+:root[data-effects='showcase'] .ci-fx-card::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  z-index: -1;
+  border-radius: inherit;
+  background: inherit;
+}
+
+/* Urgency glow pulse: the badge keeps its icon and words; the glow is extra. */
+:root[data-effects='showcase'] [data-urgency='critical'],
+:root[data-effects='showcase'] [data-urgency='high'] {
+  position: relative;
+}
+
+:root[data-effects='showcase'] [data-urgency='critical']::after,
+:root[data-effects='showcase'] [data-urgency='high']::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: var(--ci-radius-md);
+  box-shadow: 0 0 10px 2px var(--ci-color-urgency-critical);
+  opacity: 0;
+  pointer-events: none;
+  animation: ci-pulse 2.4s ease-in-out infinite;
+}
+
+:root[data-effects='showcase'] [data-urgency='high']::after {
+  box-shadow: 0 0 10px 2px var(--ci-color-urgency-high);
+}
+
+/* Heading sweep: a gradient bar under the page title — the text itself keeps its token colour. */
+:root[data-effects='showcase'] .ci-heading-sweep {
+  position: relative;
+  overflow: hidden;
+  padding-bottom: 4px;
+}
+
+:root[data-effects='showcase'] .ci-heading-sweep::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--ci-rgb-a, var(--ci-fx-1)),
+    var(--ci-rgb-b, var(--ci-fx-2)),
+    transparent
+  );
+  transform: translateX(-100%);
+  animation: ci-sweep 3.2s ease-in-out infinite;
+}
+
+/* RGB presets (R68): colours for borders, glows and accent fills — never text. */
+:root[data-effects='showcase'][data-rgb='aurora'] {
+  --ci-rgb-a: #5eead4;
+  --ci-rgb-b: #60a5fa;
+  --ci-rgb-c: #c084fc;
+}
+
+:root[data-effects='showcase'][data-rgb='synthwave'] {
+  --ci-rgb-a: #f472b6;
+  --ci-rgb-b: #a78bfa;
+  --ci-rgb-c: #fb923c;
+}
+
+:root[data-effects='showcase'][data-rgb='mocha-glow'] {
+  --ci-rgb-a: #cba6f7;
+  --ci-rgb-b: #f5c2e7;
+  --ci-rgb-c: #fab387;
+}
+
+/* The hue cycle: a filter on the decorative layers only. */
+:root[data-effects='showcase']:not([data-rgb='off']) .ci-fx-card::before,
+:root[data-effects='showcase']:not([data-rgb='off']) .ci-heading-sweep::after {
+  animation:
+    ci-spin 8s linear infinite,
+    ci-hue var(--ci-rgb-period, 12s) linear infinite;
+}
+
+:root[data-effects='showcase'][data-rgb-speed='slow'] {
+  --ci-rgb-period: 24s;
+}
+
+:root[data-effects='showcase'][data-rgb-speed='medium'] {
+  --ci-rgb-period: 12s;
+}
+
+:root[data-effects='showcase'][data-rgb-speed='fast'] {
+  --ci-rgb-period: 5s;
+}
+
+:root[data-effects='showcase'][data-rgb-speed='static']:not([data-rgb='off']) .ci-fx-card::before,
+:root[data-effects='showcase'][data-rgb-speed='static']:not([data-rgb='off'])
+  .ci-heading-sweep::after {
+  animation: ci-spin 8s linear infinite;
+}
+
+/* ---------- Paused: hidden, minimised or in the tray ---------- */
+
+/*
+ * Only the loops. A one-shot (list entrance, milestone pop) starts at opacity 0,
+ * so freezing it would leave content invisible until the window came back; it
+ * runs once, in well under a second, and stops by itself.
+ */
+:root:is([data-effects='standard'], [data-effects='showcase'])[data-paused] .ci-skeleton-bar::after,
+:root:is([data-effects='standard'], [data-effects='showcase'])[data-paused] .ci-fx-card::before,
+:root:is([data-effects='standard'], [data-effects='showcase'])[data-paused]
+  [data-urgency='critical']::after,
+:root:is([data-effects='standard'], [data-effects='showcase'])[data-paused]
+  [data-urgency='high']::after,
+:root:is([data-effects='standard'], [data-effects='showcase'])[data-paused]
+  .ci-heading-sweep::after {
+  animation-play-state: paused !important;
+}
+
+/* ---------- Keyframes: transform, opacity and filter only ---------- */
+
+@keyframes ci-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes ci-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@keyframes ci-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@keyframes ci-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@keyframes ci-sweep {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes ci-hue {
+  to {
+    filter: hue-rotate(1turn);
+  }
+}
+
+@keyframes ci-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+@keyframes ci-spark {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.6);
+  }
+
+  30% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-18px) scale(1);
+  }
+}

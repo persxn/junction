@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 
 import { getKpis } from '../../api/deadlines.js';
+import { AnimatedCount } from '../../components/AnimatedCount.js';
 import { Skeleton } from '../../components/Skeleton.js';
 import { formatCount } from '../../lib/count.js';
 import { useBackendConnection } from '../../shell/connection-context.js';
@@ -38,17 +39,20 @@ export function KpiStrip({ scope }: { readonly scope: KpiScope }): React.JSX.Ele
     );
   }
   return (
-    <ul aria-label="Key numbers" className="grid grid-cols-2 gap-3 md:grid-cols-4">
+    <ul aria-label="Key numbers" className="ci-stagger grid grid-cols-2 gap-3 md:grid-cols-4">
       {kpis.data.tiles.map((tile) => (
         <li key={tile.key}>
           <Link
             to={tile.link.to}
             search={tile.link.search as never}
-            className="flex flex-col gap-1 rounded-lg border border-line bg-surface-raised p-3 hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-accent"
+            className="ci-fx-card flex flex-col gap-1 rounded-lg border border-line bg-surface-raised p-3 hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-accent"
           >
-            <span className="font-display text-2xl" data-testid={`kpi-${tile.key}`}>
-              {formatCount(tile.value, tile.totalIsApproximate)}
-            </span>
+            <AnimatedCount
+              value={tile.value}
+              format={(n) => formatCount(n, tile.totalIsApproximate)}
+              className="font-display text-2xl"
+              testId={`kpi-${tile.key}`}
+            />
             <span className="text-sm text-fg-muted">{tile.label}</span>
           </Link>
         </li>

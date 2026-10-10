@@ -1,0 +1,11 @@
+/*
+ * Classic — WP-06's neutral set, kept selectable (WP-33, R67, ADR-0019).
+ *
+ * Classic has no ramp of its own: its values are the `:root` (light) and
+ * `:root[data-theme='dark']` blocks of `tokens.css`, which every Catppuccin
+ * flavour overrides. Selecting Classic sets `data-flavour='classic'`, which
+ * matches no override, so CALM + Classic renders exactly the app WP-06 shipped.
+ */
+:root[data-flavour='classic'] {
+  --ci-palette-name: 'classic';
+}

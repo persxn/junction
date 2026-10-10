@@ -45,6 +45,7 @@ import { createOutcomeLookup, createOutcomesModule } from './modules/outcomes/wi
 import { createTransferModule } from './modules/transfer/wiring.js';
 import { createDeadlinesModule } from './modules/deadlines/wiring.js';
 import { KpiService } from './modules/dashboard/kpis.js';
+import { createInsightsService } from './modules/dashboard/insights.js';
 import { registerDeadlineEvaluator } from './modules/deadlines/evaluator.js';
 import { createNotificationsModule } from './modules/notifications/wiring.js';
 import { createSavedSearchesModule } from './modules/saved-searches/wiring.js';
@@ -235,6 +236,8 @@ async function main(): Promise<void> {
       competitions: () => competitionsModule,
       deadlines: () => deadlinesModule,
     });
+    // WP-33: Insights, computed over stored rows only (R69).
+    const insights = createInsightsService(db, () => competitionsModule);
     const afterIngest = { evaluate: (): void => undefined };
     const refreshVocabulary = (): void => {
       try {
@@ -335,6 +338,8 @@ async function main(): Promise<void> {
       transfer: () => transferModule,
       deadlines: () => deadlinesModule,
       kpis: () => kpis,
+      insights: () => insights,
+      settings: () => settings,
       notifications: () => notificationsModule,
       savedSearches: () => savedSearchesModule.service,
       interests: () => interests,

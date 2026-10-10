@@ -96,8 +96,8 @@ export function WizardFrame({
             data-testid="setup-progress"
           >
             <div
-              className="h-full bg-accent transition-[width] duration-[var(--ci-motion-slow)] ease-(--ease-out-ui)"
-              style={{ width: `${String(Math.round(progress * 100))}%` }}
+              className="h-full w-full origin-left bg-accent transition-transform duration-[var(--ci-motion-slow)] ease-(--ease-out-ui)"
+              style={{ transform: `scaleX(${String(progress)})` }}
             />
           </div>
 

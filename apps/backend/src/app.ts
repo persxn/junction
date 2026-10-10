@@ -49,6 +49,7 @@ import { transferRoutes } from './routes/transfer.js';
 import { deadlinesRoutes } from './routes/deadlines.js';
 import { notificationsRoutes } from './routes/notifications.js';
 import { dashboardRoutes } from './routes/dashboard.js';
+import { insightsRoutes } from './routes/insights.js';
 import { savedSearchRoutes } from './routes/saved-searches.js';
 import type { SavedSearchService } from './modules/saved-searches/service.js';
 import type { InterestsService } from './modules/interests/service.js';
@@ -62,6 +63,8 @@ import type { TransferModule } from './modules/transfer/wiring.js';
 import type { DeadlinesModule } from './modules/deadlines/wiring.js';
 import type { NotificationsModule } from './modules/notifications/wiring.js';
 import type { KpiService } from './modules/dashboard/kpis.js';
+import type { InsightsService } from './modules/dashboard/insights.js';
+import type { SettingsStore } from './platform/settings.js';
 import { systemClock, type Clock } from './platform/time.js';
 
 /** Request bodies larger than this are rejected before they are parsed. */
@@ -136,6 +139,10 @@ export interface BuildAppOptions {
   /** WP-24: saved searches and "My interests". */
   readonly savedSearches?: () => SavedSearchService | undefined;
   readonly interests?: () => InterestsService | undefined;
+  /** WP-33: the Insights read model. */
+  readonly insights?: () => InsightsService | undefined;
+  /** WP-33: per-user appearance lives in the setting registry. */
+  readonly settings?: () => SettingsStore | undefined;
   /** Shared so jobs and services can publish; one hub per process (R36). */
   readonly streamHub?: StreamHub;
   /** Injected in tests so a heartbeat does not take fifteen real seconds. */
@@ -271,6 +278,13 @@ export function buildApp(
   void server.register(dashboardRoutes({ kpis: options.kpis ?? (() => undefined) }), {
     prefix: API_PREFIX,
   });
+  void server.register(
+    insightsRoutes({
+      insights: options.insights ?? (() => undefined),
+      settings: options.settings ?? (() => undefined),
+    }),
+    { prefix: API_PREFIX },
+  );
   void server.register(
     eventDetailRoutes({
       detail: options.eventDetail ?? ((): EventDetailService | undefined => undefined),

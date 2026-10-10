@@ -99,7 +99,7 @@ export function EventList({
           >
             {group.label ?? 'Results'}
           </h2>
-          <ul className="flex flex-col gap-2">
+          <ul className="ci-stagger flex flex-col gap-2">
             {group.items.map((item) => (
               <li key={item.id} data-event-id={item.id}>
                 <EventCard

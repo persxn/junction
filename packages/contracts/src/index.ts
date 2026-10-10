@@ -36,3 +36,5 @@ export * from './students.js';
 export * from './sources.js';
 export * from './system.js';
 export * from './user-state.js';
+export * from './appearance.js';
+export * from './insights.js';

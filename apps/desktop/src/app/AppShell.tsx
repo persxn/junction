@@ -6,6 +6,7 @@ import { discoverSearch } from '../features/discover/search-state.js';
 import { useNotificationDelivery } from '../features/notifications/use-notification-delivery.js';
 import { useGlobalHotkeys, type Hotkey } from '../lib/hotkeys.js';
 import { exitCompletely, hideToTray, openLogsFolder } from '../shell/backend.js';
+import { AppearanceSync } from '../features/appearance/AppearanceSync.js';
 import { useTheme } from '../theme/theme-context.js';
 import { CommandPalette } from './CommandPalette.js';
 import { buildCommands } from './commands.js';
@@ -81,7 +82,8 @@ export function AppShell(): React.JSX.Element {
   useNotificationDelivery();
 
   return (
-    <div className="flex h-full bg-surface text-fg">
+    <div className="ci-app-surface flex h-full bg-surface text-fg">
+      <AppearanceSync />
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-2 focus:rounded-md focus:bg-accent focus:px-3 focus:py-1.5 focus:text-on-accent"

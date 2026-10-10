@@ -12,6 +12,10 @@ import { ConnectionProvider } from '../shell/connection-context.js';
 import type { AuthView } from '../auth/auth-context.js';
 import { createAppRouter } from '../app/router.js';
 import { ToastProvider } from '../components/toast/ToastProvider.js';
+import type { Appearance } from '@compintel/contracts';
+
+import { cacheAppearance } from '../theme/appearance.js';
+import { AppearanceProvider } from '../theme/appearance-context.js';
 import { ThemeProvider } from '../theme/theme-context.js';
 import { mockAuth, MockAuthProvider, type MockAuthOptions } from './auth.js';
 
@@ -78,16 +82,27 @@ export interface AppRenderResult extends RenderResult {
  */
 export async function renderApp(
   initialPath = '/',
-  options: MockAuthOptions = {},
+  options: MockAuthOptions & {
+    /**
+     * WP-33: render under the real appearance provider with this choice cached.
+     * Left out, the app renders as CALM (no provider), so nothing animates
+     * under a test that reads numbers.
+     */
+    readonly appearance?: Appearance;
+  } = {},
 ): Promise<AppRenderResult> {
   const auth = mockAuth(options);
   const context = { can: auth.can };
   const router = createAppRouter(initialPath, context);
   await router.load();
-  const result = renderWithProviders(
+  const tree = (
     <MockAuthProvider value={auth}>
       <RouterProvider router={router} context={context} />
-    </MockAuthProvider>,
+    </MockAuthProvider>
+  );
+  if (options.appearance !== undefined) cacheAppearance(options.appearance);
+  const result = renderWithProviders(
+    options.appearance === undefined ? tree : <AppearanceProvider>{tree}</AppearanceProvider>,
   );
   await screen.findByRole('navigation', { name: 'Main' });
   return { ...result, auth };

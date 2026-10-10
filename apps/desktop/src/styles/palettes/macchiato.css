@@ -1,0 +1,81 @@
+/*
+ * Catppuccin Macchiato (dark) — a palette layer under the `--ci-*` tokens (WP-33, R67, ADR-0019).
+ *
+ * The `--ctp-*` block is the flavour's own ramp, verbatim from catppuccin.com/palette.
+ * The `--ci-*` block maps the semantic tokens onto it. Where a Catppuccin accent does not
+ * read at 4.5:1 as text on every surface of this flavour, the mapped value is that accent
+ * moved toward white until it does — generated and then measured again by
+ * `tokens.contrast.test.ts`, which is the arbiter. Accents at full strength are used only
+ * in non-text roles: `--ci-fx-*` (glows, gradients) and `--ci-chart-*` (chart marks).
+ */
+
+:root[data-flavour='macchiato'] {
+  color-scheme: dark;
+
+  --ctp-rosewater: #f4dbd6;
+  --ctp-flamingo: #f0c6c6;
+  --ctp-pink: #f5bde6;
+  --ctp-mauve: #c6a0f6;
+  --ctp-red: #ed8796;
+  --ctp-maroon: #ee99a0;
+  --ctp-peach: #f5a97f;
+  --ctp-yellow: #eed49f;
+  --ctp-green: #a6da95;
+  --ctp-teal: #8bd5ca;
+  --ctp-sky: #91d7e3;
+  --ctp-sapphire: #7dc4e4;
+  --ctp-blue: #8aadf4;
+  --ctp-lavender: #b7bdf8;
+  --ctp-text: #cad3f5;
+  --ctp-subtext1: #b8c0e0;
+  --ctp-subtext0: #a5adcb;
+  --ctp-overlay2: #939ab7;
+  --ctp-overlay1: #8087a2;
+  --ctp-overlay0: #6e738d;
+  --ctp-surface2: #5b6078;
+  --ctp-surface1: #494d64;
+  --ctp-surface0: #363a4f;
+  --ctp-base: #24273a;
+  --ctp-mantle: #1e2030;
+  --ctp-crust: #181926;
+
+  --ci-color-surface: var(--ctp-base);
+  --ci-color-surface-raised: #2d3044;
+  --ci-color-surface-sunken: var(--ctp-mantle);
+  --ci-color-surface-hover: var(--ctp-surface0);
+  --ci-color-border: var(--ctp-surface1);
+  --ci-color-border-strong: var(--ctp-overlay0);
+  --ci-color-text: var(--ctp-text);
+  --ci-color-text-muted: var(--ctp-subtext1);
+  --ci-color-text-subtle: var(--ctp-subtext0);
+  --ci-color-accent: var(--ctp-blue);
+  --ci-color-accent-surface: #343c58;
+  --ci-color-accent-hover: var(--ctp-lavender);
+  --ci-color-text-on-accent: var(--ctp-crust);
+  --ci-color-success: var(--ctp-green);
+  --ci-color-success-surface: #394449;
+  --ci-color-warning: var(--ctp-yellow);
+  --ci-color-warning-surface: #44434a;
+  --ci-color-danger: #ed8998;
+  --ci-color-danger-surface: #443649;
+  --ci-color-info: var(--ctp-sapphire);
+  --ci-color-info-surface: #324055;
+  --ci-color-urgency-critical: #ed8998;
+  --ci-color-urgency-high: var(--ctp-peach);
+  --ci-color-urgency-medium: var(--ctp-yellow);
+  --ci-color-urgency-low: var(--ctp-green);
+  --ci-color-urgency-none: var(--ctp-subtext1);
+  --ci-focus-ring-color: #b7bdf8;
+
+  /* Non-text roles only. */
+  --ci-fx-1: var(--ctp-mauve);
+  --ci-fx-2: var(--ctp-blue);
+  --ci-fx-3: var(--ctp-teal);
+  --ci-chart-1: var(--ctp-mauve);
+  --ci-chart-2: var(--ctp-blue);
+  --ci-chart-3: var(--ctp-teal);
+  --ci-chart-4: var(--ctp-pink);
+  --ci-chart-5: var(--ctp-peach);
+  --ci-chart-6: var(--ctp-green);
+  --ci-shadow-popover: 0 8px 24px rgb(0 0 0 / 46%);
+}

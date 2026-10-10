@@ -24,7 +24,7 @@ export function DashboardPage(): React.JSX.Element {
     <AssignProvider>
       <section aria-labelledby={`${id}-heading`} className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 id={`${id}-heading`} className="font-display text-xl">
+          <h1 id={`${id}-heading`} className="ci-heading-sweep font-display text-xl">
             Dashboard
           </h1>
           <div role="group" aria-label="Whose work" className="flex rounded-md border border-line">

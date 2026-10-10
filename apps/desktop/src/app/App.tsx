@@ -20,6 +20,7 @@ import { openLogsFolder, retryBackend } from '../shell/backend.js';
 import { ConnectionProvider } from '../shell/connection-context.js';
 import { copyDiagnostics, formatDiagnostics } from '../shell/diagnostics.js';
 import { useBackend } from '../shell/use-backend.js';
+import { AppearanceProvider } from '../theme/appearance-context.js';
 import { ThemeProvider } from '../theme/theme-context.js';
 import { createAppRouter } from './router.js';
 
@@ -37,13 +38,15 @@ export function App(): React.JSX.Element {
 
   return (
     <ThemeProvider>
-      <QueryClientProvider client={queryClient}>
-        <ToastProvider>
-          <ErrorBoundary label="Junction">
-            <BackendGate />
-          </ErrorBoundary>
-        </ToastProvider>
-      </QueryClientProvider>
+      <AppearanceProvider>
+        <QueryClientProvider client={queryClient}>
+          <ToastProvider>
+            <ErrorBoundary label="Junction">
+              <BackendGate />
+            </ErrorBoundary>
+          </ToastProvider>
+        </QueryClientProvider>
+      </AppearanceProvider>
     </ThemeProvider>
   );
 }

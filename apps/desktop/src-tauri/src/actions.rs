@@ -6,7 +6,7 @@
 use std::path::Path;
 use std::process::Command;
 
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_autostart::ManagerExt;
 
 use crate::commands::ShellState;
@@ -15,6 +15,12 @@ use crate::settings::ShellSettings;
 /// Label of the one window the shell owns (`tauri.conf.json`).
 pub const MAIN_WINDOW: &str = "main";
 
+/// `contracts/src/shell.ts` `VISIBILITY_EVENT`: `true` when the window comes
+/// back from the tray, `false` when it goes there. The UI pauses decorative
+/// animation on `false` (WP-33, R68), because a hidden window is not always a
+/// hidden document to WebView2.
+pub const VISIBILITY_EVENT: &str = "app://visibility";
+
 /// Brings the window back from the tray or from being minimised. Also what a
 /// second launch does, via the single-instance plugin.
 pub fn show_window(app: &AppHandle) {
@@ -22,6 +28,7 @@ pub fn show_window(app: &AppHandle) {
         let _ = window.unminimize();
         let _ = window.show();
         let _ = window.set_focus();
+        let _ = app.emit(VISIBILITY_EVENT, true);
     }
 }
 
@@ -30,6 +37,7 @@ pub fn show_window(app: &AppHandle) {
 pub fn hide_window(app: &AppHandle) {
     if let Some(window) = app.get_webview_window(MAIN_WINDOW) {
         let _ = window.hide();
+        let _ = app.emit(VISIBILITY_EVENT, false);
     }
 }
 

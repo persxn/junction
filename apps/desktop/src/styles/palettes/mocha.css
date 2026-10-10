@@ -1,0 +1,81 @@
+/*
+ * Catppuccin Mocha (dark) — a palette layer under the `--ci-*` tokens (WP-33, R67, ADR-0019).
+ *
+ * The `--ctp-*` block is the flavour's own ramp, verbatim from catppuccin.com/palette.
+ * The `--ci-*` block maps the semantic tokens onto it. Where a Catppuccin accent does not
+ * read at 4.5:1 as text on every surface of this flavour, the mapped value is that accent
+ * moved toward white until it does — generated and then measured again by
+ * `tokens.contrast.test.ts`, which is the arbiter. Accents at full strength are used only
+ * in non-text roles: `--ci-fx-*` (glows, gradients) and `--ci-chart-*` (chart marks).
+ */
+
+:root[data-flavour='mocha'] {
+  color-scheme: dark;
+
+  --ctp-rosewater: #f5e0dc;
+  --ctp-flamingo: #f2cdcd;
+  --ctp-pink: #f5c2e7;
+  --ctp-mauve: #cba6f7;
+  --ctp-red: #f38ba8;
+  --ctp-maroon: #eba0ac;
+  --ctp-peach: #fab387;
+  --ctp-yellow: #f9e2af;
+  --ctp-green: #a6e3a1;
+  --ctp-teal: #94e2d5;
+  --ctp-sky: #89dceb;
+  --ctp-sapphire: #74c7ec;
+  --ctp-blue: #89b4fa;
+  --ctp-lavender: #b4befe;
+  --ctp-text: #cdd6f4;
+  --ctp-subtext1: #bac2de;
+  --ctp-subtext0: #a6adc8;
+  --ctp-overlay2: #9399b2;
+  --ctp-overlay1: #7f849c;
+  --ctp-overlay0: #6c7086;
+  --ctp-surface2: #585b70;
+  --ctp-surface1: #45475a;
+  --ctp-surface0: #313244;
+  --ctp-base: #1e1e2e;
+  --ctp-mantle: #181825;
+  --ctp-crust: #11111b;
+
+  --ci-color-surface: var(--ctp-base);
+  --ci-color-surface-raised: #282839;
+  --ci-color-surface-sunken: var(--ctp-mantle);
+  --ci-color-surface-hover: var(--ctp-surface0);
+  --ci-color-border: var(--ctp-surface1);
+  --ci-color-border-strong: var(--ctp-overlay0);
+  --ci-color-text: var(--ctp-text);
+  --ci-color-text-muted: var(--ctp-subtext1);
+  --ci-color-text-subtle: var(--ctp-subtext0);
+  --ci-color-accent: var(--ctp-blue);
+  --ci-color-accent-surface: #2f364f;
+  --ci-color-accent-hover: var(--ctp-lavender);
+  --ci-color-text-on-accent: var(--ctp-crust);
+  --ci-color-success: var(--ctp-green);
+  --ci-color-success-surface: #343e40;
+  --ci-color-warning: var(--ctp-yellow);
+  --ci-color-warning-surface: #413d43;
+  --ci-color-danger: var(--ctp-red);
+  --ci-color-danger-surface: #402f42;
+  --ci-color-info: var(--ctp-sapphire);
+  --ci-color-info-surface: #2c394c;
+  --ci-color-urgency-critical: var(--ctp-red);
+  --ci-color-urgency-high: var(--ctp-peach);
+  --ci-color-urgency-medium: var(--ctp-yellow);
+  --ci-color-urgency-low: var(--ctp-green);
+  --ci-color-urgency-none: var(--ctp-subtext1);
+  --ci-focus-ring-color: #b4befe;
+
+  /* Non-text roles only. */
+  --ci-fx-1: var(--ctp-mauve);
+  --ci-fx-2: var(--ctp-blue);
+  --ci-fx-3: var(--ctp-teal);
+  --ci-chart-1: var(--ctp-mauve);
+  --ci-chart-2: var(--ctp-blue);
+  --ci-chart-3: var(--ctp-teal);
+  --ci-chart-4: var(--ctp-pink);
+  --ci-chart-5: var(--ctp-peach);
+  --ci-chart-6: var(--ctp-green);
+  --ci-shadow-popover: 0 8px 24px rgb(0 0 0 / 46%);
+}

@@ -129,7 +129,11 @@ function Workflow({ view, run }: { readonly view: WorkflowView; readonly run: Ru
           aria-valuetext={progressText(view)}
           className="h-2 overflow-hidden rounded-full bg-surface-hover"
         >
-          <div className="h-full bg-accent" style={{ width: `${String(view.progress ?? 0)}%` }} />
+          {/* Scaled, not resized: the eased fill (WP-33) animates only `transform`. */}
+          <div
+            className="ci-progress-fill h-full w-full origin-left bg-accent"
+            style={{ transform: `scaleX(${String((view.progress ?? 0) / 100)})` }}
+          />
         </div>
       </div>
 

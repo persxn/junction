@@ -196,3 +196,9 @@ export type CriticalToast = z.infer<typeof CriticalToast>;
 
 /** The event the shell emits when a toast is clicked. */
 export const NAVIGATE_EVENT = 'app://navigate';
+
+/**
+ * WP-33: the shell tells the UI the window went to the tray (`false`) or came
+ * back (`true`), so decorative animation stops while nobody can see it (R68).
+ */
+export const VISIBILITY_EVENT = 'app://visibility';

@@ -18,6 +18,7 @@ import {
 import { createTransferModule, type TransferModule } from '../modules/transfer/wiring.js';
 import { createDeadlinesModule, type DeadlinesModule } from '../modules/deadlines/wiring.js';
 import { KpiService } from '../modules/dashboard/kpis.js';
+import { createInsightsService, type InsightsService } from '../modules/dashboard/insights.js';
 import { EventsRepository } from '../modules/events/repository.js';
 import { createSearchModule, type SearchModule } from '../modules/search/wiring.js';
 import { AuditLog } from '../platform/audit.js';
@@ -59,6 +60,8 @@ export interface StudentsHarness {
   /** WP-22: search (for the Discover KPIs) and the KPI strip. */
   readonly search: SearchModule;
   readonly kpis: KpiService;
+  /** WP-33: Insights. */
+  readonly insights: InsightsService;
   readonly audit: AuditLog;
   readonly settings: SettingsStore;
   readonly clock: { now: () => Date; advance(ms: number): void };
@@ -181,6 +184,7 @@ export function openStudentsHarness(startIso = '2026-10-01T04:30:00.000Z'): Stud
       deadlines: () => deadlines,
       clock,
     }),
+    insights: createInsightsService(db, () => competitions, clock),
     audit,
     settings,
     clock,
@@ -234,6 +238,8 @@ export async function startStudentsServer(
     deadlines: () => h.deadlines,
     search: () => h.search,
     kpis: () => h.kpis,
+    insights: () => h.insights,
+    settings: () => h.settings,
   });
 }
 

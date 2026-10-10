@@ -13,6 +13,12 @@
 
 @import 'tailwindcss';
 @import './tokens.css';
+@import './palettes/classic.css';
+@import './palettes/latte.css';
+@import './palettes/frappe.css';
+@import './palettes/macchiato.css';
+@import './palettes/mocha.css';
+@import './effects.css';
 
 @theme inline {
   --color-surface: var(--ci-color-surface);

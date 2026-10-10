@@ -163,6 +163,11 @@ describe('module-owned definitions', () => {
    */
   it("keeps every WP-07b key, with WP-07b's value", () => {
     expect(settingKeys()).toStrictEqual([
+      // WP-33's, declared by modules/appearance: one value per user in each (R67, R68).
+      'appearance.effects',
+      'appearance.flavourDark',
+      'appearance.flavourLight',
+      'appearance.rgbPreset',
       'auth.autoLockMinutes',
       'auth.recoveryCodeHash',
       'backup.dailyTimeLocal',

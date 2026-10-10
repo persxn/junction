@@ -1,11 +1,8 @@
 # Progress — newest first, keep < 150 lines
 
 ## Current
-- **pre-M2b done (PARTIAL), 2 Oct 2026** (`docs/handoff/pre-M2b.md`): R75–R88 fixes, migrations 0016–0022.
-  **Unmet:** R88 first page 94 ms vs 50; live runs owed (no contactEmail).
-- **M2 (WP-17…WP-21, 2–8 Oct 2026, CLOSED)**: students + import (R91–R93), teams (R94–R95), competitions (R96–R98),
-  workflows (R99–R101), resources (R102–R103, **WP-20b PARTIAL**: manual built-app run owed), outcomes + ownership
-  transfer (R104–R105); migrations 0023–0028; handoffs `docs/handoff/WP-17…WP-21.md` (WP-21 ends with the M2 demo).
+- **pre-M2b (PARTIAL) and M2 (WP-17…21) closed, 2–8 Oct 2026** — handoffs `docs/handoff/pre-M2b.md`, `WP-17…WP-21.md`;
+  **owed:** R88 first page 94 ms vs 50, WP-20b manual built-app run.
 - **WP-22 done, 9 Oct 2026** (`docs/handoff/WP-22.md`, 8 step commits): R106–R107 (v1.1.21). `v_deadlines` view
   (migration 0029, no duplicates), `domain/deadlines` (Kolkata buckets, precision), `GET /deadlines` (counts = paged list,
   proven per scope × group × bucket), `GET /dashboard/kpis` (each tile its list's own total, proven via the links),
@@ -24,10 +21,17 @@
   entry/import); interests module (category = INTEREST tag named by its slug). UI: Save this search, Saved searches
   menu, `/discover/saved/$id`, My interests (user menu, banner, combobox), More like this, two weightiest reasons on
   every card. e2e 7/7, a11y 53/53. **Unmet:** verify **220 s vs 120**; `audit:deps` HIGH (source-map-js, upstream).
-- **Next: WP-25a** (M4; prompts in `docs/prompts/M4/`). **Send `docs/` back to the architect** — M3 is closed.
+- **Junction release + WP-33 done, 10 Oct 2026** (`docs/handoff/WP-33.md`; owner decisions O-1…O-3 in DECISIONS.md):
+  product renamed **Junction**, new logo; **M4 AI deferred** (Assistant leaves the rail). WP-33: five palettes under the
+  `--ci-*` tokens (contrast matrix 5 flavours × modes, 167 checks), CALM/STANDARD/SHOWCASE (`effects.css`, reduced motion
+  forces CALM, loops pause on hide/tray via `app://visibility`), RGB presets, `/insights` (`GET /insights`, read models
+  in engagements/events, `appearance.*` per-user settings). Built exe: **57 fps at every tier, tray at SHOWCASE 0.00 % CPU**.
+  Installer: `pnpm --filter @compintel/desktop release` → NSIS v0.9.0 (Node + backend + gazetteer + VC runtime +
+  WebView2 bootstrapper), data in `%LOCALAPPDATA%\JunctionData`; public repo `persxn/junction`. Verify **217 s vs 120**.
+- **Next:** architect review of the Junction release, then M4 (WP-25a) or M5 per the owner. **Send `docs/` back.**
 - **Owed live runs:** CTFtime / Devfolio smokes and `unstop:capture` wait on `scraper.contactEmail` (the
   owner's own address, R74); `clist:smoke` waits on U4.
-- Spec: docs/ARCHITECTURE.md **v1.1.23 - ACCEPTED** · roadmap §19 = **50 WPs, 38 done, 12 remaining** · **M2 and M3 closed** ·
+- Spec: docs/ARCHITECTURE.md **v1.1.23 - ACCEPTED** · roadmap §19 = **50 WPs, 39 done, 11 remaining** (M4 deferred) · **M2 and M3 closed** ·
   ADR-0001...0019 · decisions register docs/DECISIONS.md.
 
 ## Environment facts

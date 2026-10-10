@@ -71,7 +71,7 @@ export function EventCard({
           onOpen();
         }
       }}
-      className="rounded-lg border border-line bg-surface-raised p-3 outline-offset-2 data-[selected=true]:border-accent"
+      className="ci-glow rounded-lg border border-line bg-surface-raised p-3 outline-offset-2 data-[selected=true]:border-accent"
     >
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
@@ -89,7 +89,10 @@ export function EventCard({
             {item.organizerName ?? 'Organizer not stated'} · {EVENT_TYPE_LABELS[item.eventType]}
           </p>
         </div>
-        <p className={`flex shrink-0 items-center gap-1 text-sm font-medium ${due.tone}`}>
+        <p
+          data-urgency={due.level}
+          className={`flex shrink-0 items-center gap-1 text-sm font-medium ${due.tone}`}
+        >
           <DueIcon aria-hidden="true" className="size-4" />
           <span className="sr-only">{due.levelLabel}: </span>
           {due.label}

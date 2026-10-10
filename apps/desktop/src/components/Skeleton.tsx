@@ -33,7 +33,7 @@ export function Skeleton({
         <span
           key={index}
           aria-hidden="true"
-          className="block h-3 rounded-sm bg-surface-sunken"
+          className="ci-skeleton-bar block h-3 rounded-sm bg-surface-sunken"
           style={{ width: `${String(100 - index * 12)}%` }}
         />
       ))}

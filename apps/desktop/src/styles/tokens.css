@@ -24,7 +24,7 @@
   /* A hovered row or a pressed toolbar button. */
   --ci-color-surface-hover: #e6eaf0;
   --ci-color-border: #d6dbe3;
-  --ci-color-border-strong: #9aa3b2;
+  --ci-color-border-strong: #848d9c;
 
   /* Text. `muted` is for secondary labels, `subtle` for metadata. */
   --ci-color-text: #12161d;
@@ -104,6 +104,23 @@
   --ci-topbar-height: 48px;
 
   --ci-shadow-popover: 0 8px 24px rgb(9 12 18 / 14%);
+
+  /*
+   * WP-33 (R67): non-text roles only — glows and gradients (`fx`) and chart
+   * marks (`chart`, 3:1 against the page). Never used as a text colour.
+   */
+  --ci-fx-1: #7b3fd1;
+  --ci-fx-2: #1155c4;
+  --ci-fx-3: #0f7f7a;
+  --ci-chart-1: #7b3fd1;
+  --ci-chart-2: #1155c4;
+  --ci-chart-3: #0f7f7a;
+  --ci-chart-4: #b4237a;
+  --ci-chart-5: #c2410c;
+  --ci-chart-6: #2f7d32;
+  /* Two-series charts: validated for colour-blind separation (dataviz checks). */
+  --ci-series-1: #1155c4;
+  --ci-series-2: #c2410c;
 }
 
 :root[data-theme='dark'] {
@@ -143,6 +160,18 @@
   --ci-focus-ring-color: #7fb0ff;
 
   --ci-shadow-popover: 0 8px 24px rgb(0 0 0 / 46%);
+
+  --ci-fx-1: #c4a1ff;
+  --ci-fx-2: #7fb0ff;
+  --ci-fx-3: #5fd0c4;
+  --ci-chart-1: #c4a1ff;
+  --ci-chart-2: #7fb0ff;
+  --ci-chart-3: #5fd0c4;
+  --ci-chart-4: #f39ac8;
+  --ci-chart-5: #f5a55f;
+  --ci-chart-6: #57cd86;
+  --ci-series-1: #4a8ff0;
+  --ci-series-2: #d9732a;
 }
 
 /*

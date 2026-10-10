@@ -71,3 +71,11 @@ When the architect resolves an open question, update its row (status → RESOLVE
 | U4 | OPEN | Create a CLIST account + API key. | Live CLIST runs (WP-11) |
 | U5 | OPEN (optional) | Send permission e-mails (Devfolio courtesy, Devpost request). | — |
 | U6 | OPEN (optional) | Defender exclusions for build folders. | — |
+
+## Owner decisions, 10 Oct 2026 (Junction release)
+
+| ID | Decision | Consequence |
+|---|---|---|
+| O-1 | The product ships as **Junction**, with a new logo (`resources/brand/`). | User-visible name, window, tray, installer, bundle id `io.github.persxn.junction`, data folder `%LOCALAPPDATA%\JunctionData` (the program installs to `%LOCALAPPDATA%\Junction`). The code name `compintel` stays inside: package scope, env vars, header, URN, dev data folder. |
+| O-2 | **M4's AI work (WP-25a…WP-27c) is deferred.** WP-33 runs now, before it. | The Assistant placeholder leaves the rail (Insights takes its place); the M4 prompts stay unrun in `docs/prompts/M4/`. WP-33's "gradient sweep on the Assistant's streamed answer" has no Assistant to apply to. |
+| O-3 | Publish now: a **public GitHub repository** (`persxn/junction`, MIT) with a Windows installer in Releases, as **v0.9.0**. | A minimal slice of WP-31 is pulled forward: the NSIS installer carries Node, the backend bundle, the gazetteer and the WebView2 bootstrapper (`tauri.release.conf.json`, `pnpm release`). WP-31 still owns signing, the 8 GB install test, upgrade and uninstall behaviour. |

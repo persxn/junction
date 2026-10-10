@@ -237,10 +237,14 @@ const editStudentRoute = createRoute({
   ),
 });
 
-const assistantRoute = createRoute({
+// WP-33: Insights (R69). The Assistant (M4) is deferred, so its placeholder is gone.
+const insightsRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/assistant',
-  component: () => <PlaceholderPage item={navItem('assistant')} />,
+  path: '/insights',
+  component: lazyRouteComponent(
+    () => import('../features/insights/InsightsPage.js'),
+    'InsightsPage',
+  ),
 });
 
 const notificationsRoute = createRoute({
@@ -344,7 +348,7 @@ const routeTree = rootRoute.addChildren([
   importStudentsRoute,
   studentRoute,
   editStudentRoute,
-  assistantRoute,
+  insightsRoute,
   notificationsRoute,
   adminUsersRoute,
   adminSourcesRoute,
