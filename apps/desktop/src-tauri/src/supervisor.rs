@@ -383,6 +383,10 @@ impl Inner {
     }
 }
 
+/// `CREATE_NO_WINDOW` from `winbase.h`: run a console program with no console.
+#[cfg(windows)]
+const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+
 /// One spawn: the child plus a channel carrying its stdout lines.
 fn spawn_backend(
     config: &SupervisorConfig,
@@ -406,6 +410,14 @@ fn spawn_backend(
         // The backend logs to files (ruling R8); an undrained stderr pipe would
         // eventually block it.
         .stderr(Stdio::null());
+    // node.exe is a console program. Spawned from the windowed release build
+    // without this flag, Windows gives it a console of its own — a terminal
+    // window titled "node.exe" next to the app for as long as it runs.
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        command.creation_flags(CREATE_NO_WINDOW);
+    }
 
     let mut child = command.spawn()?;
     let stdout = child

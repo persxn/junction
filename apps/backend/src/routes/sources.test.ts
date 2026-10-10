@@ -409,7 +409,7 @@ describe('/admin/sources/:key/session', () => {
       state: 'NONE',
       capturedAt: null,
       lastVerifiedAt: null,
-      loginUrl: 'https://devfolio.co/login',
+      loginUrl: 'https://devfolio.co/discover?auth=signin',
       hosts: ['devfolio.co', '*.devfolio.co'],
     });
   });

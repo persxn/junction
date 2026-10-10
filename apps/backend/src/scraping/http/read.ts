@@ -1,4 +1,6 @@
 import { createHash } from 'node:crypto';
+import { Readable, type Transform } from 'node:stream';
+import { createBrotliDecompress, createGunzip, createInflate } from 'node:zlib';
 
 import type { ScrapeMethod } from '@compintel/contracts';
 
@@ -29,6 +31,48 @@ export interface ReadResult {
   readonly contentHash: string;
 }
 
+/**
+ * The decoder for a `Content-Encoding`, or `undefined` for an identity body.
+ *
+ * Every request says `Accept-Encoding: gzip, deflate`, and undici's `request()`
+ * hands the body back exactly as it came off the wire. Before this existed a
+ * compressed answer reached the adapters as gzip bytes, CTFtime's JSON failed to
+ * parse, and the source paused itself as SCHEMA_CHANGED on its first live run.
+ */
+function decoderFor(response: TransportResponse): Transform | undefined {
+  const encoding = (response.headers['content-encoding'] ?? '').trim().toLowerCase();
+  switch (encoding) {
+    case '':
+    case 'identity':
+      return undefined;
+    case 'gzip':
+    case 'x-gzip':
+      return createGunzip();
+    case 'deflate':
+      return createInflate();
+    case 'br':
+      return createBrotliDecompress();
+    default:
+      throw new TransportError(
+        'UNKNOWN',
+        `The response uses an unsupported Content-Encoding (${encoding}).`,
+      );
+  }
+}
+
+/** zlib's codes are `Z_DATA_ERROR` and friends; Brotli's start `ERR__` or name it. */
+function isZlibError(error: unknown): boolean {
+  const code = (error as { code?: unknown } | null)?.code;
+  return (
+    typeof code === 'string' &&
+    (code.startsWith('Z_') || code.startsWith('ERR__') || code.includes('BROTLI'))
+  );
+}
+
+/**
+ * The cap is on the **decoded** bytes, so a small compressed body that inflates
+ * past it is abandoned part-way like any other oversized answer.
+ */
 export async function readCapped(
   response: TransportResponse,
   maxBytes: number,
@@ -36,7 +80,12 @@ export async function readCapped(
   const chunks: Uint8Array[] = [];
   const hash = createHash('sha256');
   let total = 0;
-  const iterator = response.body[Symbol.asyncIterator]();
+  const decoder = decoderFor(response);
+  const wire = decoder === undefined ? undefined : Readable.from(response.body);
+  const iterator: AsyncIterator<Uint8Array> =
+    wire === undefined || decoder === undefined
+      ? response.body[Symbol.asyncIterator]()
+      : wire.pipe(decoder)[Symbol.asyncIterator]();
   try {
     for (;;) {
       const next = await iterator.next();
@@ -57,9 +106,20 @@ export async function readCapped(
       hash.update(chunk);
       chunks.push(chunk);
     }
+  } catch (error) {
+    // A corrupt compressed body is the server's fault, not the network's.
+    if (error instanceof TransportError) {
+      throw error;
+    }
+    if (decoder !== undefined && isZlibError(error)) {
+      throw new TransportError('UNKNOWN', 'The compressed response could not be decoded.');
+    }
+    throw error;
   } finally {
     // Destroys the socket when we stopped early; a no-op when we did not.
     await iterator.return?.();
+    wire?.destroy();
+    decoder?.destroy();
   }
   const body = new Uint8Array(total);
   let offset = 0;

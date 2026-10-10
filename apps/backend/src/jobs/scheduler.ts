@@ -106,6 +106,19 @@ export class Scheduler {
     return [...this.#jobs.keys()];
   }
 
+  /** Makes these jobs due now, backoff cleared (earned before setup), and ticks. */
+  makeDueNow(keys: readonly string[]): void {
+    const atMs = this.#clock.now().getTime();
+    for (const key of keys.filter((candidate) => this.#jobs.has(candidate))) {
+      this.#store.makeDue(key, atMs);
+    }
+    if (this.#started && !this.#stopped) {
+      void this.tick('SCHEDULE').catch((error: unknown) => {
+        this.#logger.error({ err: error }, 'scheduler tick failed');
+      });
+    }
+  }
+
   /** Current `job_state` rows, for diagnostics and the later admin screen. */
   snapshot(): readonly ReturnType<typeof JobStore.toSnapshot>[] {
     return this.#store.all().map((row) => JobStore.toSnapshot(row));

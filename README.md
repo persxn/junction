@@ -31,7 +31,7 @@ account or server to sign up for.
 
 ## Install
 
-1. Download **`Junction_0.9.0_x64-setup.exe`** from the
+1. Download **`Junction_0.9.1_x64-setup.exe`** from the
    [latest release](https://github.com/persxn/junction/releases/latest).
 2. Run it. It installs for your Windows user only — **no administrator rights needed** — and
    adds Junction to the Start menu.

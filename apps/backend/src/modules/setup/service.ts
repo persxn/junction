@@ -50,6 +50,11 @@ export interface SetupServiceDependencies {
    * the default workflow templates here (R101).
    */
   readonly onCompleted?: (departmentId: string, at: number) => void;
+  /**
+   * Runs once the setup transaction has committed and the gate is open — the
+   * moment scraping becomes allowed, so the scrape jobs are made due here.
+   */
+  readonly onCommitted?: () => void;
 }
 
 /** 409, not 401: nothing is wrong with the caller, the install is just empty. */
@@ -104,6 +109,7 @@ export class SetupService {
   readonly #minFreeBytes: number | undefined;
   readonly #scryptWorkFactor: number | undefined;
   readonly #onCompleted: ((departmentId: string, at: number) => void) | undefined;
+  readonly #onCommitted: (() => void) | undefined;
 
   /**
    * The gate is asked on every single request, so the answer is cached. It only
@@ -121,6 +127,7 @@ export class SetupService {
     this.#minFreeBytes = dependencies.minFreeBytes;
     this.#scryptWorkFactor = dependencies.scryptWorkFactor;
     this.#onCompleted = dependencies.onCompleted;
+    this.#onCommitted = dependencies.onCommitted;
   }
 
   /** Ruling R39. Cheap: one query on the first call, a boolean after that. */
@@ -242,6 +249,7 @@ export class SetupService {
     );
 
     this.#administratorExists = true;
+    this.#onCommitted?.();
 
     return {
       recoveryCode,

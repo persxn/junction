@@ -311,8 +311,13 @@ pub fn read_picked_file(state: State<'_, ShellState>, path: String) -> Result<St
 /// The professor signs in there with their own account, in a window with its
 /// own profile that can load nothing but that source's own pages. Nothing is
 /// typed for them and nothing is read until they say they are done.
+///
+/// `async` is load-bearing: a synchronous command runs on the main thread, and
+/// on Windows building a WebView there deadlocks WebView2's environment set-up —
+/// the window frame appears and its page stays white for ever (tauri-apps/wry#583;
+/// found on the v0.9.0 installer).
 #[tauri::command]
-pub fn open_source_signin(
+pub async fn open_source_signin(
     app: AppHandle,
     state: State<'_, ShellState>,
     request: SignInRequest,
@@ -325,8 +330,11 @@ pub fn open_source_signin(
 ///
 /// The value goes straight to `PUT /admin/sources/:key/session`; the shell keeps
 /// no copy, writes it to no file and logs nothing about it.
+///
+/// `async` for the same reason as opening it: `cookies_for_url` deadlocks when
+/// called from a synchronous command on Windows.
 #[tauri::command]
-pub fn capture_source_session(
+pub async fn capture_source_session(
     app: AppHandle,
     request: SignInRequest,
 ) -> Result<SignInResult, String> {

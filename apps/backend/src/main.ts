@@ -55,7 +55,7 @@ import { EventUserStateService } from './modules/events/user-state.js';
 import { createEventsModule } from './modules/events/wiring.js';
 import { createSearchModule } from './modules/search/wiring.js';
 import { createSourcesModule } from './modules/sources/wiring.js';
-import { registerScrapeJobs } from './scraping/jobs.js';
+import { registerScrapeJobs, scrapeJobKeys } from './scraping/jobs.js';
 import { StreamHub } from './platform/stream.js';
 import { adapterRegistry } from './sources/registry.js';
 import './settings.js';
@@ -75,10 +75,11 @@ async function main(): Promise<void> {
     shutdown.register('resources', 'data-dir-lock', lock.release);
 
     const resources = resolveResources(config, import.meta.url);
-    // R17: in the bundle both addons are named explicitly; in a checkout this is
-    // `undefined` and normal module resolution finds them.
+    const nativeBinding = { nativeBinding: resources.nativeBinding };
+    // R17: in the bundle every addon user (DB, gazetteer, argon2) is given the path
+    // explicitly; in a checkout it is `undefined` and module resolution finds them.
     setArgon2BindingPath(resources.argon2Binding);
-    const db = openDatabase(config, { logger, shutdown, nativeBinding: resources.nativeBinding });
+    const db = openDatabase(config, { logger, shutdown, ...nativeBinding });
     const migrations = runMigrations(config, db, {
       migrationsDir: resources.migrationsDir,
       logger,
@@ -99,6 +100,7 @@ async function main(): Promise<void> {
     // The first-run wizard (rulings R39-R44) and user administration. The setup
     // service also owns the gate's cached answer, so anything that changes the
     // administrator population tells it to look again.
+    const afterSetup = { run: (): void => undefined };
     const setup = new SetupService({
       repository: new SetupRepository(db),
       settings,
@@ -109,6 +111,7 @@ async function main(): Promise<void> {
       onCompleted: (_departmentId, at) => {
         new TemplatesRepository(db).ensureSeeded(at);
       },
+      onCommitted: () => afterSetup.run(),
     });
     const users = new UsersService({
       repository: new UsersRepository(db),
@@ -127,7 +130,7 @@ async function main(): Promise<void> {
     const gazetteer =
       resources.gazetteerFile === undefined
         ? unavailableGazetteer('no gazetteer was built; run `pnpm gazetteer:build`')
-        : openGazetteer(resources.gazetteerFile, { logger, shutdown });
+        : openGazetteer(resources.gazetteerFile, { logger, shutdown, ...nativeBinding });
     if (!gazetteer.available) {
       logger.warn(
         { reason: gazetteer.unavailableReason },
@@ -293,8 +296,10 @@ async function main(): Promise<void> {
       registry: adapterRegistry,
       runtime: { ...sourcesModule.scrapeRuntime, clock: systemClock, logger },
       logger,
+      setupComplete: () => !setup.isRequired(),
     });
     logger.info({ scrapeJobs, adapters: adapterRegistry.size }, 'scrape jobs registered');
+    afterSetup.run = () => scheduler.makeDueNow(scrapeJobKeys({ sources: sourcesService }));
     registerReclassifyJob(scheduler, categoriesModule.classifier);
     // WP-22: offline, every 5 min; WP-23's notifications are its sink (R108-R111).
     const notificationsModule = createNotificationsModule({ db, hub: streamHub });

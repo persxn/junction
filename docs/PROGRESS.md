@@ -28,6 +28,13 @@
   in engagements/events, `appearance.*` per-user settings). Built exe: **57 fps at every tier, tray at SHOWCASE 0.00 % CPU**.
   Installer: `pnpm --filter @compintel/desktop release` → NSIS v0.9.0 (Node + backend + gazetteer + VC runtime +
   WebView2 bootstrapper), data in `%LOCALAPPDATA%\JunctionData`; public repo `persxn/junction`. Verify **217 s vs 120**.
+- **v0.9.1 hotfix, 10 Oct 2026** (fresh-install faults found on the v0.9.0 exe): scraping transport never decoded
+  gzip (CTFtime/Devfolio failed as SCHEMA_CHANGED and paused themselves) → `readCapped` decodes, cap on decoded bytes;
+  pre-setup scrape runs counted as failures and nothing ran after the wizard → skip until setup, `makeDueNow` on
+  commit; gazetteer opened without the bundled addon path; backend console window (CREATE_NO_WINDOW); sign-in window
+  blank (sync command → async), its close hid the main window (global close handler now main-only), "signed in" on
+  anonymous cookies (capture only after landing); migration 0032 = new Devfolio/Unstop login URLs + re-enable sources
+  the bug paused. **Devfolio listing is now client-rendered from api.devfolio.co (forbidden, D-26) — owner decision.**
 - **Next:** architect review of the Junction release, then M4 (WP-25a) or M5 per the owner. **Send `docs/` back.**
 - **Owed live runs:** CTFtime / Devfolio smokes and `unstop:capture` wait on `scraper.contactEmail` (the
   owner's own address, R74); `clist:smoke` waits on U4.

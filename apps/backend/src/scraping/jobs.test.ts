@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { scrapeRuns } from '../db/schema/index.js';
 import { AuditLog } from '../platform/audit.js';
 import { SourceRecordsRepository } from '../modules/sources/records.js';
 import { SourcesRepository } from '../modules/sources/repository.js';
@@ -15,7 +16,13 @@ import {
   testAdapter,
   testScrapingHttp,
 } from '../testing/scraping.js';
-import { DETAIL_REFRESH_INTERVAL_MS, scrapeJobKey, scrapeJobs, detailRefreshJob } from './jobs.js';
+import {
+  DETAIL_REFRESH_INTERVAL_MS,
+  detailRefreshJob,
+  scrapeJobKey,
+  scrapeJobKeys,
+  scrapeJobs,
+} from './jobs.js';
 import type { RawDetail } from '../sources/types.js';
 
 /**
@@ -163,7 +170,46 @@ describe('the scrape job body', () => {
     });
     expect(result).toMatchObject({ outcome: 'SKIPPED_OFFLINE' });
   });
+
+  it('skips without a run, a streak or a backoff while first-run setup is open (A10)', async () => {
+    insertSource(database.db, { key: 'demo' });
+    registry.register(testAdapter({ key: 'demo', items: [listingItem('a')] }));
+    const jobs = scrapeJobs({ ...deps(), setupComplete: () => false });
+    const result = await jobs[0]?.run(contextFor('demo'));
+    expect(result).toMatchObject({
+      outcome: 'SKIPPED_OFFLINE',
+      detail: 'waiting for first-run setup',
+    });
+    expect(database.db.drizzle.select().from(scrapeRuns).all()).toHaveLength(0);
+    expect(scrapeJobKeys({ sources: service() })).toStrictEqual([scrapeJobKey('demo')]);
+  });
 });
+
+function contextFor(
+  key: string,
+): Parameters<NonNullable<ReturnType<typeof scrapeJobs>[0]>['run']>[0] {
+  return {
+    key: scrapeJobKey(key),
+    trigger: 'STARTUP_CATCHUP',
+    attempt: 1,
+    signal: new AbortController().signal,
+    logger: silentLogger,
+    clock,
+    state: {
+      jobKey: scrapeJobKey(key),
+      kind: 'SCRAPE',
+      lastRunAt: null,
+      lastSuccessAt: null,
+      nextDueAt: 0,
+      runningSince: null,
+      consecutiveFailures: 0,
+      backoffUntil: null,
+      lastOutcome: null,
+      lastDurationMs: null,
+      lastErrorMessage: null,
+    },
+  };
+}
 
 describe('detail-refresh (§7.2)', () => {
   it('picks up exactly the records whose detail fetch was owed', async () => {

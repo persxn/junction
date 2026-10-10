@@ -123,7 +123,7 @@ describe('where the cookie goes', () => {
     const config = sessionConfigOf(harness.source);
     expect(config?.header).toBe('Cookie');
     expect(config?.hosts).toEqual(['devfolio.co', '*.devfolio.co']);
-    expect(config?.loginUrl).toBe('https://devfolio.co/login');
+    expect(config?.loginUrl).toBe('https://devfolio.co/discover?auth=signin');
   });
 
   it('is never sent on a listing walk, nor for a new event’s page (R75)', async () => {

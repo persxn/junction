@@ -112,6 +112,15 @@ export class JobStore {
     this.#drizzle.update(jobState).set({ nextDueAt }).where(eq(jobState.jobKey, key)).run();
   }
 
+  /** Due at `atMs`, with no backoff and no failure streak (`Scheduler.makeDueNow`). */
+  makeDue(key: string, atMs: number): void {
+    this.#drizzle
+      .update(jobState)
+      .set({ nextDueAt: atMs, backoffUntil: null, consecutiveFailures: 0 })
+      .where(eq(jobState.jobKey, key))
+      .run();
+  }
+
   /** Clears the backoff, so a forced manual run is not refused by `isDue`. */
   clearBackoff(key: string): void {
     this.#drizzle

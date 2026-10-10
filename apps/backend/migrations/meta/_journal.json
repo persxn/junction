@@ -225,6 +225,13 @@
       "when": 1791557044942,
       "tag": "0031_saved_searches",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "6",
+      "when": 1791626635367,
+      "tag": "0032_fresh_install_repairs",
+      "breakpoints": true
     }
   ]
 }

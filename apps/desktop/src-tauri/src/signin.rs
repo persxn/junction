@@ -131,10 +131,43 @@ pub fn cookie_header(cookies: &[CapturedCookie], hosts: &[String]) -> String {
 /// login form: the same host, a different path. A form that posts to itself, a
 /// `?next=` round trip and an error reload all stay on the login path, and are
 /// not mistaken for success.
+///
+/// A login *modal* is addressed by its query instead — Devfolio's sign-in is
+/// `/discover?auth=signin` — so leaving the page also counts when a query pair
+/// the login URL carries is gone. A login URL with no query keeps the old rule
+/// exactly: `/login?next=…` is still the form.
 #[must_use]
 pub fn is_landing(url: &Url, login: &Url, hosts: &[String]) -> bool {
-    url_allowed(url, hosts)
-        && url.path().trim_end_matches('/') != login.path().trim_end_matches('/')
+    if !url_allowed(url, hosts) {
+        return false;
+    }
+    if url.path().trim_end_matches('/') != login.path().trim_end_matches('/') {
+        return true;
+    }
+    let current: Vec<(String, String)> = url.query_pairs().into_owned().collect();
+    login
+        .query_pairs()
+        .into_owned()
+        .any(|pair| !current.contains(&pair))
+}
+
+/// Whether the open window has got past the login form at least once.
+///
+/// One window at a time (`WINDOW_LABEL`), so one flag. Without it, closing the
+/// window on the login page still found the cookies every site sets for anyone
+/// (consent, analytics, CSRF) and the card said "Signed in" to a professor who
+/// never typed a password.
+static LANDED: AtomicBool = AtomicBool::new(false);
+
+/// The header `capture` hands back: the source's cookies once the window has
+/// landed past the form, and nothing before — "not signed in" is an empty answer.
+#[must_use]
+pub fn captured_header(landed: bool, cookies: &[CapturedCookie], hosts: &[String]) -> String {
+    if landed {
+        cookie_header(cookies, hosts)
+    } else {
+        String::new()
+    }
 }
 
 /// The profile directory the sign-in window uses, inside the data directory.
@@ -183,6 +216,7 @@ pub fn open(
         }
     };
 
+    LANDED.store(false, Ordering::SeqCst);
     let hosts = request.hosts.clone();
     let on_landing = announce.clone();
     let window = WebviewWindowBuilder::new(app, WINDOW_LABEL, WebviewUrl::External(login.clone()))
@@ -197,6 +231,7 @@ pub fn open(
                 return false;
             }
             if is_landing(url, &login, &hosts) {
+                LANDED.store(true, Ordering::SeqCst);
                 on_landing();
             }
             true
@@ -204,12 +239,20 @@ pub fn open(
         .build()
         .map_err(|error| error.to_string())?;
 
-    // ...and if they close it instead, that is an answer too. The UI asks for
-    // the cookies either way; an empty capture is how "not signed in" is said.
-    window.on_window_event(move |event| {
-        if matches!(event, WindowEvent::Destroyed) {
-            announce();
+    // ...and closing it is an answer too: "I am done". The first close is held
+    // back so the UI can still read the cookies — `capture` closes the window
+    // itself — because once the WebView is destroyed there is nothing to read
+    // and a signed-in professor would be told they are not. A second close, or
+    // one after the window already announced, goes through.
+    window.on_window_event(move |event| match event {
+        WindowEvent::CloseRequested { api, .. } => {
+            if !finished.load(Ordering::SeqCst) {
+                api.prevent_close();
+                announce();
+            }
         }
+        WindowEvent::Destroyed => announce(),
+        _ => {}
     });
     Ok(())
 }
@@ -230,8 +273,12 @@ pub fn capture(app: &AppHandle, request: &SignInRequest) -> Result<SignInResult,
             domain: cookie.domain().map(str::to_owned),
         })
         .collect();
-    let cookie = cookie_header(&captured, &request.hosts);
-    let count = captured.len();
+    let cookie = captured_header(
+        LANDED.swap(false, Ordering::SeqCst),
+        &captured,
+        &request.hosts,
+    );
+    let count = if cookie.is_empty() { 0 } else { captured.len() };
     window.close().map_err(|error| error.to_string())?;
     Ok(SignInResult {
         source_key: request.source_key.clone(),
@@ -304,6 +351,17 @@ mod tests {
     }
 
     #[test]
+    fn cookies_from_a_window_that_never_left_the_form_are_not_a_session() {
+        let cookies = vec![CapturedCookie {
+            name: "consent".to_owned(),
+            value: "yes".to_owned(),
+            domain: Some(".devfolio.co".to_owned()),
+        }];
+        assert_eq!(captured_header(false, &cookies, &hosts()), "");
+        assert_eq!(captured_header(true, &cookies, &hosts()), "consent=yes");
+    }
+
+    #[test]
     fn an_empty_capture_is_an_empty_header_rather_than_a_lie() {
         assert_eq!(cookie_header(&[], &hosts()), "");
     }
@@ -334,6 +392,18 @@ mod tests {
                 !is_landing(&url, &login, &hosts()),
                 "{still_signing_in} is still the form"
             );
+        }
+        // A login modal addressed by its query: closing it is landing.
+        let modal = Url::parse("https://devfolio.co/discover?auth=signin").unwrap();
+        for (url, landed) in [
+            ("https://devfolio.co/discover?auth=signin", false),
+            ("https://devfolio.co/discover?auth=signin&step=otp", false),
+            ("https://devfolio.co/discover", true),
+            ("https://devfolio.co/discover?tab=open", true),
+            ("https://devfolio.co/dashboard", true),
+        ] {
+            let url = Url::parse(url).unwrap();
+            assert_eq!(is_landing(&url, &modal, &hosts()), landed, "{url}");
         }
         // Somewhere else entirely is refused by rule 2 before this is asked.
         let elsewhere = Url::parse("https://accounts.google.com/x").unwrap();

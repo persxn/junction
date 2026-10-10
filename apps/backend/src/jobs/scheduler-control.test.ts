@@ -300,3 +300,32 @@ describe('Scheduler registration', () => {
     expect(store.read('from-a-newer-build')?.lastOutcome).toBeNull();
   });
 });
+
+describe('Scheduler.makeDueNow', () => {
+  it('clears a backoff earned before setup and makes the job due at once', async () => {
+    const time = clock();
+    const { scheduler, store } = harness({ clock: time });
+    scheduler.register(job({ key: 'scrape:demo' }));
+    store.finish('scrape:demo', {
+      lastRunAt: T0,
+      lastSuccessAt: null,
+      nextDueAt: T0 + 60 * MINUTE,
+      backoffUntil: T0 + 60 * MINUTE,
+      consecutiveFailures: 3,
+      lastOutcome: 'FAILED',
+      lastDurationMs: 1,
+      lastErrorMessage: 'demo: BLOCKED_BY_POLICY',
+    });
+
+    scheduler.makeDueNow(['scrape:demo', 'scrape:not-registered']);
+
+    const row = store.read('scrape:demo');
+    expect(row?.nextDueAt).toBe(T0);
+    expect(row?.backoffUntil).toBeNull();
+    expect(row?.consecutiveFailures).toBe(0);
+    expect(store.read('scrape:not-registered')).toBeUndefined();
+    const summary = await scheduler.tick();
+    expect(summary.started).toStrictEqual(['scrape:demo']);
+    await scheduler.drain();
+  });
+});

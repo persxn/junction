@@ -4,4 +4,4 @@
  * `package.json` import so the esbuild bundle (`dist-bundle/main.mjs`) carries it
  * without needing the manifest at runtime.
  */
-export const APP_VERSION = '0.9.0';
+export const APP_VERSION = '0.9.1';

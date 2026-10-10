@@ -41,6 +41,14 @@ export interface ScrapeJobsDependencies {
   readonly registry: AdapterRegistry;
   readonly runtime: DetailRefreshDependencies;
   readonly logger: Logger;
+  /**
+   * A10/R44: before the wizard has finished nothing may be contacted. A run
+   * attempted then is not a failure of the source — on a fresh install the
+   * scheduler's start-up catch-up fires while the wizard is still open — so the
+   * job skips without a run row, a streak or a backoff, and setup makes it due
+   * again the moment it completes ({@link scrapeJobKeys}).
+   */
+  readonly setupComplete?: () => boolean;
 }
 
 /** `scrape:ctftime`, `scrape:devfolio`, … */
@@ -58,6 +66,9 @@ export function scrapeJobs(deps: ScrapeJobsDependencies): readonly JobDefinition
     run: async (context) => {
       // Re-read the row: cadence, delay and `is_enabled` may have changed since
       // the job was registered, and the run must use what is true now.
+      if (deps.setupComplete?.() === false) {
+        return { outcome: 'SKIPPED_OFFLINE' as const, detail: 'waiting for first-run setup' };
+      }
       const current = deps.sources.byKey(source.key);
       if (current?.isEnabled !== true) {
         return { outcome: 'SKIPPED_OFFLINE' as const, detail: 'the source is switched off' };
@@ -120,6 +131,11 @@ export function detailRefreshJob(deps: ScrapeJobsDependencies): JobDefinition {
       };
     },
   };
+}
+
+/** The keys of every per-source scrape job — what setup makes due when it finishes. */
+export function scrapeJobKeys(deps: Pick<ScrapeJobsDependencies, 'sources'>): readonly string[] {
+  return deps.sources.runnable().map((source) => scrapeJobKey(source.key));
 }
 
 /** Registers every scrape job. Called once, after the database is open. */

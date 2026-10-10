@@ -166,6 +166,14 @@ pub fn run() {
             // Close-to-tray (D-14): the window goes away, the backend does not, so
             // scrapes and deadline evaluation keep running. Only "Exit completely"
             // stops everything.
+            //
+            // The main window only. This handler runs for every window, and the
+            // source sign-in window must simply close: treating its close as the
+            // app's hid the main window to the tray, kept the sign-in window on
+            // screen, and with close-to-tray off would have exited Junction.
+            if window.label() != actions::MAIN_WINDOW {
+                return;
+            }
             if let WindowEvent::CloseRequested { api, .. } = event {
                 let close_to_tray = window
                     .app_handle()
