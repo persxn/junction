@@ -75,6 +75,12 @@ already released:
 |---|---|---|
 | `M4/WP-33.md` | Appearance system (Catppuccin palettes, effect tiers, motion & glow) + Insights surface | Runs after WP-27b, **immediately before M5**. ADR-0019, rulings R67–R69. |
 
+## M4.6 — Students · *a student can use Junction with no account*
+
+| Prompt | WP | Notes |
+|---|---|---|
+| `M4/WP-34.md` | STUDENT role, password-less guest, "Myself" / "An institution" first run, release v0.10.0 | Owner decisions O-4…O-7 · R130–R135, spec 1.1.30 · migration 0033 · Rust checks if `src-tauri` changes |
+
 
 ## Writing a new prompt
 
