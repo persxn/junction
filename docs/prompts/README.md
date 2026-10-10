@@ -81,6 +81,12 @@ already released:
 |---|---|---|
 | `M4/WP-34.md` | STUDENT role, password-less guest, "Myself" / "An institution" first run, release v0.10.0 | **released** · Owner decisions O-4…O-7 · R130–R135, spec 1.1.30 · migration 0033 · Rust checks if `src-tauri` changes |
 
+## M4.7 — Sources · *more events, every one reviewed first*
+
+| Prompt | WP | Notes |
+|---|---|---|
+| `M4/WP-35.md` | Compliance review of nine candidate sites; adapters for Codeforces, MLH, HackerEarth, Knowafest if they pass; release v0.11.0 | Owner decision O-8 · R136–R141, spec 1.1.31 · migration 0034 (`sources` rebuild, deferred FKs) · a few live requests allowed (R137) |
+
 
 ## Writing a new prompt
 
