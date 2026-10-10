@@ -17,3 +17,6 @@ CLAUDE.md
 # Reformatting them would break the byte-identical check against docs/research
 # and turn every golden into a diff the first time Prettier ran.
 apps/backend/test/fixtures
+
+# Release staging for the installer (apps/desktop/scripts/stage-release.mjs)
+**/src-tauri/staging/

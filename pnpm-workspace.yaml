@@ -36,3 +36,7 @@ overrides:
   # runs that dev server, but `pnpm audit:deps` (R4) must stay clean, and 0.28.2
   # is the version the backend bundle already uses. Added in WP-04b.
   '@esbuild-kit/core-utils>esbuild': 0.28.2
+  # GHSA-68fv-2mgg-jv7q (event-loop DoS on crafted indexed source maps), reached via
+  # postcss (sanitize-html, a backend runtime dependency), tailwind and jsdom. 1.2.2
+  # is the patched release and a drop-in. Added for the Junction release (WP-33).
+  'source-map-js': 1.2.2

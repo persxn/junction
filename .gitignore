@@ -88,3 +88,7 @@ dist-types/
 # Playwright run output (WP-16a); traces are kept only on failure
 test-results/
 playwright-report/
+
+# --- Release staging (Junction installer) ---
+# Filled by apps/desktop/scripts/stage-release.mjs; never committed.
+**/src-tauri/staging/

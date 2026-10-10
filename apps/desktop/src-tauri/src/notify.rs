@@ -3,10 +3,10 @@
 //! owns the count and decides what is critical (the WebView stays alive while
 //! the window is closed to the tray); the shell only draws and shows.
 //!
-//! Debug builds toast under the PowerShell AUMID: there is no Start-menu
-//! shortcut with our own AppUserModelID until the installer (WP-31) registers
-//! one, so toasts read "Windows PowerShell" and a click after the toast has
-//! moved to Action Center may open PowerShell rather than Junction.
+//! Debug builds toast under the PowerShell AUMID: they have no Start-menu
+//! shortcut with our own AppUserModelID, so toasts read "Windows PowerShell".
+//! Release builds are installed by the NSIS installer, whose shortcut carries
+//! the bundle identifier as its AUMID, so they toast as Junction.
 
 use serde::Deserialize;
 use tauri::image::Image;
@@ -103,7 +103,12 @@ fn show_toast(app: AppHandle, toast: CriticalToast) -> Result<(), String> {
     use tauri_winrt_notification::{Duration, Toast};
 
     let route = toast.route.clone();
-    Toast::new(Toast::POWERSHELL_APP_ID)
+    let app_id = if cfg!(debug_assertions) {
+        Toast::POWERSHELL_APP_ID.to_owned()
+    } else {
+        app.config().identifier.clone()
+    };
+    Toast::new(&app_id)
         .title(&toast.title)
         .text1(&toast.body)
         .duration(Duration::Long)

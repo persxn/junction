@@ -4,7 +4,7 @@
 //! (`resources\node\node.exe`, `resources\backend\main.mjs`). In a dev run there
 //! is no `resources` directory, so the repository's own esbuild bundle and the
 //! system Node are used instead, and the data directory is
-//! `%LOCALAPPDATA%\CompIntel-dev` - never `%LOCALAPPDATA%\Junction`, so a
+//! `%LOCALAPPDATA%\CompIntel-dev` - never `%LOCALAPPDATA%\JunctionData`, so a
 //! developer can never point a debug build at pilot data (CLAUDE.md).
 
 use std::path::{Path, PathBuf};
@@ -14,8 +14,10 @@ pub const ENV_DATA_DIR: &str = "COMPINTEL_DATA_DIR";
 pub const ENV_NODE: &str = "COMPINTEL_BACKEND_NODE";
 pub const ENV_ENTRY: &str = "COMPINTEL_BACKEND_ENTRY";
 
-/// `%LOCALAPPDATA%\Junction` in a packaged run (§4.13).
-pub const DATA_DIR_NAME: &str = "Junction";
+/// `%LOCALAPPDATA%\JunctionData` in a packaged run (§4.13). Not `Junction`: that is
+/// where the per-user installer puts the program, and the two must never share a
+/// folder an uninstaller removes.
+pub const DATA_DIR_NAME: &str = "JunctionData";
 
 /// `%LOCALAPPDATA%\CompIntel-dev` in a dev run (CLAUDE.md).
 pub const DEV_DATA_DIR_NAME: &str = "CompIntel-dev";
@@ -123,10 +125,53 @@ fn non_empty(value: Option<String>) -> Option<String> {
     value.filter(|text| !text.trim().is_empty())
 }
 
+/// Windows' verbatim prefix, `\\?\`, and its UNC form, `\\?\UNC\`.
+const VERBATIM: &str = r"\\?\";
+const VERBATIM_UNC: &str = r"\\?\UNC\";
+
+/// Drops Windows' verbatim prefix (`\\?\C:\...`, `\\?\UNC\server\...`) that
+/// Tauri's resource directory carries. Node cannot start from such a path: its
+/// module loader calls `realpath` on it and fails on `C:` ("EISDIR"), so a
+/// packaged backend would exit before printing READY.
+pub fn without_verbatim_prefix(path: PathBuf) -> PathBuf {
+    let text = path.to_string_lossy();
+    if let Some(rest) = text.strip_prefix(VERBATIM_UNC) {
+        PathBuf::from(format!(r"\\{rest}"))
+    } else if let Some(rest) = text.strip_prefix(VERBATIM) {
+        PathBuf::from(rest)
+    } else {
+        path
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::collections::HashMap;
+
+    #[test]
+    fn strips_the_verbatim_prefix_node_cannot_load_from() {
+        // Spelled out character by character, so no editor or shell can quietly
+        // collapse the doubled backslash the test is about.
+        let verbatim = format!("{0}{0}?{0}", '\\');
+        assert_eq!(VERBATIM, verbatim);
+        assert_eq!(
+            without_verbatim_prefix(PathBuf::from(format!(
+                r"{verbatim}C:\Users\x\AppData\Local\Junction"
+            ))),
+            PathBuf::from(r"C:\Users\x\AppData\Local\Junction")
+        );
+        assert_eq!(
+            without_verbatim_prefix(PathBuf::from(format!(
+                r"{verbatim}UNC\server\share\Junction"
+            ))),
+            PathBuf::from(format!("{0}{0}server{0}share{0}Junction", '\\'))
+        );
+        assert_eq!(
+            without_verbatim_prefix(PathBuf::from(r"C:\Program Files\Junction")),
+            PathBuf::from(r"C:\Program Files\Junction")
+        );
+    }
 
     fn env(pairs: &[(&str, &str)]) -> HashMap<String, String> {
         pairs
@@ -173,7 +218,7 @@ mod tests {
 
         assert_eq!(
             paths.data_dir,
-            PathBuf::from(r"C:\Users\x\AppData\Local\Junction")
+            PathBuf::from(r"C:\Users\x\AppData\Local\JunctionData")
         );
         assert_eq!(paths.node, PathBuf::from(r"C:\app\resources\node\node.exe"));
         assert_eq!(
@@ -182,7 +227,7 @@ mod tests {
         );
         assert_eq!(
             paths.logs_dir(),
-            PathBuf::from(r"C:\Users\x\AppData\Local\Junction\logs")
+            PathBuf::from(r"C:\Users\x\AppData\Local\JunctionData\logs")
         );
     }
 
@@ -263,7 +308,7 @@ mod tests {
 
         assert_eq!(
             paths.data_dir,
-            PathBuf::from(r"C:\Users\x\AppData\Local\Junction")
+            PathBuf::from(r"C:\Users\x\AppData\Local\JunctionData")
         );
     }
 }

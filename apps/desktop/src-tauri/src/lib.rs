@@ -48,7 +48,7 @@ fn shell_paths(resource_dir: Option<PathBuf>) -> ShellPaths {
     let exists = |path: &Path| path.exists();
     paths::resolve(&PathInputs {
         env: &env,
-        resource_dir,
+        resource_dir: resource_dir.map(paths::without_verbatim_prefix),
         manifest_dir: PathBuf::from(env!("CARGO_MANIFEST_DIR")),
         dev: cfg!(debug_assertions),
         exists: &exists,
@@ -173,7 +173,7 @@ pub fn run() {
                     .is_some_and(|state| state.settings.get().close_to_tray);
                 if close_to_tray {
                     api.prevent_close();
-                    let _ = window.hide();
+                    actions::hide_window(window.app_handle());
                 } else {
                     actions::exit_completely(window.app_handle());
                 }

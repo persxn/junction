@@ -1,0 +1,21 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "bundle": {
+    "resources": {
+      "staging/backend/": "backend/",
+      "staging/node/": "node/"
+    },
+    "publisher": "Junction",
+    "copyright": "Copyright (c) 2026 Junction contributors. MIT licence.",
+    "shortDescription": "Find, track and win student competitions",
+    "longDescription": "Junction helps a college department discover hackathons, CTFs and coding contests, assign them to students and teams, track every deadline and stage, and see what the department has achieved.",
+    "windows": {
+      "webviewInstallMode": { "type": "embedBootstrapper" },
+      "nsis": {
+        "installMode": "currentUser",
+        "installerIcon": "icons/icon.ico",
+        "displayLanguageSelector": false
+      }
+    }
+  }
+}

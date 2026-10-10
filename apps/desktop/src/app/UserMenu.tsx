@@ -1,7 +1,9 @@
-import { Lock, LogOut, PowerOff, Sparkles, UserRound } from 'lucide-react';
+import { Info, Lock, LogOut, Palette, PowerOff, Sparkles, UserRound } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { useAuth } from '../auth/auth-context.js';
+import { AboutDialog } from './AboutDialog.js';
+import { AppearanceDialog } from '../features/appearance/AppearanceDialog.js';
 import { InterestsDialog } from '../features/interests/InterestsDialog.js';
 import { useTheme } from '../theme/theme-context.js';
 import { THEME_CHOICES, type ThemeChoice } from '../theme/theme.js';
@@ -27,6 +29,8 @@ export function UserMenu({ onExit }: UserMenuProps): React.JSX.Element {
   const { me, lock, signOut } = useAuth();
   const [open, setOpen] = useState(false);
   const [interests, setInterests] = useState(false);
+  const [appearance, setAppearance] = useState(false);
+  const [about, setAbout] = useState(false);
   const container = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -94,6 +98,32 @@ export function UserMenu({ onExit }: UserMenuProps): React.JSX.Element {
             </button>
           ))}
 
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              setAppearance(true);
+            }}
+            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left hover:bg-surface-hover"
+          >
+            <Palette aria-hidden="true" className="size-4" />
+            Appearance…
+          </button>
+
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              setAbout(true);
+            }}
+            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left hover:bg-surface-hover"
+          >
+            <Info aria-hidden="true" className="size-4" />
+            About Junction
+          </button>
+
           <hr className="my-1 border-line" />
 
           <button
@@ -155,6 +185,20 @@ export function UserMenu({ onExit }: UserMenuProps): React.JSX.Element {
         <InterestsDialog
           onClose={() => {
             setInterests(false);
+          }}
+        />
+      )}
+      {about && (
+        <AboutDialog
+          onClose={() => {
+            setAbout(false);
+          }}
+        />
+      )}
+      {appearance && (
+        <AppearanceDialog
+          onClose={() => {
+            setAppearance(false);
           }}
         />
       )}

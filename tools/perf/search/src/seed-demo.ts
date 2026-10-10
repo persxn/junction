@@ -18,6 +18,7 @@ import { pino } from 'pino';
 
 import { CORPUS_EPOCH, generateCorpus, type CorpusEvent } from './corpus.js';
 import { seed } from './seed.js';
+import { spreadOverYear } from './spread.js';
 
 /**
  * `pnpm seed:demo` — a small, deterministic demo database for the WP-16a E2E
@@ -25,6 +26,7 @@ import { seed } from './seed.js';
  *
  *   pnpm seed:demo [--data-dir <dir>] [--events 300]
  *   pnpm seed:demo --students --data-dir <dir>     (WP-17, after setup)
+ *   pnpm seed:demo --students --spread ...         (WP-33: history over the past year)
  *
  * It reuses WP-15a's corpus generator (the first N events of the same seeded
  * sequence), shifted so "today" in the corpus is today on the clock, and
@@ -66,6 +68,7 @@ async function main(): Promise<number> {
       'data-dir': { type: 'string' },
       events: { type: 'string' },
       students: { type: 'boolean' },
+      spread: { type: 'boolean' },
     },
   });
   const root = devRoot();
@@ -74,7 +77,7 @@ async function main(): Promise<number> {
     console.error(`seed:demo writes only under ${root}; refusing ${dataDir}.`);
     return 2;
   }
-  if (values.students === true) return seedStudents(dataDir);
+  if (values.students === true) return seedStudents(dataDir, values.spread === true);
   if (existsSync(path.join(dataDir, 'data', 'app.db'))) {
     console.error(`${dataDir} already holds a database; pass a fresh --data-dir.`);
     return 2;
@@ -140,7 +143,7 @@ async function main(): Promise<number> {
  * `--students`: the 60 synthetic students (D-33) on a database that has been
  * through setup — the organization they belong to exists only after it.
  */
-function seedStudents(dataDir: string): number {
+function seedStudents(dataDir: string, spread: boolean): number {
   if (!existsSync(path.join(dataDir, 'data', 'app.db'))) {
     console.error(`${dataDir} holds no database; seed events and finish setup first.`);
     return 2;
@@ -152,7 +155,8 @@ function seedStudents(dataDir: string): number {
   const db = openDatabase(config, { logger: silent });
   try {
     const seeded = seedDemoStudentsInto(db);
-    console.log(JSON.stringify({ dataDir, ...seeded }));
+    const spreadOut = spread ? spreadOverYear(db) : undefined;
+    console.log(JSON.stringify({ dataDir, ...seeded, spread: spreadOut }));
     return 0;
   } catch (cause) {
     console.error(
