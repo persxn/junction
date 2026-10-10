@@ -141,7 +141,7 @@ pub fn is_landing(url: &Url, login: &Url, hosts: &[String]) -> bool {
     if !url_allowed(url, hosts) {
         return false;
     }
-    if url.path().trim_end_matches('/') != login.path().trim_end_matches('/') {
+    if !in_login_area(url.path(), login.path()) {
         return true;
     }
     let current: Vec<(String, String)> = url.query_pairs().into_owned().collect();
@@ -167,6 +167,27 @@ pub fn captured_header(landed: bool, cookies: &[CapturedCookie], hosts: &[String
         cookie_header(cookies, hosts)
     } else {
         String::new()
+    }
+}
+
+/// Whether a path is still part of the login flow that starts at `login`.
+///
+/// A login page one level down (`/auth/login`) owns its whole section: Unstop
+/// moves from `/auth/login` through account-type and one-time-code steps under
+/// `/auth/…` before the professor is in, and capturing on the first of those
+/// would store a half-made session. A top-level login page (`/login`) owns only
+/// itself, so a `/dashboard` next to it is still landing.
+#[must_use]
+pub fn in_login_area(path: &str, login: &str) -> bool {
+    let path = path.trim_end_matches('/');
+    let login = login.trim_end_matches('/');
+    let segments: Vec<&str> = login.split('/').filter(|part| !part.is_empty()).collect();
+    match segments.as_slice() {
+        [section, _, ..] => {
+            let base = format!("/{section}");
+            path == base || path.starts_with(&format!("{base}/"))
+        }
+        _ => path == login,
     }
 }
 
@@ -392,6 +413,20 @@ mod tests {
                 !is_landing(&url, &login, &hosts()),
                 "{still_signing_in} is still the form"
             );
+        }
+        // A login page inside a section owns the section's other steps.
+        let nested = Url::parse("https://unstop.com/auth/login").unwrap();
+        let unstop = vec!["unstop.com".to_owned(), "*.unstop.com".to_owned()];
+        for (url, landed) in [
+            ("https://unstop.com/auth/login", false),
+            ("https://unstop.com/auth/candidate?step=otp", false),
+            ("https://unstop.com/auth", false),
+            ("https://unstop.com/authors", true),
+            ("https://unstop.com/hackathons", true),
+            ("https://unstop.com/", true),
+        ] {
+            let url = Url::parse(url).unwrap();
+            assert_eq!(is_landing(&url, &nested, &unstop), landed, "{url}");
         }
         // A login modal addressed by its query: closing it is landing.
         let modal = Url::parse("https://devfolio.co/discover?auth=signin").unwrap();
