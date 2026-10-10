@@ -6,3 +6,12 @@
 *.ico binary
 *.gguf binary
 *.db binary
+
+# Recorded source responses are evidence, kept byte for byte (their CRLFs
+# included): golden.test.ts compares each test copy with its docs/research
+# original, so neither side may be normalised on commit or checkout.
+docs/research/fixtures/** -text
+apps/backend/test/fixtures/ctftime/detail-event-3417.json -text
+apps/backend/test/fixtures/ctftime/listing-events.json -text
+apps/backend/test/fixtures/devfolio/detail-hackathon.json -text
+apps/backend/test/fixtures/devfolio/listing-hackathons.json -text
