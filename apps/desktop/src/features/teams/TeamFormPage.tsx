@@ -1,4 +1,5 @@
 import type { TeamCreateInput, TeamUpdateRequest } from '@compintel/contracts';
+import { canMentor } from '@compintel/contracts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from '@tanstack/react-router';
 import { ArrowLeft, UsersRound } from 'lucide-react';
@@ -46,7 +47,8 @@ export function NewTeamPage(): React.JSX.Element {
   const toast = useToast();
   const { me } = useAuth();
   const isAdmin = me?.roles.includes('ADMINISTRATOR') === true;
-  const selfAllowed = me?.roles.includes('PROFESSOR') === true;
+  // R131: a professor, or a student on a student install, can own the team.
+  const selfAllowed = canMentor(me?.roles ?? []);
   const professors = useQuery({
     queryKey: ['professors'],
     queryFn: () => listProfessors(connection),

@@ -9,6 +9,7 @@ import { exitCompletely, hideToTray, openLogsFolder } from '../shell/backend.js'
 import { AppearanceSync } from '../features/appearance/AppearanceSync.js';
 import { useTheme } from '../theme/theme-context.js';
 import { CommandPalette } from './CommandPalette.js';
+import { useAuth } from '../auth/auth-context.js';
 import { buildCommands } from './commands.js';
 import { NavRail } from './NavRail.js';
 import { TopBar } from './TopBar.js';
@@ -38,6 +39,7 @@ export function AppShell(): React.JSX.Element {
     [navigate],
   );
 
+  const mode = useAuth().me?.mode;
   const commands = useMemo(
     () =>
       buildCommands({
@@ -54,8 +56,9 @@ export function AppShell(): React.JSX.Element {
         exitCompletely: () => {
           void exitCompletely();
         },
+        mode,
       }),
-    [navigate, setChoice],
+    [navigate, setChoice, mode],
   );
 
   const hotkeys = useMemo<readonly Hotkey[]>(

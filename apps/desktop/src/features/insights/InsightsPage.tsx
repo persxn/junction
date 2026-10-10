@@ -30,6 +30,7 @@ import {
 } from './insights-model.js';
 import { InsightsTiles } from './InsightsTiles.js';
 import { MilestoneCelebration } from './MilestoneCelebration.js';
+import { useInstallation } from '../../app/installation.js';
 
 /**
  * Insights (WP-33, R69, ADR-0019): what the department has actually done, from
@@ -37,6 +38,7 @@ import { MilestoneCelebration } from './MilestoneCelebration.js';
  * here is a count the backend can show its working for.
  */
 export function InsightsPage(): React.JSX.Element {
+  const { labels } = useInstallation();
   const id = useId();
   const connection = useBackendConnection();
   const [preset, setPreset] = useState<RangePreset>('12m');
@@ -73,10 +75,10 @@ export function InsightsPage(): React.JSX.Element {
 
       <Guide id="insights" title="About Insights">
         <p>
-          What your department has achieved, counted from the competitions, outcomes and deadlines
-          already recorded in Junction. Nothing is estimated or predicted. Each chart has a{' '}
-          <strong>Show as table</strong> view, and the active count opens the Competitions list it
-          comes from.
+          What {labels.insightsOwner === 'you' ? 'you have' : 'your department has'} achieved,
+          counted from the competitions, outcomes and deadlines already recorded in Junction.
+          Nothing is estimated or predicted. Each chart has a <strong>Show as table</strong> view,
+          and the active count opens the Competitions list it comes from.
         </p>
       </Guide>
 
@@ -90,6 +92,7 @@ function InsightsBody({
 }: {
   readonly query: ReturnType<typeof useQuery<InsightsResponse>>;
 }): React.JSX.Element {
+  const { labels } = useInstallation();
   const navigate = useNavigate();
   if (query.isPending) return <Skeleton lines={6} label="Loading insights" />;
   if (query.isError) {
@@ -115,7 +118,7 @@ function InsightsBody({
       <EmptyState
         icon={ChartNoAxesCombined}
         title="Nothing to show yet"
-        description="Once your department assigns its first competition, this page shows participation month by month, how far competitions get, outcomes and wins, deadlines met, which sources found the events you took on, and your busiest students, teams and mentors."
+        description={`Once ${labels.insightsOwner === 'you' ? 'you take on your' : 'your department assigns its'} first competition, this page shows participation month by month, how far competitions get, outcomes and wins, deadlines met, which sources found the events you took on, and your busiest ${labels.students.toLowerCase()}, teams and ${labels.mentors.toLowerCase()}.`}
         action={{
           label: 'Find an event in Discover',
           onAction: () => {
@@ -181,7 +184,12 @@ function InsightsBody({
           'Competitions',
           'No team competitions in this period.',
         )}
-        {bars('Mentor load', mentorRows(data), 'Active now', 'Nobody is mentoring a competition.')}
+        {bars(
+          labels.mentorLoad,
+          mentorRows(data),
+          'Active now',
+          `Nobody is ${labels.mentoring} a competition.`,
+        )}
         {bars(
           'Where assigned events came from',
           sourceRows(data),

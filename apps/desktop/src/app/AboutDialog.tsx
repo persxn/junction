@@ -2,6 +2,8 @@ import { Dialog } from '../components/Dialog.js';
 import { Logo } from '../components/Logo.js';
 import { openExternal } from '../lib/external.js';
 import { JUNCTION_REPOSITORY, JUNCTION_VERSION } from '../version.js';
+import { useInstallation } from './installation.js';
+import type { InstallationMode } from '@compintel/contracts';
 
 /** Credits the licences require to be shown, not only shipped (CC BY 4.0 for GeoNames). */
 const CREDITS: readonly { name: string; note: string; url: string }[] = [
@@ -21,6 +23,13 @@ const CREDITS: readonly { name: string; note: string; url: string }[] = [
     url: `${JUNCTION_REPOSITORY}#licence`,
   },
 ];
+
+/** WP-34 (R130): the three kinds of install, as the About box names them. */
+const MODE_NAMES: Readonly<Record<InstallationMode, string>> = {
+  DEPARTMENT: 'a department',
+  STUDENT_INDIVIDUAL: 'a student, for themselves',
+  STUDENT_INSTITUTION: 'students, for an institution',
+};
 
 function ExternalLink({
   url,
@@ -45,6 +54,7 @@ function ExternalLink({
 
 /** About Junction: version, source, licence and credits. */
 export function AboutDialog({ onClose }: { readonly onClose: () => void }): React.JSX.Element {
+  const { mode } = useInstallation();
   return (
     <Dialog title="About Junction" onClose={onClose}>
       <div className="flex flex-col gap-4 text-sm">
@@ -57,9 +67,10 @@ export function AboutDialog({ onClose }: { readonly onClose: () => void }): Reac
         </div>
         <p>
           Find, track and win student competitions — hackathons, CTFs, coding contests and
-          innovation challenges — for a whole department, on one Windows PC. Your data stays on this
-          computer.
+          innovation challenges — for a whole department or a student, on one Windows PC. Your data
+          stays on this computer.
         </p>
+        <p className="text-fg-muted">This install: {MODE_NAMES[mode]}.</p>
         <p>
           Open source under the MIT licence.{' '}
           <ExternalLink url={JUNCTION_REPOSITORY}>Source code, issues and releases</ExternalLink>

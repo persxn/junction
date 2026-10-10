@@ -1,10 +1,21 @@
-import { Info, Lock, LogOut, Palette, PowerOff, Sparkles, UserRound } from 'lucide-react';
+import {
+  Info,
+  Lock,
+  LogOut,
+  Palette,
+  PowerOff,
+  Sparkles,
+  UserRound,
+  UserRoundPlus,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { useAuth } from '../auth/auth-context.js';
 import { AboutDialog } from './AboutDialog.js';
 import { AppearanceDialog } from '../features/appearance/AppearanceDialog.js';
 import { InterestsDialog } from '../features/interests/InterestsDialog.js';
+import { ProfileDialog } from '../features/profile/ProfileDialog.js';
+import { useInstallation } from './installation.js';
 import { useTheme } from '../theme/theme-context.js';
 import { THEME_CHOICES, type ThemeChoice } from '../theme/theme.js';
 
@@ -31,6 +42,10 @@ export function UserMenu({ onExit }: UserMenuProps): React.JSX.Element {
   const [interests, setInterests] = useState(false);
   const [appearance, setAppearance] = useState(false);
   const [about, setAbout] = useState(false);
+  // WP-34 (R132-R134): a guest has no password, so no Lock; it can make a profile
+  // instead. On Myself, signing the guest out would only sign it straight back in.
+  const { isGuest, isIndividual } = useInstallation();
+  const [profile, setProfile] = useState(false);
   const container = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -139,31 +154,48 @@ export function UserMenu({ onExit }: UserMenuProps): React.JSX.Element {
             My interests
           </button>
 
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              setOpen(false);
-              lock();
-            }}
-            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left hover:bg-surface-hover"
-          >
-            <Lock aria-hidden="true" className="size-4" />
-            Lock
-          </button>
+          {isGuest ? (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                setProfile(true);
+              }}
+              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left hover:bg-surface-hover"
+            >
+              <UserRoundPlus aria-hidden="true" className="size-4" />
+              Create my profile…
+            </button>
+          ) : (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                lock();
+              }}
+              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left hover:bg-surface-hover"
+            >
+              <Lock aria-hidden="true" className="size-4" />
+              Lock
+            </button>
+          )}
 
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              setOpen(false);
-              void signOut();
-            }}
-            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left hover:bg-surface-hover"
-          >
-            <LogOut aria-hidden="true" className="size-4" />
-            Sign out
-          </button>
+          {!(isGuest && isIndividual) && (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                void signOut();
+              }}
+              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left hover:bg-surface-hover"
+            >
+              <LogOut aria-hidden="true" className="size-4" />
+              Sign out
+            </button>
+          )}
 
           <hr className="my-1 border-line" />
 
@@ -185,6 +217,13 @@ export function UserMenu({ onExit }: UserMenuProps): React.JSX.Element {
         <InterestsDialog
           onClose={() => {
             setInterests(false);
+          }}
+        />
+      )}
+      {profile && (
+        <ProfileDialog
+          onClose={() => {
+            setProfile(false);
           }}
         />
       )}

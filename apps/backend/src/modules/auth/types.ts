@@ -19,6 +19,8 @@ export interface Principal {
   readonly status: UserStatus;
   readonly mustChangePassword: boolean;
   readonly roles: readonly RoleKey[];
+  /** R132: the password-less guest of a student install. */
+  readonly isGuest?: boolean;
 }
 
 export interface ActiveSession {

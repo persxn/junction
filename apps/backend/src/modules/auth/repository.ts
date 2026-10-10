@@ -113,6 +113,8 @@ export class AuthRepository {
         createdBy: user.createdBy ?? null,
         updatedAt: now,
         version: 1,
+        isGuest: false,
+        studentId: null,
       };
       this.#drizzle.insert(users).values(row).run();
       for (const key of user.roles) {

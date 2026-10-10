@@ -1,7 +1,15 @@
-import type { Action, BackendConnection, MeResponse } from '@compintel/contracts';
-import { createContext, use, useCallback, useMemo, useState } from 'react';
+import type {
+  Action,
+  BackendConnection,
+  GuestAvailability,
+  LoginResponse,
+  MeResponse,
+  ProfileInput,
+} from '@compintel/contracts';
+import { createContext, use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { setAuthToken } from '../api/auth-token.js';
+import { takeJustSetUp } from './first-run.js';
 import * as api from '../api/auth.js';
 import { isApiProblem, isUnauthorized, type ApiProblem } from '../api/problem.js';
 
@@ -40,6 +48,17 @@ export interface AuthView {
   readonly refresh: () => Promise<void>;
   /** Whether the role could ever take this action — for hiding controls (§10.1). */
   readonly can: (action: Action) => boolean;
+  /** WP-34 (R132): whether this install offers "Continue as guest"; undefined until known. */
+  readonly guest?: GuestAvailability | undefined;
+  readonly continueAsGuest?: () => Promise<void>;
+  /** R133/R134: "Create my profile" from a guest session; true when it worked. */
+  readonly createProfile?: (profile: ProfileInput) => Promise<boolean>;
+}
+
+/** The `/me` half of a login answer — everything but the token. */
+function meOf(result: LoginResponse): MeResponse {
+  const { token: _token, ...me } = result;
+  return me;
 }
 
 /**
@@ -91,12 +110,62 @@ export function AuthProvider({
       }
       setAuthToken(result.token);
       setLocked(false);
-      setMe({
-        user: result.user,
-        roles: result.roles,
-        permissions: result.permissions,
-        session: result.session,
-      });
+      setMe(meOf(result));
+    },
+    [connection, run],
+  );
+
+  // WP-34 (R132): whether a guest is offered. Asked whenever nobody is signed in;
+  // a backend without the route (or a department install) simply says no.
+  const [guest, setGuest] = useState<GuestAvailability | undefined>(undefined);
+  const signedOut = me === undefined;
+  useEffect(() => {
+    if (!signedOut) return;
+    let current = true;
+    api.fetchGuestAvailability(connection).then(
+      (answer) => {
+        if (current) setGuest(answer);
+      },
+      () => {
+        // No route (an older backend) or no answer: there is simply no guest.
+        if (current) setGuest({ available: false, mode: 'DEPARTMENT', automatic: false });
+      },
+    );
+    return () => {
+      current = false;
+    };
+  }, [connection, signedOut]);
+
+  const continueAsGuest = useCallback(async (): Promise<void> => {
+    const result = await run(() => api.signInAsGuest(connection));
+    if (result === undefined) return;
+    setAuthToken(result.token);
+    setLocked(false);
+    setMe(meOf(result));
+  }, [connection, run]);
+
+  // "Myself", still unclaimed: no sign-in screen at all — the app opens as the
+  // guest (O-6). Once per mount, so a failure shows the screen instead of looping.
+  const triedAutomatic = useRef(false);
+  useEffect(() => {
+    if (
+      signedOut &&
+      guest?.available === true &&
+      (guest.automatic || takeJustSetUp()) &&
+      !triedAutomatic.current
+    ) {
+      triedAutomatic.current = true;
+      void continueAsGuest();
+    }
+  }, [signedOut, guest, continueAsGuest]);
+
+  const createProfile = useCallback(
+    async (profile: ProfileInput): Promise<boolean> => {
+      const result = await run(() => api.createProfile(connection, profile));
+      if (result === undefined) return false;
+      setAuthToken(result.token);
+      setMe(meOf(result));
+      return true;
     },
     [connection, run],
   );
@@ -173,8 +242,24 @@ export function AuthProvider({
       changePassword,
       refresh,
       can: (action: Action) => me?.permissions.some((entry) => entry.action === action) ?? false,
+      guest,
+      continueAsGuest,
+      createProfile,
     }),
-    [status, me, error, busy, signIn, signOut, unlock, changePassword, refresh],
+    [
+      status,
+      me,
+      error,
+      busy,
+      signIn,
+      signOut,
+      unlock,
+      changePassword,
+      refresh,
+      guest,
+      continueAsGuest,
+      createProfile,
+    ],
   );
 
   return <AuthContext value={value}>{children}</AuthContext>;

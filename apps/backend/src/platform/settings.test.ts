@@ -184,6 +184,8 @@ describe('module-owned definitions', () => {
       'eventType.policy',
       'geography.nearbyRadiusKm',
       'geography.policy',
+      // WP-34 (R130), declared by modules/installation.
+      'installation.mode',
       'scraper.contactEmail',
       // WP-15b's, declared by modules/search (§8.4).
       'search.ranking.thresholds',

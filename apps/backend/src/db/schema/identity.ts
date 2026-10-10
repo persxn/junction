@@ -1,6 +1,7 @@
 import { CLIENT_KINDS, ROLE_KEYS, USER_STATUSES } from '@compintel/contracts';
 import { sql } from 'drizzle-orm';
 import {
+  type AnySQLiteColumn,
   check,
   index,
   integer,
@@ -11,6 +12,7 @@ import {
 } from 'drizzle-orm/sqlite-core';
 
 import { departments } from './organization.js';
+import { students } from './students.js';
 
 /** `'A', 'B'` — CHECK lists are written from the contracts enums (§6.1). */
 function quoted(values: readonly string[]): string {
@@ -49,9 +51,18 @@ export const users = sqliteTable(
     updatedAt: integer('updated_at').notNull(),
     /** Optimistic concurrency on an editable aggregate (§6.1, §4.4). */
     version: integer('version').notNull().default(1),
+    /** R132: the built-in, password-less guest of a student install. */
+    isGuest: integer('is_guest', { mode: 'boolean' }).notNull().default(false),
+    /** R135: "This is me" — the profile's own row among the students. */
+    // Annotated: users ↔ students reference each other, and inference cannot
+    // resolve the cycle on its own.
+    studentId: text('student_id').references((): AnySQLiteColumn => students.id),
   },
   (table) => [
     uniqueIndex('users_email_uq').on(table.email),
+    uniqueIndex('users_student_id_uq')
+      .on(table.studentId)
+      .where(sql`"student_id" is not null`),
     index('users_department_id_idx').on(table.departmentId),
     check('users_status_check', sql.raw(`"status" in (${quoted(USER_STATUSES)})`)),
     check('users_failed_login_count_check', sql.raw(`"failed_login_count" >= 0`)),

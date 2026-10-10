@@ -8,6 +8,7 @@ import type { StudentsDependencies } from './mappers.js';
 import { RelationsRepository } from './relations-repo.js';
 import { StudentsRepository } from './repository.js';
 import { StudentRelationsService } from './relations.js';
+import { ProfileLinks } from './profile-links.js';
 import { StudentsService } from './service.js';
 import { StudentHistoryRepository } from './history-repo.js';
 import { StudentHistoryService } from './history.js';
@@ -46,6 +47,7 @@ export function createStudentsModule(options: StudentsModuleOptions): StudentsMo
     competitionLinks: new CompetitionLinksRepository(options.db),
     audit: options.audit,
     settings: options.settings,
+    profiles: new ProfileLinks(options.db),
     ...(options.clock === undefined ? {} : { clock: options.clock }),
   };
   return {

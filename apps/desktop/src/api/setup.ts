@@ -1,9 +1,11 @@
 import {
   PathCheckResult,
+  PlaceSuggestionsResponse,
   SetupResult,
   SetupStatus,
   type BackendConnection,
   type PathCheckResult as PathCheck,
+  type PlaceSuggestion as PlaceSuggestionType,
   type SetupRequest,
   type SetupResult as Result,
   type SetupStatus as Status,
@@ -47,4 +49,15 @@ export async function completeSetup(
   return SetupResult.parse(
     await apiRequest(connection, '/api/v1/setup/complete', { method: 'POST', body: request }),
   );
+}
+
+/** WP-34: the location picker — institutions and cities from the offline gazetteer. */
+export async function suggestPlaces(
+  connection: BackendConnection,
+  query: string,
+): Promise<readonly PlaceSuggestionType[]> {
+  const answer = PlaceSuggestionsResponse.parse(
+    await apiGet(connection, `/api/v1/setup/places?q=${encodeURIComponent(query)}`),
+  );
+  return answer.places;
 }

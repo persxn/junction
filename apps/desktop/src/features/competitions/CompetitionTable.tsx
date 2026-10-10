@@ -7,6 +7,7 @@ import { CompetitionStatus, KIND_LABELS } from './labels.js';
 import { OutcomeBadge } from '../outcomes/OutcomeBadge.js';
 import { ProgressHealth } from '../workflows/ProgressHealth.js';
 import { NextDeadline } from './NextDeadline.js';
+import { useInstallation } from '../../app/installation.js';
 
 /** The list view (WP-19 step 6): a dense table, J/K to move, Enter to open. */
 
@@ -17,6 +18,7 @@ export interface CompetitionTableProps {
 }
 
 export function CompetitionTable({ items, now, onOpen }: CompetitionTableProps): React.JSX.Element {
+  const { labels } = useInstallation();
   const roving = useRovingRows(items, true);
   return (
     <table className="w-full border-collapse text-left text-sm">
@@ -25,13 +27,18 @@ export function CompetitionTable({ items, now, onOpen }: CompetitionTableProps):
       </caption>
       <thead>
         <tr className="border-b border-line text-fg-subtle">
-          {['Event', 'Team or student', 'Primary mentor', 'Next date', 'Progress', 'Status'].map(
-            (head) => (
-              <th key={head} scope="col" className="py-2 pr-3 font-medium">
-                {head}
-              </th>
-            ),
-          )}
+          {[
+            'Event',
+            'Team or student',
+            labels.primaryMentor,
+            'Next date',
+            'Progress',
+            'Status',
+          ].map((head) => (
+            <th key={head} scope="col" className="py-2 pr-3 font-medium">
+              {head}
+            </th>
+          ))}
         </tr>
       </thead>
       <tbody>

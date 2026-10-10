@@ -100,7 +100,8 @@ export const TeamMember = z
     id: Uuid7,
     studentId: Uuid7,
     fullName: z.string().min(1),
-    universityId: z.string().min(1),
+    /** Null on a student install, where the roll number is optional (R135). */
+    universityId: z.string().min(1).nullable(),
     studentStatus: StudentStatus,
     /** Skill names, for the member row. */
     skills: z.array(z.string()),

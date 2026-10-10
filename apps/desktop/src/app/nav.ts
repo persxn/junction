@@ -1,4 +1,4 @@
-import type { Action } from '@compintel/contracts';
+import type { Action, InstallationMode } from '@compintel/contracts';
 import {
   Activity,
   Archive,
@@ -184,3 +184,45 @@ export const ADMIN_NAV = [
 ] as const satisfies readonly AdminNavItem[];
 
 export type AdminPath = (typeof ADMIN_NAV)[number]['path'];
+
+/**
+ * WP-34 (R133–R135): the rail as a student install shows it. The paths, icons
+ * and guards are the same items; only the words change, and the admin section
+ * keeps what a student runs — Sources (to connect their own accounts) and
+ * Settings, plus Users for an institution's lead. Everything else stays reachable
+ * by URL for an administrator, as the server still allows it.
+ */
+const STUDENT_ADMIN_IDS: Readonly<Record<'individual' | 'institution', readonly string[]>> = {
+  individual: ['admin-sources', 'admin-campus'],
+  institution: ['admin-users', 'admin-sources', 'admin-campus'],
+};
+
+const STUDENT_LABELS: Readonly<Record<string, { label: string; summary: string }>> = {
+  students: {
+    label: 'Teammates',
+    summary: 'The people you compete with: skills, teams and competitions.',
+  },
+  insights: {
+    label: 'Insights',
+    summary: 'What you have achieved, counted from what is recorded.',
+  },
+  'admin-campus': { label: 'Settings', summary: 'Where you are, and how the app behaves.' },
+  'admin-users': { label: 'Members', summary: 'Profiles on this computer, and guest access.' },
+};
+
+export interface NavView {
+  readonly main: readonly NavItem[];
+  readonly admin: readonly AdminNavItem[];
+}
+
+export function navFor(mode: InstallationMode | undefined): NavView {
+  if (mode === undefined || mode === 'DEPARTMENT') {
+    return { main: MAIN_NAV, admin: ADMIN_NAV };
+  }
+  const relabel = <T extends NavItem>(item: T): T => ({ ...item, ...STUDENT_LABELS[item.id] });
+  const keep = STUDENT_ADMIN_IDS[mode === 'STUDENT_INDIVIDUAL' ? 'individual' : 'institution'];
+  return {
+    main: MAIN_NAV.map(relabel),
+    admin: ADMIN_NAV.filter((item) => keep.includes(item.id)).map(relabel),
+  };
+}

@@ -1,4 +1,4 @@
-import { MENTOR_ROLE_LABELS, type TeamDetail } from '@compintel/contracts';
+import type { TeamDetail } from '@compintel/contracts';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRightLeft, Star, UserCheck, UserMinus, UserPlus } from 'lucide-react';
 import { useId, useState } from 'react';
@@ -9,6 +9,7 @@ import { dayText } from '../students/labels.js';
 import { disabledReason } from './team-model.js';
 import { TransferDialog } from './TransferDialog.js';
 import { useTeamActions } from './use-team-actions.js';
+import { useInstallation } from '../../app/installation.js';
 
 /**
  * A team's mentors (§6.2, R95): one primary, any co-mentors, the earlier ones
@@ -17,6 +18,7 @@ import { useTeamActions } from './use-team-actions.js';
  * on screen, disabled, with the reason beside them.
  */
 export function TeamMentors({ team }: { readonly team: TeamDetail }): React.JSX.Element {
+  const { labels } = useInstallation();
   const connection = useBackendConnection();
   const actions = useTeamActions();
   const manageReason = disabledReason(team, 'manageMentors');
@@ -40,7 +42,7 @@ export function TeamMentors({ team }: { readonly team: TeamDetail }): React.JSX.
     <section aria-labelledby="team-mentors-heading" className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 id="team-mentors-heading" className="text-md">
-          Mentors
+          {labels.mentors}
         </h2>
         <button
           type="button"
@@ -69,7 +71,8 @@ export function TeamMentors({ team }: { readonly team: TeamDetail }): React.JSX.
               <Icon aria-hidden="true" className="size-4 text-accent" />
               <span className="font-medium">{mentor.displayName}</span>
               <span className="text-fg-muted">
-                {MENTOR_ROLE_LABELS[mentor.role]} since {dayText(mentor.fromAt)}
+                {mentor.role === 'PRIMARY' ? labels.primaryMentor : labels.coMentor} since{' '}
+                {dayText(mentor.fromAt)}
               </span>
               {mentor.role === 'CO_MENTOR' && (
                 <button
@@ -150,8 +153,9 @@ export function TeamMentors({ team }: { readonly team: TeamDetail }): React.JSX.
           <ul className="mt-1 flex flex-col gap-1">
             {team.pastMentors.map((mentor) => (
               <li key={mentor.id}>
-                {mentor.displayName}, {MENTOR_ROLE_LABELS[mentor.role].toLowerCase()},{' '}
-                {dayText(mentor.fromAt)} – {dayText(mentor.toAt ?? mentor.fromAt)}
+                {mentor.displayName},{' '}
+                {(mentor.role === 'PRIMARY' ? labels.primaryMentor : labels.coMentor).toLowerCase()}
+                , {dayText(mentor.fromAt)} – {dayText(mentor.toAt ?? mentor.fromAt)}
               </li>
             ))}
           </ul>

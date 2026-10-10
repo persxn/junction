@@ -13,6 +13,7 @@ import { OutcomeBadge } from '../outcomes/OutcomeBadge.js';
 import { ProgressHealth } from '../workflows/ProgressHealth.js';
 import { NextDeadline } from './NextDeadline.js';
 import type { MoveResult } from './use-competition-actions.js';
+import { useInstallation } from '../../app/installation.js';
 
 /**
  * The pipeline board (§16.2, WP-19 step 6). Columns Considering → Completed;
@@ -36,6 +37,7 @@ export function PipelineBoard({
   onOpen,
   onMove,
 }: PipelineBoardProps): React.JSX.Element {
+  const { labels } = useInstallation();
   const columns = columnsOf(items);
   const [focusedId, setFocusedId] = useState<string | undefined>(undefined);
   const [dragging, setDragging] = useState<CompetitionListItem | undefined>(undefined);
@@ -199,7 +201,8 @@ export function PipelineBoard({
                       </button>
                       <span className="text-fg-muted">{whoOf(item)}</span>
                       <span className="text-xs text-fg-muted">
-                        {item.primaryMentor?.displayName ?? 'No primary mentor'}
+                        {item.primaryMentor?.displayName ??
+                          `No ${labels.primaryMentor.toLowerCase()}`}
                       </span>
                       <span className="text-xs">
                         <NextDeadline next={item.nextDeadline} now={now} />

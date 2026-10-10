@@ -42,13 +42,16 @@ describe('the step order', () => {
     expect(WIZARD_STEPS.at(-1)).toBe('done');
     expect(NUMBERED_STEPS).not.toContain('welcome');
     expect(NUMBERED_STEPS).not.toContain('done');
-    expect(NUMBERED_STEPS).toHaveLength(WIZARD_STEPS.length - 2);
+    // WP-34: "who is setting up Junction?" comes before the numbered stages.
+    expect(NUMBERED_STEPS).not.toContain('audience');
+    expect(NUMBERED_STEPS).toHaveLength(WIZARD_STEPS.length - 3);
   });
 
   it('walks forwards to the end and back again', () => {
-    expect(nextStep('welcome')).toBe('organization');
+    expect(nextStep('welcome')).toBe('audience');
+    expect(nextStep('audience')).toBe('organization');
     expect(nextStep('done')).toBeUndefined();
-    expect(previousStep('organization')).toBe('welcome');
+    expect(previousStep('organization')).toBe('audience');
     expect(previousStep('welcome')).toBeUndefined();
   });
 

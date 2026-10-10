@@ -17,6 +17,7 @@ import { Skeleton } from '../../components/Skeleton.js';
 import { useBackendConnection } from '../../shell/connection-context.js';
 import { TeamTable } from './TeamTable.js';
 import { TEAM_LIST_KEY } from './use-team-actions.js';
+import { useInstallation } from '../../app/installation.js';
 
 /**
  * Teams (§16.1 rail item, §16.2, WP-18 step 6): every team of the department,
@@ -78,6 +79,7 @@ function Chip(props: {
 }
 
 export function TeamsPage(): React.JSX.Element {
+  const { isStudent } = useInstallation();
   const connection = useBackendConnection();
   const navigate = useNavigate();
   const searchId = useId();
@@ -103,7 +105,9 @@ export function TeamsPage(): React.JSX.Element {
           </h1>
           <p className="text-fg-muted">
             {list.data === undefined
-              ? 'Every team of the department, with its members, mentors and skills.'
+              ? isStudent
+                ? 'Your teams, with their members, owners and skills.'
+                : 'Every team of the department, with its members, mentors and skills.'
               : `${String(list.data.total)} ${list.data.total === 1 ? 'team' : 'teams'}${isDefault(settled) ? '' : ' match these filters'}.`}
           </p>
         </div>

@@ -7,6 +7,7 @@ import type {
 
 import type { StudentRow } from '../../db/schema/index.js';
 import type { AuditLog } from '../../platform/audit.js';
+import type { ProfileLinks } from './profile-links.js';
 import type { SettingsStore } from '../../platform/settings.js';
 import type { Clock } from '../../platform/time.js';
 import type { Principal } from '../auth/types.js';
@@ -31,6 +32,8 @@ export interface StudentsDependencies {
   readonly audit: AuditLog;
   readonly settings: SettingsStore;
   readonly clock?: Clock;
+  /** R135 "This is me"; absent in tests that never link a profile. */
+  readonly profiles?: ProfileLinks;
 }
 
 export interface StudentsContext {

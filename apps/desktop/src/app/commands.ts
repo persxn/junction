@@ -1,5 +1,6 @@
 import type { ThemeChoice } from '../theme/theme.js';
-import { CREATE_EVENT_PATH, MAIN_NAV, type AppPath } from './nav.js';
+import type { InstallationMode } from '@compintel/contracts';
+import { CREATE_EVENT_PATH, navFor, type AppPath } from './nav.js';
 
 /**
  * Everything the Ctrl+K palette can do today (§16.3).
@@ -28,6 +29,8 @@ export interface CommandActions {
   readonly openLogs: () => void;
   readonly hideToTray: () => void;
   readonly exitCompletely: () => void;
+  /** WP-34: a student install's labels ("Teammates"); absent means a department install. */
+  readonly mode?: InstallationMode | undefined;
 }
 
 const THEME_LABELS: Record<ThemeChoice, string> = {
@@ -37,13 +40,13 @@ const THEME_LABELS: Record<ThemeChoice, string> = {
 };
 
 export function buildCommands(actions: CommandActions): readonly AppCommand[] {
-  const navigation: AppCommand[] = MAIN_NAV.map((item) => ({
+  const navigation: AppCommand[] = navFor(actions.mode).main.map((item) => ({
     id: `go-${item.id}`,
     label: item.label,
     group: 'Go to',
     keywords: item.summary,
     run: () => {
-      actions.navigate(item.path);
+      actions.navigate(item.path as AppPath);
     },
   }));
 

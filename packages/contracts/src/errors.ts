@@ -22,10 +22,8 @@ export const COMMON_ERROR_CODES = [
 ] as const;
 
 /**
- * Authentication and session failures (§4.12, §10, rulings R33/R34/R38). Each
- * one is a different thing for the UI to say, which is why they are not all
- * `UNAUTHORIZED`: "wrong password", "locked for another 4 minutes" and "your
- * session expired while you were away" need different screens.
+ * Authentication and session failures (§4.12, §10, R33/R34/R38; the last four are
+ * WP-34's student edition, R131–R134). Each is a different thing for the UI to say.
  */
 export const AUTH_ERROR_CODES = [
   'AUTH_INVALID_CREDENTIALS',
@@ -34,6 +32,10 @@ export const AUTH_ERROR_CODES = [
   'AUTH_SESSION_EXPIRED',
   'AUTH_PASSWORD_CHANGE_REQUIRED',
   'AUTH_RECOVERY_INVALID',
+  'AUTH_ROLE_NOT_FOR_MODE',
+  'AUTH_SINGLE_PROFILE_INSTALL',
+  'AUTH_GUEST_HAS_NO_PASSWORD',
+  'AUTH_GUEST_UNAVAILABLE',
 ] as const;
 
 /**
@@ -174,6 +176,7 @@ export const IMPORT_ERROR_CODES = [
 export const STUDENT_ERROR_CODES = [
   'STUDENT_NOT_FOUND',
   'STUDENT_UNIVERSITY_ID_TAKEN',
+  'STUDENT_UNIVERSITY_ID_REQUIRED',
   'STUDENT_PHONE_DISABLED',
   'STUDENT_EXTERNAL_DISABLED',
   'STUDENT_ERASED',

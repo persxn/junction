@@ -1,4 +1,4 @@
-import { MENTOR_ROLE_LABELS, type CompetitionDetail } from '@compintel/contracts';
+import type { CompetitionDetail } from '@compintel/contracts';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRightLeft, Star, UserCheck, UserMinus, UserPlus } from 'lucide-react';
 import { useId, useState } from 'react';
@@ -14,6 +14,7 @@ import { dayText } from '../students/labels.js';
 import { TransferDialog } from '../teams/TransferDialog.js';
 import { whoOf } from './board-model.js';
 import { useCompetitionWrites } from './use-competition-writes.js';
+import { useInstallation } from '../../app/installation.js';
 
 /**
  * A competition's own mentors (R96): copied from the team at assignment and
@@ -26,6 +27,7 @@ export function CompetitionMentors({
 }: {
   readonly competition: CompetitionDetail;
 }): React.JSX.Element {
+  const { labels } = useInstallation();
   const connection = useBackendConnection();
   const write = useCompetitionWrites();
   const reasonId = useId();
@@ -52,7 +54,7 @@ export function CompetitionMentors({
     <section aria-labelledby="competition-mentors-heading" className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 id="competition-mentors-heading" className="text-md">
-          Mentors
+          {labels.mentors}
         </h2>
         <button
           type="button"
@@ -72,7 +74,10 @@ export function CompetitionMentors({
           {reason}
         </p>
       )}
-      <ul aria-label="Competition mentors" className="flex flex-col gap-1.5">
+      <ul
+        aria-label={`Competition ${labels.mentors.toLowerCase()}`}
+        className="flex flex-col gap-1.5"
+      >
         {competition.mentors.map((mentor) => {
           const Icon = mentor.role === 'PRIMARY' ? Star : UserCheck;
           return (
@@ -80,7 +85,8 @@ export function CompetitionMentors({
               <Icon aria-hidden="true" className="size-4 text-accent" />
               <span className="font-medium">{mentor.displayName}</span>
               <span className="text-fg-muted">
-                {MENTOR_ROLE_LABELS[mentor.role]} since {dayText(mentor.fromAt)}
+                {mentor.role === 'PRIMARY' ? labels.primaryMentor : labels.coMentor} since{' '}
+                {dayText(mentor.fromAt)}
               </span>
               {mentor.role === 'CO_MENTOR' && (
                 <button
@@ -156,8 +162,9 @@ export function CompetitionMentors({
           <ul className="mt-1 flex flex-col gap-1">
             {competition.pastMentors.map((mentor) => (
               <li key={mentor.id}>
-                {mentor.displayName}, {MENTOR_ROLE_LABELS[mentor.role].toLowerCase()},{' '}
-                {dayText(mentor.fromAt)} – {dayText(mentor.toAt ?? mentor.fromAt)}
+                {mentor.displayName},{' '}
+                {(mentor.role === 'PRIMARY' ? labels.primaryMentor : labels.coMentor).toLowerCase()}
+                , {dayText(mentor.fromAt)} – {dayText(mentor.toAt ?? mentor.fromAt)}
               </li>
             ))}
           </ul>

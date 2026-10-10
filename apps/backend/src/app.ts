@@ -26,6 +26,9 @@ import { StreamHub } from './platform/stream.js';
 import { adminUsersRoutes } from './routes/admin-users.js';
 import { authRoutes } from './routes/auth.js';
 import { healthRoutes } from './routes/health.js';
+import type { GuestService } from './modules/auth/guest.js';
+import type { PlacesService } from './modules/geo/places.js';
+import { guestRoutes } from './routes/guest.js';
 import { meRoutes } from './routes/me.js';
 import { setupRoutes } from './routes/setup.js';
 import { dedupRoutes } from './routes/dedup.js';
@@ -98,6 +101,9 @@ export interface BuildAppOptions {
   /** Resolved per request for the same reason as `auth`; drives the R39 gate. */
   readonly setup?: () => SetupService | undefined;
   readonly users?: () => UsersService | undefined;
+  /** WP-34: the guest, "Create my profile" and the wizard's place picker. */
+  readonly guest?: () => GuestService | undefined;
+  readonly places?: () => PlacesService | undefined;
   /** Resolved per request; absent on a backend built without a database. */
   readonly sources?: () => SourcesService | undefined;
   /** R74's one-time "Connect your sources" step. */
@@ -225,8 +231,15 @@ export function buildApp(
     prefix: API_PREFIX,
   });
   void server.register(systemRoutes({ onShutdownRequested }), { prefix: API_PREFIX });
-  void server.register(authRoutes({ auth }), { prefix: API_PREFIX });
-  void server.register(meRoutes({ auth }), { prefix: API_PREFIX });
+  void server.register(authRoutes({ auth, guest: () => options.guest?.() }), {
+    prefix: API_PREFIX,
+  });
+  const guest = options.guest ?? ((): GuestService | undefined => undefined);
+  void server.register(meRoutes({ auth, guest }), { prefix: API_PREFIX });
+  void server.register(
+    guestRoutes({ auth, guest, setup, places: options.places ?? (() => undefined) }),
+    { prefix: API_PREFIX },
+  );
   void server.register(setupRoutes({ setup }), { prefix: API_PREFIX });
   void server.register(adminUsersRoutes({ users }), { prefix: API_PREFIX });
   void server.register(sourcesRoutes({ sources, connectPrompt }), { prefix: API_PREFIX });

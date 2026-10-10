@@ -79,7 +79,7 @@ already released:
 
 | Prompt | WP | Notes |
 |---|---|---|
-| `M4/WP-34.md` | STUDENT role, password-less guest, "Myself" / "An institution" first run, release v0.10.0 | Owner decisions O-4…O-7 · R130–R135, spec 1.1.30 · migration 0033 · Rust checks if `src-tauri` changes |
+| `M4/WP-34.md` | STUDENT role, password-less guest, "Myself" / "An institution" first run, release v0.10.0 | **released** · Owner decisions O-4…O-7 · R130–R135, spec 1.1.30 · migration 0033 · Rust checks if `src-tauri` changes |
 
 
 ## Writing a new prompt

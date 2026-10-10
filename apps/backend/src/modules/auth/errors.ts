@@ -69,3 +69,23 @@ export const tooManyAttempts = (): AppError =>
     detail: 'Sign-in is limited across the whole application. Wait a moment and try again.',
     retryable: true,
   });
+
+/** R132: the guest signs in with `POST /auth/guest`, never with a password. */
+export const guestHasNoPassword = (): AppError =>
+  new AppError({
+    status: 403,
+    code: 'AUTH_GUEST_HAS_NO_PASSWORD',
+    title: 'The guest has no password',
+    detail: 'Continue as guest instead, or create your own profile to use a password.',
+    retryable: false,
+  });
+
+/** R132/R134: not a student install, the guest was claimed, or walk-in access is off. */
+export const guestUnavailable = (): AppError =>
+  new AppError({
+    status: 404,
+    code: 'AUTH_GUEST_UNAVAILABLE',
+    title: 'Guest access is not available here',
+    detail: 'Sign in with your profile instead.',
+    retryable: false,
+  });

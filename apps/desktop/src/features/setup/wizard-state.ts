@@ -2,7 +2,7 @@ import {
   CampusInput,
   PASSPHRASE_MIN_LENGTH,
   PASSWORD_MIN_LENGTH,
-  type SetupRequest,
+  type DepartmentSetupRequest,
 } from '@compintel/contracts';
 
 /**
@@ -16,6 +16,8 @@ import {
 
 export const WIZARD_STEPS = [
   'welcome',
+  // WP-34: "who is setting up Junction?" — a student leaves here for StudentWizard.
+  'audience',
   'organization',
   'campus',
   'administrator',
@@ -27,13 +29,14 @@ export const WIZARD_STEPS = [
 ] as const;
 export type WizardStep = (typeof WIZARD_STEPS)[number];
 
-/** What the left rail lists. `welcome` and `done` are not numbered stages. */
+/** What the left rail lists. `welcome`, `audience` and `done` are not numbered stages. */
 export const NUMBERED_STEPS = WIZARD_STEPS.filter(
-  (step) => step !== 'welcome' && step !== 'done',
+  (step) => step !== 'welcome' && step !== 'audience' && step !== 'done',
 ) as readonly WizardStep[];
 
 export const STEP_TITLES: Readonly<Record<WizardStep, string>> = {
   welcome: 'Welcome to Junction',
+  audience: 'Who is setting up Junction?',
   organization: 'Your institution',
   campus: 'Where you are',
   administrator: 'Your administrator account',
@@ -220,7 +223,7 @@ export function previousStep(step: WizardStep): WizardStep | undefined {
 }
 
 /** Everything the user typed, in the shape `POST /setup/complete` expects. */
-export function toSetupRequest(values: WizardValues): SetupRequest {
+export function toSetupRequest(values: WizardValues): DepartmentSetupRequest {
   const short = values.organizationShortName.trim();
   const code = values.departmentCode.trim();
   return {

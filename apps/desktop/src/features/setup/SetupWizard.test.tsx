@@ -8,6 +8,7 @@ import {
   installWizardShell,
   nextStep,
   renderWizard,
+  startAsDepartment,
   wizardUser,
   WIZARD_DATA_DIR,
   WIZARD_RECOVERY,
@@ -65,7 +66,7 @@ describe('the wizard cannot be skipped (the §19 criterion)', () => {
 
   it('refuses to advance while a step is incomplete, and says why', async () => {
     render();
-    await next(/Get started/);
+    await startAsDepartment();
     await next();
 
     expect(screen.getByRole('heading', { name: 'Your institution' })).toBeInTheDocument();

@@ -91,7 +91,7 @@ export function RecoveryStep({
           <button
             type="button"
             onClick={() => {
-              void navigator.clipboard.writeText(result.recoveryCode).then(
+              void navigator.clipboard.writeText(result.recoveryCode ?? '').then(
                 () => {
                   setCopied(true);
                 },
@@ -198,16 +198,17 @@ export function WelcomeStep(): React.JSX.Element {
   return (
     <>
       <p>
-        Junction finds hackathons, CTFs and coding contests your students could enter, keeps track
-        of who is doing what, and reminds you before deadlines pass.
+        Junction finds hackathons, CTFs and coding contests worth entering, keeps track of who is
+        doing what, and reminds you before deadlines pass — for a department and its students, or
+        for a student on their own.
       </p>
       <p className="text-fg-muted">
         Everything runs on this machine. No data leaves it except the requests Junction makes to
-        public event sites, and the encrypted backups you tell it to write.
+        public event sites, and any encrypted backups you tell it to write.
       </p>
       <Note icon={Sparkles}>
-        This takes about two minutes. Have ready: your campus coordinates, an e-mail address event
-        sites can reach you at, and a folder for backups.
+        A student needs about a minute and no password. A department needs about two: have ready an
+        e-mail address event sites can reach you at, and a folder for backups.
       </Note>
     </>
   );

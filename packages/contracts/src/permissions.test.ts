@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import {
   ACTIONS,
+  canMentor,
+  MENTOR_ROLE_KEYS,
   decide,
   effectiveRule,
   OWNERSHIP_RULES,
@@ -319,5 +321,28 @@ describe('permissionsFor (what /me/permissions returns)', () => {
         expect(entry.rule).not.toBe('NEVER');
       }
     }
+  });
+});
+
+describe('the STUDENT row (R131, WP-34)', () => {
+  it('is exactly the PROFESSOR row today, so diverging is a conscious edit', () => {
+    expect(ROLE_ACTIONS.STUDENT).toStrictEqual(ROLE_ACTIONS.PROFESSOR);
+  });
+
+  it('never grants an administrative action', () => {
+    for (const action of [
+      'user.manage',
+      'source.manage',
+      'settings.manage',
+      'backup.restore',
+    ] as const) {
+      expect(ruleFor('STUDENT', action)).toBe('NEVER');
+    }
+  });
+
+  it('can own teams and competitions, like a professor', () => {
+    expect(canMentor(['STUDENT'])).toBe(true);
+    expect(canMentor(['ADMINISTRATOR'])).toBe(false);
+    expect(MENTOR_ROLE_KEYS).toStrictEqual(['PROFESSOR', 'STUDENT']);
   });
 });

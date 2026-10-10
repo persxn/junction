@@ -1,10 +1,10 @@
-import { MENTOR_ROLE_LABELS } from '@compintel/contracts';
 import { useQuery } from '@tanstack/react-query';
 
 import { listTemplates } from '../../../api/workflows.js';
 import { useBackendConnection } from '../../../shell/connection-context.js';
 import { TEMPLATES_KEY } from '../../workflows/TemplatePicker.js';
 import type { StepProps } from './assign-model.js';
+import { useInstallation } from '../../../app/installation.js';
 
 /**
  * Step "Confirm" (R96, R98): the roster and the mentors that will be copied —
@@ -12,6 +12,7 @@ import type { StepProps } from './assign-model.js';
  * workflow that "Assign" copies (WP-20a).
  */
 export function ConfirmStep({ draft }: StepProps): React.JSX.Element {
+  const { labels } = useInstallation();
   const connection = useBackendConnection();
   const templates = useQuery({
     queryKey: [...TEMPLATES_KEY, 'list'],
@@ -57,7 +58,7 @@ export function ConfirmStep({ draft }: StepProps): React.JSX.Element {
             {planned.mentors
               .map(
                 (mentor) =>
-                  `${mentor.displayName} — ${MENTOR_ROLE_LABELS[mentor.role].toLowerCase()}`,
+                  `${mentor.displayName} — ${(mentor.role === 'PRIMARY' ? labels.primaryMentor : labels.coMentor).toLowerCase()}`,
               )
               .join(', ')}
           </p>

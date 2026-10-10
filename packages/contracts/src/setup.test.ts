@@ -6,6 +6,7 @@ import {
   CreateUserRequest,
   PASSPHRASE_MIN_LENGTH,
   PathCheckResult,
+  DepartmentSetupRequest,
   SetupRequest,
   SetupResult,
   SetupStatus,
@@ -52,7 +53,7 @@ describe('SetupStatus', () => {
 
 describe('SetupRequest', () => {
   it('accepts a filled-in wizard', () => {
-    const parsed = SetupRequest.parse(REQUEST);
+    const parsed = DepartmentSetupRequest.parse(REQUEST);
     expect(parsed.campus.lat).toBeCloseTo(10.7594);
     expect(parsed.organization.shortName).toBe('EIT');
   });

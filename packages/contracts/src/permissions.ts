@@ -19,10 +19,25 @@ import { z } from 'zod';
  *     behind them are supplied by whoever knows the resource.
  */
 
-/** `roles.key` (§6.2 Identity & access). A user may hold both (R32). */
-export const ROLE_KEYS = ['ADMINISTRATOR', 'PROFESSOR'] as const;
+/**
+ * `roles.key` (§6.2 Identity & access). A user may hold several (R32). `STUDENT`
+ * exists only on student installs and `PROFESSOR` only on department ones (R131).
+ */
+export const ROLE_KEYS = ['ADMINISTRATOR', 'PROFESSOR', 'STUDENT'] as const;
 export const RoleKey = z.enum(ROLE_KEYS);
 export type RoleKey = z.infer<typeof RoleKey>;
+
+/**
+ * The roles that can own a team or a competition — a PRIMARY or co-mentor row
+ * (R131). Everything that used to say `'PROFESSOR'` meaning "can mentor" reads
+ * this list, so a student owns their own teams exactly as a professor does.
+ */
+export const MENTOR_ROLE_KEYS: readonly RoleKey[] = ['PROFESSOR', 'STUDENT'];
+
+/** Whether these roles can hold a mentor (owner) row. */
+export function canMentor(roles: readonly RoleKey[]): boolean {
+  return roles.some((role) => MENTOR_ROLE_KEYS.includes(role));
+}
 
 /**
  * Every capability in §10.2, named. The dotted form is `<entity>.<verb>`; it is
@@ -155,6 +170,72 @@ export interface OwnershipFacts {
 type Matrix = Readonly<Record<RoleKey, Readonly<Record<Action, OwnershipRule>>>>;
 
 /**
+ * §10.2's professor column. Named so the STUDENT row can be the same object:
+ * R131 — a student owns their own work exactly as a professor does, and every
+ * administrative action stays `NEVER`. The test asserts the two are equal, so
+ * the day they diverge is a conscious edit here.
+ */
+const PROFESSOR_ACTIONS: Readonly<Record<Action, OwnershipRule>> = {
+  'event.view': 'ALWAYS',
+  'student.view': 'ALWAYS',
+  'team.view': 'ALWAYS',
+  'competition.view': 'ALWAYS',
+  // "Activity timeline of a record — ✓ (records they can view)"; the view
+  // check on the record itself is the gate, so this one is open.
+  'activity.view': 'ALWAYS',
+
+  'event.save': 'OWN',
+  'event.hide': 'OWN',
+  'event.categorize': 'ALWAYS',
+  'event.create_manual': 'ALWAYS',
+  'event.import_url': 'ALWAYS',
+  'event.correct': 'NEVER',
+  'event.mark_cancelled': 'NEVER',
+  'event.merge_duplicates': 'NEVER',
+
+  'student.create': 'ALWAYS',
+  'student.edit': 'ALWAYS',
+  'student.deactivate': 'STUDENT_MENTOR',
+  'student.erase': 'NEVER',
+  'student.import': 'ALWAYS',
+  'mentorship.manage': 'OWN',
+
+  'team.create': 'ALWAYS',
+  'team.edit': 'TEAM_MENTOR',
+  'team.archive': 'TEAM_PRIMARY_MENTOR',
+  'team.manage_mentors': 'TEAM_PRIMARY_MENTOR',
+  'team.transfer_ownership': 'NEVER',
+  'team.transfer_primary': 'TEAM_PRIMARY_MENTOR',
+
+  'competition.edit': 'COMPETITION_MENTOR',
+  'competition.assign_team': 'TEAM_MENTOR',
+  'competition.assign_individual': 'ALWAYS',
+  'competition.manage_mentors': 'COMPETITION_PRIMARY_MENTOR',
+  'competition.transfer_primary': 'COMPETITION_PRIMARY_MENTOR',
+  'workflow.edit': 'COMPETITION_MENTOR',
+  'resource.edit': 'COMPETITION_MENTOR',
+  'outcome.record': 'COMPETITION_MENTOR',
+  'ownership.transfer': 'NEVER',
+  'workflow_template.clone': 'ALWAYS',
+  'workflow_template.manage_own': 'OWN',
+  'workflow_template.manage_all': 'NEVER',
+  'saved_search.manage': 'OWN',
+
+  'user.manage': 'NEVER',
+  'category.manage': 'NEVER',
+  'source.manage': 'NEVER',
+  'campus.manage': 'NEVER',
+  'settings.manage': 'NEVER',
+  'duplicate.review': 'NEVER',
+
+  'backup.run': 'ALWAYS',
+  'backup.restore': 'NEVER',
+  'export.all': 'NEVER',
+  'audit.view_all': 'NEVER',
+  'system.health.view': 'NEVER',
+};
+
+/**
  * §10.2, transcribed. `NEVER` rows are as deliberate as the allowed ones: they
  * are how "—" in the matrix survives a refactor.
  */
@@ -216,65 +297,8 @@ export const ROLE_ACTIONS: Matrix = {
     'audit.view_all': 'ALWAYS',
     'system.health.view': 'ALWAYS',
   },
-  PROFESSOR: {
-    'event.view': 'ALWAYS',
-    'student.view': 'ALWAYS',
-    'team.view': 'ALWAYS',
-    'competition.view': 'ALWAYS',
-    // "Activity timeline of a record — ✓ (records they can view)"; the view
-    // check on the record itself is the gate, so this one is open.
-    'activity.view': 'ALWAYS',
-
-    'event.save': 'OWN',
-    'event.hide': 'OWN',
-    'event.categorize': 'ALWAYS',
-    'event.create_manual': 'ALWAYS',
-    'event.import_url': 'ALWAYS',
-    'event.correct': 'NEVER',
-    'event.mark_cancelled': 'NEVER',
-    'event.merge_duplicates': 'NEVER',
-
-    'student.create': 'ALWAYS',
-    'student.edit': 'ALWAYS',
-    'student.deactivate': 'STUDENT_MENTOR',
-    'student.erase': 'NEVER',
-    'student.import': 'ALWAYS',
-    'mentorship.manage': 'OWN',
-
-    'team.create': 'ALWAYS',
-    'team.edit': 'TEAM_MENTOR',
-    'team.archive': 'TEAM_PRIMARY_MENTOR',
-    'team.manage_mentors': 'TEAM_PRIMARY_MENTOR',
-    'team.transfer_ownership': 'NEVER',
-    'team.transfer_primary': 'TEAM_PRIMARY_MENTOR',
-
-    'competition.edit': 'COMPETITION_MENTOR',
-    'competition.assign_team': 'TEAM_MENTOR',
-    'competition.assign_individual': 'ALWAYS',
-    'competition.manage_mentors': 'COMPETITION_PRIMARY_MENTOR',
-    'competition.transfer_primary': 'COMPETITION_PRIMARY_MENTOR',
-    'workflow.edit': 'COMPETITION_MENTOR',
-    'resource.edit': 'COMPETITION_MENTOR',
-    'outcome.record': 'COMPETITION_MENTOR',
-    'ownership.transfer': 'NEVER',
-    'workflow_template.clone': 'ALWAYS',
-    'workflow_template.manage_own': 'OWN',
-    'workflow_template.manage_all': 'NEVER',
-    'saved_search.manage': 'OWN',
-
-    'user.manage': 'NEVER',
-    'category.manage': 'NEVER',
-    'source.manage': 'NEVER',
-    'campus.manage': 'NEVER',
-    'settings.manage': 'NEVER',
-    'duplicate.review': 'NEVER',
-
-    'backup.run': 'ALWAYS',
-    'backup.restore': 'NEVER',
-    'export.all': 'NEVER',
-    'audit.view_all': 'NEVER',
-    'system.health.view': 'NEVER',
-  },
+  PROFESSOR: PROFESSOR_ACTIONS,
+  STUDENT: PROFESSOR_ACTIONS,
 };
 
 /** The rule one role has for one action. */

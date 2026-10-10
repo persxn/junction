@@ -12,8 +12,18 @@ import { NUMBERED_STEPS, STEP_TITLES, stepIndex, type WizardStep } from './wizar
  * bar, no way round it — which is the visible half of ruling R39.
  */
 
+/** WP-34: the student flow numbers its own, shorter list of steps. */
+export interface WizardRail {
+  readonly steps: readonly string[];
+  readonly titles: Readonly<Record<string, string>>;
+}
+
+const DEPARTMENT_RAIL: WizardRail = { steps: NUMBERED_STEPS, titles: STEP_TITLES };
+
 export interface WizardFrameProps {
-  readonly step: WizardStep;
+  readonly step: WizardStep | (string & {});
+  /** The numbered list on the left; the department wizard's when absent. */
+  readonly rail?: WizardRail;
   readonly title: string;
   readonly description: string;
   readonly children: React.ReactNode;
@@ -29,11 +39,12 @@ export function WizardFrame({
   children,
   footer,
   error,
+  rail = DEPARTMENT_RAIL,
 }: WizardFrameProps): React.JSX.Element {
-  const current = stepIndex(step);
-  const stage = NUMBERED_STEPS.indexOf(step);
-  const progress =
-    step === 'done' ? 1 : Math.max(0, stage) / Math.max(1, NUMBERED_STEPS.length - 1);
+  const stage = rail.steps.indexOf(step);
+  // Steps before the numbered ones (welcome, the audience choice) sit at -1.
+  const current = rail === DEPARTMENT_RAIL ? stepIndex(step as WizardStep) : stage;
+  const progress = step === 'done' ? 1 : Math.max(0, stage) / Math.max(1, rail.steps.length - 1);
 
   return (
     <div className="flex h-full items-center justify-center overflow-auto bg-surface-sunken p-6">
@@ -50,8 +61,9 @@ export function WizardFrame({
             Junction
           </p>
           <ol className="flex flex-col gap-0.5">
-            {NUMBERED_STEPS.map((candidate, index) => {
-              const position = stepIndex(candidate);
+            {rail.steps.map((candidate, index) => {
+              const position =
+                rail === DEPARTMENT_RAIL ? stepIndex(candidate as WizardStep) : index;
               const done = position < current;
               const active = candidate === step;
               return (
@@ -80,7 +92,7 @@ export function WizardFrame({
                     >
                       {done ? <Check aria-hidden="true" className="size-3" /> : index + 1}
                     </span>
-                    <span className="truncate">{STEP_TITLES[candidate]}</span>
+                    <span className="truncate">{rail.titles[candidate]}</span>
                     {done && <span className="sr-only">(done)</span>}
                   </span>
                 </li>

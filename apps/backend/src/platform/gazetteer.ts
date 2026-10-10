@@ -60,7 +60,20 @@ export interface Gazetteer {
   findAdmin1ByNameKey(nameKey: string, countryCode?: string): readonly GazetteerAdmin1[];
   /** One state or province by its code, e.g. `IN` + `16`. */
   admin1(countryCode: string, admin1Code: string): GazetteerAdmin1 | undefined;
+  /**
+   * WP-34's location picker: places whose name starts with the typed text,
+   * most populous first. Optional so a fake need not implement it.
+   */
+  suggest?(typed: string, limit: number): readonly GazetteerPlace[];
   close(): void;
+}
+
+/** Lower-cased, with LIKE's own wildcards escaped (escape character `!`). */
+export function likePrefix(typed: string): string {
+  return typed
+    .trim()
+    .toLowerCase()
+    .replace(/[!%_]/g, (char) => `!${char}`);
 }
 
 /** The answer when there is no gazetteer: honest, and never throws. */
@@ -141,6 +154,12 @@ export function openGazetteer(file: string, options: OpenGazetteerOptions): Gaze
   const admin1ByNameKeyInCountry = raw.prepare(
     'select * from admin1 where name_key = ? and country_code = ?',
   );
+  // Prefix on the plain ASCII name: `name_key` sorts its tokens ("delhi new"),
+  // so it cannot answer "starts with". 37 k rows; a scan is a millisecond.
+  const byPrefix = raw.prepare(
+    `select * from places where lower(ascii_name) like ? escape '!'
+      order by population desc limit ?`,
+  );
   const admin1ByCode = raw.prepare(
     'select * from admin1 where country_code = ? and admin1_code = ?',
   );
@@ -201,6 +220,10 @@ export function openGazetteer(file: string, options: OpenGazetteerOptions): Gaze
 
   return {
     available: true,
+    suggest: (prefix, limit) =>
+      prefix.trim() === ''
+        ? []
+        : (byPrefix.all(`${likePrefix(prefix)}%`, limit) as PlaceRow[]).map(toPlace),
     findByNameKey: (nameKey, countryCode) =>
       (countryCode === undefined
         ? (byNameKey.all(nameKey, nameKey) as PlaceRow[])

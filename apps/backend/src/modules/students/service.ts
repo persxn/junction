@@ -17,8 +17,11 @@ import {
   externalDisabled,
   phoneDisabled,
   studentVersionConflict,
+  universityIdRequired,
   universityIdTaken,
 } from './errors.js';
+import { INSTALLATION_MODE } from '../installation/settings.js';
+import { isStudentMode } from '@compintel/contracts';
 import {
   decodeCursor,
   encodeCursor,
@@ -116,9 +119,10 @@ export class StudentsService {
     assertCan(context.actor, 'student.create');
     const organizationId = this.#reader.organizationId();
     this.#gate(blankToNull(request.phone), request.isExternal === true);
-    const key = universityIdKey(request.universityId);
-    if (this.#deps.students.findByKey(organizationId, key) !== undefined) {
-      throw universityIdTaken(request.universityId);
+    const universityId = this.#rollNumber(request.universityId);
+    const key = universityId === null ? null : universityIdKey(universityId);
+    if (key !== null && this.#deps.students.findByKey(organizationId, key) !== undefined) {
+      throw universityIdTaken(universityId ?? '');
     }
     const departmentId = this.#department(organizationId, request.homeDepartmentId);
     const id = uuid7();
@@ -140,7 +144,7 @@ export class StudentsService {
           this.#deps.students.insert({
             id,
             organizationId,
-            universityId: request.universityId.trim(),
+            universityId,
             universityIdKey: key,
             fullName: request.fullName.trim(),
             preferredName: blankToNull(request.preferredName) ?? null,
@@ -162,6 +166,7 @@ export class StudentsService {
             createdBy: context.actor.id,
             updatedAt: at,
           });
+          if (request.isMe === true) this.#linkMe(context, id, true);
           if (request.mentorMe) {
             this.#deps.relations.startMentorship({
               mentorUserId: context.actor.id,
@@ -174,7 +179,7 @@ export class StudentsService {
         },
       );
     } catch (error) {
-      if (isUniqueViolation(error)) throw universityIdTaken(request.universityId);
+      if (isUniqueViolation(error)) throw universityIdTaken(universityId ?? '');
       throw error;
     }
     return this.#reader.detail(context.actor, id);
@@ -198,14 +203,17 @@ export class StudentsService {
       changed[field] = value;
     };
     if (request.universityId !== undefined) {
-      const key = universityIdKey(request.universityId);
+      const universityId = this.#rollNumber(request.universityId);
+      const key = universityId === null ? null : universityIdKey(universityId);
       if (key !== row.universityIdKey) {
-        const holder = this.#deps.students.findByKey(row.organizationId, key);
-        if (holder !== undefined && holder.id !== id) throw universityIdTaken(request.universityId);
-        set('universityId', request.universityId.trim());
+        const holder =
+          key === null ? undefined : this.#deps.students.findByKey(row.organizationId, key);
+        if (holder !== undefined && holder.id !== id) throw universityIdTaken(universityId ?? '');
+        set('universityId', universityId);
         patch.universityIdKey = key;
       }
     }
+    if (request.isMe !== undefined) this.#linkMe(context, id, request.isMe);
     set('fullName', request.fullName?.trim());
     set('preferredName', blankToNull(request.preferredName));
     const email = blankToNull(request.institutionalEmail);
@@ -247,6 +255,31 @@ export class StudentsService {
   }
 
   /** Q6/Q8: the two settings decide what a form may carry. */
+  /** R135: optional on a student install, required (R93) on a department one. */
+  #rollNumber(value: string | undefined): string | null {
+    const trimmed = value?.trim() ?? '';
+    if (trimmed !== '') return trimmed;
+    if (isStudentMode(this.#deps.settings.get(INSTALLATION_MODE))) return null;
+    throw universityIdRequired();
+  }
+
+  /** R135 "This is me": links (or unlinks) the signed-in profile and this row. */
+  #linkMe(context: StudentsContext, studentId: string, isMe: boolean): void {
+    const profiles = this.#deps.profiles;
+    if (profiles === undefined) return;
+    if (!isMe) {
+      profiles.unlink(context.actor.id, studentId);
+      return;
+    }
+    const holder = profiles.profileOf(studentId);
+    if (holder !== null && holder !== context.actor.id) {
+      throw validationFailed([
+        { path: 'isMe', message: 'Another profile already says this student is them.' },
+      ]);
+    }
+    profiles.link(context.actor.id, studentId);
+  }
+
   #gate(phone: string | null | undefined, becomingExternal: boolean): void {
     if (phone !== undefined && phone !== null && !this.#deps.settings.get(STUDENTS_PHONE_ENABLED)) {
       throw phoneDisabled();

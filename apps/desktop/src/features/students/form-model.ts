@@ -27,6 +27,14 @@ export interface StudentFormState {
   readonly notes: string;
   readonly privacyNoticeShown: boolean;
   readonly mentorMe: boolean;
+  /** R135 "This is me" — offered when creating, on a student install. */
+  readonly isMe: boolean;
+}
+
+/** WP-34: what the install changes about the form (R135). */
+export interface StudentFormRules {
+  /** A student install: no roll number needed. */
+  readonly rollNumberOptional?: boolean;
 }
 
 export type StudentFormErrors = Partial<Record<keyof StudentFormState, string>>;
@@ -47,12 +55,13 @@ export function emptyForm(homeDepartmentId: string): StudentFormState {
     notes: '',
     privacyNoticeShown: false,
     mentorMe: true,
+    isMe: false,
   };
 }
 
 export function formFromStudent(student: StudentDetail): StudentFormState {
   return {
-    universityId: student.universityId,
+    universityId: student.universityId ?? '',
     fullName: student.fullName,
     preferredName: student.preferredName ?? '',
     institutionalEmail: student.institutionalEmail ?? '',
@@ -67,15 +76,21 @@ export function formFromStudent(student: StudentDetail): StudentFormState {
     // Already given once: the box shows ticked and is not asked again.
     privacyNoticeShown: student.privacyNoticeAckAt !== null,
     mentorMe: false,
+    isMe: false,
   };
 }
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function validateForm(form: StudentFormState, settings: StudentSettings): StudentFormErrors {
+export function validateForm(
+  form: StudentFormState,
+  settings: StudentSettings,
+  rules: StudentFormRules = {},
+): StudentFormErrors {
   const errors: StudentFormErrors = {};
-  if (form.universityId.trim() === '') errors.universityId = 'Enter the roll number.';
-  else if (form.universityId.trim().length > 40)
+  if (form.universityId.trim() === '') {
+    if (rules.rollNumberOptional !== true) errors.universityId = 'Enter the roll number.';
+  } else if (form.universityId.trim().length > 40)
     errors.universityId = 'A roll number has at most 40 characters.';
   if (form.fullName.trim().length < 2) errors.fullName = 'Enter the student’s full name.';
   if (form.institutionalEmail.trim() !== '' && !EMAIL.test(form.institutionalEmail.trim())) {
@@ -102,6 +117,7 @@ const orNull = (value: string): string | null => (value.trim() === '' ? null : v
 /** The fields both requests share; settings that are off send nothing for their fields. */
 function fields(form: StudentFormState, settings: StudentSettings) {
   return {
+    // Empty only reaches the server on a student install, where it means "none" (R135).
     universityId: form.universityId.trim(),
     fullName: form.fullName.trim(),
     preferredName: orNull(form.preferredName),
@@ -126,7 +142,13 @@ export function toCreateRequest(
   form: StudentFormState,
   settings: StudentSettings,
 ): StudentCreateInput {
-  return { ...fields(form, settings), mentorMe: form.mentorMe };
+  const { universityId, ...rest } = fields(form, settings);
+  return {
+    ...rest,
+    ...(universityId === '' ? {} : { universityId }),
+    mentorMe: form.mentorMe,
+    ...(form.isMe ? { isMe: true } : {}),
+  };
 }
 
 export function toUpdateRequest(

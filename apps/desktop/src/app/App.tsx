@@ -150,7 +150,8 @@ function AuthGate({ connection }: { readonly connection: BackendConnection }): R
   // §10.5: the UI locks itself after the configured idle time. The server is the
   // authority — `idle_expires_at` is what actually ends the session — so this
   // only decides when to put the lock screen up.
-  useIdleTimer(status === 'READY' ? me?.session.autoLockMinutes : undefined, lock);
+  // R132: a guest has no password to unlock with, so it never locks (`null`).
+  useIdleTimer(status === 'READY' ? (me?.session.autoLockMinutes ?? undefined) : undefined, lock);
 
   const live = useLiveUpdates({ connection, enabled: status === 'READY', refresh });
 

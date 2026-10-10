@@ -8,6 +8,7 @@ import {
   installWizardShell,
   nextStep,
   renderWizard,
+  startAsDepartment,
 } from '../../testing/wizard.js';
 
 /**
@@ -40,7 +41,7 @@ afterEach(() => {
 describe('accessibility (the §19 criterion)', () => {
   it.each([
     ['welcome', (): Promise<void> => Promise.resolve()],
-    ['organization', async (): Promise<void> => nextStep(/Get started/)],
+    ['organization', async (): Promise<void> => startAsDepartment()],
     ['campus', async (): Promise<void> => fillTo('campus').then(() => nextStep())],
     ['folders', async (): Promise<void> => fillTo('folders').then(() => nextStep())],
   ])('has no axe violations on %s', async (_name, reach) => {

@@ -133,7 +133,8 @@ export type StudentAchievementInput = z.infer<typeof StudentAchievementInput>;
 export const StudentListItem = z
   .object({
     id: Uuid7,
-    universityId: z.string().min(1),
+    /** Null only on a student install, where the roll number is optional (R135). */
+    universityId: z.string().min(1).nullable(),
     fullName: z.string().min(1),
     preferredName: z.string().nullable(),
     institutionalEmail: z.string().nullable(),
@@ -161,7 +162,8 @@ export type StudentListItem = z.infer<typeof StudentListItem>;
 export const StudentDetail = z
   .object({
     id: Uuid7,
-    universityId: z.string().min(1),
+    /** Null only on a student install, where the roll number is optional (R135). */
+    universityId: z.string().min(1).nullable(),
     fullName: z.string().min(1),
     preferredName: z.string().nullable(),
     institutionalEmail: z.string().nullable(),
@@ -196,7 +198,8 @@ export type StudentDetail = z.infer<typeof StudentDetail>;
 
 /** The form's fields, shared by create and edit. */
 const StudentFields = {
-  universityId: text(40),
+  /** Required on a department install; the service enforces it per mode (R135). */
+  universityId: text(40).optional(),
   fullName: text(200),
   preferredName: optionalText(100),
   institutionalEmail: z.email().max(254).nullish(),
@@ -210,6 +213,8 @@ const StudentFields = {
   notes: optionalText(500),
   /** The privacy notice was shown and acknowledged: stamps `privacy_notice_ack_at` (Q8). */
   privacyNoticeShown: z.boolean().optional(),
+  /** R135 "This is me": link the signed-in profile to this row (student installs). */
+  isMe: z.boolean().optional(),
 };
 
 export const StudentCreateRequest = z
@@ -237,6 +242,7 @@ export const StudentUpdateRequest = z
     externalInstitution: StudentFields.externalInstitution,
     notes: StudentFields.notes,
     privacyNoticeShown: StudentFields.privacyNoticeShown,
+    isMe: StudentFields.isMe,
     version: z.int().min(1),
   })
   .strict();

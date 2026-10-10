@@ -12,6 +12,7 @@ import type { SettingsStore } from '../../platform/settings.js';
 import {
   accountDisabled,
   accountLocked,
+  guestHasNoPassword,
   invalidCredentials,
   sessionExpired,
   tooManyAttempts,
@@ -91,16 +92,24 @@ export class AuthService {
       status: row.status as UserStatus,
       mustChangePassword: row.mustChangePassword,
       roles: this.#repo.rolesOf(row.id),
+      isGuest: row.isGuest,
     };
+  }
+
+  /** A session for an account the caller has already decided may have one (R132). */
+  issueSession(userId: string, context: LoginContext = {}): LoginResult {
+    return this.#issueSession(userId, context);
   }
 
   #issueSession(userId: string, context: LoginContext): LoginResult {
     const now = this.#nowMs;
     const token = generateSessionToken(this.#random);
+    // R132: a guest has no password to unlock with, so its idle window is its whole life.
+    const guest = this.#repo.findUserById(userId)?.isGuest === true;
     const row = this.#repo.createSession({
       userId,
       tokenHash: hashToken(token),
-      idleExpiresAt: now + this.autoLockMinutes() * 60_000,
+      idleExpiresAt: now + (guest ? ABSOLUTE_SESSION_MS : this.autoLockMinutes() * 60_000),
       absoluteExpiresAt: now + ABSOLUTE_SESSION_MS,
       clientKind: context.clientKind ?? 'DESKTOP',
       clientLabel: context.clientLabel,
@@ -153,6 +162,7 @@ export class AuthService {
       this.#auditFailure(row.id, row.email, 'account disabled', context);
       throw accountDisabled();
     }
+    if (row.isGuest) throw guestHasNoPassword();
 
     if (!(await verifyPassword(row.passwordHash, request.password))) {
       // The counter, the lock it may trigger and the audit row are one unit:
@@ -233,7 +243,7 @@ export class AuthService {
     }
 
     let idleExpiresAt = row.idleExpiresAt;
-    if (now - row.lastSeenAt >= SESSION_REFRESH_INTERVAL_MS) {
+    if (now - row.lastSeenAt >= SESSION_REFRESH_INTERVAL_MS && user.isGuest !== true) {
       idleExpiresAt = Math.min(now + this.autoLockMinutes() * 60_000, row.absoluteExpiresAt);
       this.#repo.touchSession(row.id, now, idleExpiresAt);
     }
@@ -352,7 +362,7 @@ export class AuthService {
     return {
       idleExpiresAt: new Date(session.idleExpiresAt).toISOString(),
       absoluteExpiresAt: new Date(session.absoluteExpiresAt).toISOString(),
-      autoLockMinutes: this.autoLockMinutes(),
+      autoLockMinutes: session.user.isGuest === true ? null : this.autoLockMinutes(),
     };
   }
 
@@ -372,6 +382,7 @@ export class AuthService {
         departmentId: user.departmentId,
         status: user.status,
         mustChangePassword: user.mustChangePassword,
+        isGuest: user.isGuest === true,
       },
       roles: [...user.roles],
       permissions: [...permissionsFor(user.roles)],

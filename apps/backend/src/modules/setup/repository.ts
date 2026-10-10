@@ -34,7 +34,11 @@ export interface SetupWrite {
     readonly email: string;
     readonly displayName: string;
     readonly passwordHash: string;
+    /** R132: a student install's first account is the password-less guest. */
+    readonly isGuest?: boolean;
   };
+  /** Defaults to ADMINISTRATOR + PROFESSOR; a student install's guest gets STUDENT instead. */
+  readonly roles?: readonly RoleKey[];
   /** Applied inside the same transaction, so a settings failure rolls the rest back. */
   readonly settings: readonly (readonly [key: string, valueJson: string])[];
 }
@@ -159,12 +163,13 @@ export class SetupRepository {
           createdBy: null,
           updatedAt: now,
           version: 1,
+          isGuest: write.admin.isGuest ?? false,
         })
         .run();
 
       // Both roles: the first account is the only account, and an installation
       // whose admin cannot mentor a team would need a second user to do anything.
-      for (const key of ['ADMINISTRATOR', 'PROFESSOR'] satisfies RoleKey[]) {
+      for (const key of write.roles ?? (['ADMINISTRATOR', 'PROFESSOR'] satisfies RoleKey[])) {
         const role = this.#drizzle.select().from(roles).where(eq(roles.key, key)).get();
         if (role === undefined) {
           throw new Error(`role "${key}" is not seeded; migration 0003 did not run`);

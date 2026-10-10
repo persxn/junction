@@ -12,12 +12,37 @@ import { CredentialScreen } from './CredentialScreen.js';
  */
 
 export function LoginScreen(): React.JSX.Element {
-  const { signIn, busy, error } = useAuth();
+  const { signIn, busy, error, guest, continueAsGuest } = useAuth();
+  // WP-34: while Myself signs its guest in by itself, a sign-in form would only
+  // flash up and vanish.
+  if (continueAsGuest !== undefined && guest?.automatic === true && error === undefined) {
+    return (
+      <div className="flex h-full items-center justify-center bg-surface-sunken text-fg-muted">
+        <p role="status">Opening Junction…</p>
+      </div>
+    );
+  }
+  // WP-34 (R134): a student install's walk-in account, when the lead allows it.
+  const offerGuest = guest?.available === true && continueAsGuest !== undefined;
   return (
     <CredentialScreen
       icon="sign-in"
       title="Sign in to Junction"
-      description="Use the account an administrator created for you."
+      description={
+        offerGuest
+          ? 'Sign in with your profile, or carry on as a guest — no account needed.'
+          : 'Use the account an administrator created for you.'
+      }
+      {...(offerGuest
+        ? {
+            secondaryAction: {
+              label: 'Continue as guest',
+              onAction: () => {
+                void continueAsGuest();
+              },
+            },
+          }
+        : {})}
       fields={[
         { name: 'email', label: 'Email', type: 'email', autoComplete: 'username' },
         {

@@ -20,13 +20,13 @@ import { createLogger, type LoggerHandle } from './platform/logger.js';
 import { recordAppMeta, runMigrations } from './platform/migrate.js';
 import { AUTO_LOCK_MINUTES } from './settings.js';
 import { resolveResources } from './platform/resources.js';
+import { openGeography } from './modules/geo/wiring.js';
+import { GuestService } from './modules/auth/guest.js';
+import { ProfileRepository } from './modules/auth/profile-repo.js';
 import { SettingsStore } from './platform/settings.js';
 import { ShutdownRegistry } from './platform/shutdown.js';
 import { failStart, listeningPort, writeReadyLine } from './platform/ready-line.js';
-import { openGazetteer, unavailableGazetteer } from './platform/gazetteer.js';
 import { nowMs, systemClock } from './platform/time.js';
-import { Geocoder } from './modules/geo/geocoder.js';
-import { loadInstitutions, loadSeedFile, seedInstitutions } from './modules/geo/seed.js';
 import { EventsRepository } from './modules/events/repository.js';
 import { EventsService } from './modules/events/service.js';
 import { applyCategorySeed, loadCategorySeed } from './modules/categories/seed.js';
@@ -117,33 +117,23 @@ async function main(): Promise<void> {
       repository: new UsersRepository(db),
       auth: authRepository,
       audit,
+      settings,
       onAdministratorsChanged: () => {
         setup.invalidate();
       },
     });
-
-    // Geography (§4.17, rulings R53-R55). The gazetteer is reference data the
-    // build produces; a missing one is a warning and a geocoder that answers
-    // UNKNOWN, never a failed start (R54). The institutions seed is idempotent,
-    // so running it every start costs one query and keeps a fresh install
-    // correct without a separate step.
-    const gazetteer =
-      resources.gazetteerFile === undefined
-        ? unavailableGazetteer('no gazetteer was built; run `pnpm gazetteer:build`')
-        : openGazetteer(resources.gazetteerFile, { logger, shutdown, ...nativeBinding });
-    if (!gazetteer.available) {
-      logger.warn(
-        { reason: gazetteer.unavailableReason },
-        'geocoding will answer UNKNOWN until a gazetteer is built',
-      );
-    }
-    const seeded = seedInstitutions(db, audit, {
-      ...(resources.institutionsSeedFile === undefined
-        ? {}
-        : { seed: loadSeedFile(resources.institutionsSeedFile) }),
+    // WP-34 (R132-R134): the student edition's guest and "Create my profile".
+    const guest = new GuestService({
+      auth,
+      users: authRepository,
+      profiles: new ProfileRepository(db),
+      settings,
+      audit,
+      onAdministratorsChanged: () => setup.invalidate(),
     });
-    logger.info(seeded, 'institutions seeded');
-    const geocoder = new Geocoder({ gazetteer, institutions: loadInstitutions(db) });
+
+    // Geography (§4.17, R53-R55): gazetteer, institutions seed, geocoder.
+    const { geocoder, places } = openGeography({ db, audit, logger, shutdown, resources });
     const eventsService = new EventsService({
       repository: new EventsRepository(db),
       geocoder,
@@ -324,6 +314,8 @@ async function main(): Promise<void> {
       auth: () => auth,
       setup: () => setup,
       users: () => users,
+      guest: () => guest,
+      places: () => places,
       sources: () => sourcesService,
       connectPrompt: () => sourcesModule.connectPrompt,
       imports: () => sourcesModule.imports,

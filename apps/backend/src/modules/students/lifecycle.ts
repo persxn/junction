@@ -78,7 +78,9 @@ export class StudentLifecycleService {
     assertCan(context.actor, 'student.erase');
     const row = this.#reader.require(id);
     if (row.erasedAt !== null) throw studentErased();
-    if (universityIdKey(request.universityId) !== row.universityIdKey) {
+    // R135: a student-install teammate may have no roll number; the name confirms instead.
+    const expected = row.universityIdKey ?? universityIdKey(row.fullName);
+    if (universityIdKey(request.universityId) !== expected) {
       throw validationFailed([
         {
           path: 'body.universityId',

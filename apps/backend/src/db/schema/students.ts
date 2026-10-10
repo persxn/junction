@@ -42,10 +42,10 @@ export const students = sqliteTable(
     organizationId: text('organization_id')
       .notNull()
       .references(() => organizations.id),
-    /** The roll or enrolment number, as typed. */
-    universityId: text('university_id').notNull(),
+    /** The roll or enrolment number, as typed. Optional on a student install only (R135). */
+    universityId: text('university_id'),
     /** R93: `universityId` upper-cased, spaces removed — what matches and what is unique. */
-    universityIdKey: text('university_id_key').notNull(),
+    universityIdKey: text('university_id_key'),
     fullName: text('full_name').notNull(),
     preferredName: text('preferred_name'),
     institutionalEmail: text('institutional_email'),
@@ -71,10 +71,9 @@ export const students = sqliteTable(
     version: integer('version').notNull().default(1),
   },
   (table) => [
-    uniqueIndex('students_org_university_id_key_uq').on(
-      table.organizationId,
-      table.universityIdKey,
-    ),
+    uniqueIndex('students_org_university_id_key_uq')
+      .on(table.organizationId, table.universityIdKey)
+      .where(sql`"university_id_key" is not null`),
     index('students_full_name_idx').on(table.fullName),
     index('students_status_idx').on(table.status),
     index('students_program_idx').on(table.program),

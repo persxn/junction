@@ -17,9 +17,10 @@ export function EraseDialog(props: {
 }): React.JSX.Element {
   const inputId = useId();
   const [typed, setTyped] = useState('');
+  // R135: with no roll number (a student install), the full name confirms instead.
+  const confirmWith = props.student.universityId ?? props.student.fullName;
   const matches =
-    typed.replace(/\s+/g, '').toUpperCase() ===
-    props.student.universityId.replace(/\s+/g, '').toUpperCase();
+    typed.replace(/\s+/g, '').toUpperCase() === confirmWith.replace(/\s+/g, '').toUpperCase();
   return (
     <Dialog title={`Erase ${props.student.fullName}?`} onClose={props.onCancel}>
       <p className="text-fg-muted">
@@ -36,8 +37,8 @@ export function EraseDialog(props: {
       >
         <div className="flex flex-col gap-1.5">
           <label htmlFor={inputId} className="font-medium">
-            Type the roll number <span className="font-mono">{props.student.universityId}</span> to
-            confirm
+            Type the {props.student.universityId === null ? 'name' : 'roll number'}{' '}
+            <span className="font-mono">{confirmWith}</span> to confirm
           </label>
           <input
             id={inputId}

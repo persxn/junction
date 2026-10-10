@@ -115,11 +115,18 @@ export async function nextStep(
   await wizardUser().click(screen.getByRole('button', { name }));
 }
 
+/** WP-34: past Welcome and "Who is setting up Junction?", as a department. */
+export async function startAsDepartment(): Promise<void> {
+  await nextStep(/Get started/);
+  await wizardUser().click(screen.getByRole('radio', { name: /A professor or department/ }));
+  await nextStep();
+}
+
 /** Fills everything up to, but not including, the step named. */
 export async function fillTo(
   step: 'campus' | 'administrator' | 'contact' | 'folders' | 'passphrase' | 'submit',
 ): Promise<void> {
-  await nextStep(/Get started/);
+  await startAsDepartment();
   await typeInto('Institution', 'Example Institute of Technology');
   await typeInto('Department', 'Computer Science and Engineering');
   if (step === 'campus') {

@@ -38,3 +38,4 @@ export * from './system.js';
 export * from './user-state.js';
 export * from './appearance.js';
 export * from './insights.js';
+export * from './installation.js';

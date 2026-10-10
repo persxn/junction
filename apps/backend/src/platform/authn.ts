@@ -31,6 +31,9 @@ export function publicPaths(apiPrefix: string): ReadonlySet<string> {
     // §10.3, verbatim.
     `${apiPrefix}/health`,
     `${apiPrefix}/auth/login`,
+    // WP-34 (R132): the student edition's password-less guest. It answers 404
+    // anywhere the guest is not offered, so being public gives nothing away.
+    `${apiPrefix}/auth/guest`,
     // Ruling A19: the client secret is its whole gate, by design — the UI has to
     // be able to report a crash that happened before anyone signed in.
     `${apiPrefix}/system/client-log`,

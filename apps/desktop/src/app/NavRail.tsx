@@ -3,7 +3,7 @@ import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 
 import { useAuth } from '../auth/auth-context.js';
 import { Logo } from '../components/Logo.js';
-import { ADMIN_NAV, MAIN_NAV, type NavItem } from './nav.js';
+import { navFor, type NavItem } from './nav.js';
 
 const ITEM_CLASS =
   'flex items-center gap-2 rounded-md px-2 py-1.5 text-fg-muted hover:bg-surface-hover ' +
@@ -24,8 +24,10 @@ export interface NavRailProps {
  * the route guard and, above all, the server decide.
  */
 export function NavRail({ collapsed, onToggle }: NavRailProps): React.JSX.Element {
-  const { can } = useAuth();
-  const adminItems = ADMIN_NAV.filter((item) => can(item.action));
+  const { can, me } = useAuth();
+  // WP-34: a student install relabels the rail and keeps a shorter admin section.
+  const nav = navFor(me?.mode);
+  const adminItems = nav.admin.filter((item) => can(item.action));
 
   return (
     <div
@@ -62,7 +64,7 @@ export function NavRail({ collapsed, onToggle }: NavRailProps): React.JSX.Elemen
         </div>
 
         <div className="flex flex-col gap-0.5 p-2">
-          {MAIN_NAV.map((item) => (
+          {nav.main.map((item) => (
             <RailLink key={item.id} item={item} collapsed={collapsed} />
           ))}
         </div>

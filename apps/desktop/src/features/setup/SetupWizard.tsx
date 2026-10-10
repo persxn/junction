@@ -11,7 +11,10 @@ import {
   ContactStep,
   OrganizationStep,
 } from './steps/BasicSteps.js';
+import { AudienceStep, type Audience } from './steps/AudienceStep.js';
 import { FoldersStep } from './steps/FoldersStep.js';
+import { StudentWizard } from './StudentWizard.js';
+import type { Representing } from './student-wizard-state.js';
 import { DoneStep, PassphraseStep, RecoveryStep, WelcomeStep } from './steps/RecoverySteps.js';
 import { WizardFrame } from './WizardFrame.js';
 import {
@@ -40,6 +43,7 @@ import {
 
 const DESCRIPTIONS: Readonly<Record<WizardStep, string>> = {
   welcome: 'A few questions, and then Junction is yours.',
+  audience: 'For a department, or for a student. You cannot change this later.',
   organization: 'Who this installation belongs to.',
   campus: 'Where your campus is, so “nearby” means something.',
   administrator: 'The first account. You can add more once you are in.',
@@ -73,6 +77,10 @@ export function SetupWizard({
   const [checkingPath, setCheckingPath] = useState(false);
 
   const [result, setResult] = useState<SetupResult | undefined>(undefined);
+  // WP-34: who is setting up, and — for a student — whom they represent.
+  const [audience, setAudience] = useState<Audience | undefined>(undefined);
+  const [representing, setRepresenting] = useState<Representing | undefined>(undefined);
+  const [student, setStudent] = useState(false);
   const [savedTo, setSavedTo] = useState<string | undefined>(undefined);
   const [codeConfirmed, setCodeConfirmed] = useState(false);
   const [fileConfirmed, setFileConfirmed] = useState(false);
@@ -114,8 +122,8 @@ export function SetupWizard({
       setSavedTo(
         await saveTextFile({
           folder,
-          fileName: result.recoveryFileName,
-          contents: result.recoveryFile,
+          fileName: result.recoveryFileName ?? 'junction-recovery.txt',
+          contents: result.recoveryFile ?? '',
           // The wizard writes one file, once; replacing an earlier attempt in
           // the same folder is what the user means by saving again.
           overwrite: true,
@@ -149,6 +157,23 @@ export function SetupWizard({
   }, [connection, values]);
 
   const advance = useCallback((): void => {
+    if (step === 'audience') {
+      if (audience === undefined || (audience === 'STUDENT' && representing === undefined)) {
+        setProblem({
+          title: 'Choose one to carry on',
+          detail:
+            audience === undefined
+              ? 'Tell Junction who is setting it up.'
+              : 'Tell Junction whom you represent.',
+        } as ApiProblem);
+        return;
+      }
+      setProblem(undefined);
+      if (audience === 'STUDENT') {
+        setStudent(true);
+        return;
+      }
+    }
     const found = validateStep(step, values);
     if (Object.values(found).some((message) => message !== undefined)) {
       setErrors(found);
@@ -172,9 +197,23 @@ export function SetupWizard({
     if (following !== undefined) {
       setStep(following);
     }
-  }, [step, values, pathCheck, submit, onFinished]);
+  }, [step, values, pathCheck, submit, onFinished, audience, representing]);
 
   const back = previousStep(step);
+
+  if (student && representing !== undefined) {
+    return (
+      <StudentWizard
+        connection={connection}
+        representing={representing}
+        onBack={() => {
+          setStudent(false);
+        }}
+        onFinished={onFinished}
+      />
+    );
+  }
+
   const canAdvance =
     step !== 'recovery' || (savedTo !== undefined && codeConfirmed && fileConfirmed);
 
@@ -223,6 +262,20 @@ export function SetupWizard({
       }
     >
       {step === 'welcome' && <WelcomeStep />}
+      {step === 'audience' && (
+        <AudienceStep
+          audience={audience}
+          representing={representing}
+          onAudience={(chosen) => {
+            setAudience(chosen);
+            setProblem(undefined);
+          }}
+          onRepresenting={(chosen) => {
+            setRepresenting(chosen);
+            setProblem(undefined);
+          }}
+        />
+      )}
       {step === 'organization' && (
         <OrganizationStep values={values} errors={errors} onChange={change} />
       )}

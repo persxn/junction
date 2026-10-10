@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { InstallationMode } from './installation.js';
 import { Action, OwnershipRule, RoleKey } from './permissions.js';
 
 /**
@@ -49,6 +50,8 @@ export const AuthUser = z.object({
   status: UserStatus,
   /** True until the forced first-login change is done (ruling R38). */
   mustChangePassword: z.boolean(),
+  /** R132: the built-in, password-less guest of a student install. Absent means false. */
+  isGuest: z.boolean().optional(),
 });
 export type AuthUser = z.infer<typeof AuthUser>;
 
@@ -70,7 +73,9 @@ export const SessionExpiry = z.object({
   autoLockMinutes: z
     .int()
     .min(1)
-    .max(24 * 60),
+    .max(24 * 60)
+    // R132: a guest has no password to unlock with, so it never locks.
+    .nullable(),
 });
 export type SessionExpiry = z.infer<typeof SessionExpiry>;
 
@@ -80,6 +85,10 @@ export const MeResponse = z.object({
   roles: z.array(RoleKey),
   permissions: z.array(PermissionEntry),
   session: SessionExpiry,
+  /** R130: absent from a backend older than WP-34, which is always a department install. */
+  mode: InstallationMode.optional(),
+  /** R134: whether "Continue as guest" is offered on this install. */
+  guestEnabled: z.boolean().optional(),
 });
 export type MeResponse = z.infer<typeof MeResponse>;
 
@@ -153,3 +162,35 @@ export const StreamEvent = z.object({
   payload: z.record(z.string(), z.unknown()),
 });
 export type StreamEvent = z.infer<typeof StreamEvent>;
+
+/**
+ * `POST /auth/guest` has no body; `GET /auth/guest` says whether it would work,
+ * so the sign-in screen knows whether to offer "Continue as guest" (R132).
+ */
+export const GuestAvailability = z.object({
+  available: z.boolean(),
+  mode: InstallationMode,
+  /** Myself, still unclaimed: the app signs in as the guest without asking. */
+  automatic: z.boolean(),
+});
+export type GuestAvailability = z.infer<typeof GuestAvailability>;
+
+/**
+ * `POST /me/profile` — "Create my profile" from a guest session (R133, R134).
+ * On Myself the guest itself becomes the profile; on an institution a new
+ * profile is created, and `takeGuestData` moves what the guest made with it.
+ */
+export const ProfileRequest = z
+  .object({
+    displayName: z.string().trim().min(2).max(120),
+    email: z.email().max(320),
+    password: Password,
+    takeGuestData: z.boolean().default(false),
+  })
+  .strict();
+export type ProfileRequest = z.infer<typeof ProfileRequest>;
+export type ProfileInput = z.input<typeof ProfileRequest>;
+
+/** `PUT /admin/guest` — the institution lead turns walk-in access on or off (R134). */
+export const GuestToggleRequest = z.object({ enabled: z.boolean() }).strict();
+export type GuestToggleRequest = z.infer<typeof GuestToggleRequest>;

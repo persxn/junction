@@ -1,6 +1,6 @@
 # Competition Intel — Architecture Specification
 
-**Version:** 1.1.23 · **Date:** 9 Oct 2026 · **Status:** ACCEPTED — implementation baseline (amended after WP-00…WP-02b)
+**Version:** 1.1.30 · **Date:** 10 Oct 2026 · **Status:** ACCEPTED — implementation baseline (amended after WP-00…WP-02b)
 **Author:** Architect (Claude, Cowork session) · **Implementer:** Claude Code (worker session)
 
 > **How to use this document.** This is the implementation source of truth. The worker must not
@@ -38,6 +38,7 @@
 | 1.1.21 | 9 Oct 2026 | Rulings R106–R107: deadline read model, Radar buckets and KPI counts (see §21). |
 | 1.1.22 | 9 Oct 2026 | Rulings R108–R111: notification keys, recipients, severity, snooze (see §21). |
 | 1.1.23 | 9 Oct 2026 | Rulings R112–R113: saved-search baselines, interests model (see §21). |
+| 1.1.30 | 10 Oct 2026 | Owner decisions O-4…O-7, rulings R130–R135: the student edition — STUDENT role, password-less guest, "Myself" / "An institution" first run (see §21). R114–R129 stay reserved for the deferred M4. |
 | 1.1.12 | 21 Sep 2026 | Owner ruling R74: signed-in reading with the professor's own session for approved sources; §7.2 "Never" amended; built in WP-14 (see §21, D-34). R70–R73 stay reserved for WP-13, which lands as 1.1.13. |
 
 ---
@@ -140,6 +141,10 @@ Working name: **Competition Intel** (code/paths: `compintel`).
   already built it, and the owner reviewed the security posture (Argon2id, lockout, audit chain,
   auto-lock, recovery material) and chose to keep it exactly as specified rather than trim it for a
   single-user pilot.
+- **Student installs (WP-34, O-4…O-7, R130).** The same installer sets up a *student* install when the
+  first-run wizard is told so: standalone on the student's own PC, no link to any department install.
+  A built-in **guest** (no password) can do everything; *Myself* has one personal profile, *An
+  institution* is a shared club PC whose first profile leads. `installation.mode` is fixed at setup.
 - **Client mode (speculative, not scheduled).** Kept as a design option, not a roadmap item: desktop
   apps on professor laptops would connect to a backend on a campus machine over the LAN with TLS, same
   build, run as a Windows service or on a tray host, with the API reporting its version and the UI
@@ -1154,6 +1159,10 @@ The UI reads `/api/v1/me/permissions` only to hide or disable controls (cosmetic
 | Restore, exports of all data, audit log (all) | — | ✓ |
 | Activity timeline of a record | ✓ (records they can view) | ✓ |
 
+**Student column (R131, WP-34):** `STUDENT` has exactly PROFESSOR's rules today — own teams, competitions,
+workflows, outcomes and saved items; every admin action `—`. It exists only on student installs, where the
+person's own administrator rights come from R133/R134, and PROFESSOR never does.
+
 ### 10.3 Local API hardening (host mode)
 
 Bind `127.0.0.1` only · per-launch client secret header · Host header allowlist (DNS-rebinding
@@ -1310,6 +1319,9 @@ migrations → restart backend → audit entry.
 Left rail (collapsible): **Dashboard · Discover · Competitions · Teams · Students · Assistant ·
 Notifications** · *Admin (admins only):* Users · Sources & scraper · Categories & rules · Duplicates ·
 Campus & settings · Backups · Audit log · System health.
+
+On a student install (R135) *Students* reads **Teammates**, mentors read **Owner / Co-owner**, and the
+admin section is one **Settings** page (*Myself*) or **Users + Settings** (an institution's lead).
 
 Top bar: **Ask / search box (Ctrl+K)** · freshness pill "Updated 4 min ago" (click → per-source status
 popover) · notifications bell · user menu (theme, lock, sign out).
@@ -1695,6 +1707,12 @@ ative\ (better-sqlite3 `nativeBinding`); the bundle must run from a folder with 
 | R67 Palette layer | The `--ci-*` semantic tokens from WP-06 are a contract and are never renamed; flavours are a palette layer beneath them (Catppuccin Latte default light, Mocha default dark, Frappé/Macchiato optional, Classic = the WP-06 neutrals). The measured contrast test decides: accent hues take non-text roles (borders, glows, chart marks, fills) and text uses the `text`/`subtext` ramp until every pair passes in every flavour. A failing pair is remapped, never exempted. | §16.3, WP-33, ADR-0019 |
 | R68 Effect tiers | One `appearance.effects` setting: CALM · STANDARD (default) · SHOWCASE. `prefers-reduced-motion: reduce` forces CALM regardless of the stored value. No effect carries meaning alone — "never colour alone" (§16.3) extends to "never glow alone", and CALM must lose no information. Decorative animation uses compositor-only properties (`transform`/`opacity`/`filter`) and **stops when the document is hidden or the window is in the tray**, so WP-32's 72-hour soak passes with SHOWCASE on. RGB hue-cycle presets apply to borders, glows and accent fills only — never to text or to a status colour. | §16.3, WP-33, WP-32 |
 | R69 Insights are computed, never invented | Every number on the Insights surface comes from a deterministic SQL read model over rows the app already holds — no AI commentary (§9 is read-only), no estimates, no extrapolation, and no new data collection or telemetry. A fresh install gets an empty state that says what will appear, not a page of zeros. Milestone celebrations are permitted at STANDARD+ as one-shot, dismissible acknowledgements of recorded outcomes; streak-loss warnings, artificial urgency and counters that exist only to be incremented are not. | §16.2, WP-33, D-11, ADR-0019 |
+| R130 Installation mode | One setting, `installation.mode` = `DEPARTMENT` · `STUDENT_INDIVIDUAL` · `STUDENT_INSTITUTION`, written by `/setup/complete` inside R40's transaction and never changed by any route afterwards. Its **default is `DEPARTMENT`**, so a v0.9.0 database upgrades with no data change. `GET /setup/status` and `GET /me` both carry it. Changing mode means a fresh data folder (out of scope). | §3.1, §10, §16.1, O-4…O-7, WP-34 |
+| R131 The STUDENT role | `ROLE_KEYS` gains `STUDENT`. Its §10.2 row is today **identical to PROFESSOR's**: own teams, competitions, workflows, outcomes and saved items, with every admin action `NEVER`. It is a separate key so the two can diverge, and because a role is the install's vocabulary. The server refuses mixing: `PROFESSOR` can never be granted on a student install, `STUDENT` never on a department install (422 `ROLE_NOT_FOR_MODE`). Every place that means "can mentor" (team/competition mentor pickers, `TEAM_MENTOR_NOT_PROFESSOR`, R105 transfer targets, `TeamFormPage.selfAllowed`) reads a new `MENTOR_ROLE_KEYS = ['PROFESSOR','STUDENT']` instead of the literal `'PROFESSOR'`. | §3.1, §10, §16.1, O-4…O-7, WP-34 |
+| R132 The guest | A student install creates one built-in user: `is_guest = 1`, display name "Guest", email `guest@junction.invalid` (reserved, never a login), and a password hash that is **not** a PHC string, which `verifyPassword` rejects without throwing. `POST /auth/guest` (no body, public only on student installs while guest is enabled, 404 otherwise) mints a normal session for it. Guest sessions never auto-lock (there is nothing to unlock with): `autoLockMinutes` is reported as `null` and idle expiry is not enforced for them. The 12 h absolute expiry stays, and the UI silently re-enters as guest when it is reached. Password login, unlock and change-password on the guest answer 403 `GUEST_HAS_NO_PASSWORD`. Audit rows name the actor "Guest". | §3.1, §10, §16.1, O-4…O-7, WP-34 |
+| R133 Myself (`STUDENT_INDIVIDUAL`) | The guest holds `STUDENT` + `ADMINISTRATOR` (the machine is theirs: sources, settings, backups). **Create my profile** converts the guest **in place**: same user id, so every team, competition, saved event, search, interest, notification and appearance setting stays theirs. It sets name, e-mail and password, clears `is_guest`, and from then on the app opens to the sign-in screen and `/auth/guest` answers 404. A second profile is refused (409 `SINGLE_PROFILE_INSTALL`). The admin rail collapses to one **Settings** page (location, sources, appearance, backups when they exist); Users, Duplicates, Categories and Audit are hidden, though the server still allows them since the person is an admin. | §3.1, §10, §16.1, O-4…O-7, WP-34 |
+| R134 An institution (`STUDENT_INSTITUTION`) | Until the first profile exists the guest holds `STUDENT` + `ADMINISTRATOR` (so setup's R39 gate is satisfied). The **first profile** created becomes the **lead** (`STUDENT` + `ADMINISTRATOR`) and, in the same transaction, the guest drops to `STUDENT` only. The lead adds and removes other profiles under Admin → Users (`STUDENT` only; offering `ADMINISTRATOR` to another member is allowed, and the last-admin guard stays). The guest stays available as a walk-in account, and the lead can turn it off (`auth.guestEnabled`, default on). A guest who creates a profile is asked "Take what Guest made with you?": yes moves the guest's open mentor rows (R105's transfer, reused) **and** its personal rows (`event_user_state`, `watchlist_items`, `saved_searches` + matches, `user_interest_tags`) in one transaction; notifications stay behind. | §3.1, §10, §16.1, O-4…O-7, WP-34 |
+| R135 Student records on a student install | Teammates are `students` rows as today, and the owner of a team or competition is its `PRIMARY` mentor row. The UI calls that **Owner** / **Co-owner** on student installs and never shows the word "mentor". The roll number becomes **optional on student installs only**: `students.university_id`/`university_id_key` become nullable, the unique index becomes partial (`where university_id_key is not null`), and the service still requires it on `DEPARTMENT`, so R93's import matching is unchanged there. A profile may link to its own student row (`users.student_id`, nullable FK, unique) through **This is me** on the student form, and the Dashboard's "My competitions" uses that link. Privacy acknowledgement (Q8) still applies to rows about other people. | §3.1, §10, §16.1, O-4…O-7, WP-34 |
 
 ---
 

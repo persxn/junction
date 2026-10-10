@@ -93,7 +93,8 @@ export const CompetitionParticipant = z
   .object({
     studentId: Uuid7,
     fullName: z.string().min(1),
-    universityId: z.string().min(1),
+    /** Null on a student install, where the roll number is optional (R135). */
+    universityId: z.string().min(1).nullable(),
     studentStatus: StudentStatus,
     roleLabel: z.string().nullable(),
     addedAt: z.iso.datetime(),
@@ -282,7 +283,8 @@ export const RosterEntry = z
   .object({
     studentId: Uuid7,
     fullName: z.string().min(1),
-    universityId: z.string().min(1),
+    /** Null on a student install, where the roll number is optional (R135). */
+    universityId: z.string().min(1).nullable(),
     roleLabel: z.string().nullable(),
   })
   .strict();

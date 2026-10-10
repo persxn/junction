@@ -28,6 +28,8 @@ export interface FakeApiOptions {
   readonly roles?: readonly RoleKey[];
   readonly mustChangePassword?: boolean;
   readonly autoLockMinutes?: number;
+  /** WP-34: a student install, which offers its password-less guest (R132). */
+  readonly studentMode?: 'STUDENT_INDIVIDUAL' | 'STUDENT_INSTITUTION';
 }
 
 export interface RecordedCall {
@@ -83,6 +85,10 @@ export function installFakeApi(options: FakeApiOptions = {}): FakeApi {
   const calls: RecordedCall[] = [];
   let password = CORRECT_PASSWORD;
   let mustChangePassword = options.mustChangePassword ?? false;
+  const mode = options.studentMode;
+  // R132: on a student install the session starts as the guest until a profile exists.
+  let isGuest = false;
+  let guestOffered = mode !== undefined;
 
   const session = {
     idleExpiresAt: '2026-09-20T10:15:00.000Z',
@@ -90,12 +96,29 @@ export function installFakeApi(options: FakeApiOptions = {}): FakeApi {
     autoLockMinutes: options.autoLockMinutes ?? 15,
   };
 
-  const me = (): MeResponse => ({
-    user: { ...TEST_USER, mustChangePassword },
-    roles: [...roles],
-    permissions: permissionsFor(roles).map((entry) => ({ ...entry })),
-    session,
-  });
+  const me = (): MeResponse => {
+    const held: readonly RoleKey[] =
+      mode === undefined
+        ? roles
+        : isGuest && mode === 'STUDENT_INSTITUTION'
+          ? ['STUDENT']
+          : ['ADMINISTRATOR', 'STUDENT'];
+    return {
+      user: isGuest
+        ? {
+            ...TEST_USER,
+            displayName: 'Guest',
+            email: 'guest@junction.invalid',
+            isGuest: true,
+            mustChangePassword,
+          }
+        : { ...TEST_USER, mustChangePassword },
+      roles: [...held],
+      permissions: permissionsFor(held).map((entry) => ({ ...entry })),
+      session: isGuest ? { ...session, autoLockMinutes: null } : session,
+      ...(mode === undefined ? {} : { mode, guestEnabled: guestOffered }),
+    };
+  };
 
   const loginBody = (): LoginResponse => ({ ...me(), token: SESSION_TOKEN });
 
@@ -164,6 +187,26 @@ export function installFakeApi(options: FakeApiOptions = {}): FakeApi {
         mustChangePassword = false;
         return jsonResponse(200, { session });
       }
+
+      case 'GET /api/v1/auth/guest':
+        return jsonResponse(200, {
+          available: guestOffered,
+          mode: mode ?? 'DEPARTMENT',
+          automatic: guestOffered && mode === 'STUDENT_INDIVIDUAL',
+        });
+
+      case 'POST /api/v1/auth/guest':
+        if (!guestOffered) {
+          return jsonResponse(404, problem(404, 'AUTH_GUEST_UNAVAILABLE', 'No guest', 'Sign in.'));
+        }
+        isGuest = true;
+        return jsonResponse(200, loginBody());
+
+      case 'POST /api/v1/me/profile':
+        if (!authorized || !isGuest) return unauthenticated();
+        isGuest = false;
+        if (mode === 'STUDENT_INDIVIDUAL') guestOffered = false;
+        return jsonResponse(200, loginBody());
 
       case 'GET /api/v1/me':
         return authorized ? jsonResponse(200, me()) : unauthenticated();

@@ -232,6 +232,13 @@
       "when": 1791626635367,
       "tag": "0032_fresh_install_repairs",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "6",
+      "when": 1791628329565,
+      "tag": "0033_student_edition",
+      "breakpoints": true
     }
   ]
 }

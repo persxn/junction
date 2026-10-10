@@ -75,7 +75,8 @@ describe('signing in (§10.3)', () => {
     expect(await screen.findByRole('navigation', { name: 'Main' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Dashboard');
     expect(screen.getByRole('button', { name: TEST_USER.displayName })).toBeInTheDocument();
-    expect(api.calls[0]?.path).toBe('/api/v1/auth/login');
+    // WP-34: the sign-in screen first asks whether a guest is offered.
+    expect(api.calls.map((call) => call.path)).toContain('/api/v1/auth/login');
   });
 
   it('shows what the server said about a wrong password, and stays put', async () => {

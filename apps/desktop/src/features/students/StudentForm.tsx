@@ -7,6 +7,7 @@ import {
 import { useId, useState } from 'react';
 
 import { validateForm, type StudentFormErrors, type StudentFormState } from './form-model.js';
+import { useInstallation } from '../../app/installation.js';
 
 /**
  * The add/edit form (WP-17 step 6). The phone field exists only while an
@@ -30,6 +31,8 @@ const INPUT =
   'rounded-md border border-line bg-surface px-3 py-2 text-fg aria-[invalid=true]:border-danger';
 
 export function StudentForm(props: StudentFormProps): React.JSX.Element {
+  // WP-34 (R135): on a student install the roll number is optional and you can be one of them.
+  const { isStudent } = useInstallation();
   const base = useId();
   const [form, setForm] = useState(props.initial);
   const [errors, setErrors] = useState<StudentFormErrors>({});
@@ -88,7 +91,7 @@ export function StudentForm(props: StudentFormProps): React.JSX.Element {
       className="flex max-w-2xl flex-col gap-4"
       onSubmit={(event) => {
         event.preventDefault();
-        const found = validateForm(form, settings);
+        const found = validateForm(form, settings, { rollNumberOptional: isStudent });
         setErrors(found);
         const first = Object.keys(found)[0];
         if (first !== undefined) {
@@ -99,8 +102,8 @@ export function StudentForm(props: StudentFormProps): React.JSX.Element {
       }}
     >
       <div className="grid gap-4 sm:grid-cols-2">
-        {text('universityId', 'Roll number', {
-          required: true,
+        {text('universityId', isStudent ? 'Roll number (optional)' : 'Roll number', {
+          required: !isStudent,
           hint: 'As printed on the ID card, e.g. 21CS1042.',
         })}
         {text('fullName', 'Full name', { required: true })}
@@ -209,7 +212,7 @@ export function StudentForm(props: StudentFormProps): React.JSX.Element {
         </span>
       </label>
 
-      {props.mode === 'create' && (
+      {props.mode === 'create' && !isStudent && (
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
@@ -219,6 +222,18 @@ export function StudentForm(props: StudentFormProps): React.JSX.Element {
             }}
           />
           I mentor this student
+        </label>
+      )}
+      {props.mode === 'create' && isStudent && (
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={form.isMe}
+            onChange={(event) => {
+              set('isMe', event.target.checked);
+            }}
+          />
+          This is me
         </label>
       )}
 

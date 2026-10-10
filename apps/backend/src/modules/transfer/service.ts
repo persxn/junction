@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { canMentor } from '@compintel/contracts';
 
 import type {
   TransferCommitRequest,
@@ -55,8 +56,7 @@ export class TransferService {
     const to = this.#repo.user(request.toUserId);
     if (from === undefined || to === undefined) throw transferUserNotFound();
     // *from* may be disabled — the usual case; *to* must be able to take it on.
-    if (to.status !== 'ACTIVE' || !to.roles.includes('PROFESSOR'))
-      throw transferTargetNotProfessor();
+    if (to.status !== 'ACTIVE' || !canMentor(to.roles)) throw transferTargetNotProfessor();
     return { from, to };
   }
 

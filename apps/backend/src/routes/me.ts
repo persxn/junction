@@ -2,10 +2,14 @@ import { MeResponse, permissionsFor, PermissionsResponse } from '@compintel/cont
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod';
 
 import { requireSession } from '../platform/authn.js';
+import type { GuestService } from '../modules/auth/guest.js';
 import type { AuthService } from '../modules/auth/service.js';
+import { meBody } from './guest.js';
 
 export interface MeRouteOptions {
   readonly auth: () => AuthService | undefined;
+  /** WP-34: adds the installation mode and the guest's state to `/me`. */
+  readonly guest?: () => GuestService | undefined;
 }
 
 /**
@@ -25,7 +29,7 @@ export const meRoutes =
       if (auth === undefined) {
         throw new Error('the auth service is not available on this backend');
       }
-      return auth.describe(session);
+      return meBody(auth, options.guest?.(), session);
     });
 
     app.get(

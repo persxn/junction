@@ -19,6 +19,8 @@ import { NewUserDialog } from './NewUserDialog.js';
 import { OneTimePassword } from './OneTimePassword.js';
 import { TransferDialog } from './TransferDialog.js';
 import { UserRow } from './UserRow.js';
+import { useInstallation } from '../../../app/installation.js';
+import { GuestAccess } from './GuestAccess.js';
 
 /**
  * Admin → Users (§10.2 `user.manage`, roadmap WP-07b).
@@ -30,6 +32,8 @@ import { UserRow } from './UserRow.js';
  */
 
 export function UsersPage(): React.JSX.Element {
+  // WP-34: an institution's lead sees Members, with the guest switch (R134).
+  const { isStudent } = useInstallation();
   const connection = useBackendConnection();
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -98,8 +102,12 @@ export function UsersPage(): React.JSX.Element {
     <div className="flex flex-col gap-5">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-xl">Users</h1>
-          <p className="text-fg-muted">Accounts, roles and password resets.</p>
+          <h1 className="font-display text-xl">{isStudent ? 'Members' : 'Users'}</h1>
+          <p className="text-fg-muted">
+            {isStudent
+              ? 'Profiles on this computer, their roles, and guest access.'
+              : 'Accounts, roles and password resets.'}
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
@@ -125,6 +133,8 @@ export function UsersPage(): React.JSX.Element {
           </button>
         </div>
       </header>
+
+      {isStudent && <GuestAccess />}
 
       {issued !== undefined && (
         <OneTimePassword
@@ -160,7 +170,11 @@ export function UsersPage(): React.JSX.Element {
         <EmptyState
           icon={Users}
           title="Nobody else yet"
-          description="Add the colleagues who will mentor teams. Each one gets a one-time password to change on their first sign-in."
+          description={
+            isStudent
+              ? 'Members can also make their own profile from the guest. Each one you add gets a one-time password to change on first sign-in.'
+              : 'Add the colleagues who will mentor teams. Each one gets a one-time password to change on their first sign-in.'
+          }
           action={{
             label: 'Add a person',
             onAction: () => {

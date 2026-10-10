@@ -1,9 +1,12 @@
 import {
+  isStudentSetup,
   PASSPHRASE_MIN_LENGTH,
+  type DepartmentSetupRequest,
   type PathCheckResult,
   type SetupRequest,
   type SetupResult,
   type SetupStatus,
+  type StudentSetupRequest,
 } from '@compintel/contracts';
 
 import { AppError } from '../../platform/errors.js';
@@ -16,7 +19,9 @@ import {
   BACKUP_PRIVATE_KEY_ENCRYPTED,
   BACKUP_PUBLIC_KEY,
 } from '../backup/settings.js';
+import { INSTALLATION_MODE } from '../installation/settings.js';
 import { SCRAPER_CONTACT_EMAIL } from '../org/settings.js';
+import { studentSetupPlan } from './student-setup.js';
 import { generateBackupKeys, recoveryFileName, renderRecoveryFile } from '../backup/keys.js';
 import { hashPassword } from '../auth/password.js';
 import { normalizeEmail } from '../auth/repository.js';
@@ -148,6 +153,7 @@ export class SetupService {
       hasAdmin,
       hasOrganization: this.#repository.organization() !== undefined,
       hasBackupKey: this.#settings.get(BACKUP_PUBLIC_KEY) !== '',
+      mode: hasAdmin ? this.#settings.get(INSTALLATION_MODE) : null,
     };
   }
 
@@ -170,7 +176,41 @@ export class SetupService {
     if (!this.isRequired()) {
       throw setupAlreadyDone();
     }
+    if (isStudentSetup(request)) {
+      this.#completeStudent(request);
+      return {};
+    }
+    return this.#completeDepartment(request);
+  }
 
+  /**
+   * R130–R134: a student install. Nothing to hash and no passphrase, so it is
+   * synchronous; the same repository write, gate flip and hooks as a department.
+   */
+  #completeStudent(request: StudentSetupRequest): void {
+    const plan = studentSetupPlan(request);
+    withAudit(
+      this.#audit,
+      (result: SetupWriteResult) => ({
+        actorKind: 'USER' as const,
+        actorUserId: result.adminUserId,
+        action: 'setup.completed',
+        entityKind: 'organization',
+        entityId: result.organizationId,
+        summary: `Junction was set up as a student install (${plan.label})`,
+        diff: { mode: request.mode, organization: plan.write.organization.name },
+      }),
+      (): SetupWriteResult => {
+        const written = this.#repository.completeSetup(plan.write);
+        this.#onCompleted?.(written.departmentId, this.#clock.now().getTime());
+        return written;
+      },
+    );
+    this.#administratorExists = true;
+    this.#onCommitted?.();
+  }
+
+  async #completeDepartment(request: DepartmentSetupRequest): Promise<SetupResult> {
     this.#assertPassphrase(request);
     const pathCheck = this.checkPath(request.backupDir);
     if (!pathCheck.ok) {
@@ -191,6 +231,7 @@ export class SetupService {
     // schema a later read will use — inside R40's one transaction, which is why
     // these are rows rather than `SettingsStore.set` calls.
     const settings: [string, string][] = [
+      [INSTALLATION_MODE.key, serialize(INSTALLATION_MODE, 'DEPARTMENT')],
       [
         SCRAPER_CONTACT_EMAIL.key,
         serialize(SCRAPER_CONTACT_EMAIL, normalizeEmail(request.scraperContactEmail)),
@@ -266,7 +307,7 @@ export class SetupService {
   }
 
   /** R42's three passphrase rules. The length one is also in the schema; this is the message. */
-  #assertPassphrase(request: SetupRequest): void {
+  #assertPassphrase(request: DepartmentSetupRequest): void {
     const passphrase = request.backupPassphrase;
     if (passphrase.length < PASSPHRASE_MIN_LENGTH) {
       throw passphraseWeak(

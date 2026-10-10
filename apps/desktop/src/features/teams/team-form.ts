@@ -17,7 +17,7 @@ import { parseTargets } from './team-model.js';
 export interface DraftMember {
   readonly studentId: string;
   readonly fullName: string;
-  readonly universityId: string;
+  readonly universityId: string | null;
   readonly roleLabel: string;
   readonly isLead: boolean;
 }

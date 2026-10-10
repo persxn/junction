@@ -3,24 +3,9 @@
 ## Current
 - **pre-M2b (PARTIAL) and M2 (WP-17…21) closed, 2–8 Oct 2026** — handoffs `docs/handoff/pre-M2b.md`, `WP-17…WP-21.md`;
   **owed:** R88 first page 94 ms vs 50, WP-20b manual built-app run.
-- **WP-22 done, 9 Oct 2026** (`docs/handoff/WP-22.md`, 8 step commits): R106–R107 (v1.1.21). `v_deadlines` view
-  (migration 0029, no duplicates), `domain/deadlines` (Kolkata buckets, precision), `GET /deadlines` (counts = paged list,
-  proven per scope × group × bucket), `GET /dashboard/kpis` (each tile its list's own total, proven via the links),
-  `deadline-evaluator` (offline, 5 min; `registerDueItemSink()` for WP-23). UI: Radar `/deadlines`, Dashboard at `/`.
-  e2e 6/6, a11y 49/49. **Unmet:** verify **196 s vs 120**.
-- **WP-23 PARTIAL, 9 Oct 2026** (`docs/handoff/WP-23.md`, 8 step commits): R108–R111 (v1.1.22). Migration 0030
-  `notifications` + preferences; `domain/notifications` (thresholds from WP-22's buckets, most urgent only, keys
-  re-arm on a moved deadline); engine = the evaluator's sink (thresholds, watched changes, admin episodes, snooze);
-  `emit()` for WP-24/28; user-scoped stream; inbox API. UI: bell, Inbox + preferences, Dashboard card; tray badge
-  (built-in digits, "9+"), CRITICAL toasts (`tauri-winrt-notification =0.8.1`). e2e 6/6, a11y 51/51, cargo 111.
-  **Unmet:** manual built-exe check **owed**; verify **207 s vs 120**; `audit:deps` HIGH (source-map-js, upstream).
-- **WP-24 done, 9 Oct 2026 — M3 CLOSED** (`docs/handoff/WP-24.md`, 8 step commits, ends with the M3 demo script):
-  R112–R113 (v1.1.23). Migration 0031 `saved_searches` + `saved_search_matches`; `domain/saved-searches` (diff vs the
-  whole set, hash, one NEW_MATCH per run); `SearchService.matchingIds` (same `matchedCte`, no second filter);
-  `saved-search-evaluator` (hourly, offline-safe, triggered from the hub on SUCCESS/PARTIAL runs and after manual
-  entry/import); interests module (category = INTEREST tag named by its slug). UI: Save this search, Saved searches
-  menu, `/discover/saved/$id`, My interests (user menu, banner, combobox), More like this, two weightiest reasons on
-  every card. e2e 7/7, a11y 53/53. **Unmet:** verify **220 s vs 120**; `audit:deps` HIGH (source-map-js, upstream).
+- **M3 (WP-22…24) closed, 9 Oct 2026** — handoffs `WP-22…WP-24.md`: deadline read model + Radar + KPIs (0029),
+  notifications engine/inbox/tray/toasts (0030, WP-23 PARTIAL: built-exe check owed), saved searches, interests,
+  Recommended (0031). Verify had grown to ~220 s vs the 120 s budget.
 - **Junction release + WP-33 done, 10 Oct 2026** (`docs/handoff/WP-33.md`; owner decisions O-1…O-3 in DECISIONS.md):
   product renamed **Junction**, new logo; **M4 AI deferred** (Assistant leaves the rail). WP-33: five palettes under the
   `--ci-*` tokens (contrast matrix 5 flavours × modes, 167 checks), CALM/STANDARD/SHOWCASE (`effects.css`, reduced motion
@@ -35,10 +20,17 @@
   blank (sync command → async), its close hid the main window (global close handler now main-only), "signed in" on
   anonymous cookies (capture only after landing); migration 0032 = new Devfolio/Unstop login URLs + re-enable sources
   the bug paused. **Devfolio listing is now client-rendered from api.devfolio.co (forbidden, D-26) — owner decision.**
-- **Next:** architect review of the Junction release, then M4 (WP-25a) or M5 per the owner. **Send `docs/` back.**
+- **WP-34 done, 10–11 Oct 2026 — student edition, release v0.10.0** (`docs/handoff/WP-34.md`; O-4…O-7, R130–R135,
+  spec 1.1.30): `installation.mode` (DEPARTMENT default), STUDENT role (≡ PROFESSOR), password-less guest
+  (`/auth/guest`, never locks), "Create my profile" (`/me/profile`: Myself claims in place, institution's first profile
+  leads, optional take-over), lead's guest switch; migration 0033 (roles/students rebuilt with deferred FKs, roll number
+  optional on student installs, `users.is_guest/student_id`). UI: audience step + StudentWizard (4 screens, no password,
+  offline place picker), Teammates/Owner labels, trimmed admin rail. Verify 5 212 tests green, a11y 68/68; built exe
+  driven through upgrade + Myself + institution + department. Codes renamed `AUTH_*` (R12).
+- **Next:** architect review of the Junction release + WP-34, then WP-31 or M4 per the owner. **Send `docs/` back.**
 - **Owed live runs:** CTFtime / Devfolio smokes and `unstop:capture` wait on `scraper.contactEmail` (the
   owner's own address, R74); `clist:smoke` waits on U4.
-- Spec: docs/ARCHITECTURE.md **v1.1.23 - ACCEPTED** · roadmap §19 = **50 WPs, 39 done, 11 remaining** (M4 deferred) · **M2 and M3 closed** ·
+- Spec: docs/ARCHITECTURE.md **v1.1.30 - ACCEPTED** · roadmap §19 = **51 WPs, 40 done, 11 remaining** (M4 deferred; WP-34 added by the owner) · **M2 and M3 closed** ·
   ADR-0001...0019 · decisions register docs/DECISIONS.md.
 
 ## Environment facts

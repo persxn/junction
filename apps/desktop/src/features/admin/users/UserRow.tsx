@@ -1,4 +1,12 @@
-import { ROLE_KEYS, type RoleKey, type UserSummary } from '@compintel/contracts';
+import type { RoleKey, UserSummary } from '@compintel/contracts';
+
+import { useInstallation } from '../../../app/installation.js';
+
+const ROLE_NAMES: Readonly<Record<RoleKey, string>> = {
+  ADMINISTRATOR: 'Administrator',
+  PROFESSOR: 'Professor',
+  STUDENT: 'Student',
+};
 import { Check, KeyRound, Pencil, UserCheck, UserX, X } from 'lucide-react';
 import { useState } from 'react';
 
@@ -30,6 +38,7 @@ export function UserRow({
   onSave,
   onReset,
 }: UserRowProps): React.JSX.Element {
+  const { grantableRoles } = useInstallation();
   const [editing, setEditing] = useState(false);
   const [displayName, setDisplayName] = useState(user.displayName);
   const [roles, setRoles] = useState<RoleKey[]>([...user.roles]);
@@ -61,7 +70,7 @@ export function UserRow({
       <td className="py-3">
         {editing ? (
           <div className="flex flex-col gap-1">
-            {ROLE_KEYS.map((role) => (
+            {grantableRoles.map((role) => (
               <label key={role} className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
@@ -75,7 +84,7 @@ export function UserRow({
                   }}
                   className="size-3.5 accent-[var(--ci-color-accent)]"
                 />
-                {role === 'ADMINISTRATOR' ? 'Administrator' : 'Professor'}
+                {ROLE_NAMES[role]}
               </label>
             ))}
           </div>

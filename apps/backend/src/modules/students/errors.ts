@@ -51,6 +51,16 @@ export const universityIdTaken = (universityId: string): AppError =>
     retryable: false,
   });
 
+/** R135: a department install still needs the roll number R93 matches on. */
+export const universityIdRequired = (): AppError =>
+  new AppError({
+    code: 'STUDENT_UNIVERSITY_ID_REQUIRED',
+    status: 422,
+    title: 'A roll number is needed',
+    detail: 'Every student on a department install has a roll or enrolment number.',
+    retryable: false,
+  });
+
 export const phoneDisabled = (): AppError =>
   new AppError({
     code: 'STUDENT_PHONE_DISABLED',

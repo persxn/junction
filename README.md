@@ -31,12 +31,14 @@ account or server to sign up for.
 
 ## Install
 
-1. Download **`Junction_0.9.1_x64-setup.exe`** from the
+1. Download **`Junction_0.10.0_x64-setup.exe`** from the
    [latest release](https://github.com/persxn/junction/releases/latest).
 2. Run it. It installs for your Windows user only — **no administrator rights needed** — and
    adds Junction to the Start menu.
-3. Open Junction and follow the first-run setup: your department, the first administrator,
-   where data and backups live, and a recovery code.
+3. Open Junction and say who is setting it up — **a professor or department**, or **a
+   student**. A department's setup asks for the first administrator, where backups go and a
+   recovery code; a student's asks only where you are and an e-mail address event sites can
+   reach.
 
 **Requirements:** Windows 10 (64-bit) or Windows 11, about 150 MB of disk space.
 
@@ -49,10 +51,25 @@ Windows 11 — is installed automatically if it is missing.
 > Choose **More info → Run anyway**. You can check the download against the SHA-256 published
 > with each release.
 
+## For students
+
+The same installer sets Junction up for a student. Choose **A student** on the first screen,
+then whether you represent **yourself** or **an institution** (a club, chapter or college team).
+There is no account to create: Junction opens as a **guest** that can do everything — find events,
+make teams, track competitions and deadlines.
+
+**Myself** is for your own computer. "Nearby" is measured from where you live, and when you want
+a password lock you choose **Create my profile** in the user menu; everything you did as the
+guest stays yours.
+
+**An institution** suits a club's shared computer. Anyone can use it as a guest; the first person
+to create a profile becomes the lead, who can add members and turn guest access off. A student
+install is independent of any department's Junction — nothing is shared between them.
+
 ## Features
 
-- **Discover** — events from CTFtime, CLIST and Devfolio (within each source's published
-  limits), plus manual entry and URL import. Featured views for _nearby_, _closing soon_, _new_
+- **Discover** — events from CTFtime, Unstop and CLIST (within each source's published
+  limits; CLIST needs your own API key), plus manual entry and URL import. Featured views for _nearby_, _closing soon_, _new_
   and _recommended_, every recommendation with its reason, and saved searches that alert you to
   new matches.
 - **Competitions** — a pipeline from _considering_ to _completed_, team or individual

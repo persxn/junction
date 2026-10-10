@@ -6,6 +6,7 @@ import { AssignProvider } from '../competitions/assign/assign-context.js';
 import { EventPanel } from './EventPanel.js';
 import { KpiStrip } from './KpiStrip.js';
 import { ActivePanel, NotificationsPanel, RadarPanel } from './Panels.js';
+import { useInstallation } from '../../app/installation.js';
 
 /**
  * The Dashboard (§16.2, R107, WP-22): the KPI strip, the Radar's next eight,
@@ -18,6 +19,7 @@ import { ActivePanel, NotificationsPanel, RadarPanel } from './Panels.js';
 const SCOPE_LABELS: Readonly<Record<KpiScope, string>> = { MINE: 'Mine', ALL: 'Everyone’s' };
 
 export function DashboardPage(): React.JSX.Element {
+  const { isStudent } = useInstallation();
   const [scope, setScope] = useState<KpiScope>('MINE');
   const id = useId();
   return (
@@ -46,9 +48,11 @@ export function DashboardPage(): React.JSX.Element {
         <Guide id="dashboard" title="What the Dashboard shows">
           <p>
             Each number opens the list it counts, already filtered — the list shows the same total.
-            <strong> Mine</strong> means competitions you mentor and events you saved;
-            <strong> Everyone’s</strong> covers the whole department. Event numbers are the same for
-            everyone.
+            <strong> Mine</strong> means competitions you {isStudent ? 'own' : 'mentor'} and events
+            you saved;
+            <strong> Everyone’s</strong> covers{' '}
+            {isStudent ? 'everyone on this computer' : 'the whole department'}. Event numbers are
+            the same for everyone.
           </p>
         </Guide>
         <KpiStrip scope={scope} />

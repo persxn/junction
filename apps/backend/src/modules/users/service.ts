@@ -1,10 +1,12 @@
 import { randomInt } from 'node:crypto';
 
-import type {
-  CreateUserRequest,
-  RoleKey,
-  UpdateUserRequest,
-  UserSummary,
+import {
+  isStudentMode,
+  type CreateUserRequest,
+  type InstallationMode,
+  type RoleKey,
+  type UpdateUserRequest,
+  type UserSummary,
 } from '@compintel/contracts';
 
 import { withAudit, type AuditLog } from '../../platform/audit.js';
@@ -17,6 +19,8 @@ import type { Principal } from '../auth/types.js';
 import type { UserRow } from '../../db/schema/index.js';
 import type { UsersRepository, UserWithRoles } from './repository.js';
 import { nowMs, systemClock, type Clock } from '../../platform/time.js';
+import type { SettingsStore } from '../../platform/settings.js';
+import { INSTALLATION_MODE } from '../installation/settings.js';
 
 /**
  * User administration (§10.2 `user.manage`, roadmap WP-07b).
@@ -59,6 +63,31 @@ function lastAdministrator(what: string): AppError {
   });
 }
 
+/** R131: PROFESSOR belongs to department installs, STUDENT to student ones. */
+function roleNotForMode(role: RoleKey): AppError {
+  return new AppError({
+    status: 422,
+    code: 'AUTH_ROLE_NOT_FOR_MODE',
+    title: `The ${role.toLowerCase()} role is not used on this install`,
+    detail:
+      role === 'PROFESSOR'
+        ? 'A student install has students, not professors.'
+        : 'A department install has professors; students are records, not accounts.',
+    retryable: false,
+  });
+}
+
+/** R133: "Myself" has exactly one profile — the guest that became it. */
+function singleProfileInstall(): AppError {
+  return new AppError({
+    status: 409,
+    code: 'AUTH_SINGLE_PROFILE_INSTALL',
+    title: 'This install is for one person',
+    detail: 'Junction was set up for one student, so it has no other accounts to add.',
+    retryable: false,
+  });
+}
+
 function isoOrNull(value: number | null): string | null {
   return value === null ? null : new Date(value).toISOString();
 }
@@ -86,6 +115,8 @@ export interface UsersServiceDependencies {
   readonly auth: AuthRepository;
   readonly audit: AuditLog;
   readonly clock?: Clock;
+  /** WP-34: which roles fit this install (R131); absent means a department install. */
+  readonly settings?: SettingsStore;
   /** Invalidates the R39 gate's cache when the admin population changes. */
   readonly onAdministratorsChanged?: () => void;
 }
@@ -101,8 +132,10 @@ export class UsersService {
   readonly #audit: AuditLog;
   readonly #clock: Clock;
   readonly #onAdministratorsChanged: () => void;
+  readonly #settings: SettingsStore | undefined;
 
   constructor(dependencies: UsersServiceDependencies) {
+    this.#settings = dependencies.settings;
     this.#repository = dependencies.repository;
     this.#auth = dependencies.auth;
     this.#audit = dependencies.audit;
@@ -120,6 +153,8 @@ export class UsersService {
     request: CreateUserRequest,
   ): Promise<{ user: UserSummary; temporaryPassword: string }> {
     assertCan(context.actor, 'user.manage');
+    if (this.#mode() === 'STUDENT_INDIVIDUAL') throw singleProfileInstall();
+    this.#assertRolesFit(request.roles);
 
     const email = normalizeEmail(request.email);
     if (this.#auth.findUserByEmail(email) !== undefined) {
@@ -205,6 +240,7 @@ export class UsersService {
     assertCan(context.actor, 'user.manage');
     const target = this.#require(userId);
 
+    if (request.roles !== undefined) this.#assertRolesFit(request.roles);
     if (request.roles !== undefined && this.#wouldRemoveLastAdministrator(target, request.roles)) {
       throw lastAdministrator('Taking the Administrator role away');
     }
@@ -294,6 +330,15 @@ export class UsersService {
    * Only asked when the target is an active administrator losing that standing;
    * in every other case the answer is trivially no.
    */
+  #mode(): InstallationMode {
+    return this.#settings?.get(INSTALLATION_MODE) ?? 'DEPARTMENT';
+  }
+
+  #assertRolesFit(roles: readonly RoleKey[]): void {
+    const forbidden: RoleKey = isStudentMode(this.#mode()) ? 'PROFESSOR' : 'STUDENT';
+    if (roles.includes(forbidden)) throw roleNotForMode(forbidden);
+  }
+
   #wouldRemoveLastAdministrator(target: UserWithRoles, nextRoles: readonly RoleKey[]): boolean {
     const wasAdministrator =
       target.roles.includes('ADMINISTRATOR') && target.user.status === 'ACTIVE';

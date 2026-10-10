@@ -1,5 +1,9 @@
 import { AuthRepository } from '../modules/auth/repository.js';
 import { AuthService } from '../modules/auth/service.js';
+import { GuestService } from '../modules/auth/guest.js';
+import { ProfileRepository } from '../modules/auth/profile-repo.js';
+import { PlacesService } from '../modules/geo/places.js';
+import { createStudentsModule } from '../modules/students/wiring.js';
 import { SetupRepository } from '../modules/setup/repository.js';
 import { SetupService } from '../modules/setup/service.js';
 import { SourceRecordsRepository } from '../modules/sources/records.js';
@@ -41,6 +45,8 @@ export interface SetupTestServer {
   readonly setup: SetupService;
   readonly users: UsersService;
   readonly auth: AuthService;
+  /** WP-34: the student edition's guest and profiles. */
+  readonly guest: GuestService;
   readonly sources: SourcesService;
   /** R74's one-time "Connect your sources" step. */
   readonly connectPrompt: ConnectPromptService;
@@ -94,6 +100,18 @@ export async function startSetupTestServer(
   const users = new UsersService({
     repository: new UsersRepository(database.db),
     auth: authRepository,
+    audit,
+    settings,
+    onAdministratorsChanged: () => {
+      setup.invalidate();
+    },
+  });
+  const studentsModule = createStudentsModule({ db: database.db, audit, settings });
+  const guest = new GuestService({
+    auth,
+    users: authRepository,
+    profiles: new ProfileRepository(database.db),
+    settings,
     audit,
     onAdministratorsChanged: () => {
       setup.invalidate();
@@ -166,6 +184,10 @@ export async function startSetupTestServer(
     auth: () => auth,
     setup: () => setup,
     users: () => users,
+    guest: () => guest,
+    places: () => new PlacesService(database.db, unavailableGazetteer('test')),
+    // WP-34: the student edition's roll-number and mentorship rules need records.
+    students: () => studentsModule,
     sources: () => sources,
     connectPrompt: () => connectPrompt,
     review: () => events.review,
@@ -175,6 +197,7 @@ export async function startSetupTestServer(
   });
 
   return {
+    guest,
     server,
     database,
     setup,

@@ -1,5 +1,7 @@
-import { ROLE_KEYS, type RoleKey } from '@compintel/contracts';
+import type { RoleKey } from '@compintel/contracts';
 import { useEffect, useId, useRef, useState } from 'react';
+
+import { useInstallation } from '../../../app/installation.js';
 
 /**
  * Adding a colleague. There is no password field on purpose: the server picks
@@ -10,6 +12,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 const ROLE_LABELS: Readonly<Record<RoleKey, string>> = {
   ADMINISTRATOR: 'Administrator — can manage accounts, sources and settings',
   PROFESSOR: 'Professor — can mentor teams and run competitions',
+  STUDENT: 'Student — can run their own teams and competitions',
 };
 
 export interface NewUserDialogProps {
@@ -28,7 +31,11 @@ export function NewUserDialog({ busy, onCancel, onCreate }: NewUserDialogProps):
   const nameId = useId();
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const [roles, setRoles] = useState<readonly RoleKey[]>(['PROFESSOR']);
+  // R131: only the roles this install uses; the non-admin one is the default.
+  const { grantableRoles } = useInstallation();
+  const [roles, setRoles] = useState<readonly RoleKey[]>(
+    grantableRoles.filter((role) => role !== 'ADMINISTRATOR'),
+  );
   const dialog = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -92,7 +99,7 @@ export function NewUserDialog({ busy, onCancel, onCreate }: NewUserDialogProps):
 
         <fieldset className="flex flex-col gap-2">
           <legend className="pb-1 font-medium">Roles</legend>
-          {ROLE_KEYS.map((role) => (
+          {grantableRoles.map((role) => (
             <label key={role} className="flex items-start gap-2.5">
               <input
                 type="checkbox"

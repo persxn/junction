@@ -1,4 +1,5 @@
 import type { MentorRole, StudentStatus, TeamListQuery, TeamStatus } from '@compintel/contracts';
+import { MENTOR_ROLE_KEYS } from '@compintel/contracts';
 
 import type { DatabaseHandle } from '../../platform/db.js';
 
@@ -326,15 +327,19 @@ export class TeamsRepository {
       .all(...studentIds) as SkillHolding[];
   }
 
-  /** ACTIVE accounts holding PROFESSOR, for the pickers and R95's mentor rule. */
+  /**
+   * ACTIVE accounts that can own a team — PROFESSOR, or STUDENT on a student
+   * install (R131's MENTOR_ROLE_KEYS) — for the pickers and R95's mentor rule.
+   */
   professors(): { userId: string; displayName: string }[] {
+    const keys = MENTOR_ROLE_KEYS.map(() => '?').join(', ');
     return this.#db.raw
       .prepare(
-        `SELECT u.id AS userId, u.display_name AS displayName FROM users u
+        `SELECT DISTINCT u.id AS userId, u.display_name AS displayName FROM users u
          JOIN user_roles ur ON ur.user_id = u.id JOIN roles r ON r.id = ur.role_id
-         WHERE r.key = 'PROFESSOR' AND u.status = 'ACTIVE' ORDER BY lower(u.display_name), u.id`,
+         WHERE r.key IN (${keys}) AND u.status = 'ACTIVE' ORDER BY lower(u.display_name), u.id`,
       )
-      .all() as { userId: string; displayName: string }[];
+      .all(...MENTOR_ROLE_KEYS) as { userId: string; displayName: string }[];
   }
 
   isActiveProfessor(userId: string): boolean {

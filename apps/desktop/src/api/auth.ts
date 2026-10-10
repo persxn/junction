@@ -1,10 +1,13 @@
 import {
+  GuestAvailability,
   LoginResponse,
   MeResponse,
   PermissionsResponse,
   SessionResponse,
   type BackendConnection,
   type ClientKind,
+  type GuestAvailability as GuestAvailabilityType,
+  type ProfileInput,
   type LoginResponse as Login,
   type MeResponse as Me,
   type PermissionsResponse as Permissions,
@@ -67,4 +70,39 @@ export async function fetchMe(connection: BackendConnection): Promise<Me> {
 
 export async function fetchPermissions(connection: BackendConnection): Promise<Permissions> {
   return PermissionsResponse.parse(await apiGet(connection, '/api/v1/me/permissions'));
+}
+
+/* WP-34: the student edition's guest and "Create my profile" (R132–R134). */
+
+/** Whether "Continue as guest" is offered, and whether to use it without asking. */
+export async function fetchGuestAvailability(
+  connection: BackendConnection,
+): Promise<GuestAvailabilityType> {
+  return GuestAvailability.parse(await apiGet(connection, '/api/v1/auth/guest'));
+}
+
+export async function signInAsGuest(connection: BackendConnection): Promise<Login> {
+  return LoginResponse.parse(
+    await apiRequest(connection, '/api/v1/auth/guest', { method: 'POST' }),
+  );
+}
+
+/** Answers a fresh session for the profile; the guest session that asked is ended. */
+export async function createProfile(
+  connection: BackendConnection,
+  profile: ProfileInput,
+): Promise<Login> {
+  return LoginResponse.parse(
+    await apiRequest(connection, '/api/v1/me/profile', { method: 'POST', body: profile }),
+  );
+}
+
+/** R134: the institution lead turns walk-in access on or off. */
+export async function setGuestEnabled(
+  connection: BackendConnection,
+  enabled: boolean,
+): Promise<GuestAvailabilityType> {
+  return GuestAvailability.parse(
+    await apiRequest(connection, '/api/v1/admin/guest', { method: 'PUT', body: { enabled } }),
+  );
 }

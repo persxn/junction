@@ -77,8 +77,9 @@ export const mentorNotProfessor = (): AppError =>
   new AppError({
     code: 'TEAM_MENTOR_NOT_PROFESSOR',
     status: 422,
-    title: 'Mentors must be professors',
-    detail: 'A team mentor must be an active account with the Professor role.',
+    title: 'That account cannot look after a team',
+    detail:
+      'A team mentor or owner must be an active account with the Professor role, or the Student role on a student install.',
     retryable: false,
   });
 

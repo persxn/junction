@@ -17,6 +17,7 @@ import {
   type StudentFilterState,
 } from './StudentFilters.js';
 import { StudentTable } from './StudentTable.js';
+import { useInstallation } from '../../app/installation.js';
 
 /**
  * Students (§16.1 rail item, §16.2, WP-17 step 6).
@@ -55,6 +56,7 @@ function toQuery(filters: StudentFilterState): StudentListQueryInput {
 }
 
 export function StudentsPage(): React.JSX.Element {
+  const { labels } = useInstallation();
   const connection = useBackendConnection();
   const navigate = useNavigate();
   const [filters, setFilters] = useState<StudentFilterState>(NO_FILTERS);
@@ -81,12 +83,12 @@ export function StudentsPage(): React.JSX.Element {
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 id="students-heading" className="font-display text-xl">
-            Students
+            {labels.students}
           </h1>
           <p className="text-fg-muted">
             {first === undefined
-              ? 'Every student of the institution, with their skills and mentors.'
-              : `${String(first.total)} ${first.total === 1 ? 'student' : 'students'}${hasFilters(settled) ? ' match these filters' : ''}.`}
+              ? labels.studentsIntro
+              : `${String(first.total)} ${(first.total === 1 ? labels.student : labels.students).toLowerCase()}${hasFilters(settled) ? ' match these filters' : ''}.`}
           </p>
         </div>
         <div className="flex gap-2">

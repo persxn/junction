@@ -8,11 +8,24 @@ import {
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod';
 
 import { requireSession } from '../platform/authn.js';
+import { guestHasNoPassword } from '../modules/auth/errors.js';
+import type { GuestService } from '../modules/auth/guest.js';
 import type { AuthService } from '../modules/auth/service.js';
+import type { ActiveSession } from '../modules/auth/types.js';
+import { meBody } from './guest.js';
 
 export interface AuthRouteOptions {
   /** Undefined on a backend with no database; every route then 401s. */
   readonly auth: () => AuthService | undefined;
+  readonly guest?: () => GuestService | undefined;
+}
+
+/** R132: the guest has no password to check, change or unlock with. */
+function passwordHolder(session: ActiveSession): ActiveSession {
+  if (session.user.isGuest === true) {
+    throw guestHasNoPassword();
+  }
+  return session;
 }
 
 function service(options: AuthRouteOptions): AuthService {
@@ -46,7 +59,7 @@ export const authRoutes =
           clientLabel: request.body.clientLabel,
           requestId: request.id,
         });
-        return { token: result.token, ...auth.describe(result.session) };
+        return { token: result.token, ...meBody(auth, options.guest?.(), result.session) };
       },
     );
 
@@ -63,7 +76,7 @@ export const authRoutes =
       async (request) => {
         const auth = service(options);
         const session = await auth.unlock(
-          requireSession(request),
+          passwordHolder(requireSession(request)),
           request.body.password,
           request.id,
         );
@@ -77,7 +90,7 @@ export const authRoutes =
       { schema: { body: ChangePasswordRequest, response: { 200: SessionResponse } } },
       async (request) => {
         const auth = service(options);
-        const session = requireSession(request);
+        const session = passwordHolder(requireSession(request));
         await auth.changePassword(
           session,
           request.body.currentPassword,

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { AuthUser, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from './auth.js';
+import { InstallationMode } from './installation.js';
 import { RoleKey } from './permissions.js';
 
 /**
@@ -31,6 +32,8 @@ export const SetupStatus = z.object({
   hasAdmin: z.boolean(),
   hasOrganization: z.boolean(),
   hasBackupKey: z.boolean(),
+  /** R130: what the wizard chose; `null` until it has run. */
+  mode: InstallationMode.nullable().optional(),
 });
 export type SetupStatus = z.infer<typeof SetupStatus>;
 
@@ -68,8 +71,13 @@ export const AdminInput = z.object({
 });
 export type AdminInput = z.infer<typeof AdminInput>;
 
-/** `POST /api/v1/setup/complete` — everything, in one request, applied in one transaction (R40). */
-export const SetupRequest = z.object({
+/**
+ * `POST /api/v1/setup/complete` for a professor or department — everything, in
+ * one request, applied in one transaction (R40). `mode` may be left out: a
+ * request without one is this kind, as it was before WP-34.
+ */
+export const DepartmentSetupRequest = z.object({
+  mode: z.literal('DEPARTMENT').optional(),
   organization: OrganizationInput,
   department: DepartmentInput,
   campus: CampusInput,
@@ -81,7 +89,78 @@ export const SetupRequest = z.object({
   /** Encrypts the age identity and is never stored anywhere (R42). */
   backupPassphrase: z.string().min(PASSPHRASE_MIN_LENGTH).max(PASSWORD_MAX_LENGTH),
 });
+export type DepartmentSetupRequest = z.infer<typeof DepartmentSetupRequest>;
+
+/** Where a student is, for "nearby": a place from the picker, or typed coordinates. */
+export const PlaceInput = z.object({
+  label: z.string().trim().min(2).max(160),
+  lat: z.number().min(-90).max(90),
+  lon: z.number().min(-180).max(180),
+});
+export type PlaceInput = z.infer<typeof PlaceInput>;
+
+/**
+ * "Myself" (R133). No account, no password, no backup passphrase: the app opens
+ * as the guest. `.strict()` so a request carrying an administrator or a
+ * passphrase is refused rather than half-read.
+ */
+export const StudentIndividualSetupRequest = z
+  .object({
+    mode: z.literal('STUDENT_INDIVIDUAL'),
+    /** What the guest is called until a profile exists; blank means "Guest". */
+    displayName: z.string().trim().max(120).optional(),
+    home: PlaceInput,
+    scraperContactEmail: z.email().max(320),
+  })
+  .strict();
+export type StudentIndividualSetupRequest = z.infer<typeof StudentIndividualSetupRequest>;
+
+/** "An institution" (R134): the institution, the group (club or chapter) and its campus. */
+export const StudentInstitutionSetupRequest = z
+  .object({
+    mode: z.literal('STUDENT_INSTITUTION'),
+    organization: OrganizationInput,
+    /** The club, chapter or team: it becomes the managing department. */
+    group: DepartmentInput,
+    campus: CampusInput,
+    scraperContactEmail: z.email().max(320),
+  })
+  .strict();
+export type StudentInstitutionSetupRequest = z.infer<typeof StudentInstitutionSetupRequest>;
+
+export const StudentSetupRequest = z.discriminatedUnion('mode', [
+  StudentIndividualSetupRequest,
+  StudentInstitutionSetupRequest,
+]);
+export type StudentSetupRequest = z.infer<typeof StudentSetupRequest>;
+
+/** Any of the three (R130). */
+export const SetupRequest = z.union([StudentSetupRequest, DepartmentSetupRequest]);
 export type SetupRequest = z.infer<typeof SetupRequest>;
+
+/** Whether this request sets up a student install. */
+export function isStudentSetup(request: SetupRequest): request is StudentSetupRequest {
+  return request.mode === 'STUDENT_INDIVIDUAL' || request.mode === 'STUDENT_INSTITUTION';
+}
+
+/**
+ * `GET /api/v1/setup/places?q=` — the wizard's location picker, over the offline
+ * gazetteer and the institutions list. Open only while setup is required.
+ */
+export const PLACE_KINDS = ['CITY', 'INSTITUTION'] as const;
+export const PlaceSuggestion = z.object({
+  label: z.string().min(1),
+  kind: z.enum(PLACE_KINDS),
+  lat: z.number(),
+  lon: z.number(),
+  /** CAMPUS for an institution with its own coordinates, CITY otherwise. */
+  precision: z.enum(['CAMPUS', 'CITY']),
+});
+export type PlaceSuggestion = z.infer<typeof PlaceSuggestion>;
+export const PlaceSuggestionsResponse = z.object({ places: z.array(PlaceSuggestion) });
+export type PlaceSuggestionsResponse = z.infer<typeof PlaceSuggestionsResponse>;
+export const PlaceQuery = z.object({ q: z.string().trim().max(80).default('') });
+export type PlaceQuery = z.infer<typeof PlaceQuery>;
 
 /**
  * What setup hands back, once, and never again.
@@ -91,10 +170,11 @@ export type SetupRequest = z.infer<typeof SetupRequest>;
  * and cannot be recovered afterwards, which is why that step forces an export.
  */
 export const SetupResult = z.object({
-  recoveryCode: z.string().min(1),
+  /** Absent on a student install: there is no administrator password to recover (R133). */
+  recoveryCode: z.string().min(1).optional(),
   /** Suggested file name, e.g. `junction-recovery-20260920.txt` (R42). */
-  recoveryFileName: z.string().min(1),
-  recoveryFile: z.string().min(1),
+  recoveryFileName: z.string().min(1).optional(),
+  recoveryFile: z.string().min(1).optional(),
 });
 export type SetupResult = z.infer<typeof SetupResult>;
 

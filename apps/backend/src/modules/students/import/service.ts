@@ -297,6 +297,11 @@ export class StudentImportService {
     const tags = new Map(this.#deps.relations.tagsByStudent(rows.map((row) => row.id)));
     const students = new Map<string, ExistingStudent>();
     for (const row of rows) {
+      // R93 matches on the roll number; a row without one (student installs,
+      // R135) can never be matched by an import, so it is not a candidate.
+      if (row.universityIdKey === null) {
+        continue;
+      }
       const held = tags.get(row.id) ?? [];
       const names = (relation: string): Set<string> =>
         new Set(
@@ -304,6 +309,7 @@ export class StudentImportService {
         );
       students.set(row.universityIdKey, {
         ...row,
+        universityId: row.universityId ?? row.universityIdKey,
         skills: names('SKILL'),
         interests: names('INTEREST'),
       });
